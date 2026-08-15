@@ -1,0 +1,136 @@
+"Feature test: Dolphin's event semantics (DolphinDart DD8).
+
+ Written from the D8 SOURCE — Core.Object.cls and
+ Kernel.EventMessageSequence.cls — before the compat implementation existed, so
+ these assert what Dolphin does rather than what our code happens to do. Each
+ rule cites where it came from; if the implementation is ever rewritten, this
+ file is the contract it must still meet.
+
+ The brief called the event system DD8's risk item precisely because porting
+ consumers against a misremembered trigger contract is how GUI heisenbugs are
+ born."
+
+Object subclass: EvtProbe [
+    | log |
+    EvtProbe class >> new [ ^self basicNew initProbe ]
+    initProbe [ log := OrderedCollection new ]
+    log [ ^log ]
+    note [ log add: #note. ^#noteValue ]
+    noteA [ log add: #a. ^#fromA ]
+    noteB [ log add: #b. ^#fromB ]
+    take: x [ log add: x. ^x ]
+    takeTwo: x with: y [ log add: (Array with: x with: y). ^y ]
+    raise [ ^Error signal: 'probe raised' ]
+]
+
+STestCase subclass: TestEvents [
+    <classVars: Adder AdderSource>
+
+    tests [
+        | src p q r |
+        EventRegistry reset.
+
+        "--- Rule 3: no handlers is safe and answers nil
+             (Object>>events -> NullEventsCollection.Current) ---"
+        src := Object new.
+        self check: (src trigger: #nothing) is: nil
+             label: 'trigger with no handlers answers nil'.
+
+        "--- a registered handler runs, and gets the trigger's argument ---"
+        src := Object new. p := EvtProbe new.
+        src when: #ping send: #note to: p.
+        src trigger: #ping.
+        self check: p log asArray is: #(#note) label: 'handler runs on trigger'.
+
+        src := Object new. p := EvtProbe new.
+        src when: #ping send: #take: to: p.
+        src trigger: #ping with: 42.
+        self check: p log asArray is: #(42) label: 'trigger:with: passes its argument'.
+
+        "--- Rule 1: the LAST handler's value is the trigger's value
+             (EventMessageSequence>>value: `last := msg value` ... `^last`) ---"
+        src := Object new. p := EvtProbe new. q := EvtProbe new.
+        src when: #ping send: #noteA to: p.
+        src when: #ping send: #noteB to: q.
+        self check: (src trigger: #ping) is: #fromB
+             label: 'trigger answers the LAST handler value'.
+
+        "--- Rule 2: registration is keyed BY RECEIVER, so re-registering the
+             same receiver REPLACES rather than adding a second handler
+             (`receivers addAnsweringIndex:` + `messages basicAt: index put:`) ---"
+        src := Object new. p := EvtProbe new.
+        src when: #ping send: #noteA to: p.
+        src when: #ping send: #noteB to: p.
+        src trigger: #ping.
+        self check: p log asArray is: #(#b)
+             label: 'same receiver re-registered REPLACES (not appended)'.
+
+        "--- but a DIFFERENT receiver is a separate registration ---"
+        src := Object new. p := EvtProbe new. q := EvtProbe new.
+        src when: #ping send: #noteA to: p.
+        src when: #ping send: #noteA to: q.
+        src trigger: #ping.
+        self check: (Array with: p log size with: q log size) is: #(1 1)
+             label: 'distinct receivers both run'.
+
+        "--- argument merge from the LEFT: the handler's own argument first,
+             then the trigger's ---"
+        src := Object new. p := EvtProbe new.
+        src when: #ping send: #takeTwo:with: to: p with: #userArg.
+        src trigger: #ping with: #triggerArg.
+        self check: p log first asArray is: #(#userArg #triggerArg)
+             label: 'when:...with: merges its argument from the left'.
+
+        "--- Rule 4: a handler registered DURING a trigger does not run in that
+             trigger (`1 to: receivers basicSize do:` reads the size once) ---"
+        src := Object new. p := EvtProbe new. q := EvtProbe new.
+        src when: #ping send: #noteA to: p.
+        Adder := q.
+        AdderSource := src.
+        src when: #ping send: #addDuringTrigger to: self.
+        src trigger: #ping.
+        self check: q log size is: 0
+             label: 'a handler added DURING a trigger does not run in it'.
+        "and it does run on the NEXT trigger"
+        src trigger: #ping.
+        self check: q log size is: 1 label: 'the added handler runs next time'.
+
+        "--- Rule 5: removeEventsTriggeredFor: removes by receiver ---"
+        src := Object new. p := EvtProbe new. q := EvtProbe new.
+        src when: #ping send: #noteA to: p.
+        src when: #ping send: #noteA to: q.
+        src removeEventsTriggeredFor: p.
+        src trigger: #ping.
+        self check: (Array with: p log size with: q log size) is: #(0 1)
+             label: 'removeEventsTriggeredFor: removes only that receiver'.
+
+        "--- Rule 6: noEventsDo: suppresses for the block and restores after ---"
+        src := Object new. p := EvtProbe new.
+        src when: #ping send: #noteA to: p.
+        src noEventsDo: [ src trigger: #ping ].
+        self check: p log size is: 0 label: 'noEventsDo: suppresses triggers'.
+        src trigger: #ping.
+        self check: p log size is: 1 label: 'noEventsDo: restores afterwards'.
+
+        "--- and restores even when the block RAISES (Dolphin uses ensure:) ---"
+        src := Object new. p := EvtProbe new.
+        src when: #ping send: #noteA to: p.
+        [ src noEventsDo: [ Error signal: 'boom' ] ] on: Error do: [ :e | nil ].
+        src trigger: #ping.
+        self check: p log size is: 1
+             label: 'noEventsDo: restores under ensure: after a raise'.
+
+        "--- an unrelated event is unaffected ---"
+        src := Object new. p := EvtProbe new.
+        src when: #ping send: #noteA to: p.
+        src trigger: #pong.
+        self check: p log size is: 0 label: 'triggering a different event does nothing'.
+    ]
+
+    "Used by the add-during-trigger rule: registers a NEW handler while the
+     trigger that called this one is still running."
+    addDuringTrigger [
+        AdderSource when: #ping send: #noteA to: Adder.
+        ^nil
+    ]
+]

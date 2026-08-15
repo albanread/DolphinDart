@@ -1,0 +1,167 @@
+"01_events.mst — Dolphin's event system (DolphinDart DD8).
+
+ HAND-WRITTEN compat, not translated: Dolphin's implementation is built on
+ EventsCollection/EventMessageSequence with a receiver-indexed store and
+ DeadObject sentinels, machinery this VM does not have and does not need. What
+ must survive is the SEMANTICS, which were read out of the D8 source before a
+ line of this was written (Core.Object.cls, Kernel.EventMessageSequence.cls):
+
+   1. `trigger:` answers the LAST handler's value; nil when there are none.
+      (EventMessageSequence>>value: `last := msg value` in a loop, `^last`.)
+   2. Handlers are keyed BY RECEIVER — `receivers addAnsweringIndex: receiver`
+      then `messages basicAt: index put:`. Registering the same receiver for the
+      same event again REPLACES; it does not add a second handler.
+   3. Triggering an event with no handlers is safe and answers nil
+      (Object>>events answers NullEventsCollection.Current).
+   4. The trigger loop is `1 to: receivers basicSize do:` — the size is read
+      ONCE, so a handler registered DURING a trigger does not run in that
+      trigger.
+   5. `removeEventsTriggeredFor:` removes by receiver, across all events.
+   6. `noEventsDo:` clears the events for the dynamic extent of a block and
+      restores them under `ensure:` — so it restores even if the block raises.
+
+ Arguments merge from the left: a handler registered with `when:send:to:with:`
+ receives its own argument, then the trigger's."
+
+Object subclass: EventHandler [
+    | receiver selector userArg hasUserArg |
+    EventHandler class >> receiver: r selector: s [
+        ^self basicNew setReceiver: r selector: s arg: nil has: false
+    ]
+    EventHandler class >> receiver: r selector: s with: a [
+        ^self basicNew setReceiver: r selector: s arg: a has: true
+    ]
+    setReceiver: r selector: s arg: a has: b [
+        receiver := r. selector := s. userArg := a. hasUserArg := b
+    ]
+    receiver [ ^receiver ]
+    selector [ ^selector ]
+
+    "Argument merge, from the left: the handler's own argument precedes the
+     trigger's."
+    valueWithArguments: triggerArgs [
+        | args |
+        args := hasUserArg
+            ifTrue: [ (Array with: userArg) , triggerArgs ]
+            ifFalse: [ triggerArgs ].
+        "Trim to the selector's own arity: a handler may be registered for an
+         event that carries more arguments than it wants, which Dolphin allows."
+        ^receiver perform: selector withArguments:
+            (args size > selector numArgs
+                ifTrue: [ args first: selector numArgs ]
+                ifFalse: [ args ])
+    ]
+]
+
+"The per-object event registry."
+Object subclass: EventsCollection [
+    | table |
+    EventsCollection class >> new [ ^self basicNew initEvents ]
+    initEvents [ table := Dictionary new ]
+
+    "Rule 2: keyed by receiver, so re-registering REPLACES."
+    at: anEventSymbol add: aHandler [
+        | handlers idx |
+        handlers := table at: anEventSymbol ifAbsent: [ nil ].
+        handlers isNil ifTrue: [ handlers := OrderedCollection new.
+                                 table at: anEventSymbol put: handlers ].
+        idx := nil.
+        1 to: handlers size do: [ :i |
+            ((handlers at: i) receiver == aHandler receiver) ifTrue: [ idx := i ] ].
+        idx isNil ifTrue: [ handlers add: aHandler ] ifFalse: [ handlers at: idx put: aHandler ].
+        ^aHandler
+    ]
+
+    "Rules 1 and 4: answer the LAST handler's value, over a SNAPSHOT of the
+     handlers taken before the first one runs."
+    trigger: anEventSymbol withArguments: args [
+        | handlers snapshot last |
+        handlers := table at: anEventSymbol ifAbsent: [ nil ].
+        handlers isNil ifTrue: [ ^nil ].
+        snapshot := handlers copyFrom: 1 to: handlers size.
+        last := nil.
+        snapshot do: [ :h | last := h valueWithArguments: args ].
+        ^last
+    ]
+
+    "Rule 5: by receiver, across every event."
+    removeEventsTriggeredFor: anObject [
+        table keysAndValuesDo: [ :k :handlers |
+            | keep |
+            keep := OrderedCollection new.
+            handlers do: [ :h | h receiver == anObject ifFalse: [ keep add: h ] ].
+            table at: k put: keep ]
+    ]
+
+    isEmpty [ ^table isEmpty ]
+]
+
+"The protocol Dolphin puts on Object itself. Reopened here rather than defined,
+ so every object in the world gains it."
+nil subclass: Object [
+    events [
+        | e |
+        e := EventRegistry at: self.
+        ^e isNil ifTrue: [ EventRegistry at: self put: EventsCollection new ] ifFalse: [ e ]
+    ]
+    hasEvents [ ^(EventRegistry at: self) notNil ]
+
+    when: anEventSymbol send: aSelector to: anObject [
+        ^self events at: anEventSymbol
+            add: (EventHandler receiver: anObject selector: aSelector)
+    ]
+    when: anEventSymbol send: aSelector to: anObject with: anArg [
+        ^self events at: anEventSymbol
+            add: (EventHandler receiver: anObject selector: aSelector with: anArg)
+    ]
+
+    "Rule 3: no handlers is not an error."
+    trigger: anEventSymbol [ ^self trigger: anEventSymbol withArguments: #() ]
+    trigger: anEventSymbol with: a [ ^self trigger: anEventSymbol withArguments: (Array with: a) ]
+    trigger: anEventSymbol with: a with: b [
+        ^self trigger: anEventSymbol withArguments: (Array with: a with: b) ]
+    trigger: anEventSymbol withArguments: args [
+        self hasEvents ifFalse: [ ^nil ].
+        ^self events trigger: anEventSymbol withArguments: args
+    ]
+
+    removeEventsTriggeredFor: anObject [
+        self hasEvents ifTrue: [ self events removeEventsTriggeredFor: anObject ]
+    ]
+    removeAllEventsTriggered [ EventRegistry removeKey: self ]
+
+    "Rule 6: cleared for the block, restored under ensure: even on a raise."
+    noEventsDo: aBlock [
+        | saved |
+        saved := EventRegistry at: self.
+        EventRegistry removeKey: self.
+        ^[ aBlock value ] ensure: [
+            saved isNil ifFalse: [ EventRegistry at: self put: saved ] ]
+    ]
+]
+
+"Registry of object -> EventsCollection.
+
+ Dolphin stores the collection in an instance variable on Object itself. This
+ VM's Object has no such slot and adding one would touch every class, so the
+ mapping lives here — an IDENTITY dictionary, because two equal-but-distinct
+ objects must have distinct event registrations.
+
+ v1 holds receivers STRONGLY (DIALECT_GAPS A7: weak refs are backlog), so an
+ object with registrations is retained until removeAllEventsTriggered. That is
+ the prior art's own v1 decision, recorded rather than discovered later."
+Object subclass: EventRegistry [
+    <classVars: Table>
+    EventRegistry class >> table [
+        Table isNil ifTrue: [ Table := IdentityDictionary new ]. ^Table
+    ]
+    EventRegistry class >> at: anObject [ ^self table at: anObject ifAbsent: [ nil ] ]
+    EventRegistry class >> at: anObject put: aCollection [
+        self table at: anObject put: aCollection. ^aCollection
+    ]
+    EventRegistry class >> removeKey: anObject [
+        self table removeKey: anObject ifAbsent: [ nil ]
+    ]
+    EventRegistry class >> reset [ Table := IdentityDictionary new ]
+    EventRegistry class >> size [ ^self table size ]
+]
