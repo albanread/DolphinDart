@@ -13,12 +13,37 @@ full release-mode sweep at sprint end ([test cadence](docs/prior_art/winvm/READM
 
 ```
 DD0 → DD1 → DD2 → DD3 → { DD4, DD5, DD6 in parallel } → DD7 → DD8 → DD9 → DD10 → DD11 → DD12 → DD13
-                                                  (DD5 keeps rolling through DD12)
+                                                  (DD5 absorbed into DD3's translator — see Status)
 ```
 
 DD4 (exceptions) gates DD10, not DD9. DD5 (prims) is a rolling campaign with
 per-wave checkpoints. DD6 (Windows prims) gates DD7. Nothing before DD10 may
 use `on:do:` in translated code (prior-art rule, carried).
+
+## Status (updated 2026-08-15, after the DD0–DD7 run)
+
+| # | Status | Outcome in one line |
+|---|---|---|
+| DD0 | ✅ DONE | Both arches build from the new home; battery vendored — **and found 4 inherited defects, all fixed**; baseline 12 suites / 566 assertions / 0 |
+| DD1 | ✅ DONE | World split 73/10/14 (kernel / gamepane ext / IDE attic); worlds became **layer stacks**; GamePane proven to pixels |
+| DD2 | ✅ DONE | **D157 is the only primitive number in the MVP tree**; zero namespace collisions; `<virtual`/`<overlap` are pragma *modifiers* |
+| DD3+3b | ✅ DONE | `dolphin2mst`: 211 classes / 5,441 methods, byte-stable; translated `Rectangle` **runs** on our kernel; `.pax` loose methods + pools ingested |
+| DD4 | ✅ DONE | Resumability settled by measurement (0 MVP `resume:` sites → v1 non-resumable, refuses loudly); `Notification` + resumable-default; DNU → catchable MNU on both paths |
+| DD5 | ✅ ABSORBED | The 215-row campaign evaporated (DD2); D157 lowering lives in the translator; nothing left to do |
+| DD6 (a/b/c) | ✅ DONE | FFI floor with **no assembly** (arity-cast); **1,126 prims generated from the corpus** + tiered harness (1,007/1,104 resolve); marshalling runtime; **148 structs, offsets from winkb** |
+| DD7 | ✅ DONE | Door proven to depth 5 through real `SendMessageW`; visible window with real WM_PAINT/WM_COMMAND; `ValidateRect` backstop; generation guard — all falsifiably tested |
+| DD8 | 🚧 IN PROGRESS | Event system + semantics suite written (from D8 source, test-first); **blocked on an inherited `identityHash` defect** — see the brief's status block |
+| DD9–DD13 | ⬜ PENDING | Direction updates recorded in the DD9 brief (generated prims replace the old allowlist story; `User32`-style alias globals needed) |
+
+Two standing corrections the ladder should be read with:
+
+1. **Numbered `<primitive: N>` pragmas are intent, not dispatch** (DD8 finding,
+   recorded in `docs/HOUSE_PRIMS.md`): the front-end special-cases *selectors*;
+   a bare numbered-primitive body compiles to `^self`. Anything gated on "the
+   primitive number works" is really gated on the selector being handled.
+2. **The external-call story is `st/prims/`, not translator-emitted pragmas.**
+   The generated libraries + structs + marshalling runtime are the binding
+   surface; the translator's job is to *route sends to them* (DD9 brief).
 
 | # | Sprint | Size | Gate (one line — the detail doc is authoritative) |
 |---|---|---|---|

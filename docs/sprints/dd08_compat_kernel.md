@@ -1,5 +1,52 @@
 # DD8 — The compat kernel (`world/dolphin_compat`) `M`
 
+> ## STATUS (2026-08-15) — in progress, blocked; read this before the brief
+>
+> **Done:** `st/dolphin_compat/01_events.mst` (the event system, hand-written)
+> and `st/test/features/test_events.mst` (the semantics suite, written FIRST
+> from the D8 source — six cited rules: last-handler value; keyed-by-receiver
+> replace; safe no-handler trigger; size-snapshotted trigger loop; remove-by-
+> receiver; `noEventsDo:` restores under `ensure:`).
+>
+> **Blocker 1 — `Object>>identityHash` answers SELF** (inherited, on the bare
+> world). Root cause is structural: a numbered `<primitive: N>` pragma is NOT
+> dispatch in this front-end — only the `"primitive: FFI "` form is handled, so
+> a bare numbered body compiles to `^self`. Most world prims work because their
+> SELECTORS are special-cased; `identityHash` has no such handling, so every
+> identity collection keyed by a plain object dies (`IdentityDictionary at:
+> Object new` → "does not understand &", via `identityHash bitAnd:`).
+> **Fix design:** a named `<stprim: stIdentityHash>` backed by Dart's
+> `identityHashCode()` (present in 1.24) wired through cocoa.dart + a one-line
+> body change in `01_object.mst`. Do NOT use `^self hash` — String/Integer hash
+> by value, which would conflate identity with equality exactly where the
+> distinction matters. Then re-run the FULL battery for regressions.
+>
+> **Blocker 2 — gate layering.** The suite lives in `st/test/features` but needs
+> `st/dolphin_compat` loaded; the standard battery invocation loads `st/world`
+> alone, so TestEvents aborts on `EventRegistry` before it even reaches the
+> identityHash wall. From DD8 on, the gate is
+> `st_battery.dart "st/world;st/dolphin_compat" st/test/features` — update
+> `docs/TOOLCHAIN.md` when closing the sprint.
+>
+> **New sub-task — the bare-primitive audit.** `identityHash` is unlikely to be
+> the only silent-`^self` method: scan the world for methods whose body is ONLY
+> a `<primitive: N>` line (no fallback code after it) and cross-check each
+> selector against the front-end's special-casing. Anything unhandled is a
+> latent identityHash-class defect. Small script, big hazard.
+>
+> **Inherited from DD7 (build here, not there):** the posted-action queue and
+> idle hook are UiSession's deferred-actions/`onIdle` machinery — they were DD7
+> leftovers precisely because they belong to this sprint's `UiSession`. The DD7
+> spike classes (`MvpDoor`, `MvpWindow`) are the seed UiSession replaces; the
+> door tortures in `test/st_door.dart` must be re-run green under UiSession
+> routing before the spikes are deleted.
+>
+> **Two compat items measured in DD6c, add to the class list below:**
+> `Character>>asUnicodeValue` (alias of house `value`); and note that `asString`
+> is a helper selector the IL builder rewrites AT THE CALL SITE — compat must
+> route Dolphin's `asString` uses, never define a method of that name and expect
+> it to be reached.
+
 **Objective:** the hand-written bridge classes Dolphin's MVP corpus assumes,
 per the prior-art G3 inventory — **which transfers nearly verbatim**; this doc
 records only deltas. Home: `st/world/dolphin_compat/` (loaded after the core

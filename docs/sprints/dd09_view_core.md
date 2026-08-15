@@ -1,5 +1,45 @@
 # DD9 — View core vertical slice (= milestone UI-2) `L`
 
+> ## DIRECTION UPDATE (2026-08-15) — the external-call story changed under this brief
+>
+> The brief below predates DD6b/c. What now exists and replaces its "DD5 W3 +
+> DD6 allowlist extensions" plan:
+>
+> - **`st/prims/`** — 1,126 generated external methods across 37 library
+>   classes (from Dolphin's own pragmas; regenerate with `genprims.py`), with
+>   the tiered harness `test/st_prims.dart` (1,007/1,104 resolve, Tier B green).
+> - **`st/prims/structs/`** — 148 struct classes with typed accessors, offsets
+>   from winkb (`genstructs.py`); nested structs are typed views; sizes include
+>   trailing padding.
+> - **`st/prims/rt/`** — `ExternalMemory`/`Utf16Buffer`/`FFICoerce`; generated
+>   wrappers coerce objects and free string temps under `ensure:`.
+>
+> So the translator does NOT emit FFI pragmas for the View wave; **translated
+> sends must route to the generated library classes.** The corpus's dominant
+> idiom (measured): **`User32 beginPaint: h lpPaint: ps` — a bare global name —
+> 212 refs in MVP/Base**, vs `UserLibrary default …` at only 5. Two small
+> pre-tasks before translation starts:
+>
+> 1. **Alias globals**: a tiny `st/prims/rt/02_aliases.mst` binding the global
+>    names the corpus uses to the generated classes (`User32 :=
+>    UserLibrary.` etc. — globals live on STGlobals; class names win reads, and
+>    no class is named `User32`, so the read resolves to the global). Census the
+>    exact alias list from the corpus first (`\w+32` style names + `Gdi32`,
+>    `Kernel32`, `ComCtl32`…), don't guess it.
+> 2. **`default` bridge**: add class-side `default [ ^self ]` to the generated
+>    libraries (one line in `genprims.py`) for the 5 `XxxLibrary default` sends.
+>
+> Also landing here from DD7's open list: the **storm-message probe** (measure
+> `WM_MOUSEMOVE`/`WM_NCHITTEST`/`WM_SIZE` rates BEFORE routing them to the
+> image — WINARM measured its door at ~154× `DefWindowProcW`), because resize
+> relayout is this sprint's gate and storms are where it bites; and **drawing
+> through the WM_PAINT HDC** (the door already delivers it) — `TextOutW` first,
+> then the translated `Graphics.Canvas` wave.
+>
+> Reminder from the DD7 notes: **a handler installed outside a door entry
+> cannot catch a raise from inside one** — containment is at the door. View
+> code that wants `on:do:` protection must install it INSIDE the entry.
+
 **Objective:** the first translated MVP corpus wave: a real window tree built
 from Dolphin's own `UI.View` code running on our substrate. The prior-art G4
 sprint transfers as scope + gate, with one correction: **the canvas class is

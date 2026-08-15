@@ -1,5 +1,13 @@
 # DD6 — The Windows-prims floor: `<stdcall:>` → natives `L`
 
+> **OUTCOME (2026-08-15): DONE, differently than planned — see
+> `dd06_NOTES.md` + `dd06c_NOTES.md`.** The generator-vs-trampoline choice
+> below turned out to be false: `ST_ffiCall`'s Windows branch casts the
+> resolved address to a function-pointer of the right ARITY and the C++
+> compiler emits the call, correct on both arches with no `.asm` (~120 lines).
+> The winkb DB validates rather than enumerates; `genprims.py` reads Dolphin's
+> own pragmas. Kept below unedited as the record of what was planned.
+
 **Objective:** translated Dolphin external methods call real Win32. This is
 the sprint that builds what WINVM already had (a working FFI + winkb) and we
 don't: **`ST_ffiCall` is stubbed on Windows** ("Win64 trampoline pending",
