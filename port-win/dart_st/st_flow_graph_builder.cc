@@ -1736,9 +1736,25 @@ Fragment StGraphBuilder::TranslateClassSend(const Class& cls,
   // Type), which reaches those through the Type ext-holders (Behavior ext ->
   // ClassDescription ext -> ...) exactly as a runtime reflective send does. A
   // genuine miss now becomes an honest doesNotUnderstand instead of a silent nil.
+  //
+  // DolphinDart DD0 (2026-08-15): it did NOT — the comment above stated the
+  // intent while the emitted helper was `stSendExtOrNil`, whose own docstring
+  // reads "GRACEFUL on a total miss: answers nil instead of throwing". So every
+  // class-side miss on a class NAME evaluated to nil: `Set totallyBogusSelector`
+  // answered nil, while the instance-side `Set new bogusSelector` raised
+  // correctly. MACDART has no `stSendExtOrNil` at all and reaches `stSendExt`
+  // here, so the divergence is local to this port; the fix is to emit what the
+  // comment always claimed. Silence of exactly this kind hid five never-written
+  // constructors in the MACDART lineage (the history at the head of
+  // st/test/features/test_class_side.mst), and Dolphin's MVP leans on class-side
+  // sends constantly — a missing method must not become a nil that surfaces
+  // arbitrarily far from its cause.
+  //
+  // Pinned by TestClassSide's 10 assertions, which could not run in this port
+  // until DD0 vendored st/test/features.
   {
     const Function& send =
-        Function::ZoneHandle(zone_, LookupCocoaFunction("stSendExtOrNil"));
+        Function::ZoneHandle(zone_, LookupCocoaFunction("stSendExt"));
     const Function& new_list =
         Function::ZoneHandle(zone_, LookupCocoaFunction("stNewList"));
     const Function& append =

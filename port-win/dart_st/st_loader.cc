@@ -575,6 +575,47 @@ bool Loader::Load(std::unique_ptr<ProgramNode> program_owned,
                   bool allow_reopen) {
   using namespace dart;
 
+  // LAZY-PARSE GUARD (ported from MACDART's st_loader.cc during DolphinDart
+  // DD0, 2026-08-15 — the Windows port never received it). Core-snapshot
+  // classes finalize their MEMBERS lazily: `_Type` boots with
+  // is_finalized()=false and functions()=empty, and the patched
+  // `_Type.noSuchMethod` (runtime/lib/type_patch.dart — the hook that gives a
+  // Smalltalk class value its class-side dispatch) only comes into existence
+  // when Class::EnsureIsFinalized runs Compiler::CompileClass over it. The ST
+  // engine must use the OTHER finalizer on its own classes
+  // (ClassFinalizer::FinalizeClass — types only, no member parse; ST classes
+  // have no token stream for the Dart parser), and finalizing an ST holder
+  // CASCADES through its signature/super types into marking `_Type` finalized
+  // with its members never parsed, after which EnsureIsFinalized is a no-op
+  // and the patch method is permanently unreachable.
+  //
+  // WINDOWS DIVERGENCE, and why this surfaced only now: on macOS the corruption
+  // was SILENT (class values quietly lost class-side dispatch, breaking
+  // unrelated String code whole suites later). Here the debug build asserts
+  // instead — `_Type` is concrete with zero functions, so the ST super-chain
+  // walk's ClassFinalizer::FinalizeClass trips class_finalizer.cc:2667
+  // ("a concrete class must carry >=1 function") and takes the process down.
+  // Loud beats silent, but both are the same defect. It stayed invisible in
+  // this port because st/test/features — the suite that pins it
+  // (test_class_side) — was never vendored here until DD0.
+  //
+  // So: force FULL finalization of the Type family (and Object, the NSM root)
+  // BEFORE any ST class is loaded or finalized. Idempotent, ~zero cost after
+  // the first call, and it makes boot deterministic instead of a race between
+  // whoever touches `_Type` first.
+  {
+    Thread* thread = Thread::Current();
+    Zone* zone = thread->zone();
+    Class& c = Class::Handle(
+        zone, thread->isolate()->class_table()->At(kTypeCid));
+    Error& err = Error::Handle(zone);
+    while (!c.IsNull()) {
+      err = c.EnsureIsFinalized(thread);
+      if (!err.IsNull()) break;  // never seen; the guard must not break loads
+      c = c.SuperClass();
+    }
+  }
+
   // Any load can add or replace methods — stale (cid -> Function) dispatch
   // cache entries would then dispatch to the OLD method body.
   ClearSendCache();

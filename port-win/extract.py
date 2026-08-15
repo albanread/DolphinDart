@@ -26,8 +26,17 @@ import sys
 # --- Locations (WINDARTARM: de-pinned; repo-relative defaults, env overrides) -
 # Layout: <workroot>\WINDARTTALK\port-win\extract.py (this file),
 #         <workroot>\sdk-1.24.3 (quarry), <workroot>\tree (DEST, generated).
-HERE = os.path.dirname(os.path.abspath(__file__))          # ...\WINDARTTALK\port-win
-_WORKROOT = os.path.normpath(os.path.join(HERE, os.pardir, os.pardir))
+#
+# DolphinDart (DD0): the workroot is overridable. The seed assumed the repo sits
+# INSIDE its work area (<workroot>\WINDARTTALK), so the defaults below resolved to
+# the parent's parent. This repo lives at C:\projects\DolphinDart, whose parent's
+# parent is C:\projects — generating a tree there would litter the projects root
+# and, worse, silently share a tree with a sibling port. WINDART_WORKROOT names
+# the work area explicitly; everything generated (tree, builds) lives under it and
+# NEVER inside the repo. See docs/TOOLCHAIN.md.
+HERE = os.path.dirname(os.path.abspath(__file__))          # ...\<repo>\port-win
+_WORKROOT = os.environ.get("WINDART_WORKROOT") or os.path.normpath(
+    os.path.join(HERE, os.pardir, os.pardir))
 SRC = os.environ.get("WINDART_SDK_SRC") or os.path.join(_WORKROOT, "sdk-1.24.3")
 DEST = os.environ.get("WINDART_TREE") or os.path.join(_WORKROOT, "tree")
 PATCH = os.path.join(HERE, "windart-port.patch")           # optional (see below)

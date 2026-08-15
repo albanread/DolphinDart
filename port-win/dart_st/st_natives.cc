@@ -421,8 +421,28 @@ static void STSendCommon(Dart_NativeArguments args, bool probe) {
     }
     if (fn.IsNull()) {
       if (!probe) {
-        err = "stSend: " + std::string(cls.ToCString()) +
-              " has no method '" + selector + "'";
+        // Name the receiver the way a Smalltalk programmer would (ported from
+        // MACDART during DolphinDart DD0, 2026-08-15 — this port never had it).
+        // On a CLASS-side miss the receiver is the class VALUE — a Type — whose
+        // Dart class is the internal `_Type`, so "Class _Type@0150898 has no
+        // method 'today'" was all you got. Say "Date class" instead: the
+        // metaclass split is how these sends resolve, so it is also literally
+        // what missed.
+        std::string who;
+        if (recv.IsType()) {
+          const Class& tc = Class::Handle(zone, Type::Cast(recv).type_class());
+          who = std::string(String::Handle(zone, tc.Name()).ToCString());
+          // Drop the " ext" holder suffix: Dart's String/int are sealed, so
+          // Smalltalk's protocol for them lives in `Object ext`-style holder
+          // classes. That is an implementation detail of the bridge and has no
+          // business in an error a Smalltalk programmer reads.
+          const size_t sn = who.size();
+          if (sn >= 4 && who.compare(sn - 4, 4, " ext") == 0) who.erase(sn - 4);
+          who += " class";
+        } else {
+          who = std::string(cls.ToCString());
+        }
+        err = "stSend: " + who + " has no method '" + selector + "'";
       }
     } else {
       const Array& arr = Array::Handle(zone, Array::New(n + 1));
@@ -644,8 +664,26 @@ void ST_eq(Dart_NativeArguments args) {
       }
     }
     if (fn.IsNull()) {
-      const Class& cls = Class::Handle(zone, recv.clazz());
-      err = "stSend: " + std::string(cls.ToCString()) + " has no method '='";
+      // IDENTITY FALLBACK (DolphinDart DD0, 2026-08-15). A receiver whose chain
+      // declares no `=` is not an error: Smalltalk's root definition IS identity
+      // — the world says exactly that, `Object >> = anObject [ ^self == anObject ]`
+      // (st/world/02_nil_boolean.mst). Raising here made `=` a partial function.
+      //
+      // Measured symptom: `true = false` and `false = true` RAISED, while
+      // `true = true` and `false = false` answered correctly, and every other
+      // native receiver (int/String/Symbol/Double/Character/Array/nil) was fine.
+      // The asymmetry is the giveaway — the call site's inline identity check
+      // short-circuits equal operands, so ST_eq is only reached when the operands
+      // DIFFER, and Dart's `bool` is the one bridged type with no reachable ST
+      // `=` on its Dart super chain (the ext holders dispatch through the
+      // Object-NSM hook, which this walk does not use). `~=` inherits the fault
+      // via `^(self = anObject) not`.
+      //
+      // Found by st/test/features' TestClassSide and TestControl, which both
+      // ABORTED on it — the suites were never vendored into this port until DD0.
+      const Object& other = Object::Handle(zone, Api::UnwrapHandle(b_h));
+      result_handle =
+          Api::NewHandle(thread, Bool::Get(recv.raw() == other.raw()).raw());
     } else {
       // kNew, deliberately: the args Array dies at the next scavenge, where
       // STSendCommon's kOld allocation churned old space per comparison.

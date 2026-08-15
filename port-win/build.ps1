@@ -22,14 +22,19 @@ param(
   [switch]$Clean,
   [string]$Target = "",
   [string]$Config = "Debug",
-  [string]$Tree = ""     # override -DWINDART_TREE (default: <workroot>\tree)
+  [string]$Tree = "",    # override -DWINDART_TREE (default: <workroot>\tree)
+  [string]$WorkRoot = ""  # override the work area (default: env:WINDART_WORKROOT, else <repo>\..)
 )
 
 $ErrorActionPreference = "Stop"
 
-$SrcDir   = $PSScriptRoot                          # ...\WINDARTTALK\port-win
-$RepoRoot = Split-Path -Parent $SrcDir             # ...\WINDARTTALK
-$WorkRoot = Split-Path -Parent $RepoRoot           # e.g. C:\projects\WINDARTARM
+$SrcDir   = $PSScriptRoot                          # ...\<repo>\port-win
+$RepoRoot = Split-Path -Parent $SrcDir             # ...\<repo>
+# DolphinDart (DD0): the work area is overridable — the seed assumed the repo sat
+# inside it. Generated output (tree, build-<arch>) never lives in the repo, and a
+# sibling port must not share this repo's tree. See docs/TOOLCHAIN.md.
+if ($WorkRoot -eq "") { $WorkRoot = $env:WINDART_WORKROOT }
+if ($WorkRoot -eq "" -or $null -eq $WorkRoot) { $WorkRoot = Split-Path -Parent $RepoRoot }
 $BuildDir = Join-Path $WorkRoot "build-$Arch"
 $LogFile  = Join-Path $BuildDir "build.log"
 
