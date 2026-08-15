@@ -60,3 +60,49 @@ Object subclass: MvpDoor [
         ^[ self send: 4 with: 0 ] on: Error do: [ :e | #caught ]
     ]
 ]
+
+"── The VISIBLE window (DD7 second half) ────────────────────────────────────
+ A real top-level window with a real BUTTON child. The message-only window
+ above proved the re-entry contract; this proves the door carries real Win32
+ messages — WM_PAINT, WM_COMMAND, WM_DESTROY — into the image."
+Object subclass: MvpWindow [
+    <classVars: Hwnd Button Painted Clicks Destroys PaintMode MarkP MarkC>
+
+    MvpWindow class >> open [
+        Win32 mvpInstall.
+        Painted := 0. Clicks := 0. Destroys := 0. PaintMode := #ok.
+        MarkP := 0. MarkC := 0.
+        Hwnd := Win32 mvpCreateTopWindow: 420 height: 240.
+        Button := Win32 mvpCreateButton: Hwnd id: 1001.
+        ^Hwnd
+    ]
+    MvpWindow class >> show [ ^Win32 mvpShow: Hwnd ]
+    MvpWindow class >> pump [ ^Win32 mvpPump: 200 ]
+    MvpWindow class >> click [ ^Win32 mvpClick: Hwnd id: 1001 ]
+    MvpWindow class >> repaint [ Win32 mvpInvalidate: Hwnd. ^self pump ]
+    MvpWindow class >> close [ Hwnd isNil ifFalse: [ Win32 mvpDestroyWindow: Hwnd ]. ^self pump ]
+    MvpWindow class >> hwnd [ ^Hwnd ]
+    MvpWindow class >> painted [ ^Painted ]
+    MvpWindow class >> clicks [ ^Clicks ]
+    MvpWindow class >> destroys [ ^Destroys ]
+    MvpWindow class >> paintMode: m [ PaintMode := m ]
+
+    "A BEFORE/AFTER mark, so a test can assert a DELTA. Asserting the raw
+     counter proves nothing: it reads the same whether the generation guard
+     worked or not."
+    MvpWindow class >> mark [ MarkP := Painted. MarkC := Clicks ]
+    MvpWindow class >> paintedSinceMark [ ^Painted - MarkP ]
+    MvpWindow class >> clicksSinceMark [ ^Clicks - MarkC ]
+
+    "The door calls this for the visible window's messages. kind 1 = paint,
+     2 = command, 3 = destroy."
+    MvpWindow class >> onKind: kind arg: arg [
+        kind = 1 ifTrue: [
+            Painted := Painted + 1.
+            PaintMode == #raise ifTrue: [ ^Error signal: 'paint handler raised' ].
+            ^0 ].
+        kind = 2 ifTrue: [ Clicks := Clicks + 1. ^0 ].
+        kind = 3 ifTrue: [ Destroys := Destroys + 1. ^0 ].
+        ^0
+    ]
+]

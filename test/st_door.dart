@@ -91,6 +91,43 @@ main(List<String> a) {
         'MvpDoor send: 3 with: 0');
   probe('door closes', 'MvpDoor close.', 'MvpDoor window isNil');
 
+  // ── The VISIBLE window: real WM_PAINT / WM_COMMAND / WM_DESTROY ──────────
+  probe('window opens', 'MvpWindow open.', 'MvpWindow hwnd ~= 0');
+  probe('show paints', 'MvpWindow show. MvpWindow pump.', 'MvpWindow painted > 0');
+  probe('live window: click delivered',
+        'MvpWindow mark. MvpWindow click. MvpWindow pump.',
+        'MvpWindow clicksSinceMark');
+  probe('live window: paint delivered',
+        'MvpWindow mark. MvpWindow repaint.',
+        'MvpWindow paintedSinceMark > 0');
+
+  // A paint handler that RAISES must not spin the pump. Without the
+  // ValidateRect backstop the region stays invalid, Windows re-posts WM_PAINT
+  // immediately, and the pump burns 100% CPU forever. The budget on `pump`
+  // bounds the damage so this test can fail rather than hang.
+  probe('paint fault is contained', 'MvpWindow paintMode: #raise. MvpWindow repaint.',
+        'Win32 mvpPaintFaults > 0');
+  probe('pump does not spin after fault',
+        'MvpWindow paintMode: #raise. Win32 mvpInvalidate: MvpWindow hwnd.',
+        '(Win32 mvpPump: 200) < 200');
+  probe('window survives the paint fault', 'MvpWindow paintMode: #ok. MvpWindow repaint.',
+        'MvpWindow painted > 0');
+
+  // GENERATION: after a bump every existing window is stale and stops reaching
+  // the image, which is what a world reload needs.
+  //
+  // These compare a BEFORE against an AFTER. Asserting the raw counter proves
+  // nothing — an earlier draft of this file printed `MvpWindow clicks -> 1` and
+  // called it a pass, which it would have been whether or not the guard worked.
+  probe('stale window: no paint delivered',
+        'MvpWindow paintMode: #ok. MvpWindow mark. Win32 mvpBumpGeneration. '
+        'MvpWindow repaint.',
+        'MvpWindow paintedSinceMark');
+  probe('stale window: no click delivered',
+        'MvpWindow mark. MvpWindow click. MvpWindow pump.',
+        'MvpWindow clicksSinceMark');
+  probe('window destroys cleanly', 'MvpWindow close.', 'true');
+
   print('\nDOOR: $fails failure(s)');
   exit(fails == 0 ? 0 : 1);
 }

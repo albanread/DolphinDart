@@ -1312,12 +1312,29 @@ stMvpDestroyWindow(int h) native "ST_mvpDestroyWindow";
 stMvpSend(int h, int wp, int lp) native "ST_mvpSend";
 stMvpStats() native "ST_mvpStats";
 stMvpResetStats() native "ST_mvpResetStats";
+stMvpCreateTopWindow(int w, int h) native "ST_mvpCreateTopWindow";
+stMvpCreateButton(int parent, int id) native "ST_mvpCreateButton";
+stMvpShow(int h) native "ST_mvpShow";
+stMvpPump(int budget) native "ST_mvpPump";
+stMvpClick(int h, int id) native "ST_mvpClick";
+stMvpInvalidate(int h) native "ST_mvpInvalidate";
+stMvpBumpGeneration() native "ST_mvpBumpGeneration";
+stMvpPaintFaults() native "ST_mvpPaintFaults";
 
 /// Route a door message to the image. `UiSession` is the Smalltalk entry point
 /// (DD8 owns it); until then the spike class answers. A miss must not take the
 /// pump down, so the send is a TRY and a null answer becomes 0.
 _mvpToSmalltalk(int wp, int lp) {
-  var box = _stClassSendTry(stClassNamed('MvpDoor'), 'wndProc_with_', [wp, lp]);
+  // kind 0 is the re-entry spike's own recursion probe; 1..3 are the visible
+  // window's reflected messages (paint/command/destroy). Two receivers, one
+  // funnel — DD8's UiSession replaces both.
+  // wp is the CHANNEL (0 = the re-entry spike's recursion probe, 1..3 = the
+  // visible window's paint/command/destroy), lp is that channel's payload.
+  // Keeping them separate is what stops a depth-3 probe being read as a
+  // WM_DESTROY — measured, after exactly that happened.
+  var box = (wp == 0)
+      ? _stClassSendTry(stClassNamed('MvpDoor'), 'wndProc_with_', [lp, 0])
+      : _stClassSendTry(stClassNamed('MvpWindow'), 'onKind_arg_', [wp, lp]);
   if (box == null) return 0;
   var v = box[0];
   return v is int ? v : 0;

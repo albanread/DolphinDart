@@ -31,8 +31,14 @@ namespace bin {
 namespace {
 
 const wchar_t* kMvpClass = L"DolphinDartMvpDoor";
+const wchar_t* kMvpTopClass = L"DolphinDartMvpWindow";
 // WM_APP is the first message id safe for application use.
 const UINT kMvpCall = WM_APP + 1;
+// Reflected message kinds, passed to the image as wParam of the funnel.
+const int kKindMessage = 0;   // the spike's own recursion probe
+const int kKindPaint   = 1;
+const int kKindCommand = 2;
+const int kKindDestroy = 3;
 
 Dart_PersistentHandle g_mvp_dispatch = nullptr;
 bool g_class_registered = false;
@@ -45,6 +51,14 @@ int g_max_depth = 0;
 // swallowed silently.
 int g_contained = 0;
 
+// GENERATION (prior-art G-i). A world reload leaves real HWNDs alive whose
+// image-side owners are gone. Every window records the generation it was made
+// in; a message to a stale window answers DefWindowProcW instead of reaching an
+// image that no longer knows about it. Bumped by mvpBumpGeneration.
+int g_generation = 1;
+int g_paint_faults = 0;
+bool g_top_registered = false;
+
 LRESULT CALLBACK MvpWndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
   if (msg != kMvpCall || g_mvp_dispatch == nullptr) {
     return DefWindowProcW(hwnd, msg, wp, lp);
@@ -55,8 +69,11 @@ LRESULT CALLBACK MvpWndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
   int64_t result = 0;
   Dart_EnterScope();
   {
+    // CHANNEL, then argument. The channel is a separate value from the payload
+    // precisely so the two cannot collide: routing on the payload made a
+    // depth-3 recursion probe look like a WM_DESTROY.
     Dart_Handle fn = Dart_HandleFromPersistent(g_mvp_dispatch);
-    Dart_Handle a[2] = { Dart_NewInteger((int64_t)wp), Dart_NewInteger((int64_t)lp) };
+    Dart_Handle a[2] = { Dart_NewInteger(kKindMessage), Dart_NewInteger((int64_t)wp) };
     Dart_Handle r = Dart_InvokeClosure(fn, 2, a);
     if (Dart_IsError(r)) {
       // CONTAINMENT. A raise inside the image must not escape into the OS: the
@@ -77,6 +94,81 @@ LRESULT CALLBACK MvpWndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
   Dart_ExitScope();
   g_depth--;
   return (LRESULT)result;
+}
+
+// Call the image funnel. Returns false when the image raised (contained here).
+bool CallImage(int64_t wp, int64_t lp, int64_t* out) {
+  if (g_mvp_dispatch == nullptr) return false;
+  bool ok = true;
+  g_depth++;
+  if (g_depth > g_max_depth) g_max_depth = g_depth;
+  Dart_EnterScope();
+  {
+    Dart_Handle fn = Dart_HandleFromPersistent(g_mvp_dispatch);
+    Dart_Handle a[2] = { Dart_NewInteger(wp), Dart_NewInteger(lp) };
+    Dart_Handle r = Dart_InvokeClosure(fn, 2, a);
+    if (Dart_IsError(r)) {
+      g_contained++;
+      ok = false;
+    } else if (out != nullptr && Dart_IsInteger(r)) {
+      Dart_IntegerToInt64(r, out);
+    }
+  }
+  Dart_ExitScope();
+  g_depth--;
+  return ok;
+}
+
+// The VISIBLE window's WndProc. Same door, real messages.
+LRESULT CALLBACK MvpTopWndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
+  // GENERATION GUARD (prior-art G-i): a window outliving the image that made it
+  // must not reach the image at all. The generation is stashed in the window's
+  // own user data at creation, so this costs one load per message.
+  const LONG_PTR gen = GetWindowLongPtrW(hwnd, GWLP_USERDATA);
+  const bool live = (gen == (LONG_PTR)g_generation);
+
+  switch (msg) {
+    case WM_PAINT: {
+      PAINTSTRUCT ps;
+      HDC hdc = BeginPaint(hwnd, &ps);
+      bool ok = false;
+      if (live) ok = CallImage(kKindPaint, (int64_t)(intptr_t)hdc, nullptr);
+      if (!ok) {
+        // THE BACKSTOP (prior-art G-b). If the image raised, the update region
+        // is still invalid, so Windows re-posts WM_PAINT immediately and the
+        // pump spins at 100% forever. EndPaint validates what BeginPaint
+        // claimed, but only for the region it was given — validate the whole
+        // window so a partially-painted failure cannot re-arm itself.
+        g_paint_faults++;
+        ValidateRect(hwnd, nullptr);
+      }
+      EndPaint(hwnd, &ps);
+      return 0;
+    }
+    case WM_COMMAND:
+      // A child control notifying its parent: the control id is LOWORD(wp).
+      if (live) CallImage(kKindCommand, (int64_t)LOWORD(wp), nullptr);
+      return 0;
+    case WM_DESTROY:
+      if (live) CallImage(kKindDestroy, 0, nullptr);
+      return 0;
+    default:
+      return DefWindowProcW(hwnd, msg, wp, lp);
+  }
+}
+
+bool EnsureTopClass() {
+  if (g_top_registered) return true;
+  WNDCLASSEXW wc;
+  ZeroMemory(&wc, sizeof(wc));
+  wc.cbSize = sizeof(wc);
+  wc.lpfnWndProc = MvpTopWndProc;
+  wc.hInstance = GetModuleHandleW(nullptr);
+  wc.lpszClassName = kMvpTopClass;
+  wc.hCursor = LoadCursorW(nullptr, IDC_ARROW);
+  wc.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
+  g_top_registered = (RegisterClassExW(&wc) != 0);
+  return g_top_registered;
 }
 
 bool EnsureClass() {
@@ -148,7 +240,80 @@ void ST_mvpStats(Dart_NativeArguments args) {
 void ST_mvpResetStats(Dart_NativeArguments args) {
   g_max_depth = 0;
   g_contained = 0;
+  g_paint_faults = 0;
   Dart_SetReturnValue(args, Dart_True());
+}
+
+// A VISIBLE top-level window, stamped with the current generation.
+void ST_mvpCreateTopWindow(Dart_NativeArguments args) {
+  if (!EnsureTopClass()) {
+    Dart_SetReturnValue(args, Dart_NewInteger(0));
+    return;
+  }
+  int64_t w = ArgInt(args, 0), h = ArgInt(args, 1);
+  HWND hwnd = CreateWindowExW(0, kMvpTopClass, L"DolphinDart",
+                              WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT,
+                              (int)w, (int)h, nullptr, nullptr,
+                              GetModuleHandleW(nullptr), nullptr);
+  if (hwnd != nullptr) SetWindowLongPtrW(hwnd, GWLP_USERDATA, (LONG_PTR)g_generation);
+  Dart_SetReturnValue(args, Dart_NewInteger((int64_t)(intptr_t)hwnd));
+}
+
+// A child BUTTON whose control id is the ticket the image will see in WM_COMMAND.
+void ST_mvpCreateButton(Dart_NativeArguments args) {
+  HWND parent = (HWND)(intptr_t)ArgInt(args, 0);
+  int64_t id = ArgInt(args, 1);
+  HWND b = CreateWindowExW(0, L"BUTTON", L"Press",
+                           WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
+                           10, 10, 120, 30, parent, (HMENU)(intptr_t)id,
+                           GetModuleHandleW(nullptr), nullptr);
+  Dart_SetReturnValue(args, Dart_NewInteger((int64_t)(intptr_t)b));
+}
+
+void ST_mvpShow(Dart_NativeArguments args) {
+  HWND h = (HWND)(intptr_t)ArgInt(args, 0);
+  ShowWindow(h, SW_SHOW);
+  UpdateWindow(h);   // synchronous WM_PAINT, so a paint fault surfaces NOW
+  Dart_SetReturnValue(args, Dart_True());
+}
+
+// Pump every pending message and answer how many were dispatched. The image
+// drives the pump so a test can bound it; a real app loop is DD9's problem.
+void ST_mvpPump(Dart_NativeArguments args) {
+  int64_t budget = ArgInt(args, 0);
+  int64_t n = 0;
+  MSG m;
+  while (n < budget && PeekMessageW(&m, nullptr, 0, 0, PM_REMOVE)) {
+    TranslateMessage(&m);
+    DispatchMessageW(&m);
+    n++;
+  }
+  Dart_SetReturnValue(args, Dart_NewInteger(n));
+}
+
+// Send a real WM_COMMAND, as a button click does.
+void ST_mvpClick(Dart_NativeArguments args) {
+  HWND h = (HWND)(intptr_t)ArgInt(args, 0);
+  int64_t id = ArgInt(args, 1);
+  SendMessageW(h, WM_COMMAND, MAKEWPARAM((WORD)id, BN_CLICKED), 0);
+  Dart_SetReturnValue(args, Dart_True());
+}
+
+void ST_mvpInvalidate(Dart_NativeArguments args) {
+  HWND h = (HWND)(intptr_t)ArgInt(args, 0);
+  InvalidateRect(h, nullptr, TRUE);
+  Dart_SetReturnValue(args, Dart_True());
+}
+
+// Bump the generation: every existing window becomes stale and stops reaching
+// the image, which is what a world reload needs.
+void ST_mvpBumpGeneration(Dart_NativeArguments args) {
+  g_generation++;
+  Dart_SetReturnValue(args, Dart_NewInteger(g_generation));
+}
+
+void ST_mvpPaintFaults(Dart_NativeArguments args) {
+  Dart_SetReturnValue(args, Dart_NewInteger(g_paint_faults));
 }
 
 }  // namespace bin

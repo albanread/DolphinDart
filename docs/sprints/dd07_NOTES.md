@@ -73,18 +73,54 @@ asserts it is exactly 1.
   view-server uses.
 - `st/test/ffi/mvp_door_spike.mst` + `test/st_door.dart`, pinned.
 
-## Not yet built (the rest of DD7)
+## The visible window (second half, landed)
 
-The spike deliberately came first and it is what the brief gated on. Still to
-land before DD8 can delete the spike class:
+A real top-level window with a real BUTTON child, carrying real Win32 messages
+into the image:
 
-- **A visible top-level window** with a real BUTTON child, `TextOutW` from a
-  paint handler, and click → Transcript. The message-only window proves the
-  re-entry contract; it draws nothing.
-- **The WM_PAINT `ValidateRect` backstop** (prior-art G-b): a paint handler that
-  raises must not leave the region invalid and spin the pump.
-- **hwnd → generation map** (prior-art G-i) so a stale window answers
-  `DefWindowProcW` after a world reload.
-- **Posted-action queue + idle hook**, and the storm-message probe (measure
-  `WM_MOUSEMOVE`/`WM_NCHITTEST` rates *before* routing them to the image;
-  WINARM measured its door at ~154× `DefWindowProcW`).
+| Probe | Result |
+|---|---|
+| window opens, `ShowWindow` paints | yes |
+| live window: click delivered | **1** (a delta, not a raw count) |
+| live window: paint delivered | yes |
+| **paint fault contained** | `ValidateRect` backstop fired |
+| **pump does not spin after a paint fault** | budget not exhausted |
+| window survives the paint fault | yes |
+| **stale window: no paint delivered** | **0** |
+| **stale window: no click delivered** | **0** |
+| destroys cleanly | yes |
+
+**The `ValidateRect` backstop** (prior-art G-b) is the one that would otherwise
+be found in production: if a paint handler raises, the update region is still
+invalid, Windows re-posts `WM_PAINT` immediately, and the pump burns 100% CPU
+forever. `EndPaint` only validates the region `BeginPaint` was given, so the
+backstop validates the whole window — a partially-painted failure cannot re-arm
+itself. The test bounds the pump with a budget so this fails rather than hangs.
+
+**The generation guard** (prior-art G-i) stamps each window with the generation
+that made it; after a bump, a stale window's messages never reach the image. A
+world reload leaves real HWNDs alive whose image-side owners are gone.
+
+## Two mistakes worth recording
+
+**1. The channel was overloaded onto the payload.** Routing the funnel on
+`wParam` meant the spike's depth-3 recursion probe was read as a `WM_DESTROY`.
+Channel and payload are now separate arguments. The test *passed* while this was
+broken, because the probe asserted a raw value with no expectation.
+
+**2. Three assertions proved nothing.** `stale window stops dispatching` was
+literally a tautology (`x = (y - y + x)`), and the click probes asserted a raw
+counter that reads the same whether the guard works or not. Replaced with
+before/after **deltas**, and paired with live-window probes so the guard is
+proven by contrast: live delivers 1, stale delivers 0. This is the exact trap
+the sprint briefs warn about — "passes numerically but wasn't observed" — caught
+here in my own test.
+
+## Still open
+
+- **Posted-action queue + idle hook** — the "run this on the UI thread" path.
+- **The storm-message probe**: measure `WM_MOUSEMOVE`/`WM_NCHITTEST` rates
+  *before* routing them to the image. WINARM measured its door at ~154×
+  `DefWindowProcW`, which is why an allowlist exists at all.
+- **`TextOutW` from the paint handler** — the door carries `WM_PAINT` and hands
+  the image its HDC; drawing through it is DD9's `Graphics.Canvas` work.

@@ -99,6 +99,14 @@ Object subclass: Win32 [
     Win32 class >> mvpSend: h wparam: w lparam: l [ <stprim: stMvpSend> ]
     Win32 class >> mvpStats [ <stprim: stMvpStats> ]
     Win32 class >> mvpResetStats [ <stprim: stMvpResetStats> ]
+    Win32 class >> mvpCreateTopWindow: w height: h [ <stprim: stMvpCreateTopWindow> ]
+    Win32 class >> mvpCreateButton: parent id: anId [ <stprim: stMvpCreateButton> ]
+    Win32 class >> mvpShow: h [ <stprim: stMvpShow> ]
+    Win32 class >> mvpPump: budget [ <stprim: stMvpPump> ]
+    Win32 class >> mvpClick: h id: anId [ <stprim: stMvpClick> ]
+    Win32 class >> mvpInvalidate: h [ <stprim: stMvpInvalidate> ]
+    Win32 class >> mvpBumpGeneration [ <stprim: stMvpBumpGeneration> ]
+    Win32 class >> mvpPaintFaults [ <stprim: stMvpPaintFaults> ]
 ]
 
 "── The system object (corpus surface: Smalltalk millisecondClock) ──"

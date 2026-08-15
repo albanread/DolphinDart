@@ -53,6 +53,14 @@ void ST_mvpDestroyWindow(Dart_NativeArguments args);
 void ST_mvpSend(Dart_NativeArguments args);
 void ST_mvpStats(Dart_NativeArguments args);
 void ST_mvpResetStats(Dart_NativeArguments args);
+void ST_mvpCreateTopWindow(Dart_NativeArguments args);
+void ST_mvpCreateButton(Dart_NativeArguments args);
+void ST_mvpShow(Dart_NativeArguments args);
+void ST_mvpPump(Dart_NativeArguments args);
+void ST_mvpClick(Dart_NativeArguments args);
+void ST_mvpInvalidate(Dart_NativeArguments args);
+void ST_mvpBumpGeneration(Dart_NativeArguments args);
+void ST_mvpPaintFaults(Dart_NativeArguments args);
 void ST_peekByte(Dart_NativeArguments args);
 void ST_pokeByte(Dart_NativeArguments args);
 void ST_peekF64(Dart_NativeArguments args);
@@ -107,6 +115,14 @@ void ST_symbolFor(Dart_NativeArguments args);   // interned symbol lookup (perf 
   V(ST_mvpSend, 3)                                                          \
   V(ST_mvpStats, 0)                                                         \
   V(ST_mvpResetStats, 0)                                                    \
+  V(ST_mvpCreateTopWindow, 2)                                             \
+  V(ST_mvpCreateButton, 2)                                                \
+  V(ST_mvpShow, 1)                                                        \
+  V(ST_mvpPump, 1)                                                        \
+  V(ST_mvpClick, 2)                                                       \
+  V(ST_mvpInvalidate, 1)                                                  \
+  V(ST_mvpBumpGeneration, 0)                                              \
+  V(ST_mvpPaintFaults, 0)                                                 \
   V(ST_peekByte, 1)                                                            \
   V(ST_pokeByte, 2)                                                            \
   V(ST_peekF64, 1)                                                             \
