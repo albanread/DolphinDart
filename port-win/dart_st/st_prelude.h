@@ -85,6 +85,7 @@ Notification subclass: Warning [
  own return value has reported failure."
 Object subclass: Win32 [
     Win32 class >> lastError [ <stprim: stWinLastError> ]
+    Win32 class >> resolve: aName [ <stprim: stFfiResolve> ]
 ]
 
 "── The system object (corpus surface: Smalltalk millisecondClock) ──"

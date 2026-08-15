@@ -52,10 +52,25 @@ namespace st {
 // module here is the supported way to widen the surface; loading an ARBITRARY
 // caller-named DLL is deliberately NOT offered — that would let image code pull
 // any binary on the machine into the process.
+// Ordered so the GUI surface resolves first; the tail is what the corpus's
+// non-GUI libraries need. Derived from measurement, not guesswork: the DD6b
+// harness resolved all 1,104 generated prims and reported the misses BY LIBRARY
+// CLASS, which named exactly the DLLs missing from an earlier, shorter list
+// (ws2_32 68, iphlpapi 57, the CRT 49, httpapi 34, ICU 21, pathcch 18, …).
 static const char* kWinFfiModules[] = {
+    // The MVP GUI surface.
     "user32.dll", "gdi32.dll", "kernel32.dll", "comctl32.dll",
     "shell32.dll", "ole32.dll", "oleaut32.dll", "comdlg32.dll",
-    "advapi32.dll", "uxtheme.dll", "msimg32.dll",
+    "advapi32.dll", "uxtheme.dll", "msimg32.dll", "dwmapi.dll",
+    // kernelbase carries the PathCch* family and much of modern kernel32.
+    "kernelbase.dll", "shlwapi.dll", "version.dll", "ntdll.dll",
+    // Networking and the rest of the corpus's library classes.
+    "ws2_32.dll", "iphlpapi.dll", "httpapi.dll", "wininet.dll",
+    "urlmon.dll", "crypt32.dll", "rpcrt4.dll", "winspool.drv",
+    "bcrypt.dll", "shcore.dll",
+    // The C runtime. ucrtbase is the modern split; msvcrt remains for the
+    // legacy names the corpus's CRTLibrary still declares.
+    "ucrtbase.dll", "msvcrt.dll",
 };
 
 void* WinResolveSymbol(const char* name) {
@@ -1511,6 +1526,25 @@ __asm__(
 // THIS thread. Read separately rather than returned alongside every call: most
 // calls do not care, and Win32's contract is that the code is only meaningful
 // when the call's own return value says it failed.
+// Resolve a symbol through the SAME path a real call takes, and answer its
+// address (0 = not found). The harness's resolve-all tier uses this: proving a
+// prim resolves is proving the floor could call it, because it is literally the
+// floor's own resolver (DolphinDart DD6b).
+void ST_ffiResolve(Dart_NativeArguments args) {
+#if defined(_WIN32)
+  const char* name = NULL;
+  if (Dart_IsError(Dart_StringToCString(Dart_GetNativeArgument(args, 0), &name)) ||
+      name == NULL) {
+    STThrow("ffiResolve: bad symbol name");
+    return;
+  }
+  Dart_SetReturnValue(args, Dart_NewInteger(
+      reinterpret_cast<int64_t>(st::WinResolveSymbol(name))));
+#else
+  Dart_SetReturnValue(args, Dart_NewInteger(0));
+#endif
+}
+
 void ST_winLastError(Dart_NativeArguments args) {
 #if defined(_WIN32)
   Dart_SetReturnValue(args, Dart_NewInteger(

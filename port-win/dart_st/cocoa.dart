@@ -1298,6 +1298,9 @@ stFfiCall(List args, String desc) native "ST_ffiCall";
 /// reports failure — Win32 does not clear it on success.
 stWinLastError() native "ST_winLastError";
 
+/// Address of `name` via the floor's own resolver, 0 if absent (DD6b harness).
+stFfiResolve(String name) native "ST_ffiResolve";
+
 /// Alien peek/poke (stage b): raw read/write at an ABSOLUTE address (an int).
 /// The prelude's Alien bounds-checks against its span before calling these.
 stPeekByte(a) native "ST_peekByte";

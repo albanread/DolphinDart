@@ -25,7 +25,13 @@ hypothesis was wrong. It was.
 5. [A Smalltalk world, byte-identical, on a Snapdragon](05-a-smalltalk-world-on-a-snapdragon.md)
    — 97 Mac-authored files boot unmodified; Metal shaders on D3D11; an IDE
    you drive from TCL.
+6. [The device farm costs £350](06-the-device-farm-costs-350.md) — a second
+   machine, same `X126100` silicon in a mini-desktop: the pinned benchmarks
+   reproduce **to the hundredth of a millisecond**, and the one row that
+   moved indicts the software, not the box.
 
-Every number was measured on the machine described: Snapdragon X (Oryon,
-8 cores), Windows 11 arm64, Adreno X1-45. The full engineering log lives in
+Every number in articles 1–5 was measured on the machine described:
+a Snapdragon X laptop (Oryon, 8 cores), Windows 11 arm64, Adreno X1-45.
+Article 6 re-measures on its £350 stablemate — same silicon, different box.
+The full engineering log lives in
 [`../../port-arm64/`](../../port-arm64/).
