@@ -10,6 +10,10 @@ C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.ShellView.cls:287: [hash
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.ShellView.cls:287: [hashhash] `##(self indexOfInstVar: 'actualIcons')` is not a foldable constant
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.ShellView.cls:433: [hashhash] `##(UIValidMask bitInvert)` is not a foldable constant
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.ShellView.cls:1379: [hashhash] `##(self defaultIcon)` is not a foldable constant
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.ShellView.cls:1406: [cascade] cascade on a non-primary receiver — splitting it would evaluate the receiver once per part
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.ShellView.cls:1423: [cascade] cascade on a non-primary receiver — splitting it would evaluate the receiver once per part
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.ShellView.cls:1441: [cascade] cascade on a non-primary receiver — splitting it would evaluate the receiver once per part
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.ShellView.cls:1451: [cascade] cascade on a non-primary receiver — splitting it would evaluate the receiver once per part
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.View.cls:369: [hashhash] `##(1 bitInvert)` is not a foldable constant
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.View.cls:503: [hashhash] `##(2 @ 2)` is not a foldable constant
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.View.cls:583: [hashhash] `##(48 bitInvert)` is not a foldable constant
@@ -17,13 +21,18 @@ C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.View.cls:846: [hashhash]
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.View.cls:1449: [hashhash] `##(32 | SWP_NOACTIVATE | 2 | SWP_NOSIZE | 4)` is not a foldable constant
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.View.cls:2918: [hashhash] `##(1 | SWP_NOZORDER | 16)` is not a foldable constant
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.View.cls:3359: [hashhash] `##(2 | SWP_NOZORDER | 16)` is not a foldable constant
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.View.cls:3503: [cascade] cascade on a non-primary receiver — splitting it would evaluate the receiver once per part
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.View.cls:3608: [hashhash] `##(4 | CWP_SKIPINVISIBLE | 2)` is not a foldable constant
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.View.cls:5375: [cascade] cascade on a non-primary receiver — splitting it would evaluate the receiver once per part
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.View.cls:5457: [binding-literal] `#{...}` variable-binding literal has no house equivalent
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.View.cls:5484: [hashhash] `##(Message selector: #iconImageIndex)` is not a foldable constant
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.View.cls:5489: [hashhash] `##(Message selector: #displayString)` is not a foldable constant
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.View.cls:5600: [hashhash] `##(self)` is not a foldable constant
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.View.cls:5605: [cascade] cascade on a non-primary receiver — splitting it would evaluate the receiver once per part
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.View.cls:5624: [hashhash] `##(self)` is not a foldable constant
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.View.cls:5655: [hashhash] `##(External.Handle new)` is not a foldable constant
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.View.cls:5663: [cascade] cascade on a non-primary receiver — splitting it would evaluate the receiver once per part
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.View.cls:5705: [binding-literal] `#{...}` variable-binding literal has no house equivalent
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.View.cls:5721: [cascade] cascade on a non-primary receiver — splitting it would evaluate the receiver once per part
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.View.cls:5902: [hashhash] `##(self)` is not a foldable constant
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.View.cls:5968: [hashhash] `##('DolphinWindow' asUtf16String)` is not a foldable constant

@@ -132,8 +132,18 @@ def main(argv: List[str]) -> int:
     n_consts = 0
     for pf in list(reference.values()) + list(parsed.values()):
         for cd in pf.classdefs or ([pf.classdef] if pf.classdef else []):
-            if cd.superclass.endswith("SharedPool"):
+            # EVERY class's own `classConstants:`, not just SharedPool subclasses.
+            # The struct classes reach each other's field offsets as
+            # `NMHDR._OffsetOf_hwndFrom`, so a class whose constants are not in
+            # the table leaves that qualified reference unfolded — and it then
+            # reaches the parser as `NMHDR` followed by `._OffsetOf_…`, which is
+            # a syntax error. Measured on UI.View.
+            if cd.class_constants and cd.class_constants != "{}":
                 n_consts += pool_table.add(cd.name, cd.class_constants)
+
+    by_name_all = {cd.name: cd
+                   for pf in list(reference.values()) + list(parsed.values())
+                   for cd in (pf.classdefs or ([pf.classdef] if pf.classdef else []))}
 
     # Loose methods, keyed by the class they are filed onto.
     loose: Dict[str, List[parse.Method]] = collections.defaultdict(list)
@@ -162,6 +172,21 @@ def main(argv: List[str]) -> int:
             refusals.extend(res.refusals)
             notes.extend(res.notes)
             name = emit.flatten_name(cd.name, renames)
+            # LOAD ORDER IS DEPENDENCY ORDER. The layer loader takes a directory
+            # and sorts by filename, so a class must sort AFTER its superclass or
+            # it loads against a forward-reference stub and the hierarchy never
+            # links. Measured: emitted alphabetically, ContainerView arrived
+            # before View existed and `ShellView inheritsFrom: View` was false.
+            # A zero-padded depth prefix makes alphabetical order correct.
+            depth = 0
+            walk, guard = cd.superclass, 0
+            while walk and walk != "nil" and guard < 64:
+                parent = by_name_all.get(walk)
+                if parent is None:
+                    break
+                depth += 1
+                walk, guard = parent.superclass, guard + 1
+            fname = f"{depth:02d}_{name}.mst"
             if name in emitted_names:
                 # Not a refusal when the loser is a `.pax` re-declaration of a
                 # class that has its own `.cls` — that is the format working as
@@ -174,7 +199,7 @@ def main(argv: List[str]) -> int:
                                                  f"{cd.name} would overwrite {name}.mst"))
                 continue
             emitted_names.add(name)
-            with open(os.path.join(args.out, name + ".mst"), "w",
+            with open(os.path.join(args.out, fname), "w",
                       encoding="utf-8", newline="\n") as fh:
                 fh.write(res.text)
             written += 1

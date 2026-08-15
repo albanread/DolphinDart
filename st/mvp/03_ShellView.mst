@@ -241,12 +241,8 @@ ContainerView subclass: ShellView [
     ]
     filerProxyIn: anSTxOutFiler [
         	| proxy |
-        	proxy := super filerProxyIn: anSTxOutFiler.
-        	proxy instVars
-        		at: (self indexOfInstVar: 'lastFocus') put: nil;
-        		at: (self indexOfInstVar: 'combinedAcceleratorTable') put: nil;
-        		at: (self indexOfInstVar: 'defaultButton') put: 0;
-        		at: (self indexOfInstVar: 'actualIcons') put: nil.
+        	proxy := super filerProxyIn: anSTxOutFiler.proxy instVars
+        		at: (self indexOfInstVar: 'lastFocus') put: nil. proxy at: (self indexOfInstVar: 'combinedAcceleratorTable') put: nil. proxy at: (self indexOfInstVar: 'defaultButton') put: 0. proxy at: (self indexOfInstVar: 'actualIcons') put: nil.
         	^proxy
     ]
     flash: anInteger [
@@ -258,11 +254,7 @@ ContainerView subclass: ShellView [
         	configured by the FLASHWINFO flags in the <integer>, flagsInteger.
         	Answer a <boolean> indicating whether the window caption was drawn as active before the call."
         | params |
-        	params := FLASHWINFO new.
-        	params
-        		hwnd: handle;
-        		uCount: flashCountInteger;
-        		dwFlags: flagsInteger.
+        	params := FLASHWINFO new.params hwnd: handle. params uCount: flashCountInteger. params dwFlags: flagsInteger.
         	^(User32 flashWindowEx: params) ~= 0
     ]
     getDefId [
@@ -486,7 +478,7 @@ ContainerView subclass: ShellView [
     ]
     menuBar: aMenuBarOrNil [
         "Set the menu bar for this window to aMenuBarOrNil"
-        aMenuBarOrNil notNil 
+         aMenuBarOrNil notNil 
         		ifTrue: 
         			[menuBar := aMenuBarOrNil.
         			self updateMenuBar]
@@ -808,7 +800,7 @@ ContainerView subclass: ShellView [
         	does not meed their needs.
         	Received when the receiver's view is first opened if it is its own presenter,
         	and by default from the Shell presenter."
-        self validateUserInterface; tabFirst
+        self validateUserInterface. self tabFirst
     ]
     showMaximized [
         "Show the receiver in a maximised state"
@@ -879,10 +871,7 @@ ContainerView subclass: ShellView [
     updateMenuBar [
         	self isStateRestoring ifTrue: [^self].
         	self releaseAccelerators.
-        	menuBar ifNotNil: [menuBar metrics: self metrics].
-        	self
-        		basicMenu: menuBar;
-        		drawMenuBar
+        	menuBar ifNotNil: [menuBar metrics: self metrics].self basicMenu: menuBar. self drawMenuBar
     ]
     validateUserInterface [
         "Validates the user interface for the receiver. Usually performed at idle time

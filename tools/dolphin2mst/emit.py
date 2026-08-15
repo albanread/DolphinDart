@@ -108,6 +108,72 @@ def rewrite_selectors(src: str, renames=None) -> str:
     return "".join(out)
 
 
+# --- rewrite: cascades -> statements -----------------------------------------
+# Dolphin writes `^self destroy; isOpen not` (UI.View>>close). A cascade PART may
+# be a whole message chain in Dolphin; this dialect's parser accepts only a
+# single message per part, so `View.mst` failed to load on exactly that line.
+# Measured first: `^self a; b` parses fine here, so the limit is specifically a
+# multi-message part.
+#
+# Splitting into statements is semantically identical WHEN the receiver is a
+# simple primary (`self`, a variable, a literal) — it is then evaluated once
+# either way. When it is not, the receiver would be evaluated once per part, so
+# those are REFUSED rather than rewritten: silently duplicating a side-effecting
+# receiver is exactly the class of change this translator must never make.
+#
+#   ^self destroy; isOpen not      ->   self destroy. ^self isOpen not
+#   Transcript show: 'x'; cr       ->   Transcript show: 'x'. Transcript cr
+
+_SIMPLE_RECV = re.compile(r"^(self|super|thisContext|[A-Za-z_]\w*)$")
+
+
+def _split_top_level(text: str, ch: str) -> List[str]:
+    """Split on `ch` at bracket/paren depth 0, ignoring comments and strings."""
+    blank = strip_code(text)
+    parts, start, depth = [], 0, 0
+    for i, c in enumerate(blank):
+        if c in "([{":
+            depth += 1
+        elif c in ")]}":
+            depth -= 1
+        elif c == ch and depth == 0:
+            parts.append(text[start:i])
+            start = i + 1
+    parts.append(text[start:])
+    return parts
+
+
+def rewrite_cascades(body: str, where: str) -> Tuple[str, List[Refusal]]:
+    blank = strip_code(body)
+    if ";" not in blank:
+        return body, []
+    refusals: List[Refusal] = []
+    out_lines = []
+    for stmt in _split_top_level(body, "."):
+        sblank = strip_code(stmt)
+        if ";" not in sblank:
+            out_lines.append(stmt)
+            continue
+        parts = _split_top_level(stmt, ";")
+        head = parts[0]
+        ret = head.lstrip().startswith("^")
+        head_body = head.lstrip()[1:] if ret else head
+        m = re.match(r"\s*([A-Za-z_]\w*)\s+(.*)$", head_body, re.S)
+        if not m or not _SIMPLE_RECV.match(m.group(1)):
+            refusals.append(Refusal(where, "cascade",
+                                    "cascade on a non-primary receiver — splitting it "
+                                    "would evaluate the receiver once per part"))
+            out_lines.append(stmt)
+            continue
+        recv = m.group(1)
+        stmts = [f"{recv} {m.group(2).strip()}"]
+        stmts += [f"{recv} {p.strip()}" for p in parts[1:]]
+        if ret:
+            stmts[-1] = "^" + stmts[-1]
+        out_lines.append(" ".join(s + "." for s in stmts[:-1]) + " " + stmts[-1])
+    return ".".join(out_lines), refusals
+
+
 # --- rewrite: `??` -> ifNil: -------------------------------------------------
 # Dolphin's binary `??` answers the receiver unless it is nil, in which case it
 # answers the argument: `^cause ?? #unknown`. 133 sites / 65 files (DD2).
@@ -231,6 +297,32 @@ _TEMPS = re.compile(r"\|([^|]*)\|")
 # accessor addresses its fields, and excluding it left every struct class
 # refusing its own `##(_OffsetOf_x + 1)` expressions.
 _IDENT = re.compile(r"(?<![\w:#])(_?[A-Za-z][A-Za-z0-9_]*)(?![\w:])")
+
+
+# `NMHDR._OffsetOf_hwndFrom` — a class constant read through its OWNING class,
+# rather than through an imported pool. The struct classes use this constantly to
+# reach each other's field offsets. It is not a namespace reference (the second
+# segment starts with `_`), so the flattener leaves it alone, and the bare-name
+# folder never sees it — the result reached the parser as `NMHDR` followed by
+# `._OffsetOf_…`, which is a syntax error. Measured on UI.View.
+_QUALIFIED_CONST = re.compile(r"(?<![\w.])([A-Z][A-Za-z0-9_]*)\.(_?[A-Za-z][A-Za-z0-9_]*)(?![\w])")
+
+
+def rewrite_qualified_constants(body: str, table) -> str:
+    if table is None:
+        return body
+    blanked = strip_code(body)
+    out, last = [], 0
+    for m in _QUALIFIED_CONST.finditer(blanked):
+        owner, name = body[m.start(1):m.end(1)], body[m.start(2):m.end(2)]
+        val = table.lookup([owner], name)
+        if val is None:
+            continue
+        out.append(body[last:m.start()])
+        out.append(val)
+        last = m.end()
+    out.append(body[last:])
+    return "".join(out)
 
 
 def rewrite_pool_constants(body: str, where: str, imports, table,
@@ -431,10 +523,12 @@ def emit_class(pf: ParsedFile, renames: Dict[str, str],
                 continue
             # Pools fold BEFORE `##()`, so a compile-time expression written
             # over pool names (`##(BM_CLICK bitOr: 4)`) has literals to fold.
+            body = rewrite_qualified_constants(body, pool_table)
             body, r = rewrite_pool_constants(
                 body, where, own_imports, pool_table, shadowed | set(m.arg_names))
             refusals.extend(r)
             body = rewrite_selectors(body)
+            body, r = rewrite_cascades(body, where); refusals.extend(r)
             body, r = rewrite_hashhash(body, where); refusals.extend(r)
             body, r = rewrite_qq(body, where); refusals.extend(r)
             body = flatten_refs(body, renames)

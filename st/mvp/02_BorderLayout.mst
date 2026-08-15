@@ -248,9 +248,7 @@ LayoutManager subclass: BorderLayout [
     BorderLayout class >> horizontalGap: horizontal verticalGap: vertical [
         "Answer a new instance of the receiver intialized with
         	the supplied gaps."
-        ^self new
-        		horizontalGap: horizontal;
-        		verticalGap: vertical;
-        		yourself
+        self new
+        		horizontalGap: horizontal. self verticalGap: vertical. ^self yourself
     ]
 ]

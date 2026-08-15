@@ -35,9 +35,57 @@ scope by design) and 3 binding literals.
 **Four of the five load into the world**: `ContainerView`, `ShellView`,
 `BorderLayout`, `LayoutManager`.
 
-## The one that does not, and why
+## All five now load
 
-`View.mst` fails at `close`:
+After three translator fixes the whole wave loads and the hierarchy links
+(`ShellView inheritsFrom: View` → true, `ContainerView inheritsFrom: View` →
+true):
+
+1. **Cascade → statements.** Dolphin allows a whole message chain as a cascade
+   part (`^self destroy; isOpen not`); this dialect allows one message. Split
+   into statements — semantically identical when the receiver is a simple
+   primary, and REFUSED when it is not, since splitting would evaluate a
+   side-effecting receiver once per part.
+2. **Qualified class constants.** `NMHDR._OffsetOf_hwndFrom` is a constant read
+   through its owning class, not an imported pool. The flattener skipped it (the
+   second segment starts with `_`) and the bare-name folder never saw it, so it
+   reached the parser as `NMHDR` followed by `._OffsetOf_…`. Now folded — which
+   also meant pooling EVERY class's own `classConstants:`, not just
+   `SharedPool` subclasses.
+3. **Load order is dependency order.** The layer loader sorts by filename, so a
+   class must sort after its superclass or it loads against a forward-reference
+   stub. Emitted alphabetically, `ContainerView` arrived before `View` existed
+   and `ShellView inheritsFrom: View` was **false** — a silent wrong answer, not
+   an error. Filenames now carry a zero-padded inheritance depth
+   (`01_View.mst`, `02_ContainerView.mst`, `03_ShellView.mst`).
+
+## THE NEXT BLOCKER: class-side `super`
+
+The classes load; they cannot yet be **instantiated**. `View class >> new` is
+Dolphin's standard idiom:
+
+```smalltalk
+View class >> new [ ^super new initialize ]
+```
+
+and the front-end answers `st::BuildGraph: unsupported self/super here
+(Sprint 4/5)`. **Not a translation artifact** — a two-line hand-written probe
+reproduces it:
+
+```smalltalk
+Object subclass: SupA [ SupA class >> new [ ^self basicNew ] ]
+SupA   subclass: SupB [ SupB class >> new [ ^super new ] ]     "-> unsupported"
+```
+
+This is a **front-end gap**, and it gates the DD9 shell gate: nearly every
+Dolphin class constructs through `super new`, so until class-side `super` is
+supported no translated view can be instantiated. It is the next piece of work
+and it belongs in `st_flow_graph_builder.cc`, alongside the class-side dispatch
+machinery DD0 already touched.
+
+## What the old blocker was
+
+(Resolved — kept for the record.) `View.mst` first failed at `close`:
 
 ```smalltalk
 ^self destroy; isOpen not.

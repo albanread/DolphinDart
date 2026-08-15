@@ -1,0 +1,2 @@
+Object subclass: SupA [ SupA class >> new [ ^self basicNew ] ]
+SupA subclass: SupB [ SupB class >> new [ ^super new ] ]

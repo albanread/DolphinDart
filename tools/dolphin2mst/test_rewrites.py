@@ -133,6 +133,27 @@ check("selectors: leaves strings alone",
 check("selectors: does not touch a keyword part of the same spelling",
       rewrite_selectors("^x asUnicodeValue: 1"), "^x asUnicodeValue: 1")
 
+# --- rewrite: cascades -------------------------------------------------------
+from emit import rewrite_cascades
+# The case that blocked UI.View: Dolphin allows a whole message chain as a
+# cascade part; this dialect allows one message.
+out, ref = rewrite_cascades("^self destroy; isOpen not", "t:1")
+check("cascade: multi-message part becomes statements",
+      out.strip(), "self destroy. ^self isOpen not")
+check("cascade: no refusal on a simple receiver", ref, [])
+out, ref = rewrite_cascades("Transcript show: 'x'; cr", "t:1")
+check("cascade: keyword + unary parts",
+      out.strip(), "Transcript show: 'x'. Transcript cr")
+out, ref = rewrite_cascades("^self a; b", "t:1")
+check("cascade: the last part carries the return", out.strip(), "self a. ^self b")
+out, ref = rewrite_cascades("^self foo", "t:1")
+check("cascade: untouched when there is no cascade", out, "^self foo")
+out, ref = rewrite_cascades('"a ; b" ^1', "t:1")
+check("cascade: ignores a `;` inside a comment", out, '"a ; b" ^1')
+# A non-primary receiver would be evaluated once PER PART if split, so refuse.
+out, ref = rewrite_cascades("^(self viewAt: 1) a; b", "t:1")
+check("cascade: refuses a non-primary receiver", len(ref), 1)
+
 # --- rewrite: namespace flattening -------------------------------------------
 check("flatten: dotted reference",
       flatten_refs("^Graphics.Point x: 1 y: 2", {}), "^Point x: 1 y: 2")
