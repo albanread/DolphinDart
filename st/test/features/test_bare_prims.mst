@@ -1,0 +1,71 @@
+"Feature test: bare-primitive methods answer real values (DolphinDart DD8).
+
+ A numbered `<primitive: N>` pragma is NOT dispatch in this front-end — only the
+ `""primitive: FFI ""` form is handled, so a method whose body is ONLY the pragma
+ compiles to an empty body and ANSWERS SELF. Most of them work anyway because
+ their SELECTOR is separately special-cased (a helper rewrite, a named stprim,
+ or a native); the numbers document intent while the selectors do the work.
+
+ `Object>>identityHash` was the one with no such handling: it answered its own
+ receiver, and since the identity collections index with
+ `key identityHash bitAnd: cap - 1`, every IdentityDictionary/IdentitySet keyed
+ by a plain object raised `does not understand &`. Fixed by giving it a named
+ `<stprim: stIdentityHash>`.
+
+ An audit of all 53 bare-primitive methods in the world found no others. This
+ file keeps it that way: a method added later whose body is only a numbered
+ pragma, with a selector nothing special-cases, will silently answer self — and
+ be caught here rather than three sprints downstream."
+
+STestCase subclass: TestBarePrims [
+    tests [
+        | o |
+        "--- the defect that motivated this file ---"
+        o := Object new.
+        self deny: (o identityHash == o)
+             label: 'identityHash does NOT answer self'.
+        self assert: (o identityHash isInteger)
+             label: 'identityHash answers an Integer'.
+        self assert: (o identityHash = o identityHash)
+             label: 'identityHash is stable across sends'.
+        self deny: (Object new identityHash = Object new identityHash)
+             label: 'distinct objects get distinct identity hashes'.
+
+        "--- and the collections that depend on it ---"
+        self check: ((IdentityDictionary new) at: Object new ifAbsent: [ #none ])
+             is: #none label: 'IdentityDictionary takes a plain object as a key'.
+        self check: (((IdentityDictionary new) at: o put: 7; yourself) at: o)
+             is: 7 label: 'IdentityDictionary stores and finds by identity'.
+
+        "--- every other bare-primitive selector answers a real value, not self.
+             Each of these is a method whose whole body is a numbered pragma. ---"
+        self check: 4.0 sqrt is: 2.0 label: 'Double sqrt'.
+        self check: 2.7 floor is: 2 label: 'Double floor'.
+        self check: 0.0 cos is: 1.0 label: 'Double cos'.
+        self check: 1.0 ln is: 0.0 label: 'Double ln'.
+        self check: 0.0 exp is: 1.0 label: 'Double exp'.
+        self check: 0.0 sin is: 0.0 label: 'Double sin'.
+        self check: 0.0 tan is: 0.0 label: 'Double tan'.
+        self check: 0.0 atan is: 0.0 label: 'Double atan'.
+        self check: 3 asDouble is: 3.0 label: 'SmallInteger asDouble'.
+        self check: (5 bitAnd: 3) is: 1 label: 'SmallInteger bitAnd:'.
+        self check: (5 bitOr: 2) is: 7 label: 'SmallInteger bitOr:'.
+        self check: (5 bitXor: 3) is: 6 label: 'SmallInteger bitXor:'.
+        self check: (1 bitShift: 4) is: 16 label: 'SmallInteger bitShift:'.
+        self check: ('a' compare: 'b') is: -1 label: 'String compare:'.
+        self check: ('abc' basicByteAt: 1) is: 97 label: 'String basicByteAt:'.
+        self check: 'abc' asSymbol is: #abc label: 'String asSymbol'.
+        self check: 'abc' size is: 3 label: 'String size'.
+        self assert: ((2 raisedTo: 70) size > 0) label: 'LargeInteger size'.
+        self assert: ((2 raisedTo: 70) hash isInteger) label: 'LargeInteger hash'.
+        self assert: (Smalltalk millisecondClock isInteger)
+             label: 'Smalltalk millisecondClock'.
+        self assert: ((Array with: 1 with: 2) at: 2) = 2 label: 'Array at:'.
+        self assert: ([ 42 ] value) = 42 label: 'BlockClosure value'.
+        self assert: ([ :x | x + 1 ] value: 1) = 2 label: 'BlockClosure value:'.
+        self assert: ([ 1 ] ensure: [ 2 ]) = 1 label: 'BlockClosure ensure:'.
+        self assert: (Object new class) == Object label: 'Object class'.
+        self assert: (o == o) label: 'Object =='.
+        self deny: (Object new == Object new) label: 'Object == is identity'.
+    ]
+]
