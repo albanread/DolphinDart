@@ -20,7 +20,7 @@ DD4 (exceptions) gates DD10, not DD9. DD5 (prims) is a rolling campaign with
 per-wave checkpoints. DD6 (Windows prims) gates DD7. Nothing before DD10 may
 use `on:do:` in translated code (prior-art rule, carried).
 
-## Status (updated 2026-08-15, after the DD0–DD7 run)
+## Status (updated 2026-08-15, after the DD9 gate went green)
 
 | # | Status | Outcome in one line |
 |---|---|---|
@@ -32,8 +32,9 @@ use `on:do:` in translated code (prior-art rule, carried).
 | DD5 | ✅ ABSORBED | The 215-row campaign evaporated (DD2); D157 lowering lives in the translator; nothing left to do |
 | DD6 (a/b/c) | ✅ DONE | FFI floor with **no assembly** (arity-cast); **1,126 prims generated from the corpus** + tiered harness (1,007/1,104 resolve); marshalling runtime; **148 structs, offsets from winkb** |
 | DD7 | ✅ DONE | Door proven to depth 5 through real `SendMessageW`; visible window with real WM_PAINT/WM_COMMAND; `ValidateRect` backstop; generation guard — all falsifiably tested |
-| DD8 | 🚧 IN PROGRESS | Event system + semantics suite written (from D8 source, test-first); **blocked on an inherited `identityHash` defect** — see the brief's status block |
-| DD9–DD13 | ⬜ PENDING | Direction updates recorded in the DD9 brief (generated prims replace the old allowlist story; `User32`-style alias globals needed) |
+| DD8 | ✅ DONE | Compat kernel: events, `UiSession`, Model/ValueModel, SearchPolicy, GUID, properties |
+| DD9 | ✅ DONE | **Gate green.** Dolphin's `BorderLayout` arranges real Win32 windows; live WM_SIZE relayout via Dolphin's own `buildMessageMap`; paint through the HDC proved by pixel readback; focus/tab; clean destroy. Class-side `super` implemented in the front-end. Carried forward: `Graphics.Canvas` wave, supervisor respawn demo |
+| DD10–DD13 | ⬜ PENDING | DD10 next: the MVP triad |
 
 Two standing corrections the ladder should be read with:
 
