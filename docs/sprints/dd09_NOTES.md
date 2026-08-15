@@ -307,6 +307,39 @@ It needs a small cascade parser in `emit.py` and golden cases; it is the next
 piece of DD9 work, and until it lands `UI.View` itself is held out of `st/mvp`
 rather than shipped broken.
 
+## What the storm number decides about the acceptance shell
+
+The remaining gate (code-built shell, BorderLayout, live resize relayout,
+focus/tab, clean destroy) needs translated `ShellView` code to own a real
+window, and that forces a choice the measurement now settles.
+
+Dolphin's `View` creates its windows against a class whose WndProc is
+Dolphin's own dispatcher, and that dispatcher reflects **every** message into
+the image, routing it through `View class >> buildMessageMap` — a
+message-number → selector table the class builds once. Reflecting everything
+at ~26 µs a message is not affordable during a drag.
+
+But `buildMessageMap` is itself the answer: it is an explicit, per-class list
+of exactly the messages Dolphin wants. **The door should ask the image for
+that set once and reflect only those**, DefWindowProcW-ing the rest — which is
+what the census already shows is the common case. The measurement makes this a
+design conclusion rather than a preference: the routed cost is fixed and known,
+so the lever is the message COUNT, and the corpus hands us the minimal count
+for free.
+
+Two mechanical prerequisites, neither started:
+
+1. **A wider funnel.** `_mvpToSmalltalk(wp, lp)` carries a kind and one
+   payload; a reflected Windows message needs `(msg, wParam, lParam)`. The
+   funnel goes to four arguments — `(kind, a, b, c)` — with paint/command/
+   destroy filling `(kind, payload, 0, 0)`. `UiSession wndProc:arg:` gains the
+   four-argument form, and the DD7 spike classes must keep working against the
+   raw door since they are the door's own regression.
+2. **A routed-message set in the door**, replacing the hardcoded
+   paint/command/destroy switch plus the DD9 storm list. WM_PAINT keeps its
+   named case regardless: it owns the `BeginPaint`/`EndPaint` pair and the
+   `ValidateRect` backstop, which is structure, not routing policy.
+
 ## Carried
 
 - `st/mvp/` holds the four loading classes plus the refusal report.
