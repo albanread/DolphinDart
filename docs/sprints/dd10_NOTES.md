@@ -65,3 +65,42 @@ assertion by accident.
   continuation updating a `ValueModel` **on the UI thread via the posted-action
   queue** — never from the worker. `docs/WORKERS.md`.
 - The acceptance app and its beep-and-revert path.
+
+## The worker doctrine: settled, not yet built (`docs/WORKERS.md`)
+
+Dolphin runs long work on green processes. This VM has no green processes and
+will not grow any — Dart's unit is the isolate, which copies rather than
+shares. The doctrine that replaces `fork`:
+
+> Work happens in an isolate. The UI is touched only on the UI thread, and only
+> through the posted-action queue.
+
+The queue is not a convenience. The door enters the image from inside a
+`WndProc`, synchronously and to arbitrary depth, and DD7 established both that
+a handler must not rebuild the window it is being called from, and that a raise
+inside a door entry cannot be caught outside it. A worker continuation is the
+same hazard arriving from a different direction, and `UiSession postAction:` is
+where DD8 already proved deferral works — a self-posting action defers to the
+NEXT pump rather than extending the current drain.
+
+The continuation updates a **ValueModel**, never a view. The triad already
+propagates a model change to every subscriber, so a worker result reaches the
+screen by the same route a keystroke does.
+
+### `st/world/47_worker.mst` is INERT here — and that is a finding
+
+The world carries a `Worker` class from the MACVM lineage with the whole
+primary/worker doctrine written up in its header. It does not work in this
+port: its methods are bodied with **numbered primitives** (220–228, 250), and
+in this VM a numbered `<primitive: N>` is intent, not dispatch — the rule the
+DD8 `identityHash` defect established. Every one of those methods compiles to
+`^self`.
+
+It is therefore a SPECIFICATION to reimplement against isolates, not a
+starting point to wire up. Its doctrine transfers wholesale; only the transport
+changes. Nothing loads it today, and nothing should until that is done.
+
+The build order, and the one step that carries the doctrine, are in
+`docs/WORKERS.md` §"The build order when it lands" — step 3 must POST the
+continuation, not call it. Calling it directly from the reply handler would
+work, look correct, and violate every reason above.
