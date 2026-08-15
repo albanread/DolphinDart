@@ -141,16 +141,36 @@ def _fold_constant(expr: str) -> Optional[str]:
         return e
     if e in ("true", "false", "nil"):
         return e
-    # Integer arithmetic over literals: 16r0F, 1 bitShift: 4, 3 + 4 ...
-    m = re.match(r"^(-?\d+)\s*(\+|-|\*|//|bitShift:|bitOr:|bitAnd:)\s*(-?\d+)$", e)
-    if m:
-        a, op, b = int(m.group(1)), m.group(2), int(m.group(3))
+    # Integer expressions over literals, left-to-right as Smalltalk evaluates
+    # binary sends. Multi-term is required, not a nicety: after pool folding the
+    # corpus is full of `##(MIIM_STRING | MIIM_ID | MIIM_BITMAP)`, which is three
+    # terms. `|` and `&` are Dolphin's bitwise binaries on integers.
+    _OPS = {"+": lambda a, b: a + b, "-": lambda a, b: a - b,
+            "*": lambda a, b: a * b, "//": lambda a, b: a // b,
+            "|": lambda a, b: a | b, "&": lambda a, b: a & b,
+            "bitShift:": lambda a, b: a << b if b >= 0 else a >> -b,
+            "bitOr:": lambda a, b: a | b, "bitAnd:": lambda a, b: a & b,
+            "bitXor:": lambda a, b: a ^ b}
+    toks = e.split()
+    if len(toks) >= 3 and len(toks) % 2 == 1:
         try:
-            return str({"+": a + b, "-": a - b, "*": a * b, "//": a // b,
-                        "bitShift:": a << b if b >= 0 else a >> -b,
-                        "bitOr:": a | b, "bitAnd:": a & b}[op])
-        except Exception:
-            return None
+            acc = int(toks[0], 0) if not toks[0].startswith("-") else int(toks[0])
+        except ValueError:
+            acc = None
+        if acc is not None:
+            ok = True
+            for i in range(1, len(toks), 2):
+                op, rhs = toks[i], toks[i + 1]
+                if op not in _OPS:
+                    ok = False
+                    break
+                try:
+                    acc = _OPS[op](acc, int(rhs))
+                except Exception:
+                    ok = False
+                    break
+            if ok:
+                return str(acc)
     m = re.match(r"^(\d+)r([0-9A-Fa-f]+)$", e)
     if m:
         try:
@@ -158,6 +178,52 @@ def _fold_constant(expr: str) -> Optional[str]:
         except ValueError:
             return None
     return None
+
+
+# --- rewrite: bare pool constants -------------------------------------------
+# A class names its pools in `imports:` and then writes the constants as BARE
+# identifiers (`BM_CLICK`, not a qualified reference), so folding needs the
+# import list as well as the tables. 928 constants live in `Dolphin MVP Base.pax`
+# alone (DD3b).
+#
+# The guard matters more than the fold: an identifier is only replaced when it
+# is NOT a method argument, temporary, instance variable or class variable.
+# Shadowing is legal Smalltalk, and folding a shadowed name would substitute a
+# constant for a live variable — a wrong answer with no diagnostic.
+
+_TEMPS = re.compile(r"\|([^|]*)\|")
+# Constant names are SHOUT_CASE (`BM_CLICK`, `MIIM_STRING`) or the struct
+# classes' leading-underscore offsets (`_OffsetOf_cch`, `_MENUITEMINFOW_Size`).
+# The underscore form is not decoration: it is how every generated struct
+# accessor addresses its fields, and excluding it left every struct class
+# refusing its own `##(_OffsetOf_x + 1)` expressions.
+_IDENT = re.compile(r"(?<![\w:#])(_?[A-Za-z][A-Za-z0-9_]*)(?![\w:])")
+
+
+def rewrite_pool_constants(body: str, where: str, imports, table,
+                           shadowed) -> Tuple[str, List[Refusal]]:
+    if table is None:
+        return body, []
+    blanked = strip_code(body)
+    local = set(shadowed)
+    for m in _TEMPS.finditer(blanked):
+        local.update(m.group(1).split())
+    out, last, changed = [], 0, False
+    for m in _IDENT.finditer(blanked):
+        name = body[m.start(1):m.end(1)]
+        if name in local:
+            continue
+        val = table.lookup(imports, name)
+        if val is None:
+            continue
+        out.append(body[last:m.start(1)])
+        out.append(val)
+        last = m.end(1)
+        changed = True
+    if not changed:
+        return body, []
+    out.append(body[last:])
+    return "".join(out), []
 
 
 def rewrite_hashhash(src: str, where: str) -> Tuple[str, List[Refusal]]:
@@ -212,15 +278,17 @@ def lower_prim157(m: Method, cd: ClassDef, where: str,
         return None, [Refusal(where, "prim157",
                               f"{cd.name}>>{m.selector}: superclass ivar count unknown "
                               f"({cd.superclass}); cannot place fields safely")]
-    if super_ivar_count != 0:
-        return None, [Refusal(where, "prim157",
-                              f"{cd.name}>>{m.selector}: superclass {cd.superclass} contributes "
-                              f"{super_ivar_count} ivars; inherited-offset case not implemented")]
     if n_args != len(cd.ivars):
         return None, [Refusal(where, "prim157",
                               f"{cd.name}>>{m.selector}: {n_args} args vs {len(cd.ivars)} "
                               f"instance variables — refusing to guess the mapping")]
-    stores = " ".join(f"instVarAt: {i + 1} put: {a};"
+    # `instVarAt:` is 1-based over the FULL instance-variable order, inherited
+    # fields first, so this class's own variables start after the superclass's.
+    # Getting the offset wrong shifts every field by one — a defect that surfaces
+    # arbitrarily far from its cause, which is why the count must be known
+    # exactly (a `None` above refuses) rather than assumed.
+    base = super_ivar_count
+    stores = " ".join(f"instVarAt: {base + i + 1} put: {a};"
                       for i, a in enumerate(m.arg_names))
     return f"^self basicNew {stores} yourself", []
 
@@ -243,8 +311,10 @@ def _house_pattern(m: Method, cls_name: str) -> str:
 
 
 def emit_class(pf: ParsedFile, renames: Dict[str, str],
-               super_ivars: Dict[str, Optional[int]]) -> EmitResult:
-    cd = pf.classdef
+               super_ivars: Dict[str, Optional[int]],
+               pool_table=None, extra_methods: Optional[List[Method]] = None,
+               classdef: Optional[ClassDef] = None) -> EmitResult:
+    cd = classdef or pf.classdef
     if cd is None:
         return EmitResult("", [Refusal(pf.path, "classdef", "no class-definition chunk")])
     refusals: List[Refusal] = []
@@ -266,7 +336,23 @@ def emit_class(pf: ParsedFile, renames: Dict[str, str],
     if cd.cvars or cd.ivars:
         lines.append("")
 
-    for m in pf.methods:
+    # Loose methods filed onto this class from a `.pax` land here alongside the
+    # class's own — the User32 binding is 177 such methods on `OS.UserLibrary`.
+    all_methods = list(pf.methods if classdef is None or classdef is pf.classdef else [])
+    all_methods.extend(extra_methods or [])
+    shadowed = set(cd.ivars) | set(cd.cvars) | set(cd.civars)
+
+    # A class's OWN `classConstants:` is an implicit pool for its own methods.
+    # The struct classes lean on this heavily — `OS.DTBGOPTS` computes field
+    # offsets as `##(_OffsetOf_rcClip + 1)`, where `_OffsetOf_rcClip` is its own
+    # class constant, not an imported one. Without this, every struct accessor
+    # refused as "not a foldable constant".
+    own_imports = list(cd.imports)
+    if pool_table is not None and cd.class_constants and cd.class_constants != "{}":
+        if pool_table.add(cd.name, cd.class_constants):
+            own_imports.insert(0, cd.name)
+
+    for m in all_methods:
         where = f"{pf.path}:{m.line}"
         body = m.body
         prim = next((p for p in m.pragmas if p.startswith("<primitive:")), None)
@@ -310,6 +396,11 @@ def emit_class(pf: ParsedFile, renames: Dict[str, str],
                 refusals.append(Refusal(where, "binding-literal",
                                         "`#{...}` variable-binding literal has no house equivalent"))
                 continue
+            # Pools fold BEFORE `##()`, so a compile-time expression written
+            # over pool names (`##(BM_CLICK bitOr: 4)`) has literals to fold.
+            body, r = rewrite_pool_constants(
+                body, where, own_imports, pool_table, shadowed | set(m.arg_names))
+            refusals.extend(r)
             body, r = rewrite_hashhash(body, where); refusals.extend(r)
             body, r = rewrite_qq(body, where); refusals.extend(r)
             body = flatten_refs(body, renames)

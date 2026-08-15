@@ -73,6 +73,13 @@ class ParsedFile:
     classdef: Optional[ClassDef]
     methods: List[Method]
     refusals: List[str] = field(default_factory=list)
+    # DD3b: a `.pax` holds MANY class definitions and files LOOSE METHODS onto
+    # classes defined elsewhere — `Dolphin MVP Base.pax` alone carries three
+    # shared pools and 181 `OS.UserLibrary` methods. So a parsed file is not
+    # "one class": `classdefs` holds every definition it declares, and
+    # `loose` maps target-class-name -> methods filed onto it.
+    classdefs: List[ClassDef] = field(default_factory=list)
+    loose: Dict[str, List[Method]] = field(default_factory=dict)
 
 
 # --- the class-definition chunk ---------------------------------------------
@@ -93,7 +100,11 @@ def _kw_array(chunk: str, keyword: str) -> Optional[List[str]]:
     m = re.search(keyword + r":\s*#\((.*?)\)", chunk, re.S)
     if not m:
         return None
-    return [t.strip().strip("#'") for t in m.group(1).split() if t.strip()]
+    # Entries look like `{OS.Win32Constants}` — a brace-wrapped binding
+    # reference — or a bare/quoted symbol. Strip both wrappers: leaving the
+    # braces on made every pool import unmatchable, so no bare pool constant
+    # folded and `##(MIIM_STRING | MIIM_ID)` refused as "not constant".
+    return [t.strip().strip("#'").strip("{}") for t in m.group(1).split() if t.strip()]
 
 
 def parse_classdef(chunk: Chunk) -> Optional[ClassDef]:
@@ -191,30 +202,49 @@ def parse_file(path: str) -> ParsedFile:
     src = read_source(path)
     chunks = split_chunks(src)
     cd: Optional[ClassDef] = None
+    classdefs: List[ClassDef] = []
+    by_name: Dict[str, ClassDef] = {}
     methods: List[Method] = []
+    loose: Dict[str, List[Method]] = {}
     refusals: List[str] = []
     mode: Optional[bool] = None      # None = not in a methods section; else class_side
+    target: Optional[str] = None     # which class the current section files onto
 
     for ch in chunks:
         head = ch.text.strip()
         sm = _SECTION_RE.match(head) if "\n" not in head else None
         if sm:
-            mode = bool(sm.group("side")) if sm.group("what") == "methodsFor" else None
+            if sm.group("what") == "methodsFor":
+                mode = bool(sm.group("side"))
+                target = sm.group("name")
+            else:
+                mode, target = None, None
             continue
         if mode is None:
-            if cd is None:
-                maybe = parse_classdef(ch)
-                if maybe:
-                    cd = maybe
-                    continue
-            if cd is not None:
-                cm = re.match(r"^\s*[\w.]+\s+comment:\s*'((?:[^']|'')*)'", ch.text, re.S)
-                if cm:
-                    cd.comment = cm.group(1).replace("''", "'")
-                    continue
+            maybe = parse_classdef(ch)
+            if maybe:
+                classdefs.append(maybe)
+                by_name[maybe.name] = maybe
+                if cd is None:
+                    cd = maybe          # the first definition is the file's own
+                continue
+            cm = re.match(r"^\s*([\w.]+)\s+comment:\s*'((?:[^']|'')*)'", ch.text, re.S)
+            if cm:
+                owner = by_name.get(cm.group(1))
+                if owner is not None:
+                    owner.comment = cm.group(2).replace("''", "'")
+                continue
             # guid:, categoriesFor..., binary metadata: all droppable
             continue
         m = parse_method(ch, mode)
         if m:
-            methods.append(m)
-    return ParsedFile(path=path, classdef=cd, methods=methods, refusals=refusals)
+            # A method belongs to the class its SECTION names. In a `.cls` that
+            # is always the file's own class; in a `.pax` it is usually not.
+            if target and cd is not None and target == cd.name:
+                methods.append(m)
+            elif target:
+                loose.setdefault(target, []).append(m)
+            else:
+                methods.append(m)
+    return ParsedFile(path=path, classdef=cd, methods=methods, refusals=refusals,
+                      classdefs=classdefs, loose=loose)

@@ -142,8 +142,13 @@ check("prim157: no refusal on the clean case", ref, [])
 
 got, ref = lower_prim157(m157, cd157, "t:1", None)
 check("prim157: refuses an unknown superclass ivar count", (got, len(ref)), (None, 1))
+# Inherited fields come FIRST in the instVarAt: order, so a superclass with 3
+# of its own pushes this class's variables to slots 4 and 5. Off-by-one here
+# shifts every field of every instance, so the arithmetic is pinned exactly.
 got, ref = lower_prim157(m157, cd157, "t:1", 3)
-check("prim157: refuses when the superclass contributes fields", (got, len(ref)), (None, 1))
+check("prim157: offsets past the superclass's fields", got,
+      "^self basicNew instVarAt: 4 put: xc; instVarAt: 5 put: yc; yourself")
+check("prim157: no refusal once the count is known", ref, [])
 
 m_bad = Method(selector="x:", arg_names=["only"], pattern="x: only", comment="",
                body="", class_side=True, line=1)

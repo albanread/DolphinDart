@@ -24,11 +24,15 @@ from typing import Dict, List, Optional
 
 import parse
 import emit
+import pools
 from stlex import is_balanced
 from chunks import read_source
 
 
-def collect(paths: List[str]) -> List[str]:
+def collect(paths: List[str], exts=(".cls", ".pax")) -> List[str]:
+    """Gather sources. `.pax` counts: it is load-bearing source, not metadata —
+    it carries the shared pools AND 177 loose `OS.UserLibrary` methods, so a
+    `.cls`-only ingester silently loses the entire User32 binding."""
     out: List[str] = []
     for p in paths:
         if os.path.isdir(p):
@@ -36,8 +40,8 @@ def collect(paths: List[str]) -> List[str]:
                 parts = set(dp.replace("\\", "/").split("/"))
                 if parts & {"Tests", "Deprecated", "Gdiplus"}:
                     continue
-                out.extend(os.path.join(dp, f) for f in fn if f.endswith(".cls"))
-        elif p.endswith(".cls"):
+                out.extend(os.path.join(dp, f) for f in fn if f.endswith(exts))
+        elif p.endswith(exts):
             out.append(p)
     return sorted(out)
 
@@ -48,7 +52,8 @@ def superclass_ivar_counts(parsed: Dict[str, parse.ParsedFile]) -> Dict[str, Opt
     `None` means "chain not fully known" — the caller must then refuse anything
     that depends on field placement, rather than assume zero.
     """
-    by_name = {pf.classdef.name: pf.classdef for pf in parsed.values() if pf.classdef}
+    by_name = {cd.name: cd for pf in parsed.values() for cd in
+               (pf.classdefs or ([pf.classdef] if pf.classdef else []))}
     memo: Dict[str, Optional[int]] = {}
 
     def count(name: str, seen: Optional[set] = None) -> Optional[int]:
@@ -120,23 +125,68 @@ def main(argv: List[str]) -> int:
     ivars = superclass_ivar_counts({**reference, **parsed})
     renames: Dict[str, str] = {}           # DD2: zero collisions, so empty by measurement
 
+    # Shared pools, gathered from EVERY parsed file (reference sources included:
+    # the pools live in `.pax` manifests that are usually not translation
+    # targets themselves).
+    pool_table = pools.PoolTable()
+    n_consts = 0
+    for pf in list(reference.values()) + list(parsed.values()):
+        for cd in pf.classdefs or ([pf.classdef] if pf.classdef else []):
+            if cd.superclass.endswith("SharedPool"):
+                n_consts += pool_table.add(cd.name, cd.class_constants)
+
+    # Loose methods, keyed by the class they are filed onto.
+    loose: Dict[str, List[parse.Method]] = collections.defaultdict(list)
+    for pf in parsed.values():
+        for target, ms in pf.loose.items():
+            loose[target].extend(ms)
+
     refusals: List[emit.Refusal] = []
     notes: List[str] = []
     written = 0
+    adopted = 0
     per_file = []
-    for f, pf in parsed.items():
-        if pf.classdef is None:
-            refusals.append(emit.Refusal(f, "classdef", "no class-definition chunk"))
-            continue
-        res = emit.emit_class(pf, renames, ivars)
-        refusals.extend(res.refusals)
-        notes.extend(res.notes)
-        name = emit.flatten_name(pf.classdef.name, renames)
-        with open(os.path.join(args.out, name + ".mst"), "w",
-                  encoding="utf-8", newline="\n") as fh:
-            fh.write(res.text)
-        written += 1
-        per_file.append((name, len(pf.methods), len(res.refusals)))
+    emitted_names = set()
+    # `.cls` files first. A `.pax` manifest RE-DECLARES the classes its package
+    # contains, so a class present in both must be emitted from its own `.cls` —
+    # the authoritative source. Measured: a run over MVP/Base + MVP/Graphics with
+    # the package manifest as an input produced 211 duplicate refusals, one per
+    # class, purely from that overlap.
+    for f, pf in sorted(parsed.items(), key=lambda kv: kv[0].endswith(".pax")):
+        for cd in pf.classdefs or ([pf.classdef] if pf.classdef else []):
+            if cd.superclass.endswith("SharedPool"):
+                continue          # folded into constants; never emitted as a class
+            extra = loose.pop(cd.name, [])
+            adopted += len(extra)
+            res = emit.emit_class(pf, renames, ivars, pool_table, extra, cd)
+            refusals.extend(res.refusals)
+            notes.extend(res.notes)
+            name = emit.flatten_name(cd.name, renames)
+            if name in emitted_names:
+                # Not a refusal when the loser is a `.pax` re-declaration of a
+                # class that has its own `.cls` — that is the format working as
+                # designed. Any other collision IS a refusal.
+                if f.endswith(".pax"):
+                    notes.append(f"{cd.name}: package re-declaration, "
+                                 f"emitted from its own .cls")
+                else:
+                    refusals.append(emit.Refusal(f, "duplicate",
+                                                 f"{cd.name} would overwrite {name}.mst"))
+                continue
+            emitted_names.add(name)
+            with open(os.path.join(args.out, name + ".mst"), "w",
+                      encoding="utf-8", newline="\n") as fh:
+                fh.write(res.text)
+            written += 1
+            n_methods = (len(pf.methods) if cd is pf.classdef else 0) + len(extra)
+            per_file.append((name, n_methods, len(res.refusals)))
+
+    # Loose methods whose target class was never translated are REPORTED, not
+    # dropped: they are the User32 binding when the target is `OS.UserLibrary`.
+    for target, ms in sorted(loose.items()):
+        refusals.append(emit.Refusal(target, "orphan-loose-methods",
+                                     f"{len(ms)} loose method(s) filed onto "
+                                     f"'{target}', which was not translated"))
 
     with open(os.path.join(args.out, "_refusals.txt"), "w",
               encoding="utf-8", newline="\n") as fh:
@@ -147,7 +197,10 @@ def main(argv: List[str]) -> int:
     with open(os.path.join(args.out, "_report.md"), "w",
               encoding="utf-8", newline="\n") as fh:
         fh.write("# dolphin2mst run report\n\n")
-        fh.write(f"- inputs: **{len(files)}** `.cls`\n")
+        fh.write(f"- inputs: **{len(files)}** source files (`.cls` + `.pax`)\n")
+        fh.write(f"- shared-pool constants available: **{n_consts}** "
+                 f"from **{len(pool_table)}** pools\n")
+        fh.write(f"- loose methods adopted from `.pax`: **{adopted}**\n")
         fh.write(f"- parsed: **{len(parsed)}**  (unbalanced/skipped: {len(unbalanced)})\n")
         fh.write(f"- emitted: **{written}** `.mst`\n")
         fh.write(f"- methods: **{sum(p[1] for p in per_file)}**\n")
