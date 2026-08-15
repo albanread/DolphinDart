@@ -86,6 +86,10 @@ Notification subclass: Warning [
 Object subclass: Win32 [
     Win32 class >> lastError [ <stprim: stWinLastError> ]
     Win32 class >> resolve: aName [ <stprim: stFfiResolve> ]
+    "Raw byte access to external memory, addressed by integer. The FFI
+     marshalling runtime (st/prims/rt) composes wider fields from these."
+    Win32 class >> peek: anAddress [ <stprim: stPeekByte> ]
+    Win32 class >> poke: anAddress put: aByte [ <stprim: stPokeByte> ]
 ]
 
 "── The system object (corpus surface: Smalltalk millisecondClock) ──"

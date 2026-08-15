@@ -71,6 +71,34 @@ def arg_code(t: str) -> Tuple[Optional[str], str]:
     return None, f"unknown type '{ty}'"
 
 
+# --- marshalling kinds (DD6c) ------------------------------------------------
+# The generated prim takes words; real callers pass objects. `coerce_kind` says
+# which runtime helper an argument needs, from the type Dolphin itself declared.
+
+_STRING_TYPES = {"lpwstr", "lpstr", "char*", "char16*", "char8*", "bstr"}
+_POINTER_ISH = {"lpvoid", "void*", "lppvoid"}
+
+
+def coerce_kind(t: str) -> str:
+    """'string' (allocates a temp), 'pointer', or 'word' (identity + nil/bool)."""
+    ty = t.strip()
+    if ty in _STRING_TYPES:
+        return "string"
+    if ty in _POINTER_ISH or ty.endswith("*"):
+        return "pointer"
+    return "word"
+
+
+def needs_wrapper(argtypes) -> bool:
+    """True when at least one argument is not a plain word.
+
+    Pure-word methods get NO wrapper: a wrapper that only forwards is overhead
+    on the hot path and noise in the source. 1,126 methods is enough surface
+    without doubling it for nothing.
+    """
+    return any(coerce_kind(t) != "word" for t in argtypes)
+
+
 def ret_code(t: str) -> Tuple[Optional[str], str]:
     ty = t.strip()
     if ty == "void":

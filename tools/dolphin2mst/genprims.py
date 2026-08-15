@@ -97,6 +97,64 @@ def winkb_index(db_path: str) -> Optional[Dict[str, Tuple[str, int, int, int]]]:
     return idx
 
 
+def prim_selector(selector: str) -> str:
+    """`getClientRect:lpRect:` -> `primGetClientRect:lpRect:`.
+
+    The raw, word-only entry point stays reachable under a distinct name so the
+    wrapper can call it and a caller who already holds addresses can skip the
+    coercion entirely.
+    """
+    if ":" in selector:
+        head, rest = selector.split(":", 1)
+        return "prim" + head[:1].upper() + head[1:] + ":" + rest
+    return "prim" + selector[:1].upper() + selector[1:]
+
+
+def wrapper_lines(base: str, d: "Decl", raw_sel: str) -> List[str]:
+    """The coercing wrapper: objects in, words to the raw prim, temps freed.
+
+    String arguments allocate a UTF-16 buffer that must be released, so the call
+    runs under `ensure:` — a raised exception (a bad argument type further along
+    the list, say) must not leak external memory.
+    """
+    kinds = [ffitypes.coerce_kind(t) for t in d.argtypes]
+    parts = d.selector.split(":")[:-1] if ":" in d.selector else []
+    temps = [f"t{i}" for i, k in enumerate(kinds) if k == "string"]
+
+    # Build the raw send, coercing each argument by its declared kind.
+    def coerced(i: int, a: str) -> str:
+        k = kinds[i]
+        if k == "string":
+            return f"(FFICoerce addressOf: t{i})"
+        if k == "pointer":
+            return f"(FFICoerce pointer: {a})"
+        return f"(FFICoerce word: {a})"
+
+    raw_parts = raw_sel.split(":")[:-1] if ":" in raw_sel else []
+    if raw_parts:
+        send = "self " + " ".join(f"{k}: {coerced(i, a)}"
+                                  for i, (k, a) in enumerate(zip(raw_parts, d.args)))
+    elif d.args:
+        send = f"self {raw_sel} {coerced(0, d.args[0])}"
+    else:
+        send = f"self {raw_sel}"
+
+    out = [f"    {base} class >> {house_pattern(d.selector, d.args)} ["]
+    if temps:
+        out.append(f"        | {' '.join(temps)} |")
+        for i, k in enumerate(kinds):
+            if k == "string":
+                out.append(f"        t{i} := FFICoerce stringTemp: {d.args[i]}.")
+        out.append(f"        ^[ {send} ]")
+        frees = " ".join(f"t{i} isNil ifFalse: [ t{i} free ]." for i, k in
+                         enumerate(kinds) if k == "string")
+        out.append(f"            ensure: [ {frees} ]")
+    else:
+        out.append(f"        ^{send}")
+    out.append("    ]")
+    return out
+
+
 def house_pattern(selector: str, args: List[str]) -> str:
     if args and ":" in selector:
         parts = selector.split(":")[:-1]
@@ -177,6 +235,7 @@ def main(argv: List[str]) -> int:
         by_class[d.cls].append((d, rc, "".join(codes)))
 
     written = 0
+    wrapped = 0
     total_methods = 0
     manifest: List[Tuple[str, str, int]] = []
     for cls, items in sorted(by_class.items()):
@@ -187,10 +246,15 @@ def main(argv: List[str]) -> int:
                  f"Object subclass: {base} ["]
         for d, rc, codes in sorted(items, key=lambda x: x[0].selector):
             argspec = " ".join(codes) if codes else ""
-            lines.append(f"    {base} class >> {house_pattern(d.selector, d.args)} [")
+            wrap = ffitypes.needs_wrapper(d.argtypes)
+            raw_sel = prim_selector(d.selector) if wrap else d.selector
+            lines.append(f"    {base} class >> {house_pattern(raw_sel, d.args)} [")
             lines.append(f"        <primitive: FFI function: #{d.func} ret: #{rc} "
                          f"args: #( {argspec} )>")
             lines.append("    ]")
+            if wrap:
+                lines.extend(wrapper_lines(base, d, raw_sel))
+                wrapped += 1
             manifest.append((d.func, base, len(codes)))
             total_methods += 1
         lines.append("]")
@@ -245,7 +309,7 @@ def main(argv: List[str]) -> int:
             fh.write(f"{d.where}: {d.cls}>>{d.selector} [{d.func}] {r}\n")
 
     print(f"genprims: {total_methods} prims in {written} classes, "
-          f"{len(refused)} refused -> {args.out}")
+          f"{wrapped} wrapped, {len(refused)} refused -> {args.out}")
     for r, n in hist.most_common(6):
         print(f"    {n:4d}  {r[:66]}")
     if kb is not None:

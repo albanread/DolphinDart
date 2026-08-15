@@ -1,0 +1,51 @@
+"01_coerce.mst — argument coercion for generated external calls (DD6c).
+
+ HAND-WRITTEN. The generated prims take WORDS, because that is what the FFI
+ floor takes. Real Dolphin code passes objects: a String where LPCWSTR is
+ wanted, an ExternalMemory where a struct pointer is wanted, nil for a null
+ pointer. This is the seam, and the generator emits calls into it from the type
+ information in Dolphin's own pragma.
+
+ A runtime layer rather than code inlined into 1,126 wrappers: the rules are the
+ same everywhere, and one place to fix them is worth more than saving a send.
+ Where a coercion allocates, the selector says so (`...Temp`) and the caller
+ frees under ensure:."
+
+Object subclass: FFICoerce [
+
+    "A word argument: integers pass through, nil is the null pointer, booleans
+     are Win32 BOOLs. Anything else is a caller bug and says so — a silent
+     coercion here would put a plausible number into a real API call."
+    FFICoerce class >> word: x [
+        x isNil ifTrue: [ ^0 ].
+        x == true ifTrue: [ ^1 ].
+        x == false ifTrue: [ ^0 ].
+        x isInteger ifTrue: [ ^x ].
+        (x isKindOf: ExternalMemory) ifTrue: [ ^x address ].
+        ^self error: 'FFI: cannot pass ', x class name, ' as a word argument'
+    ]
+
+    "A pointer argument. nil is null; ExternalMemory passes its address; an
+     Integer is a raw address the caller already holds."
+    FFICoerce class >> pointer: x [
+        x isNil ifTrue: [ ^0 ].
+        (x isKindOf: ExternalMemory) ifTrue: [ ^x address ].
+        x isInteger ifTrue: [ ^x ].
+        ^self error: 'FFI: cannot pass ', x class name, ' as a pointer argument'
+    ]
+
+    "An LPCWSTR argument. A String is copied into a fresh UTF-16 buffer which
+     the CALLER frees — hence the name. Answers the buffer, not the address, so
+     the caller can free it; the address is taken at the call site."
+    FFICoerce class >> stringTemp: x [
+        x isNil ifTrue: [ ^nil ].
+        (x isKindOf: ExternalMemory) ifTrue: [ ^x ].
+        x isString ifTrue: [ ^Utf16Buffer fromString: x ].
+        ^self error: 'FFI: cannot pass ', x class name, ' as a string argument'
+    ]
+
+    FFICoerce class >> addressOf: x [
+        x isNil ifTrue: [ ^0 ].
+        ^x address
+    ]
+]

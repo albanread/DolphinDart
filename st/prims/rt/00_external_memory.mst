@@ -1,0 +1,126 @@
+"00_external_memory.mst — the FFI marshalling runtime (DolphinDart DD6c).
+
+ HAND-WRITTEN, unlike the rest of st/prims. Loaded before the generated
+ libraries; they call into it.
+
+ The model, settled by the DD6 RECT gate: external memory is a block outside the
+ Dart heap, addressed by integer. Nothing here is ever moved by a GC because
+ nothing here is IN the collected heap — the property Dolphin's own FFI silently
+ assumes and would not get on a moving-collector VM.
+
+ The allocator is Win32's own, reached through the same FFI floor as everything
+ else. No new primitive was needed for any of this."
+
+"The runtime's OWN prims. Deliberately not taken from the generated libraries:
+ Dolphin declares LocalFree but never LocalAlloc (its image allocates through
+ its own heap), and infrastructure this layer depends on should not be hostage
+ to what the corpus happened to declare."
+Object subclass: Win32Rt [
+    Win32Rt class >> localAlloc: flags size: n [
+        <primitive: FFI function: #LocalAlloc ret: #g args: #( g g )>
+    ]
+    Win32Rt class >> localFree: p [
+        <primitive: FFI function: #LocalFree ret: #g args: #( g )>
+    ]
+    Win32Rt class >> lstrlenW: p [
+        <primitive: FFI function: #lstrlenW ret: #g args: #( g )>
+    ]
+]
+
+Object subclass: ExternalMemory [
+    | address size |
+
+    "LMEM_FIXED | LMEM_ZEROINIT = 0 | 64."
+    ExternalMemory class >> new: nBytes [
+        | p |
+        nBytes <= 0 ifTrue: [ ^self error: 'ExternalMemory new: needs a positive size' ].
+        p := Win32Rt localAlloc: 64 size: nBytes.
+        p = 0 ifTrue: [ ^self error: 'ExternalMemory: LocalAlloc failed, GetLastError=',
+                                     Win32 lastError printString ].
+        ^self basicNew setAddress: p size: nBytes
+    ]
+
+    setAddress: p size: n [ address := p. size := n ]
+    address [ ^address ]
+    size [ ^size ]
+    isNull [ ^address isNil or: [ address = 0 ] ]
+
+    "Explicit lifetime. v1 has no finalization (DIALECT_GAPS A7: weak refs and
+     mourning are backlog), so whoever allocates frees — and the generated
+     wrappers do, for the temporaries they create."
+    free [
+        self isNull ifFalse: [ Win32Rt localFree: address. address := 0 ]
+    ]
+
+    byteAt: i [ ^Win32 peek: address + i - 1 ]
+    byteAt: i put: v [ ^Win32 poke: address + i - 1 put: v ]
+
+    "Little-endian composites. Peek is byte-wise — all an Alien-shaped floor
+     guarantees — so the widths are composed here rather than assumed."
+    uint32At: i [
+        | v b |
+        v := 0.
+        3 to: 0 by: -1 do: [ :k | b := self byteAt: i + k. v := (v bitShift: 8) bitOr: b ].
+        ^v
+    ]
+    int32At: i [
+        | v |
+        v := self uint32At: i.
+        ^v > 2147483647 ifTrue: [ v - 4294967296 ] ifFalse: [ v ]
+    ]
+    uint32At: i put: v [
+        | x |
+        x := v.
+        0 to: 3 do: [ :k | self byteAt: i + k put: (x bitAnd: 255). x := x bitShift: -8 ].
+        ^v
+    ]
+    intptrAt: i [
+        | v b |
+        v := 0.
+        7 to: 0 by: -1 do: [ :k | b := self byteAt: i + k. v := (v bitShift: 8) bitOr: b ].
+        ^v
+    ]
+
+    printOn: aStream [
+        aStream nextPutAll: 'an ExternalMemory('.
+        aStream nextPutAll: size printString.
+        aStream nextPutAll: ' bytes @ '.
+        aStream nextPutAll: address printString.
+        aStream nextPutAll: ')'
+    ]
+]
+
+"A UTF-16LE buffer holding a copy of a Smalltalk String, null-terminated, ready
+ to pass as LPCWSTR.
+
+ Dart strings ARE UTF-16 code units (DIALECT_GAPS A9), so this is a copy, not a
+ transcoding — `asUnicodeValue` hands back the code unit directly. Characters
+ outside the BMP are already surrogate PAIRS in the source string, so copying
+ unit by unit preserves them with no special case."
+ExternalMemory subclass: Utf16Buffer [
+    Utf16Buffer class >> fromString: aString [
+        | n buf cu |
+        n := aString size.
+        buf := self new: (n + 1) * 2.
+        1 to: n do: [ :i |
+            cu := (aString at: i) asUnicodeValue.
+            buf byteAt: (i - 1) * 2 + 1 put: (cu bitAnd: 255).
+            buf byteAt: (i - 1) * 2 + 2 put: ((cu bitShift: -8) bitAnd: 255) ].
+        buf byteAt: n * 2 + 1 put: 0.
+        buf byteAt: n * 2 + 2 put: 0.
+        ^buf
+    ]
+
+    "Read back a null-terminated UTF-16 string — the out-direction of the same
+     marshalling (GetWindowTextW and friends fill a buffer we supplied)."
+    asString [
+        | ws i cu done |
+        ws := WriteStream on: String new.
+        i := 0. done := false.
+        [ done or: [ i * 2 + 2 > size ] ] whileFalse: [
+            cu := (self byteAt: i * 2 + 1) bitOr: ((self byteAt: i * 2 + 2) bitShift: 8).
+            cu = 0 ifTrue: [ done := true ]
+                   ifFalse: [ ws nextPut: (Character value: cu). i := i + 1 ] ].
+        ^ws contents
+    ]
+]
