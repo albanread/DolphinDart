@@ -62,15 +62,51 @@ Object subclass: UiSession [
     ]
 
     "── message routing ─────────────────────────────────────────────────
-     The door hands us (channel, payload). Channel 1 = paint, 2 = command,
-     3 = destroy — the kinds win_mvp.cpp reflects."
-    UiSession class >> wndProc: channel arg: arg [
+     The door hands us (kind, a, b, c). Kinds 1..3 are the named reflections
+     (paint/command/destroy) and use `a` alone; kind 5 is a REFLECTED WINDOWS
+     MESSAGE and uses all three — (msg, wParam, lParam) — which is why the
+     funnel carries four arguments since DD9.
+
+     ANSWERING NIL MEANS 'NOT HANDLED', and the door then calls DefWindowProcW.
+     Answering 0 is a different statement: it is an ordinary LRESULT, and for
+     WM_NCHITTEST it means HTNOWHERE. Collapsing the two would make the door
+     swallow every message it was asked to reflect."
+    UiSession class >> wndProc: kind a: a b: b c: c [
         MessageCount := (MessageCount ifNil: [ 0 ]) + 1.
-        channel = 1 ifTrue: [ ^self dispatch: #onPaint: arg: arg ].
-        channel = 2 ifTrue: [ ^self dispatch: #onCommand: arg: arg ].
-        channel = 3 ifTrue: [ ^self dispatch: #onDestroy: arg: arg ].
+        kind = 1 ifTrue: [ ^self dispatch: #onPaint: arg: a ].
+        kind = 2 ifTrue: [ ^self dispatch: #onCommand: arg: a ].
+        kind = 3 ifTrue: [ ^self dispatch: #onDestroy: arg: a ].
+        kind = 5 ifTrue: [ ^self dispatchMessage: a wParam: b lParam: c ].
         ^0
     ]
+
+    "The old two-argument entry, kept because it is what the DD7 spike suite
+     drives and those tortures are the door's own regression."
+    UiSession class >> wndProc: kind arg: arg [
+        ^self wndProc: kind a: arg b: 0 c: 0
+    ]
+
+    "A reflected Windows message. The view answers nil for anything it does not
+     handle, and that nil rides all the way back out to DefWindowProcW."
+    UiSession class >> dispatchMessage: msg wParam: wp lParam: lp [
+        | view |
+        view := LastWindow.
+        view isNil ifTrue: [ ^nil ].
+        (view respondsTo: #onMessage:wParam:lParam:) ifFalse: [ ^nil ].
+        ^[ view onMessage: msg wParam: wp lParam: lp ]
+            on: Error
+            do: [ :e | self noteHandlerError: e. nil ]
+    ]
+
+    "The set of messages the door reflects. Dolphin's `buildMessageMap` is
+     exactly this list; until the View wave drives it, a caller passes the ids
+     it wants. Answers the number the door ACCEPTED, which a caller should
+     compare against what it sent — a half-installed message map looks exactly
+     like handlers that never fire."
+    UiSession class >> routeMessages: anArray [
+        ^Win32 mvpSetRoutedMessages: anArray asArray
+    ]
+    UiSession class >> routedMessageCount [ ^Win32 mvpRoutedMessageCount ]
 
     "Route to the current view, protecting the send HERE — inside the entry —
      because the door contains raises rather than propagating them outward."

@@ -75,6 +75,7 @@ bool g_top_registered = false;
 // The switch is the honest way to do the comparison: same window, same
 // messages, same process, one flag apart.
 const int kKindStorm = 4;      // a storm message reflected, when routing is on
+const int kKindWinMsg = 5;     // a reflected Windows message: (msg, wParam, lParam)
 
 // Census slots. Indexed by kStormMsgs order; the last slot is everything else.
 enum {
@@ -104,6 +105,32 @@ int StormSlot(UINT msg) {
   return kStormOther;
 }
 
+// --- the routed-message set (DD9) -------------------------------------------
+//
+// Which messages the image wants reflected. Supplied by the image (Dolphin's
+// buildMessageMap is exactly this list) and empty by default, so a door with
+// nobody listening behaves as it always has.
+//
+// A flat BITMAP over the low message ids rather than a set: the lookup is on
+// EVERY message that reaches the default branch, so it must be a load and a
+// mask, not a search. Windows' own messages all sit below WM_USER (0x400);
+// anything above falls back to a small linear scan of the registered ids,
+// which is where the handful of WM_APP/registered messages live.
+const int kRoutedBitmapBits = 0x400;
+uint32_t g_routed_bitmap[kRoutedBitmapBits / 32] = {0};
+UINT g_routed_high[64] = {0};
+int g_routed_high_count = 0;
+
+inline bool IsRoutedMessage(UINT msg) {
+  if (msg < kRoutedBitmapBits) {
+    return (g_routed_bitmap[msg >> 5] & (1u << (msg & 31))) != 0;
+  }
+  for (int i = 0; i < g_routed_high_count; i++) {
+    if (g_routed_high[i] == msg) return true;
+  }
+  return false;
+}
+
 LRESULT CALLBACK MvpWndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
   if (msg != kMvpCall || g_mvp_dispatch == nullptr) {
     return DefWindowProcW(hwnd, msg, wp, lp);
@@ -118,8 +145,10 @@ LRESULT CALLBACK MvpWndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
     // precisely so the two cannot collide: routing on the payload made a
     // depth-3 recursion probe look like a WM_DESTROY.
     Dart_Handle fn = Dart_HandleFromPersistent(g_mvp_dispatch);
-    Dart_Handle a[2] = { Dart_NewInteger(kKindMessage), Dart_NewInteger((int64_t)wp) };
-    Dart_Handle r = Dart_InvokeClosure(fn, 2, a);
+    Dart_Handle a[4] = { Dart_NewInteger(kKindMessage),
+                         Dart_NewInteger((int64_t)wp), Dart_NewInteger(0),
+                         Dart_NewInteger(0) };
+    Dart_Handle r = Dart_InvokeClosure(fn, 4, a);
     if (Dart_IsError(r)) {
       // CONTAINMENT. A raise inside the image must not escape into the OS: the
       // pump has to keep pumping, and Win32 has no notion of a Smalltalk
@@ -141,8 +170,22 @@ LRESULT CALLBACK MvpWndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
   return (LRESULT)result;
 }
 
-// Call the image funnel. Returns false when the image raised (contained here).
-bool CallImage(int64_t wp, int64_t lp, int64_t* out) {
+// Call the image funnel: (kind, a, b, c).
+//
+// FOUR arguments, not two (DD9). paint/command/destroy each carry one payload
+// and fitted the old shape, but a REFLECTED WINDOWS MESSAGE carries three —
+// msg, wParam, lParam — and Dolphin's `buildMessageMap` dispatch needs all of
+// them. Widening here rather than packing them into one integer keeps the
+// channel and its payload separate, which is the same discipline that stopped
+// a depth-3 recursion probe reading as a WM_DESTROY.
+//
+// Answers false when the image raised (contained here) — the caller then takes
+// its default. `*handled` distinguishes "the image answered nothing" (Dart
+// null, i.e. this message is not in its map) from "the image answered 0",
+// which is a perfectly ordinary LRESULT.
+bool CallImage(int64_t kind, int64_t a0, int64_t b0, int64_t c0, int64_t* out,
+               bool* handled) {
+  if (handled != nullptr) *handled = false;
   if (g_mvp_dispatch == nullptr) return false;
   bool ok = true;
   g_depth++;
@@ -150,13 +193,15 @@ bool CallImage(int64_t wp, int64_t lp, int64_t* out) {
   Dart_EnterScope();
   {
     Dart_Handle fn = Dart_HandleFromPersistent(g_mvp_dispatch);
-    Dart_Handle a[2] = { Dart_NewInteger(wp), Dart_NewInteger(lp) };
-    Dart_Handle r = Dart_InvokeClosure(fn, 2, a);
+    Dart_Handle a[4] = { Dart_NewInteger(kind), Dart_NewInteger(a0),
+                         Dart_NewInteger(b0), Dart_NewInteger(c0) };
+    Dart_Handle r = Dart_InvokeClosure(fn, 4, a);
     if (Dart_IsError(r)) {
       g_contained++;
       ok = false;
-    } else if (out != nullptr && Dart_IsInteger(r)) {
-      Dart_IntegerToInt64(r, out);
+    } else if (Dart_IsInteger(r)) {
+      if (handled != nullptr) *handled = true;
+      if (out != nullptr) Dart_IntegerToInt64(r, out);
     }
   }
   Dart_ExitScope();
@@ -177,7 +222,10 @@ LRESULT CALLBACK MvpTopWndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
       PAINTSTRUCT ps;
       HDC hdc = BeginPaint(hwnd, &ps);
       bool ok = false;
-      if (live) ok = CallImage(kKindPaint, (int64_t)(intptr_t)hdc, nullptr);
+      if (live) {
+        ok = CallImage(kKindPaint, (int64_t)(intptr_t)hdc, 0, 0,
+                       nullptr, nullptr);
+      }
       if (!ok) {
         // THE BACKSTOP (prior-art G-b). If the image raised, the update region
         // is still invalid, so Windows re-posts WM_PAINT immediately and the
@@ -192,10 +240,11 @@ LRESULT CALLBACK MvpTopWndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
     }
     case WM_COMMAND:
       // A child control notifying its parent: the control id is LOWORD(wp).
-      if (live) CallImage(kKindCommand, (int64_t)LOWORD(wp), nullptr);
+      if (live) CallImage(kKindCommand, (int64_t)LOWORD(wp), 0, 0, nullptr,
+                          nullptr);
       return 0;
     case WM_DESTROY:
-      if (live) CallImage(kKindDestroy, 0, nullptr);
+      if (live) CallImage(kKindDestroy, 0, 0, 0, nullptr, nullptr);
       return 0;
     default: {
       // The storm census (DD9). Counting is two loads and a store — cheap
@@ -205,8 +254,30 @@ LRESULT CALLBACK MvpTopWndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
       const int slot = StormSlot(msg);
       g_storm_counts[slot]++;
       g_storm_total++;
+      // THE ROUTED SET (DD9). Dolphin's `View class >> buildMessageMap` is an
+      // explicit per-class list of the messages it wants; the image hands that
+      // list here once and everything outside it goes straight to
+      // DefWindowProcW. The storm measurement is what makes this the design
+      // and not a preference: a routed message costs ~26 microseconds, so the
+      // only lever is the message COUNT, and the corpus supplies the minimal
+      // count for free.
+      //
+      // The image answering NOTHING (Dart null) means "not in my map after
+      // all" and falls through to DefWindowProcW — distinct from answering 0,
+      // which is an ordinary LRESULT that many messages return.
+      if (live && IsRoutedMessage(msg)) {
+        int64_t out = 0;
+        bool handled = false;
+        if (CallImage(kKindWinMsg, (int64_t)msg, (int64_t)wp, (int64_t)lp,
+                      &out, &handled) &&
+            handled) {
+          return (LRESULT)out;
+        }
+        return DefWindowProcW(hwnd, msg, wp, lp);
+      }
       if (g_storm_route && live && slot != kStormOther) {
-        CallImage(kKindStorm, (int64_t)msg, nullptr);
+        CallImage(kKindStorm, (int64_t)msg, (int64_t)wp, (int64_t)lp,
+                  nullptr, nullptr);
       }
       return DefWindowProcW(hwnd, msg, wp, lp);
     }
@@ -388,6 +459,64 @@ void ST_mvpStormCounts(Dart_NativeArguments args) {
   }
   Dart_ListSetAt(list, kStormSlots, Dart_NewInteger(g_storm_total));
   Dart_SetReturnValue(args, list);
+}
+
+// Replace the routed-message set with the given list of message ids. Answers
+// how many were accepted — the caller can compare against what it sent, since
+// silently dropping half a message map would look exactly like a view whose
+// handlers never fire.
+void ST_mvpSetRoutedMessages(Dart_NativeArguments args) {
+  for (size_t i = 0; i < sizeof(g_routed_bitmap) / sizeof(g_routed_bitmap[0]);
+       i++) {
+    g_routed_bitmap[i] = 0;
+  }
+  g_routed_high_count = 0;
+  Dart_Handle list = Dart_GetNativeArgument(args, 0);
+  intptr_t n = 0;
+  int64_t accepted = 0;
+  if (!Dart_IsError(Dart_ListLength(list, &n))) {
+    for (intptr_t i = 0; i < n; i++) {
+      Dart_Handle e = Dart_ListGetAt(list, i);
+      int64_t v = 0;
+      if (Dart_IsError(e) || !Dart_IsInteger(e)) continue;
+      if (Dart_IsError(Dart_IntegerToInt64(e, &v))) continue;
+      if (v < 0) continue;
+      const UINT msg = (UINT)v;
+      if (msg < kRoutedBitmapBits) {
+        g_routed_bitmap[msg >> 5] |= (1u << (msg & 31));
+        accepted++;
+      } else if (g_routed_high_count <
+                 (int)(sizeof(g_routed_high) / sizeof(g_routed_high[0]))) {
+        g_routed_high[g_routed_high_count++] = msg;
+        accepted++;
+      }
+    }
+  }
+  Dart_SetReturnValue(args, Dart_NewInteger(accepted));
+}
+
+// Send an ARBITRARY message and answer its LRESULT. `ST_mvpSend` is hardwired
+// to the door's private kMvpCall; this is how a probe can check that a routed
+// message's return value really comes back out through the WndProc — which is
+// the difference between "the handler ran" and "the handler's answer is what
+// Windows saw".
+void ST_mvpSendMsg(Dart_NativeArguments args) {
+  HWND h = (HWND)(intptr_t)ArgInt(args, 0);
+  UINT msg = (UINT)ArgInt(args, 1);
+  WPARAM wp = (WPARAM)ArgInt(args, 2);
+  LPARAM lp = (LPARAM)ArgInt(args, 3);
+  Dart_SetReturnValue(
+      args, Dart_NewInteger((int64_t)SendMessageW(h, msg, wp, lp)));
+}
+
+void ST_mvpRoutedMessageCount(Dart_NativeArguments args) {
+  int64_t n = g_routed_high_count;
+  for (size_t i = 0; i < sizeof(g_routed_bitmap) / sizeof(g_routed_bitmap[0]);
+       i++) {
+    uint32_t w = g_routed_bitmap[i];
+    while (w) { n += (w & 1); w >>= 1; }
+  }
+  Dart_SetReturnValue(args, Dart_NewInteger(n));
 }
 
 void ST_mvpResetStormCounts(Dart_NativeArguments args) {

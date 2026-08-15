@@ -327,18 +327,40 @@ design conclusion rather than a preference: the routed cost is fixed and known,
 so the lever is the message COUNT, and the corpus hands us the minimal count
 for free.
 
-Two mechanical prerequisites, neither started:
+Both mechanical prerequisites are now **DONE** — gate `test/st_routed.dart`.
 
-1. **A wider funnel.** `_mvpToSmalltalk(wp, lp)` carries a kind and one
-   payload; a reflected Windows message needs `(msg, wParam, lParam)`. The
-   funnel goes to four arguments — `(kind, a, b, c)` — with paint/command/
-   destroy filling `(kind, payload, 0, 0)`. `UiSession wndProc:arg:` gains the
-   four-argument form, and the DD7 spike classes must keep working against the
-   raw door since they are the door's own regression.
-2. **A routed-message set in the door**, replacing the hardcoded
-   paint/command/destroy switch plus the DD9 storm list. WM_PAINT keeps its
-   named case regardless: it owns the `BeginPaint`/`EndPaint` pair and the
-   `ValidateRect` backstop, which is structure, not routing policy.
+1. **The funnel carries four arguments.** `_mvpToSmalltalk(kind, a, b, c)`;
+   paint/command/destroy fill `(kind, payload, 0, 0)`, a reflected Windows
+   message fills `(5, msg, wParam, lParam)`. `UiSession` gains
+   `wndProc:a:b:c:`, and the two-argument `wndProc:arg:` stays as a forwarder
+   because the DD7 spike suite drives it and those tortures are the door's own
+   regression.
+
+2. **A routed-message set in the door.** `Win32 mvpSetRoutedMessages:` takes
+   the ids; everything outside the set goes straight to DefWindowProcW. It is
+   a flat BITMAP over ids below WM_USER with a short linear tail above,
+   because the lookup runs on every message that reaches the default branch —
+   it must be a load and a mask, not a search. WM_PAINT keeps its named case:
+   it owns the `BeginPaint`/`EndPaint` pair and the `ValidateRect` backstop,
+   which is structure, not routing policy.
+
+   `mvpSetRoutedMessages:` answers how many ids it ACCEPTED so a caller can
+   compare against what it sent — silently dropping half a message map looks
+   exactly like handlers that never fire.
+
+**NIL MEANS NOT HANDLED**, and it is the distinction the whole mechanism turns
+on. A view answering nil falls through to DefWindowProcW; answering 0 is an
+ordinary LRESULT, and for WM_NCHITTEST it means HTNOWHERE. Collapse the two
+and a view can never decline a message it asked to receive. The gate asserts
+it by comparing a declined send against an UNROUTED send of the same message,
+rather than against a constant — DefWindowProcW's answer depends on its
+arguments, so a hardcoded expectation would test the probe's coordinates
+instead of the door. (The first version did exactly that and failed:
+WM_NCHITTEST at screen point (0,0) is outside the window and correctly answers
+HTNOWHERE, which is 0.)
+
+What remains for the acceptance shell is now Smalltalk-side: drive the set
+from a translated `buildMessageMap`, and give `UI.View` a real window.
 
 ## Carried
 

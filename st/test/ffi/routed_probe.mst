@@ -1,0 +1,37 @@
+"routed_probe.mst — the routed-message set (DolphinDart DD9).
+
+ The door reflects only the messages the image asks for, and Dolphin's
+ `View class >> buildMessageMap` is exactly that list. This probe stands in for
+ a translated view: it records what it was handed and answers a distinctive
+ LRESULT, so the gate can check three separate things that a paint-style count
+ cannot distinguish.
+
+   1. The wider funnel really carries (msg, wParam, lParam). Two of those are
+      new in DD9; a funnel that dropped them would still call the handler.
+   2. A handler's ANSWER comes back out through the WndProc as the LRESULT.
+   3. Answering NIL means 'not handled' and falls through to DefWindowProcW —
+      which is a different statement from answering 0. WM_NCHITTEST returning 0
+      means HTNOWHERE; if nil and 0 were the same value, a view could never
+      decline a message it had been asked to receive without also claiming it."
+UiWindow subclass: RoutedProbe [
+    | seen lastMsg lastW lastL claim |
+
+    "A value no Windows message would return by coincidence."
+    RoutedProbe class >> claimValue [ ^12345 ]
+
+    initWindow [
+        super initWindow. seen := 0. claim := true.
+        lastMsg := lastW := lastL := nil
+    ]
+    seen [ ^seen ]
+    lastMsg [ ^lastMsg ]
+    lastW [ ^lastW ]
+    lastL [ ^lastL ]
+    claim: aBoolean [ claim := aBoolean ]
+
+    onMessage: msg wParam: wp lParam: lp [
+        seen := seen + 1.
+        lastMsg := msg. lastW := wp. lastL := lp.
+        ^claim ifTrue: [ RoutedProbe claimValue ] ifFalse: [ nil ]
+    ]
+]

@@ -1340,6 +1340,16 @@ stMvpIsWindow(int h) native "ST_mvpIsWindow";
 /// `stMvpStormCounts()` -> [mouseMove, ncHitTest, setCursor, size, moving,
 /// eraseBkgnd, other, total].
 stMvpStormCounts() native "ST_mvpStormCounts";
+/// The routed-message set: which Windows messages the door reflects into
+/// the image. Dolphin's `buildMessageMap` is exactly this list. Answers how
+/// many ids were ACCEPTED, so a caller can compare against what it sent —
+/// silently dropping half a message map looks just like handlers that never
+/// fire.
+stMvpSetRoutedMessages(List msgs) native "ST_mvpSetRoutedMessages";
+stMvpRoutedMessageCount() native "ST_mvpRoutedMessageCount";
+/// Send an arbitrary message and answer its LRESULT — how a probe checks that
+/// a routed handler's answer is what Windows actually saw.
+stMvpSendMsg(int h, int msg, int wp, int lp) native "ST_mvpSendMsg";
 stMvpResetStormCounts() native "ST_mvpResetStormCounts";
 stMvpSetStormRouting(bool on) native "ST_mvpSetStormRouting";
 /// Send `msg` to `h` `n` times; answers the elapsed NANOSECONDS. Timed in
@@ -1349,7 +1359,7 @@ stMvpStormBurst(int h, int msg, int n) native "ST_mvpStormBurst";
 /// Route a door message to the image. `UiSession` is the Smalltalk entry point
 /// (DD8 owns it); until then the spike class answers. A miss must not take the
 /// pump down, so the send is a TRY and a null answer becomes 0.
-_mvpToSmalltalk(int wp, int lp) {
+_mvpToSmalltalk(int kind, int a, int b, int c) {
   // kind 0 is the re-entry spike's own recursion probe; 1..3 are the visible
   // window's reflected messages (paint/command/destroy). Two receivers, one
   // funnel — DD8's UiSession replaces both.
@@ -1362,26 +1372,32 @@ _mvpToSmalltalk(int wp, int lp) {
   // is the spike's recursion probe and has no UiSession meaning, and a window
   // message finds MvpWindow only when no UiSession is loaded.
   var box;
-  if (wp == 0) {
+  if (kind == 0) {
     _doorMvpDoor ??= stClassNamed('MvpDoor');
     if (_doorMvpDoor != null) {
-      box = _stClassSendTry(_doorMvpDoor, 'wndProc_with_', [lp, 0]);
+      box = _stClassSendTry(_doorMvpDoor, 'wndProc_with_', [a, 0]);
     }
   } else {
     _doorUiSession ??= stClassNamed('UiSession');
     if (_doorUiSession != null) {
-      box = _stClassSendTry(_doorUiSession, 'wndProc_arg_', [wp, lp]);
+      box = _stClassSendTry(_doorUiSession, 'wndProc_a_b_c_', [kind, a, b, c]);
     }
+    // The DD7 spike classes remain the door's own regression, and they predate
+    // the wider funnel — they still see (kind, payload).
     if (box == null) {
       _doorMvpWindow ??= stClassNamed('MvpWindow');
       if (_doorMvpWindow != null) {
-        box = _stClassSendTry(_doorMvpWindow, 'onKind_arg_', [wp, lp]);
+        box = _stClassSendTry(_doorMvpWindow, 'onKind_arg_', [kind, a]);
       }
     }
   }
-  if (box == null) return 0;
+  // NULL means "not handled" and the door falls through to DefWindowProcW.
+  // Answering 0 is a different thing entirely: it is an ordinary LRESULT, and
+  // for WM_NCHITTEST it means HTNOWHERE. Collapsing the two is how a door
+  // swallows every message it was asked to reflect.
+  if (box == null) return null;
   var v = box[0];
-  return v is int ? v : 0;
+  return v is int ? v : null;
 }
 
 /// The door's receivers, resolved ONCE.

@@ -108,6 +108,11 @@ Object subclass: Win32 [
     Win32 class >> mvpBumpGeneration [ <stprim: stMvpBumpGeneration> ]
     Win32 class >> mvpPaintFaults [ <stprim: stMvpPaintFaults> ]
     Win32 class >> mvpIsWindow: h [ <stprim: stMvpIsWindow> ]
+    "The routed-message set (DD9): which Windows messages the door reflects
+     into the image. Dolphin's `buildMessageMap` is exactly this list."
+    Win32 class >> mvpSetRoutedMessages: msgs [ <stprim: stMvpSetRoutedMessages> ]
+    Win32 class >> mvpRoutedMessageCount [ <stprim: stMvpRoutedMessageCount> ]
+    Win32 class >> mvpSendMsg: h msg: m wparam: w lparam: l [ <stprim: stMvpSendMsg> ]
 ]
 
 "── The system object (corpus surface: Smalltalk millisecondClock) ──"
