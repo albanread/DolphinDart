@@ -1296,6 +1296,19 @@ stFfiCall(List args, String desc) native "ST_ffiCall";
 /// GetLastError as captured immediately after the most recent FFI call on this
 /// thread (DolphinDart DD6). Meaningful only when the call's own return value
 /// reports failure — Win32 does not clear it on success.
+/// IDENTITY HASH (DolphinDart DD8). `Object>>identityHash` was written as a
+/// bare `<primitive: 20>`, and a numbered primitive is not dispatch in this
+/// front-end — the body compiled to `^self`, so `Object new identityHash`
+/// answered the object. Every identity collection indexes with
+/// `key identityHash bitAnd: cap - 1` (st/world/29_identity_collections.mst),
+/// so a plain object as a key raised "does not understand &".
+///
+/// dart:core's `identityHashCode` is exactly the right primitive and needs no
+/// C++ native. Deliberately NOT `^self hash`: String and Integer hash BY VALUE,
+/// which would conflate identity with equality precisely where the distinction
+/// is the point. SmallInteger keeps its own `^self` override.
+stIdentityHash(o) => identityHashCode(o);
+
 stWinLastError() native "ST_winLastError";
 
 /// Address of `name` via the floor's own resolver, 0 if absent (DD6b harness).

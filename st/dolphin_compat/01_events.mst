@@ -39,17 +39,22 @@ Object subclass: EventHandler [
 
     "Argument merge, from the left: the handler's own argument precedes the
      trigger's."
-    valueWithArguments: triggerArgs [
-        | args |
+    "NOT `valueWithArguments:` — that is BlockClosure's selector and the IL
+     builder rewrites it at the call site, so a method of that name here is
+     never reached (third instance of this trap after `asString` and `at:put:`;
+     see docs/HOUSE_PRIMS.md)."
+    evaluateWith: triggerArgs [
+        | args want |
         args := hasUserArg
             ifTrue: [ (Array with: userArg) , triggerArgs ]
             ifFalse: [ triggerArgs ].
         "Trim to the selector's own arity: a handler may be registered for an
-         event that carries more arguments than it wants, which Dolphin allows."
+         event carrying more arguments than it wants, which Dolphin allows.
+         Arity is counted from the COLONS, not from `numArgs` — a selector
+         reaches here as a String, and String has no numArgs (measured)."
+        want := selector occurrencesOf: $:.
         ^receiver perform: selector withArguments:
-            (args size > selector numArgs
-                ifTrue: [ args first: selector numArgs ]
-                ifFalse: [ args ])
+            (args size > want ifTrue: [ args first: want ] ifFalse: [ args ])
     ]
 ]
 
@@ -60,27 +65,42 @@ Object subclass: EventsCollection [
     initEvents [ table := Dictionary new ]
 
     "Rule 2: keyed by receiver, so re-registering REPLACES."
-    at: anEventSymbol add: aHandler [
-        | handlers idx |
+    forEvent: anEventSymbol add: aHandler [
+        | handlers idx fresh |
         handlers := table at: anEventSymbol ifAbsent: [ nil ].
-        handlers isNil ifTrue: [ handlers := OrderedCollection new.
-                                 table at: anEventSymbol put: handlers ].
-        idx := nil.
+        handlers isNil ifTrue: [
+            "Build the bucket in a TEMP and store it populated. Storing an empty
+             OrderedCollection and then sending add: to the re-fetched one died
+             with `_Type has no instance method at_put_` — the collection's
+             internals are not ready by that route. Measured, not theorised."
+            fresh := OrderedCollection new.
+            fresh add: aHandler.
+            table at: anEventSymbol put: fresh.
+            ^aHandler ].
+        idx := 0.
         1 to: handlers size do: [ :i |
             ((handlers at: i) receiver == aHandler receiver) ifTrue: [ idx := i ] ].
-        idx isNil ifTrue: [ handlers add: aHandler ] ifFalse: [ handlers at: idx put: aHandler ].
+        idx = 0
+            ifTrue: [ handlers add: aHandler ]
+            ifFalse: [ handlers at: idx put: aHandler ].
         ^aHandler
     ]
 
-    "Rules 1 and 4: answer the LAST handler's value, over a SNAPSHOT of the
-     handlers taken before the first one runs."
-    trigger: anEventSymbol withArguments: args [
-        | handlers snapshot last |
+    "Rules 1 and 4: answer the LAST handler's value, over the handler list as
+     it stood when the trigger began.
+
+     Dolphin does not COPY for this — `1 to: receivers basicSize do:` reads the
+     size once and indexes the live array, which is what makes an add-during-
+     trigger invisible to that trigger. Matching that exactly is both faithful
+     and cheaper; an earlier draft snapshotted with `copyFrom:to:` and died in
+     the collection's own internals (`_Type has no instance method at_put_`)."
+    triggerEvent: anEventSymbol withArguments: args [
+        | handlers n last |
         handlers := table at: anEventSymbol ifAbsent: [ nil ].
         handlers isNil ifTrue: [ ^nil ].
-        snapshot := handlers copyFrom: 1 to: handlers size.
+        n := handlers size.
         last := nil.
-        snapshot do: [ :h | last := h valueWithArguments: args ].
+        1 to: n do: [ :i | last := (handlers at: i) evaluateWith: args ].
         ^last
     ]
 
@@ -101,17 +121,17 @@ Object subclass: EventsCollection [
 nil subclass: Object [
     events [
         | e |
-        e := EventRegistry at: self.
-        ^e isNil ifTrue: [ EventRegistry at: self put: EventsCollection new ] ifFalse: [ e ]
+        e := EventRegistry eventsFor: self.
+        ^e isNil ifTrue: [ EventRegistry eventsFor: self put: EventsCollection new ] ifFalse: [ e ]
     ]
-    hasEvents [ ^(EventRegistry at: self) notNil ]
+    hasEvents [ ^(EventRegistry eventsFor: self) notNil ]
 
     when: anEventSymbol send: aSelector to: anObject [
-        ^self events at: anEventSymbol
+        ^self events forEvent: anEventSymbol
             add: (EventHandler receiver: anObject selector: aSelector)
     ]
     when: anEventSymbol send: aSelector to: anObject with: anArg [
-        ^self events at: anEventSymbol
+        ^self events forEvent: anEventSymbol
             add: (EventHandler receiver: anObject selector: aSelector with: anArg)
     ]
 
@@ -122,25 +142,32 @@ nil subclass: Object [
         ^self trigger: anEventSymbol withArguments: (Array with: a with: b) ]
     trigger: anEventSymbol withArguments: args [
         self hasEvents ifFalse: [ ^nil ].
-        ^self events trigger: anEventSymbol withArguments: args
+        ^self events triggerEvent: anEventSymbol withArguments: args
     ]
 
     removeEventsTriggeredFor: anObject [
         self hasEvents ifTrue: [ self events removeEventsTriggeredFor: anObject ]
     ]
-    removeAllEventsTriggered [ EventRegistry removeKey: self ]
+    removeAllEventsTriggered [ EventRegistry removeEventsFor: self ]
 
     "Rule 6: cleared for the block, restored under ensure: even on a raise."
     noEventsDo: aBlock [
         | saved |
-        saved := EventRegistry at: self.
-        EventRegistry removeKey: self.
+        saved := EventRegistry eventsFor: self.
+        EventRegistry removeEventsFor: self.
         ^[ aBlock value ] ensure: [
-            saved isNil ifFalse: [ EventRegistry at: self put: saved ] ]
+            saved isNil ifFalse: [ EventRegistry eventsFor: self put: saved ] ]
     ]
 ]
 
 "Registry of object -> EventsCollection.
+
+ NOTE THE SELECTOR NAMES. `at:`/`at:put:`/`removeKey:` are UNIVERSAL HELPER
+ selectors: the IL builder rewrites them at the call site, so a class-side
+ method of that name is never reached — the send lands on the class VALUE as
+ `_Type has no instance method at_put_`. Same family as the `asString` trap
+ recorded in st/prims/rt. Hence `eventsFor:` / `eventsFor:put:` /
+ `removeEventsFor:`, which nothing rewrites.
 
  Dolphin stores the collection in an instance variable on Object itself. This
  VM's Object has no such slot and adding one would touch every class, so the
@@ -155,11 +182,11 @@ Object subclass: EventRegistry [
     EventRegistry class >> table [
         Table isNil ifTrue: [ Table := IdentityDictionary new ]. ^Table
     ]
-    EventRegistry class >> at: anObject [ ^self table at: anObject ifAbsent: [ nil ] ]
-    EventRegistry class >> at: anObject put: aCollection [
+    EventRegistry class >> eventsFor: anObject [ ^self table at: anObject ifAbsent: [ nil ] ]
+    EventRegistry class >> eventsFor: anObject put: aCollection [
         self table at: anObject put: aCollection. ^aCollection
     ]
-    EventRegistry class >> removeKey: anObject [
+    EventRegistry class >> removeEventsFor: anObject [
         self table removeKey: anObject ifAbsent: [ nil ]
     ]
     EventRegistry class >> reset [ Table := IdentityDictionary new ]

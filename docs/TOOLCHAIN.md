@@ -46,6 +46,18 @@ powershell -ExecutionPolicy Bypass -File port-win\build.ps1 -Arch arm64 -WorkRoo
 emulation). `-Clean` wipes the arch's build dir first. Output and full log:
 `<workarea>\build-<arch>\{dart.exe,build.log}`.
 
+**The battery gate, from DD8 on, loads the compat layer** — `TestEvents` needs
+`st/dolphin_compat`, and the bare-world invocation aborts before it reaches its
+first assertion:
+
+```bash
+C:\projects\dolphindart-work\build-arm64\dart.exe test\st_battery.dart "st\world;st\dolphin_compat" st\test\features
+```
+
+Other standing gates: `test\st_prims.dart` (resolve-all + call-and-check),
+`test\st_marshal.dart`, `test\st_structs.dart`, `test\st_door.dart` (the
+wndproc-door tortures).
+
 Headless world boot + functional checks:
 
 ```bash

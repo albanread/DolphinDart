@@ -24,8 +24,12 @@ nil subclass: Object [
     == anObject <Object> ^ <Boolean> [
         <primitive: 22>
     ]
+    "A NAMED stprim, not `<primitive: 20>`: numbered primitives are not dispatch
+     in this front-end (docs/HOUSE_PRIMS.md), so the bare-pragma body compiled to
+     `^self` and every identity collection keyed by a plain object failed.
+     Backed by dart:core's identityHashCode."
     identityHash ^ <Integer> [
-        <primitive: 20>
+        <stprim: stIdentityHash>
     ]
     hash ^ <Integer> [
         ^self identityHash
