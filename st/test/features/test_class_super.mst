@@ -1,0 +1,116 @@
+"Feature test: CLASS-SIDE `super` (DolphinDart DD9).
+
+ Dolphin's universal constructor is
+
+     Foo class >> new [ ^super new initialize ]
+
+ and until DD9 the front-end had no path for it at all: the send fell past the
+ instance-side super check (this_var_ is nil on the class side), past the
+ class-NAME check (which excludes `super`), and reached TranslateVariable, which
+ printed `unsupported self/super here` and yielded NULL. The method still
+ compiled, so the failure surfaced later as a doesNotUnderstand on nil — never
+ at the constructor. 572 sites in the dsfork corpus depend on this.
+
+ The contract these assertions pin, in one line: RESOLUTION goes up, `self`
+ does not. A class-side super send starts its lookup above the owner, but
+ argument 0 stays the RECEIVING class — so an inherited constructor builds the
+ subclass it was sent to, not the class that wrote it."
+
+"── the Dolphin idiom: no ancestor defines class-side `new` ──────────────
+ st/world/01_object.mst declares no class side at all, so `super new` here has
+ nothing to resolve to and must mean RAW ALLOCATION of the receiving class.
+ The trap avoided: re-dispatching `new` would find THIS method again and
+ recurse until the stack ends."
+Object subclass: SupBase [
+    | tag |
+    SupBase class >> new [ ^super new setTag: #base ]
+    setTag: t [ tag := t ]
+    tag [ ^tag ]
+]
+
+"Inherits SupBase's constructor without writing one. `SupSub new` must answer a
+ SupSub — the guarded slow path, where the runtime receiving class is NOT the
+ owner's instance class."
+SupBase subclass: SupSub [ ]
+SupSub subclass: SupSubSub [ ]
+
+"A subclass that DOES write one, and chains through it."
+SupBase subclass: SupChained [
+    SupChained class >> new [ ^super new setTag: #chained ]
+]
+
+"── resolution: an ancestor DOES define the class-side selector ──────────"
+Object subclass: MakeP [
+    | who |
+    MakeP class >> make [ ^self basicNew setWho: #P ]
+    MakeP class >> make: n [ ^self basicNew setWho: n ]
+    setWho: w [ who := w ]
+    who [ ^who ]
+]
+MakeP subclass: MakeQ [
+    "`super make` reaches MakeP class >> make, whose `self basicNew` must see
+     self = the RECEIVING class (MakeQ), not the defining class (MakeP)."
+    MakeQ class >> make [ ^super make ]
+    MakeQ class >> make: n [ ^super make: n * 2 ]
+    MakeQ class >> makeBasic [ ^super basicNew ]
+]
+MakeQ subclass: MakeR [ ]
+
+STestCase subclass: TestClassSuper [
+    tests [
+        | a b c d |
+
+        "--- the unresolved case: `super new` == allocate the receiver -------"
+        a := SupBase new.
+        self assert: (a isKindOf: SupBase) label: 'super new allocates at all'.
+        self check: a class name is: 'SupBase'
+             label: 'super new answers the class it was sent to'.
+        self check: a tag is: #base
+             label: 'the constructor kept running after super new'.
+
+        "The inherited constructor: SupSub writes none, so SupBase class >> new
+         runs with self = SupSub. Before DD9 this was the null."
+        b := SupSub new.
+        self check: b class name is: 'SupSub'
+             label: 'an INHERITED super new builds the subclass, not the owner'.
+        self assert: (b isKindOf: SupBase) label: 'and it is still a SupBase'.
+        self check: b tag is: #base label: 'inherited constructor still ran'.
+
+        "Two levels down — the slow path is not special-cased to one hop."
+        c := SupSubSub new.
+        self check: c class name is: 'SupSubSub'
+             label: 'two levels of inheritance still build the receiver'.
+
+        "A subclass with its own constructor chains INTO the inherited one:
+         SupChained new -> super new -> SupBase class >> new -> super new ->
+         allocate. Both bodies run, in order, and the later tag wins."
+        d := SupChained new.
+        self check: d class name is: 'SupChained'
+             label: 'a chained constructor still builds the receiver'.
+        self check: d tag is: #chained
+             label: 'both constructor bodies ran, subclass last'.
+
+        "--- the resolved case: super finds an ancestor class method ---------"
+        self check: MakeQ make class name is: 'MakeQ'
+             label: 'super make resolves UP but self stays the receiver'.
+        self check: MakeQ make who is: #P
+             label: 'and the ancestor body is the one that ran'.
+        self check: MakeR make class name is: 'MakeR'
+             label: 'through two levels of class-side inheritance'.
+
+        "Arguments are evaluated and passed."
+        self check: (MakeQ make: 21) who is: 42
+             label: 'a class-side super send passes its argument'.
+
+        "super basicNew, unresolved, is the same raw allocation as super new."
+        self check: MakeQ makeBasic class name is: 'MakeQ'
+             label: 'super basicNew allocates the receiver too'.
+
+        "--- the recursion trap ---------------------------------------------
+         If `super new` re-dispatched `new` instead of allocating, every call
+         above would have blown the stack rather than answered. Reaching here
+         at all is the assertion; this one states it out loud."
+        self check: ((1 to: 5) inject: 0 into: [ :acc :i | acc + SupSub new tag size ])
+             is: 20 label: 'repeated construction terminates (no super-new recursion)'
+    ]
+]

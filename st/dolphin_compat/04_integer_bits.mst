@@ -1,0 +1,41 @@
+"04_integer_bits.mst — Dolphin's Integer BIT-MASK protocol (DolphinDart DD9).
+
+ Every Windows flag word in the corpus is read and written through these seven
+ selectors, and the world had none of them. Corpus counts (dsfork, all `.cls`):
+ `allMask:` 505, `mask:set:` 343, `anyMask:` 218, `bitInvert` 71,
+ `maskSet:` 67, `maskClear:` 66, `noMask:` 63 — a little over 1,300 sends.
+
+ Found by instantiating a translated view: `View>>initialize` ends at
+ `self isManaged: true`, which is `flags := flags mask: ManagedMask set: true`,
+ and it answered `Class 'int' has no instance method 'mask_set_'`.
+
+ Each body is Dolphin's own, from Core.Integer.cls — these are one-liners whose
+ exact bit semantics matter, so they are transcribed rather than reinvented.
+ The two divergences are deliberate and equivalent on integers: Dolphin writes
+ `~~ 0` / `== 0` (identity) where this file writes `~= 0` / `= 0`, because a
+ SmallInteger comparison is a value comparison in both dialects and `=` is what
+ this world defines on Integer.
+
+ `bitAnd:` / `bitOr:` are not defined here: the front-end already maps them to
+ Dart's `&` and `|` (DartSelector). `bitInvert` had no mapping and no method,
+ so `maskClear:` would have failed on it."
+Number subclass: Integer [
+    "^-1 - self — two's complement, and correct for LargeIntegers too, which a
+     fixed-width `~` would not be."
+    bitInvert [ ^-1 - self ]
+
+    allMask: mask [ ^(self bitAnd: mask) = mask ]
+    anyMask: mask [ ^(self bitAnd: mask) ~= 0 ]
+    noMask: mask [ ^(self bitAnd: mask) = 0 ]
+
+    maskSet: anInteger [ ^self bitOr: anInteger ]
+    maskClear: anInteger [ ^self bitAnd: anInteger bitInvert ]
+
+    "The workhorse: 343 sites. Answers a NEW integer — Dolphin's flag words are
+     values, and every caller assigns the result back."
+    mask: integerMask set: aBoolean [
+        ^aBoolean
+            ifTrue: [ self bitOr: integerMask ]
+            ifFalse: [ self bitAnd: integerMask bitInvert ]
+    ]
+]

@@ -89,7 +89,7 @@ ContainerView subclass: ShellView [
     ]
     close [
         "Asks the receiver to close itself, answering whether it is closed."
-        self sendMessage: WM_CLOSE wParam: 0 lParam: 0.
+        self sendMessage: 16 wParam: 0 lParam: 0.
         	^self isOpen not
     ]
     combinedAcceleratorTable [
@@ -158,16 +158,16 @@ ContainerView subclass: ShellView [
         ^UseDefaultGeometry
     ]
     defaultShowStyle [
-        	^self isMaximized ifTrue: [SW_SHOWMAXIMIZED] ifFalse: [SW_SHOWNORMAL]
+        	^self isMaximized ifTrue: [3] ifFalse: [1]
     ]
     defaultWindowStyle [
         "Private - Answer the default basic window creation style"
-        ^(WS_THICKFRAME | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX | WS_MAXIMIZEBOX)
+        ^13565952
     ]
     dialogMessageMap [
         	^(IdentityDictionary withAll: {
-        				DM_GETDEFID - WM_USER -> #dmGetDefId:wParam:lParam:.
-        				DM_SETDEFID - WM_USER -> #dmSetDefId:wParam:lParam: 
+        				1024 - 1024 -> #dmGetDefId:wParam:lParam:.
+        				1025 - 1024 -> #dmSetDefId:wParam:lParam: 
         			})
     ]
     dispatchUser: userId wParam: wParam lParam: lParam [
@@ -195,7 +195,7 @@ ContainerView subclass: ShellView [
         	of Dialogs in normal shells, we must implement this message for the benefit of IsDialogMessage()."
         | buttonId |
         	buttonId := self defaultButtonId.
-        	^buttonId notNull ifTrue: [(DC_HASDEFID bitShift: 16) bitOr: buttonId] ifFalse: [0]
+        	^buttonId notNull ifTrue: [(21323 bitShift: 16) bitOr: buttonId] ifFalse: [0]
     ]
     dmSetDefId: message wParam: wParam lParam: lParam [
         "Private - Default handler for a DM_SETDEFID message sent to request that the id of any default
@@ -247,7 +247,7 @@ ContainerView subclass: ShellView [
     ]
     flash: anInteger [
         "Flash the receiver in a manner so as to attract the user's attention, anInteger times."
-        self flash: anInteger flags: FLASHW_ALL
+        self flash: anInteger flags: 3
     ]
     flash: flashCountInteger flags: flagsInteger [
         "Flash the receiver the number of times specified by the <integer> argument, flashCountInteger,
@@ -260,8 +260,8 @@ ContainerView subclass: ShellView [
     getDefId [
         "Private - Answer the ID of any default push button in the receiver, or 0 if none."
         | lresult |
-        	lresult := self sendMessage: DM_GETDEFID.
-        	^lresult highWord = DC_HASDEFID
+        	lresult := self sendMessage: 1024.
+        	^lresult highWord = 21323
         		ifTrue: [lresult lowWord]
         		ifFalse: [0]
     ]
@@ -282,14 +282,14 @@ ContainerView subclass: ShellView [
     ]
     hasCaption [
         "Answers true if the receiver has a caption bar. i.e. it has the WS_CAPTION style"
-        ^self baseStyleAllMask: WS_CAPTION
+        ^self baseStyleAllMask: 12582912
     ]
     hasCaption: aBoolean [
         "Sets the receiver to have a caption bar if aBoolean is true. This is the WS_CAPTION style.
         	Note that removing the caption will also remove the window frame entirely if #isResizable is
         	false."
         (self 
-        		baseStyleMask: WS_CAPTION
+        		baseStyleMask: 12582912
         		set: aBoolean
         		recreateIfChanged: false) ifTrue: [self frameChanged]
     ]
@@ -301,14 +301,14 @@ ContainerView subclass: ShellView [
     ]
     hasMaximize [
         "Answers true if the receiver has a maximize button. i.e. it has the WS_MAXIMIZEBOX style"
-        ^self baseStyleAllMask: WS_MAXIMIZEBOX
+        ^self baseStyleAllMask: 65536
     ]
     hasMaximize: aBoolean [
         "Sets the receiver to have a maximize box if aBoolean is true. This is the WS_MAXIMIZEBOX
         	style. Note than on a themed XP system the button is not added/removed, just
         	enabled/disabled."
         (self 
-        		baseStyleMask: WS_MAXIMIZEBOX
+        		baseStyleMask: 65536
         		set: aBoolean
         		recreateIfChanged: false) ifTrue: [self frameChanged]
     ]
@@ -318,41 +318,41 @@ ContainerView subclass: ShellView [
     ]
     hasMinimize [
         "Answers true if the receiver has a minimize button. i.e. it has the WS_MINIMIZEBOX style"
-        ^self baseStyleAllMask: WS_MINIMIZEBOX
+        ^self baseStyleAllMask: 131072
     ]
     hasMinimize: aBoolean [
         "Sets the receiver to have a minimize box if aBoolean is true. This is the WS_MINIMIZEBOX
         	style. Note than on a themed XP system the button is not added/removed, just
         	enabled/disabled."
         (self 
-        		baseStyleMask: WS_MINIMIZEBOX
+        		baseStyleMask: 131072
         		set: aBoolean
         		recreateIfChanged: false) ifTrue: [self frameChanged]
     ]
     hasSysMenu [
         "Answers true if the receiver has a system menu, i.e. it has the WS_SYSMENU style"
-        ^self baseStyleAllMask: WS_SYSMENU
+        ^self baseStyleAllMask: 524288
     ]
     hasSysMenu: aBoolean [
         "Sets the receiver to have a system menu if aBoolean is true. This is the WS_SYSMENU style.
         	Note than removing the system menu also removes the minimize/maximize and close buttons."
         (self 
-        		baseStyleMask: WS_SYSMENU
+        		baseStyleMask: 524288
         		set: aBoolean
         		recreateIfChanged: false) ifTrue: [self frameChanged]
     ]
     hasTaskbarIcon [
-        	^self extendedStyle noMask: WS_EX_NOACTIVATE
+        	^self extendedStyle noMask: 134217728
     ]
     hasTaskbarIcon: aBoolean [
         "Set whether or not the receiver is activated and appears in the task bar on creation (i.e. it 
         	set/remove the WS_EX_NOACTIVATE style)."
-        self exStyleMask: WS_EX_NOACTIVATE set: aBoolean not
+        self exStyleMask: 134217728 set: aBoolean not
     ]
     hasVisibleStyle: aBoolean [
         "Set or clear the receiever's WS_VISIBLE style flag.
         	Answer whether the receiver's window was previously visible."
-        ^self showWithStyle: (aBoolean ifTrue: [SW_SHOWNA] ifFalse: [SW_HIDE])
+        ^self showWithStyle: (aBoolean ifTrue: [8] ifFalse: [0])
     ]
     initialize [
         "Private - Initialise the receiver. Register with SessionManager events."
@@ -362,27 +362,27 @@ ContainerView subclass: ShellView [
     invalidateUserInterface [
         "Invalidates the user interface of the receiver indicating that it needs
         	to be requeried using #validateUserInterface (usually at idle time)"
-        flags := flags bitAnd: (UIValidMask bitInvert).
+        flags := flags bitAnd: (1024 bitInvert).
         	Current inputState prod
     ]
     isInitiallyCentered [
         "Private - Answer whether the receiver should be centered within its parent when created."
-        ^flags anyMask: CreateCenteredMask
+        ^flags anyMask: 64
     ]
     isInitiallyCentered: aBoolean [
         "Set or reset whether the receiver will be centered within its parent on creation."
-        flags := flags mask: CreateCenteredMask set: aBoolean
+        flags := flags mask: 64 set: aBoolean
     ]
     isLayeredWindow [
         "Answers true if the receiver is a layered window. 
         	i.e. it has the WS_EX_LAYERED style"
-        ^self extendedStyle allMask: WS_EX_LAYERED
+        ^self extendedStyle allMask: 524288
     ]
     isLayeredWindow: aBoolean [
         "Sets the receiver to be a tool window if aBoolean is true.
         	This is the WS_EX_LAYERED style"
         self 
-        		exStyleMask: WS_EX_LAYERED
+        		exStyleMask: 524288
         		set: aBoolean
         		recreateIfChanged: false
     ]
@@ -392,11 +392,11 @@ ContainerView subclass: ShellView [
     ]
     isMinimized [
         "Answer whether the receiver is currently minimized."
-        ^flags anyMask: MinimizedMask
+        ^flags anyMask: 128
     ]
     isMinimized: aBoolean [
         "Private - Set or reset the receiver's isMinimized flag"
-        flags := flags mask: MinimizedMask set: aBoolean
+        flags := flags mask: 128 set: aBoolean
     ]
     isPersistentlyDisabled [
         "Private - Answer whether the receiver is disabled in a way that should be persisted.
@@ -424,19 +424,19 @@ ContainerView subclass: ShellView [
         "Answers true if the receiver is a tool window. A tool window has a title bar that is shorter than 
         	a normal title bar, and the window title is drawn using a smaller font. 
         	i.e. it has the WS_EX_TOOLWINDOW style"
-        ^self extendedStyle allMask: WS_EX_TOOLWINDOW
+        ^self extendedStyle allMask: 128
     ]
     isToolWindow: aBoolean [
         "Sets the receiver to be a tool window if aBoolean is true.
         	This is the WS_EX_TOOLWINDOW style"
         (self 
-        		exStyleMask: WS_EX_TOOLWINDOW
+        		exStyleMask: 128
         		set: aBoolean
         		recreateIfChanged: false) ifTrue: [self frameChanged]
     ]
     isUserInterfaceValid [
         "Answer true if the user interface of the receiver is currently valid"
-        ^flags allMask: UIValidMask.
+        ^flags allMask: 1024.
     ]
     keyboardCommands [
         "Answer a collection of <CommandDescription>s for all the commands in the receiver and its
@@ -502,7 +502,7 @@ ContainerView subclass: ShellView [
     ]
     minimize [
         "Show the receiver in a minimized state"
-        self showWithStyle: SW_MINIMIZE
+        self showWithStyle: 6
     ]
     onAboutToDisplaySystemMenu: hMenu [
         "The system menu with <integer> handle, hMenu, is about to be displayed.
@@ -547,7 +547,7 @@ ContainerView subclass: ShellView [
         	(menuBar isNil or: [(menu := menuBar menuFromHandle: aDRAWITEMSTRUCT hwndItem) isNil]) 
         		ifTrue: [^super onDrawMenuItem: aDRAWITEMSTRUCT].
         	menu onDrawItem: aDRAWITEMSTRUCT.
-        	^TRUE
+        	^1
     ]
     onGetCursor: aSymbol [
         "The named area of the window associated with the receiver has been hit.
@@ -664,7 +664,7 @@ ContainerView subclass: ShellView [
         "Private - Sets the parent of the receiver to aView. Can only be used when the receiver is not yet realized since Windows has a bug when reparenting"
         creationParent := aView.
         	creationStyles at: 1
-        		put: (self baseStyle mask: WS_CHILD set: (aView isNil or: [aView isDesktop]) not)
+        		put: (self baseStyle mask: 1073741824 set: (aView isNil or: [aView isDesktop]) not)
     ]
     performCommand: aCommand [
         "Perform the <Command> argument, assumed to have been initiated from the receiver or one of its sub-views, and answer the result. Can be overridden by subclasses that wish, for example, to add some generic undo/redo ability for all commands."
@@ -696,9 +696,9 @@ ContainerView subclass: ShellView [
         			| vKey |
         			vKey := aMSG wParam.
         			"Do not pass ESC as don't want shell to close"
-        			(vKey ~= VK_ESCAPE and: 
+        			(vKey ~= 27 and: 
         					["Do not pass VK_RETURN if no default button either"
-        					vKey ~= VK_RETURN or: [self defaultButtonId notNull]]) 
+        					vKey ~= 13 or: [self defaultButtonId notNull]]) 
         						and: [self isDialogMessage: aMSG]]]
     ]
     preTranslateMouseInput: aMSG [
@@ -743,7 +743,7 @@ ContainerView subclass: ShellView [
     resetDefaultButton [
         "Private - No default button has been explicitly specified for the receiver, so attempt
         	to reproduce the Windows behaviour, which is to fall back on IDOK if there is such a button."
-        defaultButton := IDOK.
+        defaultButton := 1.
         	self findItemHandle: defaultButton ifAbsent: [defaultButton := 0]
     ]
     resolutionScaledBy: aPoint [
@@ -792,7 +792,7 @@ ContainerView subclass: ShellView [
     ]
     setDefId: anInteger [
         "Private - Set the ID of any default push button in the receiver, or 0 if none."
-        ^self sendMessage: DM_SETDEFID wParam: anInteger
+        ^self sendMessage: 1025 wParam: anInteger
     ]
     setInitialFocus [
         "Set the initial keyboard focus to the first view in the tab sequence.
@@ -804,15 +804,15 @@ ContainerView subclass: ShellView [
     ]
     showMaximized [
         "Show the receiver in a maximised state"
-        self showWithStyle: SW_SHOWMAXIMIZED
+        self showWithStyle: 3
     ]
     showMinimized [
         "Show the receiver in a minimized state without activating"
-        self showWithStyle: SW_SHOWMINIMIZED
+        self showWithStyle: 2
     ]
     showMinimizedNoActivate [
         "Show the receiver in a minimized state without activating"
-        self showWithStyle: SW_SHOWMINNOACTIVE
+        self showWithStyle: 7
     ]
     showShell [
         "Private - Show the receiver within a shell"
@@ -856,14 +856,14 @@ ContainerView subclass: ShellView [
         	self isTopView ifFalse: [^self].
         	large := (largeIcon ifNil: [self presenter icon]) withExtent: self metrics largeIconExtent.
         	self
-        		sendMessage: WM_SETICON
-        		wParam: ICON_BIG
+        		sendMessage: 128
+        		wParam: 1
         		lParam: large asParameter.
         	"Ensure that the small icon is rendered at the right size"
         	small := (smallIcon ifNil: [ large ]) withExtent: self metrics smallIconExtent.
         	self
-        		sendMessage: WM_SETICON
-        		wParam: ICON_SMALL
+        		sendMessage: 128
+        		wParam: 0
         		lParam: small asParameter.
         	"We hold onto the actual icons just to prevent them being GC'd while associated with the Window"
         	actualIcons := { large. small }
@@ -876,7 +876,7 @@ ContainerView subclass: ShellView [
     validateUserInterface [
         "Validates the user interface for the receiver. Usually performed at idle time
         	when the  UI has been flagged as being invalid"
-        flags := flags maskSet: UIValidMask.
+        flags := flags maskSet: 1024.
         	super validateUserInterface
 
 
@@ -909,7 +909,7 @@ ContainerView subclass: ShellView [
         				message: message
         				wParam: wParam
         				lParam: lParam.
-        	^wParam lowWord == WA_INACTIVE
+        	^wParam lowWord == 0
         		ifTrue: [self presenter onViewDeactivated: event]
         		ifFalse: [self presenter onViewActivated: event	"send onActivate for WA_ACTIVE and WA_CLICKACTIVE"]
     ]
@@ -1005,7 +1005,7 @@ ContainerView subclass: ShellView [
         		ifTrue: 
         			[| msg |
         			msg := lParam highWord.
-        			(msg == WM_LBUTTONDOWN or: [msg == WM_RBUTTONDOWN]) 
+        			(msg == 513 or: [msg == 516]) 
         				ifTrue: [self activateLastPopup ifTrue: [^true	"suppress default processing (no bell)"]]].
         	^super 
         		wmSetCursor: message
@@ -1026,7 +1026,7 @@ ContainerView subclass: ShellView [
 
         	self isStateRestoring ifTrue: [^self].
         	#todo.	"Work out how we can do this from #wmPositionChanged:etc instead"
-        	wParam == SIZE_MINIMIZED
+        	wParam == 1
         		ifTrue: 
         			[self isMinimized: true.
         			^self presenter onViewMinimized: (SizeEvent
@@ -1034,7 +1034,7 @@ ContainerView subclass: ShellView [
         						message: message
         						wParam: wParam
         						lParam: lParam)].
-        	(wParam == SIZE_RESTORED and: [self isMinimized])
+        	(wParam == 0 and: [self isMinimized])
         		ifTrue: 
         			[self isMinimized: false.
         			^self presenter onViewRestored: (SizeEvent
@@ -1077,12 +1077,12 @@ ContainerView subclass: ShellView [
         	^(self asSessionManagerClass basicNew mainShellClass: self) install
     ]
     ShellView class >> messageMappings [
-        	^{WM_ACTIVATE -> #wmActivate:wParam:lParam:.
-        		WM_ACTIVATEAPP -> #wmActivateApp:wParam:lParam:.
-        		WM_NCACTIVATE -> #wmNcActivate:wParam:lParam:.
-        		WM_GETMINMAXINFO -> #wmGetMinMaxInfo:wParam:lParam:.
-        		WM_SETTINGCHANGE -> #wmSettingChange:wParam:lParam:.
-        		WM_TIMECHANGE -> #wmTimeChange:wParam:lParam:}
+        	^{6 -> #wmActivate:wParam:lParam:.
+        		28 -> #wmActivateApp:wParam:lParam:.
+        		134 -> #wmNcActivate:wParam:lParam:.
+        		36 -> #wmGetMinMaxInfo:wParam:lParam:.
+        		26 -> #wmSettingChange:wParam:lParam:.
+        		30 -> #wmTimeChange:wParam:lParam:}
     ]
     ShellView class >> shutdownOnExit [
         "Answer whether a runtime session should be shutdown when an instance of the receiver is closed."

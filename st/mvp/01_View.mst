@@ -1262,7 +1262,7 @@ Object subclass: View [
         		y: 0
         		cx: 0
         		cy: 0
-        		uFlags: (32 | SWP_NOACTIVATE | 2 | SWP_NOSIZE | 4)
+        		uFlags: 55
     ]
     frameWidths [
         "Answer the widths of the frames (if any) configured for the receiver."
@@ -2506,7 +2506,7 @@ Object subclass: View [
         		y: aPoint y
         		cx: 0
         		cy: 0
-        		uFlags: (1 | SWP_NOZORDER | 16)
+        		uFlags: 21
     ]
     positionForKeyboardContextMenu [
         "Answer the desired position for a context menu requested from the keyboard.
@@ -2884,7 +2884,7 @@ Object subclass: View [
         		y: 0
         		cx: aPoint x
         		cy: aPoint y
-        		uFlags: (2 | SWP_NOZORDER | 16)
+        		uFlags: 22
     ]
     setFocus [
         "Sets focus to the receiver. Answers the View which previously had focus, or nil if
@@ -3108,7 +3108,7 @@ Object subclass: View [
         	by transparent subviews."
         | viewFound |
         	viewFound := self subViewFromPoint: aPoint
-        				flags: (4 | CWP_SKIPINVISIBLE | 2).
+        				flags: 7.
         	^viewFound 
         		ifNil: 
         			["Look for a transparent subview"

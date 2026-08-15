@@ -290,7 +290,59 @@ def _fold_constant(expr: str) -> Optional[str]:
 # Shadowing is legal Smalltalk, and folding a shadowed name would substitute a
 # constant for a live variable — a wrong answer with no diagnostic.
 
-_TEMPS = re.compile(r"\|([^|]*)\|")
+_TEMP_NAMES = re.compile(r"[A-Za-z_]\w*(?:\s+[A-Za-z_]\w*)*\Z")
+
+
+def collect_temps(blanked: str) -> set:
+    """Names declared as method or block TEMPORARIES.
+
+    Deliberately not a `|([^|]*)|` scan. Dolphin writes bit masks with the
+    binary operator — `##(WS_THICKFRAME | WS_CAPTION | WS_SYSMENU |
+    WS_MINIMIZEBOX | WS_MAXIMIZEBOX)` — and a bare pair-scan reads
+    `| WS_CAPTION |` and `| WS_MINIMIZEBOX |` as declarations, shadowing EVERY
+    OTHER OPERAND so it never folds. Measured on `UI.ShellView`: three of the
+    five folded, two stayed bare, and the method answered nil at runtime
+    (`_bitOrFromInteger was called on null`) rather than refusing at
+    translation. Alternate operands surviving is the signature of the bug.
+
+    A declaration can only OPEN where one is legal: at the start of a body, or
+    just inside a block, after that block's `:arg` list if it has one. `input`
+    is the comment/string-blanked body, so quoted text cannot open one either.
+    """
+    temps: set = set()
+    i, n = 0, len(blanked)
+    decl_ok = True                       # a method body starts in decl position
+    while i < n:
+        c = blanked[i]
+        if c.isspace():
+            i += 1
+            continue
+        if c == "[":
+            i += 1
+            j = i
+            while j < n and blanked[j].isspace():
+                j += 1
+            if j < n and blanked[j] == ":":          # `[:a :b | …` — skip args
+                k = j
+                while k < n and blanked[k] not in "|]":
+                    k += 1
+                if k < n and blanked[k] == "|":
+                    i = k + 1
+            decl_ok = True
+            continue
+        if c == "|" and decl_ok:
+            j = blanked.find("|", i + 1)
+            if j < 0:
+                break
+            inner = blanked[i + 1:j].strip()
+            if inner and _TEMP_NAMES.match(inner):
+                temps.update(inner.split())
+                i = j + 1
+                decl_ok = False
+                continue
+        decl_ok = False
+        i += 1
+    return temps
 # Constant names are SHOUT_CASE (`BM_CLICK`, `MIIM_STRING`) or the struct
 # classes' leading-underscore offsets (`_OffsetOf_cch`, `_MENUITEMINFOW_Size`).
 # The underscore form is not decoration: it is how every generated struct
@@ -331,8 +383,7 @@ def rewrite_pool_constants(body: str, where: str, imports, table,
         return body, []
     blanked = strip_code(body)
     local = set(shadowed)
-    for m in _TEMPS.finditer(blanked):
-        local.update(m.group(1).split())
+    local.update(collect_temps(blanked))
     out, last, changed = [], 0, False
     for m in _IDENT.finditer(blanked):
         name = body[m.start(1):m.end(1)]
@@ -438,7 +489,8 @@ def _house_pattern(m: Method, cls_name: str) -> str:
 def emit_class(pf: ParsedFile, renames: Dict[str, str],
                super_ivars: Dict[str, Optional[int]],
                pool_table=None, extra_methods: Optional[List[Method]] = None,
-               classdef: Optional[ClassDef] = None) -> EmitResult:
+               classdef: Optional[ClassDef] = None,
+               inherited_imports: Optional[List[str]] = None) -> EmitResult:
     cd = classdef or pf.classdef
     if cd is None:
         return EmitResult("", [Refusal(pf.path, "classdef", "no class-definition chunk")])
@@ -476,6 +528,18 @@ def emit_class(pf: ParsedFile, renames: Dict[str, str],
     if pool_table is not None and cd.class_constants and cd.class_constants != "{}":
         if pool_table.add(cd.name, cd.class_constants):
             own_imports.insert(0, cd.name)
+    # POOL IMPORTS ARE INHERITED. A class binds a bare constant name through its
+    # own pools first, then its superclass's, on up the chain — so `imports: #()`
+    # does not mean "no pools". Measured on the DD9 wave: `UI.ContainerView`
+    # declares no imports and still writes `WS_EX_CONTROLPARENT`, inheriting
+    # `OS.Win32Constants` from `UI.View`; `UI.ShellView` declares only
+    # `OS.ButtonConstants` and writes `WS_SYSMENU`. Folding only the OWN imports
+    # left both unfolded, and each surfaced at RUNTIME as a nil in a bitOr
+    # (`_bitOrFromInteger was called on null`) — never as a translation refusal.
+    # The ancestors' own class constants ride along for the same reason.
+    for p in (inherited_imports or []):
+        if p not in own_imports:
+            own_imports.append(p)
 
     for m in all_methods:
         where = f"{pf.path}:{m.line}"

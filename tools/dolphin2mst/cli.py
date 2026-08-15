@@ -89,6 +89,32 @@ def superclass_ivar_counts(parsed: Dict[str, parse.ParsedFile]) -> Dict[str, Opt
     return memo
 
 
+def inherited_pool_chain(by_name: Dict[str, parse.ClassDef],
+                         name: str) -> List[str]:
+    """The pools an ancestor of `name` contributes, nearest ancestor first.
+
+    Smalltalk resolves a bare constant through the class's own pools, then its
+    superclass's, on up — `imports:` is not the whole story for any class with
+    a parent. Each ancestor contributes its own `classConstants:` (keyed by
+    class name in the PoolTable) followed by its declared imports, which is the
+    order the binding search visits them in.
+    """
+    out: List[str] = []
+    seen = set()
+    cd = by_name.get(name)
+    guard = 0
+    while cd is not None and guard < 64:
+        cd = by_name.get(cd.superclass)
+        guard += 1
+        if cd is None:
+            break
+        for p in [cd.name] + list(cd.imports):
+            if p not in seen:
+                seen.add(p)
+                out.append(p)
+    return out
+
+
 def main(argv: List[str]) -> int:
     ap = argparse.ArgumentParser(prog="dolphin2mst")
     ap.add_argument("--out", required=True)
@@ -168,7 +194,8 @@ def main(argv: List[str]) -> int:
                 continue          # folded into constants; never emitted as a class
             extra = loose.pop(cd.name, [])
             adopted += len(extra)
-            res = emit.emit_class(pf, renames, ivars, pool_table, extra, cd)
+            res = emit.emit_class(pf, renames, ivars, pool_table, extra, cd,
+                                  inherited_pool_chain(by_name_all, cd.name))
             refusals.extend(res.refusals)
             notes.extend(res.notes)
             name = emit.flatten_name(cd.name, renames)

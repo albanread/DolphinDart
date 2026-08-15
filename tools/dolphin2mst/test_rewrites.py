@@ -154,6 +154,54 @@ check("cascade: ignores a `;` inside a comment", out, '"a ; b" ^1')
 out, ref = rewrite_cascades("^(self viewAt: 1) a; b", "t:1")
 check("cascade: refuses a non-primary receiver", len(ref), 1)
 
+# --- temporaries vs. the binary `|` operator ---------------------------------
+# The DD9 silent-wrong-answer: a bare `|...|` pair scan reads a bitOr chain as
+# a declaration and shadows alternate operands, so they never fold and the
+# method answers nil at runtime instead of refusing at translation.
+from emit import collect_temps
+check("temps: a real method declaration",
+      collect_temps("| a b |  ^a + b"), {"a", "b"})
+check("temps: a bitOr chain declares NOTHING",
+      collect_temps("^(WS_THICKFRAME | WS_CAPTION | WS_SYSMENU | WS_MAXIMIZEBOX)"),
+      set())
+check("temps: declaration then a bitOr chain",
+      collect_temps("| mask | mask := WS_BORDER | WS_CAPTION | WS_SYSMENU. ^mask"),
+      {"mask"})
+check("temps: block temporaries count",
+      collect_temps("^[ | t | t := 1. t ] value"), {"t"})
+check("temps: block ARGUMENTS are not temps, and the arg bar is not a decl",
+      collect_temps("^coll inject: 0 into: [ :acc :each | acc | each ]"), set())
+check("temps: block args followed by real temps",
+      collect_temps("^coll do: [ :each | | tmp | tmp := each ]"), {"tmp"})
+check("temps: a `|` inside a comment opens nothing",
+      collect_temps(strip_code('"a | b |" ^X | Y')), set())
+
+# --- pool imports are INHERITED ----------------------------------------------
+# The DD9 case: ContainerView declares `imports: #()` and still writes
+# WS_EX_CONTROLPARENT, binding it through View's OS.Win32Constants. Folding only
+# a class's own imports left it as a bare name that became a runtime nil.
+from cli import inherited_pool_chain
+_view = ClassDef(name="UI.View", superclass="Core.Object", ivars=[], cvars=[],
+                 civars=[], imports=["OS.Win32Constants", "OS.Win32Errors"],
+                 class_constants="{}")
+_cont = ClassDef(name="UI.ContainerView", superclass="UI.View", ivars=[],
+                 cvars=[], civars=[], imports=[], class_constants="{}")
+_shell = ClassDef(name="UI.ShellView", superclass="UI.ContainerView", ivars=[],
+                  cvars=[], civars=[], imports=["OS.ButtonConstants"],
+                  class_constants="{ 'TransientMask' -> 1 }")
+_by = {c.name: c for c in (_view, _cont, _shell)}
+# An ancestor OUTSIDE the parsed+reference set contributes nothing — it has no
+# ClassDef to read imports from. That is why the kernel classes must be passed
+# as `--reference` inputs when a translated class binds through their pools.
+check("imports: a class whose parent was never parsed inherits nothing",
+      inherited_pool_chain(_by, "UI.View"), [])
+check("imports: a class with `imports: #()` still sees its parent's pools",
+      inherited_pool_chain(_by, "UI.ContainerView"),
+      ["UI.View", "OS.Win32Constants", "OS.Win32Errors"])
+check("imports: the chain is walked to the root, nearest ancestor first",
+      inherited_pool_chain(_by, "UI.ShellView"),
+      ["UI.ContainerView", "UI.View", "OS.Win32Constants", "OS.Win32Errors"])
+
 # --- rewrite: namespace flattening -------------------------------------------
 check("flatten: dotted reference",
       flatten_refs("^Graphics.Point x: 1 y: 2", {}), "^Point x: 1 y: 2")

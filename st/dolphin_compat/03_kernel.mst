@@ -108,6 +108,16 @@ Object subclass: PropertyRegistry [
 ]
 
 nil subclass: Object [
+    "Dolphin's Object>>initialize — quoting Core.Object.cls: the default is to
+     do nothing, and it ANSWERS THE RECEIVER. Both halves are load-bearing.
+     `Foo class >> new [ ^super new initialize ]` is the universal constructor
+     (147 sites in the corpus), so without this every translated class raised
+     `does not understand initialize` the moment DD9 made `super new` allocate;
+     and answering anything but self would make that `^` return the wrong
+     object. Its instance-side twin, `super initialize` from a subclass's own
+     initialize, needs it for the same reason — 8 more sites."
+    initialize [ ^self ]
+
     propertyAt: aKey [ ^(PropertyRegistry propertiesOf: self) at: aKey ifAbsent: [ nil ] ]
     propertyAt: aKey ifAbsent: aBlock [
         ^(PropertyRegistry propertiesOf: self) at: aKey ifAbsent: aBlock

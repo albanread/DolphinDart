@@ -1,0 +1,78 @@
+"Feature test: Dolphin's Integer BIT-MASK protocol (DolphinDart DD9).
+
+ ~1,300 corpus sends ride on these seven selectors, and every one of them is a
+ Windows flag word — a wrong bit is a wrong window style, which shows up as a
+ window that looks subtly incorrect rather than as an error. So the values here
+ are stated as literals computed by hand, not as expressions that would repeat
+ whatever mistake the implementation makes.
+
+ WS_CAPTION (16rC00000 = 12582912) and WS_VISIBLE (16r10000000 = 268435456) are
+ used as the worked example because they are the real ones the View wave
+ exercises."
+STestCase subclass: TestIntegerBits [
+    tests [
+        | caption visible both flags |
+        caption := 12582912.      "WS_CAPTION      16rC00000"
+        visible := 268435456.     "WS_VISIBLE      16r10000000"
+        both := 281018368.        "the two ORed together, computed by hand"
+
+        "--- bitInvert: two's complement, and NOT fixed-width ---"
+        self check: 0 bitInvert is: -1 label: 'bitInvert of 0 is -1'.
+        self check: -1 bitInvert is: 0 label: 'bitInvert of -1 is 0'.
+        self check: 5 bitInvert is: -6 label: 'bitInvert of 5 is -6'.
+        "A LargeInteger must invert by value, which -1 - self does and a
+         fixed-width complement would not."
+        self check: 4294967296 bitInvert is: -4294967297
+             label: 'bitInvert of 2^32 is exact (no 32-bit wraparound)'.
+
+        "--- the three predicates ---"
+        self assert: (both allMask: caption) label: 'allMask: sees a set bit'.
+        self assert: (both allMask: both) label: 'allMask: of the whole mask'.
+        self deny: (caption allMask: both)
+             label: 'allMask: is ALL the bits, not any of them'.
+        self assert: (both anyMask: caption) label: 'anyMask: sees one bit'.
+        self assert: (caption anyMask: both) label: 'anyMask: is any, not all'.
+        self deny: (visible anyMask: caption) label: 'anyMask: of a disjoint mask'.
+        self assert: (visible noMask: caption) label: 'noMask: of a disjoint mask'.
+        self deny: (both noMask: caption) label: 'noMask: is false when set'.
+        "Zero is the boundary all three share."
+        self assert: (0 allMask: 0) label: 'allMask: 0 is vacuously true'.
+        self deny: (0 anyMask: caption) label: 'nothing is set in 0'.
+        self assert: (0 noMask: caption) label: 'and so noMask: holds'.
+
+        "--- set / clear ---"
+        self check: (caption maskSet: visible) is: both label: 'maskSet: ors in'.
+        self check: (both maskSet: visible) is: both
+             label: 'maskSet: of an already-set bit is idempotent'.
+        self check: (both maskClear: visible) is: caption
+             label: 'maskClear: masks out'.
+        self check: (caption maskClear: visible) is: caption
+             label: 'maskClear: of an unset bit changes nothing'.
+
+        "--- mask:set: — 343 sites, the one that surfaced the gap ---"
+        self check: (caption mask: visible set: true) is: both
+             label: 'mask:set: true sets'.
+        self check: (both mask: visible set: false) is: caption
+             label: 'mask:set: false clears'.
+        self check: (both mask: visible set: true) is: both
+             label: 'mask:set: true is idempotent'.
+        self check: (caption mask: visible set: false) is: caption
+             label: 'mask:set: false on an unset bit is a no-op'.
+        "It ANSWERS a new value and leaves the receiver alone — every caller
+         assigns the result back, so an in-place implementation would pass the
+         checks above and still be wrong."
+        flags := caption.
+        flags mask: visible set: true.
+        self check: flags is: caption
+             label: 'mask:set: does not mutate its receiver'.
+
+        "--- and they compose the way the View wave uses them ---"
+        flags := 0.
+        flags := flags mask: caption set: true.
+        flags := flags mask: visible set: true.
+        self check: flags is: both label: 'flags accumulate'.
+        flags := flags mask: caption set: false.
+        self check: flags is: visible label: 'and clear back down'.
+        self assert: (flags allMask: visible) label: 'leaving the other bit set'
+    ]
+]

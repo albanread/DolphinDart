@@ -1,0 +1,1353 @@
+"`Color` is the abstract class of colours. 
+
+Concrete subclasses represent the different types of colour object: `SystemColor` for the logical system colours that vary depending on the Windows theme; `IndexedColor` for a limited range of palletized colours; `RGB` for general purpose representation of colours composed of arbitrary proportions of red, green, and blue, and `ARGB` the same but with alpha (translucency).
+
+The special singleton subclasses `ColorDefault` and `ColorNone` represent the default colour of some Window or control in a specific context, and full transparency.
+
+There are also the virtual colours, `ThemeColor` and `PluggableColor`, to represent symbolic (i.e. named, logical) and dynamic/calculated colours respectively. These can be resolved to an absolute colour from the list of concrete colour types when required."
+
+Object subclass: Color [
+    <classVars: Black ColorNames CommonColors Default Face3d NamedColors None White Window WindowText>
+
+    = aColor [
+        "Answer whether the receiver and argument are equivalent (i.e. represent the same colour)."
+        ^self == aColor or: 
+        			[aColor species == self species and: 
+        					["We want to compare the RGBA (or ARGB) code, but to avoid working with LargeIntegers, compare the alpha and rgb separately"
+        					aColor rgbCode == self rgbCode and: [aColor alpha == self alpha]]]
+    ]
+    actualColor [
+        	^self
+    ]
+    adjustBrightness: aNumber [
+        "Answer a new <Color> that is derived from this color but with the specified relative brightness."
+        "Brightness is clamped to a minimum of 0.005 so that hue information is not lost"
+
+        	^Color
+        		h: self hue
+        		s: self hsvSaturation
+        		v: (self brightness + aNumber clampBetween: 0.005 and: 1.0)
+        		alpha: self normalizedAlpha
+    ]
+    adjustSaturation: saturationNumber brightness: brightnessNumber [
+        "Adjust the relative saturation and brightness of this color. (lowest value is 0.005 so that hue information is not lost)"
+        ^Color
+        		h: self hue
+        		s: (self hsvSaturation + saturationNumber clampBetween: 0.005 and: 1.0)
+        		v: (self brightness + brightnessNumber clampBetween: 0.005 and: 1.0)
+        		alpha: self normalizedAlpha
+    ]
+    alpha [
+        "Answer the receiver's alpha component (a SmallInteger in the range 0..255). This specifies
+        	the opacity of the colour, with 0 being completely transparent and 255 completely opaque."
+        ^255
+    ]
+    alpha: anAlphaInteger [
+        "Answer a `Color` which has the same red, green and blue components as the receiver, but with the <integer> alpha, anAlphaInteger.
+        	The alpha component is expected to be in the range [0,255], but is clamped to that if not."
+        ^ColorAlpha color: self alpha: anAlphaInteger
+    ]
+    alphaMask [
+        "Private - Answer the receiver's alpha bits as they would compose into an ARGB."
+        ^16rFF000000
+    ]
+    argb [
+        "Answer a four-element <Array> containing alpha, red, green, and blue components of the receiver expressed as integer in the range [0,255]."
+        ^(ByteArray new: 4)
+        		at: 1 put: self alpha;
+        		at: 2 put: self red;
+        		at: 3 put: self green;
+        		at: 4 put: self blue;
+        		yourself
+    ]
+    argbCode [
+        "Answer the receiver's colour value in 32-bit ARGB encoding with 8-bits per component in alpha, red, green, blue order."
+        | bgr |
+        	bgr := self rgbCode.
+        	^self alphaMask bitOr: (((bgr bitShift: -16) bitAnd: 16rFF)
+        				bitOr: ((bgr bitAnd: 16r00FF00) bitOr: ((bgr bitAnd: 16rFF) bitShift: 16)))
+    ]
+    asARGB [
+        "Answer the receiver as an <ARGB>."
+        ^ARGB fromArgbCode: self argbCode
+    ]
+    asColor [
+        	^self
+    ]
+    asColorRef [
+        "Answer the receiver as a <ColorRef> (an <RGB> or one of the standard pseudo-colour constants Color default and Color none)."
+        ^self asRGB
+    ]
+    asCOLORREF [
+        "Answer the receiver's COLORREF encoding. This is basically an BGR encoding, but the high bits (that would be used for an alpha value in an ARGB) are used for some special values, either
+        	to indicate indexed colours, or for Color none and Color default."
+        ^self rgbCode
+    ]
+    asGrayscale [
+        "Answer a <Color> that is a grayscale representation of the receiver."
+        | grey |
+        	grey := (self red * 30 + (self green * 59) + (self blue * 11)) // 100.
+        	^Color
+        		a: self alpha
+        		r: grey
+        		g: grey
+        		b: grey
+    ]
+    asParameter [
+        "Answer the receiver in a form suitable for an API call."
+        "It is recommended not to use this conversion, as the result will vary depending on the colour encoding, and so may not work if the encoding is not that expected by the API being called. Rather you should use (for example) #rgbCode or #argbCode."
+
+        	^self subclassResponsibility
+    ]
+    asRGB [
+        "Answer the receiver as an <RGB>. Any alpha is discarded."
+        ^RGB fromRgbCode: self rgbCode
+    ]
+    asUInt32 [
+        "Answer the receiver in a form suitable for passing as a 32-bit unsigned integer parameter."
+        ^self asParameter
+    ]
+    asUIntPtr [
+        "Answer the receiver in a form suitable for passing/returning as a Windows LRESULT
+        	(32 or 64-bit, depending on host OS) return value. The default is self (which will cause the
+        	default window proc. of the window to be called for most objects other than Integers when
+        	used as a return value)."
+        ^self asParameter
+    ]
+    blue [
+        "Answer the receiver's blue component component expressed as an <integer> in the range [0,255]."
+        ^(self rgbCode bitShift: -16) bitAnd: 16rFF
+    ]
+    brightness [
+        "Answer a <Number> in the range [0,1] representing the brightness of this color in the HSV colour model."
+        ^((self red max: self green) max: self blue) / 255.0
+    ]
+    brush [
+        "Answer a Brush configured for solid painting of the receiver's color."
+        ^self brushClass newColor: self
+    ]
+    brushClass [
+        "Private - Answer the class of Brush to be used in conjunction with the receiver."
+        ^Brush
+    ]
+    chroma [
+        "Answer a <Number> in the range [0,1] representing the chroma value of the receiver."
+        | r g b |
+        	r := self red.
+        	g := self green.
+        	b := self blue.
+        	^(((r max: g) max: b) - ((r min: g) min: b)) / 255.0
+    ]
+    darker [
+        "Answer a darker shade of this color."
+        ^ self adjustBrightness: -0.08
+    ]
+    defaultPalette [
+        "Private - Answer the default palette."
+        ^Gdi32 getStockObject: 15
+    ]
+    faded [
+        "Answer a new color which is a faded (half intensity) copy of the receiver."
+        ^self fadedBy: 2
+    ]
+    fadedBy: aNumber [
+        "Answer a new <Color> which is a copy of the receiver faded by the specified factor."
+        ^Color
+        		a: self alpha
+        		r: 255 - ((255 - self red) // aNumber)
+        		g: 255 - ((255 - self green) // aNumber)
+        		b: 255 - ((255 - self blue) // aNumber)
+    ]
+    green [
+        "Answer the receiver's green component component expressed as an <integer> in the range [0,255]."
+        ^(self rgbCode bitShift: -8) bitAnd: 16rFF
+    ]
+    hash [
+        "Answer the <SmallInteger> hash code for the receiver."
+        ^(self rgbCode bitShift: 6) bitXor: self alpha
+    ]
+    hls [
+        "Answer a three element <Array> representing the hue, lightness, and saturation values that correspond to the receiver."
+        | r g b max min span h chroma |
+        	r := self red.
+        	g := self green.
+        	b := self blue.
+        	max := (r max: g) max: b.
+        	min := (r min: g) min: b.
+        	span := max - min.
+        	span == 0
+        		ifTrue: [h := 0.0]
+        		ifFalse: 
+        			[h := r == max
+        						ifTrue: [(g - b) asFloat / span * 60.0]
+        						ifFalse: 
+        							[g == max
+        								ifTrue: [120.0 + ((b - r) asFloat / span * 60.0)]
+        								ifFalse: [240.0 + ((r - g) asFloat / span * 60.0)]].
+        			h < 0.0 ifTrue: [h := 360.0 + h]].
+        	chroma := (max - min) asFloat / 255.0.
+        	^{h.
+        		(max + min) asFloat / (255.0 * 2).
+        		chroma isZero
+        			ifTrue: [chroma]
+        			ifFalse: [chroma / (1.0 - ((max + min) / (255.0 * 2) * 2.0 - 1.0) abs)]}
+    ]
+    hlsSaturation [
+        "Answer a <Float> in the range [0.0, 1.0] representing the HSL saturation of the receiver. Note any alpha is ignored
+        	- the influence of this would depend on the background colour with which the receiver is blended"
+        | chroma r g b max min |
+        	r := self red.
+        	g := self green.
+        	b := self blue.
+        	max := (r max: g) max: b.
+        	min := (r min: g) min: b.
+        	chroma := (max - min) / 255.0.
+        	"Chroma is zero for black and white, which are the two cases of division by zero below."
+        	^chroma isZero
+        		ifTrue: [chroma]
+        		ifFalse: [chroma / (1.0 - ((max + min) / (255.0 * 2) * 2.0 - 1.0) abs)]
+    ]
+    hsv [
+        "Answer a three-element <Array> representing the hue, saturation and brightness values that describe the receiver in the HSV colour system."
+        | r g b max min span h |
+        	r := self red.
+        	g := self green.
+        	b := self blue.
+        	max := (r max: g) max: b.
+        	min := (r min: g) min: b.
+        	span := max - min.
+        	span == 0
+        		ifTrue: [h := 0.0]
+        		ifFalse: 
+        			[h := r == max
+        						ifTrue: [(g - b) asFloat / span * 60.0]
+        						ifFalse: 
+        							[g == max
+        								ifTrue: [120.0 + ((b - r) asFloat / span * 60.0)]
+        								ifFalse: [240.0 + ((r - g) asFloat / span * 60.0)]].
+        			h < 0.0 ifTrue: [h := 360.0 + h]].
+        	^{h.
+        		max isZero ifTrue: [0.0] ifFalse: [(max - ((r min: g) min: b)) asFloat / max asFloat].
+        		max / 255.0}
+    ]
+    hsvSaturation [
+        "Answer a <Number> in the range [0, 1] representing the HSV saturation of the receiver."
+        | max r g b |
+        	r := self red.
+        	g := self green.
+        	b := self blue.
+        	max := (r max: g) max: b.
+        	^max isZero ifTrue: [0.0] ifFalse: [(max - ((r min: g) min: b)) asFloat / max]
+    ]
+    hue [
+        "Answer a <Number> in the range [0,360] representing the receiver's hue in the HSV or HLS color models."
+        | r g b max min span h |
+        	r := self red.
+        	g := self green.
+        	b := self blue.
+        	max := (r max: g) max: b.
+        	min := (r min: g) min: b.
+        	span := max - min.
+        	span == 0 ifTrue: [^0.0].
+        	h := r == max
+        				ifTrue: [(g - b) asFloat / span * 60.0]
+        				ifFalse: 
+        					[g == max
+        						ifTrue: [120.0 + ((b - r) asFloat / span * 60.0)]
+        						ifFalse: [240.0 + ((r - g) asFloat / span * 60.0)]].
+        	^h < 0.0 ifTrue: [360.0 + h] ifFalse: [h]
+    ]
+    intensity: aNumber [
+        "Answer a new <Color> which is a copy of the receiver the specified fractional intensity away from black."
+        | multiplier |
+        	multiplier := aNumber clampBetween: 0 and: 1.
+        	^Color
+        		a: self alpha
+        		r: (multiplier * self red) rounded
+        		g: (multiplier * self green) rounded
+        		b: (multiplier * self blue) rounded
+    ]
+    isDefault [
+        "Answer whether the receiver is the special <Color> representing the default colour for the
+        	situation. The user of the colour, or the object of which it is an attribute, interprets
+        	this appropriately based on its own notion of a default color. As an example for TabViews
+        	this would translate to the system '3d face' colour."
+        ^false
+    ]
+    isGrayscale [
+        "Answer whether each of this Colors red, green and blue components are of the same magnitude, i.e. it is a shade of grey."
+        | red |
+        	red := self red.
+        	^red = self green and: [red = self blue]
+    ]
+    isNone [
+        "Answer whether the receiver is the special <Color> representing no colour (transparent)."
+        ^false
+    ]
+    isOpaque [
+        "Answer whether this <Color> is completely opaque."
+        ^true
+    ]
+    isSelfEvaluating [
+        "Answer whether or not the receiver has a printString representation that evaluates back to an equivalent object."
+        ^true
+    ]
+    isSymbolic [
+        "Answer whether the receiver is the symbolic <Color> that does not correspond to a fixed RGB(A) value.
+        	A symbolic Color may be equal to a non-symbolic Color at a point in time because it resolves to the same RGB(A), but it should not be assumed this will always be true."
+        ^false
+    ]
+    isTransparent [
+        "Answer whether this <Color> is completely transparent."
+        ^self alpha == 0
+    ]
+    lighter [
+        "Answer a lighter shade of this color."
+        ^ self adjustSaturation: -0.03 brightness: 0.08
+    ]
+    lightness [
+        "Answer a <Number> in the range [0,1] representing the lightness of the receiver in the HSL colour system."
+        | r g b |
+        	r := self red.
+        	g := self green.
+        	b := self blue.
+        	^(((r max: g) max: b) + ((r min: g) min: b)) / (255.0 * 2)
+    ]
+    luminance [
+        "Answer a <Number> in the range [0,1] representing the luminance of the receiver, a brightness value weighted by the human eye's color sensitivity."
+        ^(299 * self red + (587 * self green) + (114 * self blue)) / (1000.0 * 255.0)
+    ]
+    name [
+        "Answer the symbolic name of the colour, or nil if it does not have a name (or known name)."
+        ^ColorNames lookup: self
+    ]
+    normalizedAlpha [
+        "Answer the receiver's alpha component as a <Number> in the range [0,1], with 0 being completely transparent and 1 completely opaque."
+        ^1
+    ]
+    normalizedAlpha: aNumber [
+        "Answer an <ARGB> which has the same red, green and blue components as the receiver, but with the alpha, aNumber.
+        	The alpha component is expected to be in the range [0,1], but is clamped to that if not."
+        ^self alpha: (aNumber * 255) rounded
+    ]
+    normalizedBlue [
+        "Answer a <Number> in the range [0,1] representing the receiver's blue component."
+        ^self blue / 255
+    ]
+    normalizedGreen [
+        "Answer a <Number> in the range [0,1] representing the receiver's green component."
+        ^self green / 255
+    ]
+    normalizedRed [
+        "Answer a <Number> in the range [0,1] representing the receiver's red component."
+        ^self red / 255
+    ]
+    pen [
+        "Answer a <Pen> configured for painting solid 1-pixel wide lines of the receiver's color."
+        ^self penClass newColor: self
+    ]
+    penClass [
+        "Private - Answer the class of Pen to be used in conjunction with the receiver."
+        ^Pen
+    ]
+    printArgbOn: aPuttableStream [
+        aPuttableStream nextPut: $(. aPuttableStream print: Color. self isOpaque
+        		ifFalse: 
+        			[aPuttableStream
+        				display: ' a: ';
+        				print: self alpha].aPuttableStream display: ' r: '. aPuttableStream print: self red. aPuttableStream display: ' g: '. aPuttableStream print: self green. aPuttableStream display: ' b: '. aPuttableStream print: self blue. ^aPuttableStream nextPut: $)
+    ]
+    printGrayscaleOn: aPuttableStream [
+        aPuttableStream nextPut: $(. aPuttableStream print: Color. aPuttableStream space. aPuttableStream display: #brightness:. aPuttableStream space. aPuttableStream display: self red / 255. aPuttableStream nextPut: $)
+    ]
+    printNamed: aSymbol on: aPuttableStream [
+        	^(Color class canUnderstand: aSymbol)
+        		ifTrue: 
+        			[aPuttableStream
+        				print: Color;
+        				space;
+        				display: aSymbol]
+        		ifFalse: 
+        			[aPuttableStream
+        				nextPut: $(;
+        				print: Color;
+        				space;
+        				display: #named:;
+        				space;
+        				print: aSymbol;
+        				nextPut: $)]
+    ]
+    printOn: aPuttableStream [
+        "Append, to the <puttableStream> argument a string whose characters are the same as those which would result from sending a #printString message to the receiver."
+        self name
+        		ifNotNil: [:symbol | self printNamed: symbol on: aPuttableStream]
+        		ifNil: 
+        			[(self isGrayscale and: [self isOpaque])
+        				ifTrue: [self printGrayscaleOn: aPuttableStream]
+        				ifFalse: [self printArgbOn: aPuttableStream]]
+    ]
+    red [
+        "Answer the receiver's red component expressed as an <integer> in the range [0,255]."
+        ^self rgbCode bitAnd: 16rFF
+    ]
+    registerName: aSymbol [
+        "Some colours are registered for reverse lookup, so that for example if we have RGB(255,255,0) then it is printed as Color yellow.
+        	We don't register logical colours in the Color registry, though, as it doesn't necessarily make sense to make an equivalent RGB to the named system colour."
+    ]
+    rgb [
+        "Answer a three-element <Array> containing red, green, and blue components of the receiver expressed as integer in the range [0,255]."
+        ^{self red. self green. self blue}
+    ]
+    rgbaCode [
+        "Answer the receiver's colour value in 32-bit RGBA encoding (or ABGR if you prefer), i.e. red | (green << 8) | (blue << 16) | (alpha << 24)."
+        ^self alphaMask bitOr: self rgbCode
+    ]
+    rgbCode [
+        "Answer the receiver's <integer> color value in 24-bit RGB encoding with 8-bits per component in COLORREF order (red as low-order byte, green 2nd byte, and blue 3rd byte)."
+        ^self subclassResponsibility
+    ]
+    setAlpha: aFloat [
+        	^self alpha: aFloat * 255
+    ]
+    species [
+        	^(self)
+    ]
+    stbSaveOn: anSTBOutFiler [
+        "Output the receiver to anSTBOutFiler."
+        self name
+        		ifNil: [anSTBOutFiler saveObject: self]
+        		ifNotNil: 
+        			[:symbol |
+        			anSTBOutFiler
+        				saveSingleton: self
+        				class: Color
+        				name: symbol]
+    ]
+    Color class >> a: alphaInteger r: redInteger g: greenInteger b: blueInteger [
+        "Answer a minimal instance whose four components are given by the <integer> arguments, each of which must be in the range [0,255] (this is not checked)."
+        ^alphaInteger >= 255
+        		ifTrue: 
+        			[self rgbClass
+        				r: redInteger
+        				g: greenInteger
+        				b: blueInteger]
+        		ifFalse: 
+        			[ARGB
+        				a: alphaInteger
+        				r: redInteger
+        				g: greenInteger
+        				b: blueInteger]
+    ]
+    Color class >> addNamed: aSymbol color: aColor [
+        "Register the <Color>, aColor, as a named colour with the symbolic name, aSymbol."
+        aColor registerName: aSymbol.
+        	^NamedColors at: aSymbol put: aColor
+    ]
+    Color class >> aliceBlue [
+        	^self named: #aliceBlue
+    ]
+    Color class >> alpha: alphaValue red: redValue green: greenValue blue: blueValue [
+        "Answer an instance whose four component colour values are provided as the arguments, but
+        	which are clamped to the range 0..255."
+        ^self
+        		a: (alphaValue asInteger clampBetween: 0 and: 255)
+        		r: (redValue asInteger clampBetween: 0 and: 255)
+        		g: (greenValue asInteger clampBetween: 0 and: 255)
+        		b: (blueValue asInteger clampBetween: 0 and: 255)
+    ]
+    Color class >> antiqueWhite [
+        	^self named: #antiqueWhite
+    ]
+    Color class >> applicationWorkspace [
+        "Answer the background colour for an application's workspace area (e.g. the background of
+        	the main window MDI applications). This is typically a dark grey."
+        ^self named: #applicationWorkspace
+    ]
+    Color class >> aqua [
+        	^self named: #aqua
+    ]
+    Color class >> aquamarine [
+        	^self named: #aquamarine
+    ]
+    Color class >> argbClass [
+        	^ARGB
+    ]
+    Color class >> argbNoneCode [
+        "Answer the ARGB encoding for the special 'none' (transparent) color. Our convention is transparent white."
+        ^16r00FFFFFF
+    ]
+    Color class >> azure [
+        	^self named: #azure
+    ]
+    Color class >> beige [
+        	^self named: #beige
+    ]
+    Color class >> bisque [
+        	^self named: #bisque
+    ]
+    Color class >> black [
+        	^Black
+    ]
+    Color class >> blanchedAlmond [
+        	^self named: #blanchedAlmond
+    ]
+    Color class >> blue [
+        	^self named: #blue
+    ]
+    Color class >> blueViolet [
+        	^self named: #blueViolet
+    ]
+    Color class >> brightness: aNumber [
+        "Answer a <Color> that is a shade of grey with the specified brightness, expected to be in the range [0,1]."
+        | v |
+        	v := (aNumber * 255) rounded clampBetween: 0 and: 255.
+        	^self
+        		a: 255
+        		r: v
+        		g: v
+        		b: v
+    ]
+    Color class >> brown [
+        	^self named: #brown
+    ]
+    Color class >> burlyWood [
+        	^self named: #burlyWood
+    ]
+    Color class >> byteSize [
+        "Answer the byte size of the receiver when converted to parameter format (i.e. by asParameter)."
+        ^4
+    ]
+    Color class >> cadetBlue [
+        	^self named: #cadetBlue
+    ]
+    Color class >> caption [
+        	^self named: #caption
+    ]
+    Color class >> chartreuse [
+        	^self named: #chartreuse
+    ]
+    Color class >> chocolate [
+        	^self named: #chocolate
+    ]
+    Color class >> commonColors [
+        "Answer the set of common, named, colours. These are ordered by hue, saturation and then value (brightness)."
+        ^CommonColors
+    ]
+    Color class >> commonGreen [
+        	^self named: #commonGreen
+    ]
+    Color class >> coral [
+        	^self named: #coral
+    ]
+    Color class >> cornflowerBlue [
+        	^self named: #cornflowerBlue
+    ]
+    Color class >> cornsilk [
+        	^self named: #cornsilk
+    ]
+    Color class >> crimson [
+        	^self named: #crimson
+    ]
+    Color class >> cyan [
+        	^self named: #cyan
+    ]
+    Color class >> darkBlue [
+        	^self named: #darkBlue
+    ]
+    Color class >> darkCyan [
+        	^self named: #darkCyan
+    ]
+    Color class >> darkGoldenrod [
+        	^self named: #darkGoldenrod
+    ]
+    Color class >> darkGray [
+        	^self named: #darkGray
+    ]
+    Color class >> darkGreen [
+        	^self named: #darkGreen
+    ]
+    Color class >> darkKhaki [
+        	^self named: #darkKhaki
+    ]
+    Color class >> darkMagenta [
+        	^self named: #darkMagenta
+    ]
+    Color class >> darkOliveGreen [
+        	^self named: #darkOliveGreen
+    ]
+    Color class >> darkOrange [
+        	^self named: #darkOrange
+    ]
+    Color class >> darkOrchid [
+        	^self named: #darkOrchid
+    ]
+    Color class >> darkRed [
+        	^self named: #darkRed
+    ]
+    Color class >> darkSalmon [
+        	^self named: #darkSalmon
+    ]
+    Color class >> darkSeaGreen [
+        	^self named: #darkSeaGreen
+    ]
+    Color class >> darkShadow3d [
+        "Answer a <Color> representing 3D-shadow system color."
+        ^self named: #darkShadow3d
+    ]
+    Color class >> darkSlateBlue [
+        	^self named: #darkSlateBlue
+    ]
+    Color class >> darkSlateGray [
+        	^self named: #darkSlateGray
+    ]
+    Color class >> darkTurquoise [
+        	^self named: #darkTurquoise
+    ]
+    Color class >> darkViolet [
+        	^self named: #darkViolet
+    ]
+    Color class >> deepPink [
+        	^self named: #deepPink
+    ]
+    Color class >> deepSkyBlue [
+        	^self named: #deepSkyBlue
+    ]
+    Color class >> default [
+        "Answer the special <Color> representing the 'default' colour in any context."
+        ^Default
+    ]
+    Color class >> dialog [
+        "Answer the <Color> used for the background of built-in dialogs."
+        ^self named: #dialog
+    ]
+    Color class >> dimGray [
+        	^self named: #dimGray
+    ]
+    Color class >> dodgerBlue [
+        	^self named: #dodgerBlue
+    ]
+    Color class >> face3d [
+        "Answer the 3D button/menu face system color."
+        ^Face3d
+    ]
+    Color class >> firebrick [
+        	^self named: #firebrick
+    ]
+    Color class >> floralWhite [
+        	^self named: #floralWhite
+    ]
+    Color class >> forestGreen [
+        	^self named: #forestGreen
+    ]
+    Color class >> fromAddress: anAddress [
+        "Answer a new Colour, based on the 32-bit integer value at anAddress."
+        ^self fromCOLORREF: (anAddress asExternalAddress int32AtOffset: 0)
+    ]
+    Color class >> fromArgbCode: anInteger [
+        "Answer a <Color> representing the specified encoded value. Note that the encoding of the argument is assumed to be 8-bit RGB, as used by ARGB, not the BGR encoding used by ColorRef's.
+        	If the argument specifies an alpha value other than 255, then aside from the special 'none' encoding, an ARGB will be answered as ColorRefs cannot represent transparency."
+        ^((anInteger bitShift: -24) bitAnd: 16rFF) ~~ 16rFF
+        		ifTrue: 
+        			[anInteger == self argbNoneCode ifTrue: [self none] ifFalse: [ARGB fromArgbCode: anInteger]]
+        		ifFalse: 
+        			[self fromRgbCode: (((anInteger bitShift: -16) bitAnd: 16rFF)
+        						bitOr: ((anInteger bitAnd: 16r00FF00) bitOr: ((anInteger bitAnd: 16rFF) bitShift: 16)))]
+    ]
+    Color class >> fromArray: anArray [
+        "Answer an instance whose three or (optionally) four (components are provided in the Array argument in order [alpha], red, green, blue."
+        ^anArray size > 3
+        		ifTrue: 
+        			[self
+        				alpha: anArray first
+        				red: anArray second
+        				green: anArray third
+        				blue: anArray fourth]
+        		ifFalse: 
+        			[self
+        				red: anArray first
+        				green: anArray second
+        				blue: anArray third]
+    ]
+    Color class >> fromCOLORREF: anInteger [
+        "Answer an appropriate <Color> to represent the color code value, anInteger."
+        ^((anInteger bitAnd: 16rFFFFFF) < 256 and: [(16rFF000000 bitAnd: anInteger) == 16r1000000])
+        		ifTrue: [IndexedColor withIndex: anInteger]
+        		ifFalse: [ColorRef fromCOLORREF: anInteger]
+    ]
+    Color class >> fromHTMLSpec: aString [
+        "Answer an instance of the receiver from the HTML format RGB specification. These
+        	are of the form #RRGGBB where RR is the hex value for the red component, etc."
+        | source rgb |
+        	source := aString readStream.
+        	rgb := (source peekFor: $#)
+        				ifTrue: [Integer readFrom: source radix: 16]
+        				ifFalse: [Integer readFrom: source radix: 10].
+        	^self
+        		r: ((rgb bitShift: -16) bitAnd: 16rFF)
+        		g: ((rgb bitShift: -8) bitAnd: 16rFF)
+        		b: (rgb bitAnd: 16rFF)
+    ]
+    Color class >> fromInteger: anInteger [
+        "Private - Answer an appropriate <Color> to represent the color code value, anInteger. This should only be used for loading from STB."
+        ^self fromCOLORREF: anInteger
+    ]
+    Color class >> fromNormalizedArray: anArray [
+        "Answer an instance whose four components are given as #(alpha red green blue).
+        	 Each component is expected to be between zero and one."
+        ^anArray size > 3
+        		ifTrue: 
+        			[self
+        				alpha: anArray first * 255
+        				red: anArray second * 255
+        				green: anArray third * 255
+        				blue: anArray fourth * 255]
+        		ifFalse: 
+        			[self
+        				red: anArray first * 255
+        				green: anArray second * 255
+        				blue: anArray third * 255]
+    ]
+    Color class >> fromRgbaCode: anInteger [
+        "Answer a <Color> representing the specified encoded value. Note that the encoding of the argument is assumed to be BGRA."
+        | rgb alpha |
+        	rgb := self fromRgbCode: (anInteger bitAnd: 16rFFFFFF).
+        	alpha := (anInteger bitShift: -24) bitAnd: 16rFF.
+        	^alpha == 16rFF ifTrue: [rgb] ifFalse: [rgb alpha: alpha]
+    ]
+    Color class >> fromRgbCode: anInteger [
+        "Answer a <Color> representing the specified encoded value. Note that the encoding of the argument is assumed to be 8-bit RGB, as used by ARGB, not the BGR encoding used by ColorRef's.
+        	If the argument specifies an alpha value other than 255, then aside from the special 'none' encoding, an ARGB will be answered as ColorRefs cannot represent translucent colours."
+        ^self rgbClass fromRgbCode: anInteger
+    ]
+    Color class >> fuchsia [
+        	^self named: #fuchsia
+    ]
+    Color class >> gainsboro [
+        	^self named: #gainsboro
+    ]
+    Color class >> generateCommonColorAccessors [
+        "Private - Generated methods to return each of the named 'common' colours.
+        		self generateCommonColorAccessors."
+        | autogenerated |
+        	autogenerated := '**auto generated**' asMethodCategory.
+        	(self commonColors , {self named: #transparent} select: 
+        			[:each |
+        			| symbol |
+        			symbol := each name.
+        			(Color class includesSelector: symbol) not
+        				or: [autogenerated includesMethod: (Color class compiledMethodAt: symbol)]])
+        		do: 
+        			[:each |
+        			| s symbol |
+        			symbol := each name.
+        			s := String writeStream.
+        			s
+        				nextPutAll: symbol;
+        				crtab;
+        				nextPutAll: '^self ';
+        				display: #named:;
+        				space;
+        				print: symbol.
+        			Color class compile: s contents categories: #('**auto generated**' 'common colors')]
+    ]
+    Color class >> ghostWhite [
+        	^self named: #ghostWhite
+    ]
+    Color class >> gold [
+        	^self named: #gold
+    ]
+    Color class >> goldenrod [
+        	^self named: #goldenrod
+    ]
+    Color class >> gray [
+        	^self named: #gray
+    ]
+    Color class >> grayText [
+        "Answer the Gray Text system color."
+        ^Color named: #grayText
+    ]
+    Color class >> green [
+        	^self named: #green
+    ]
+    Color class >> greenYellow [
+        	^self named: #greenYellow
+    ]
+    Color class >> h: hueNumber s: saturationNumber l: lightnessNumber [
+        "Answer a new opaque <Color> with hue, saturation and lightness values from the HLS colour model as represented by the arguments.
+        	hueNumber specifies the angle in degrees of the color on a color circle where red is zero degrees. Saturation and lightness are numbers in the range [0,1], with higher values for each representing more saturated and lighter colours respectively.
+        	Lightness values range from black at lightness 0, through vivid hues at lightness 0.5, to white at lightness 1. For example, (Color h: 0 s: 1 l: 0.5) is pure red."
+        ^self
+        		h: hueNumber
+        		s: saturationNumber
+        		l: lightnessNumber
+        		alpha: 1.0
+    ]
+    Color class >> h: hueNumber s: saturationNumber l: lightnessNumber alpha: alphaNumber [
+        "Answer a new <Color> with hue, saturation and lightness values from the HLS colour model as represented by the arguments, and with translucency specified by the alpha value."
+        | s l hf i f lo hi up dn red green blue |
+        	s := saturationNumber asFloat clampBetween: 0.0 and: 1.0.
+        	l := lightnessNumber asFloat clampBetween: 0.0 and: 1.0.
+        	s isZero
+        		ifTrue: [red := green := blue := l]
+        		ifFalse: 
+        			[hf := hueNumber asFloat \\ 360.0 / 60.0.
+        			i := hf truncated.	"integer part of hue"
+        			f := hf fractionPart.	"fractional part of hue"
+
+        			"Color components follow a step function between levels hi & lo with sloped transitions up & dn. Each component is phased according to hue."
+        			hi := l < 0.5 ifTrue: [(1.0 + s) * l] ifFalse: [l + s - (l * s)].
+        			lo := 2.0 * l - hi.
+        			up := (hi - lo) * f + lo.
+        			dn := (lo - hi) * f + hi.
+        			i == 0
+        				ifTrue: 
+        					[red := hi.
+        					green := up.
+        					blue := lo].
+        			i == 1
+        				ifTrue: 
+        					[red := dn.
+        					green := hi.
+        					blue := lo].
+        			i == 2
+        				ifTrue: 
+        					[red := lo.
+        					green := hi.
+        					blue := up].
+        			i == 3
+        				ifTrue: 
+        					[red := lo.
+        					green := dn.
+        					blue := hi].
+        			i == 4
+        				ifTrue: 
+        					[red := up.
+        					green := lo.
+        					blue := hi].
+        			i == 5
+        				ifTrue: 
+        					[red := hi.
+        					green := lo.
+        					blue := dn]].
+        	^self
+        		a: ((alphaNumber asFloat clampBetween: 0.0 and: 1.0) * 255) rounded
+        		r: (red * 255) rounded
+        		g: (green * 255) rounded
+        		b: (blue * 255) rounded
+    ]
+    Color class >> h: hueNumber s: saturationNumber v: brightnessNumber [
+        "Answer a new <Color> with hue, saturation and brightness values from the HSV colour model as represented by the arguments.
+
+        	Expected range for arguments to which they will be clamped:
+        		hue			[0, 360]
+        		saturation		[0, 1]
+        		brightness		[0, 1]."
+        ^self
+        		h: hueNumber
+        		s: saturationNumber
+        		v: brightnessNumber
+        		alpha: 1
+    ]
+    Color class >> h: hueNumber s: saturationNumber v: brightnessNumber alpha: alphaNumber [
+        "Answer a new <Color> with hue, saturation and brightness values from the HSV colour model as represented by the arguments, and with translucency specified by the alpha value.
+
+        	Expected range for arguments (to which they are clamped):
+        		hue		[0, 360]
+        		saturation	[0, 1]
+        		value		[0, 1]
+        		alpha	[0, 1]"
+        | s v h red green blue |
+        	s := saturationNumber asFloat clampBetween: 0.0 and: 1.0.
+        	v := brightnessNumber asFloat clampBetween: 0.0 and: 1.0.
+        	h := hueNumber asFloat clampBetween: 0.0 and: 360.0.
+        	s isZero
+        		ifTrue: 
+        			["Color on black-white center line, assume achromatic"
+        			red := green := blue := v]
+        		ifFalse: 
+        			[| i f p q t |
+        			"Chromatic"
+        			h = 360 ifTrue: [h := 0].
+        			h := h / 60.
+        			i := h floor.
+        			f := h - i.
+        			p := v * (1.0 - s).
+        			q := v * (1.0 - (s * f)).
+        			t := v * (1.0 - (s * (1.0 - f))).
+        			i == 0
+        				ifTrue: 
+        					[red := v.
+        					green := t.
+        					blue := p].
+        			i == 1
+        				ifTrue: 
+        					[red := q.
+        					green := v.
+        					blue := p].
+        			i == 2
+        				ifTrue: 
+        					[red := p.
+        					green := v.
+        					blue := t].
+        			i == 3
+        				ifTrue: 
+        					[red := p.
+        					green := q.
+        					blue := v].
+        			i == 4
+        				ifTrue: 
+        					[red := t.
+        					green := p.
+        					blue := v].
+        			i == 5
+        				ifTrue: 
+        					[red := v.
+        					green := p.
+        					blue := q]].
+        	^self
+        		a: ((alphaNumber asFloat clampBetween: 0.0 and: 1.0) * 255) rounded
+        		r: (red * 255) rounded
+        		g: (green * 255) rounded
+        		b: (blue * 255) rounded
+    ]
+    Color class >> highlight [
+        "Answer the Highlight system color."
+        ^self named: #highlight
+    ]
+    Color class >> highlight3d [
+        "Answer the 3D Highlight system color."
+        ^self named: #highlight3d
+    ]
+    Color class >> highlightText [
+        "Answer the Highlight Text system color."
+        ^Color named: #highlightText
+    ]
+    Color class >> hls: anArray [
+        "Answer a <Color> with the hue, lightness and saturation values specified by the first three elements of the <Array> argument."
+        ^self
+        		h: anArray first
+        		s: anArray third
+        		l: anArray second
+    ]
+    Color class >> honeydew [
+        	^self named: #honeydew
+    ]
+    Color class >> hotlight [
+        "Answer the 'hotlight' system color."
+        ^self named: #hotlight
+    ]
+    Color class >> hotPink [
+        	^self named: #hotPink
+    ]
+    Color class >> hsv: anArrayOfFloat [
+        "Answer a <Color> with the hue, saturation and brightness values specified by the first three elements of the <Array> argument."
+        ^self
+        		h: anArrayOfFloat first
+        		s: anArrayOfFloat second
+        		v: anArrayOfFloat third
+    ]
+    Color class >> icon [
+        "Answers an Icon that can be used to represent this class"
+        ^(self) defaultIcon
+    ]
+    Color class >> inactiveCaption [
+        "Answer the 'inactive caption' system colour (i.e. the fill color of the captions of inactive windows)."
+        ^self named: #inactiveCaption
+    ]
+    Color class >> indexedColorClass [
+        	^IndexedColor
+    ]
+    Color class >> indianRed [
+        	^self named: #indianRed
+    ]
+    Color class >> indigo [
+        	^self named: #indigo
+    ]
+    Color class >> initialize [
+        	| default |
+        	NamedColors := LookupTable new.
+        	ColorNames := LookupTable new.default := ColorDefault basicNew
+        				setCode: 4278190080. default beImmutableObject. default yourself.self addNamed: #default color: default. self addClassVariable: 'Default' value: default. self addClassVariable: 'None'
+        		value: (ColorNone basicNew
+        				setCode: 4294967295;
+        				beImmutableObject;
+        				yourself).
+        	self initializeCommonColors.
+        	#(#black #white) do: [:each | self addClassVariable: each capitalized value: (self named: each)]
+    ]
+    Color class >> initializeCommonColors [
+        "Private - Initialize the common colours, as defined in several Windows SDK header files, e.g. gdipluscolor.h.
+
+        	Note that we replace the green (a mid-green) with lime (full saturation green) since the standard definition conflicts with the normal expectation that red, green and blue colours are just fully saturated versions of that component. The 'Common Colors' representation where green is a mid-green and lime is 100% green is just too confusing, although #lime is still an alias for green and #commonGreen refers to the 'Common Colors' half-saturation green.
+
+        	Some of the other common colour names as defined for later Windows APIs (Gdiplus, Direct2d, etc) do not quite match the original IndexedColor RGB values for the colour of that name as historically used in Dolphin, e.g. the old #darkRed is actually called #maroon in the common colour set and #darkRed itself is slightly lighter. As these differences are relatively insignificant and likely to have only cosmetic effect versus the historic IndexedColor of the same name, the conflict has been resolved in favour of the common colors definition. The original colour is still provided if directly enquired of the IndexedColor class."
+        | commonColors |
+        	ColorNames := LookupTable new.
+        	commonColors := Set new.
+        	"Some of the colours have more than one name, e.g. Aqua and Cyan. It is important that the dominant name is enumerated first as this is the name the colour will have once instantiated. It will also be the name of the generated accessor method."
+        	#(#aliceBlue 16rFFF0F8FF #antiqueWhite 16rFFFAEBD7 #cyan 16rFF00FFFF #aqua 16rFF00FFFF #aquamarine 16rFF7FFFD4 #azure 16rFFF0FFFF #beige 16rFFF5F5DC #bisque 16rFFFFE4C4 #black 16rFF000000 #blanchedAlmond 16rFFFFEBCD #blue 16rFF0000FF #blueViolet 16rFF8A2BE2 #brown 16rFFA52A2A #burlyWood 16rFFDEB887 #cadetBlue 16rFF5F9EA0 #chartreuse 16rFF7FFF00 #chocolate 16rFFD2691E #coral 16rFFFF7F50 #cornflowerBlue 16rFF6495ED #cornsilk 16rFFFFF8DC #crimson 16rFFDC143C #darkBlue 16rFF00008B #darkCyan 16rFF008B8B #darkGoldenrod 16rFFB8860B #darkGray 16rFFA9A9A9 #darkGreen 16rFF006400 #darkKhaki 16rFFBDB76B #darkMagenta 16rFF8B008B #darkOliveGreen 16rFF556B2F #darkOrange 16rFFFF8C00 #darkOrchid 16rFF9932CC #darkRed 16rFF8B0000 #darkSalmon 16rFFE9967A #darkSeaGreen 16rFF8FBC8B #darkSlateBlue 16rFF483D8B #darkSlateGray 16rFF2F4F4F #darkTurquoise 16rFF00CED1 #darkViolet 16rFF9400D3 #deepPink 16rFFFF1493 #deepSkyBlue 16rFF00BFFF #dimGray 16rFF696969 #dodgerBlue 16rFF1E90FF #firebrick 16rFFB22222 #floralWhite 16rFFFFFAF0 #forestGreen 16rFF228B22 #magenta 16rFFFF00FF #fuchsia 16rFFFF00FF #gainsboro 16rFFDCDCDC #ghostWhite 16rFFF8F8FF #gold 16rFFFFD700 #goldenrod 16rFFDAA520 #gray 16rFF808080 #green 16rFF00FF00 #commonGreen 16rFF008000 #greenYellow 16rFFADFF2F #honeydew 16rFFF0FFF0 #hotPink 16rFFFF69B4 #indianRed 16rFFCD5C5C #indigo 16rFF4B0082 #ivory 16rFFFFFFF0 #khaki 16rFFF0E68C #lavender 16rFFE6E6FA #lavenderBlush 16rFFFFF0F5 #lawnGreen 16rFF7CFC00 #lemonChiffon 16rFFFFFACD #lightBlue 16rFFADD8E6 #lightCoral 16rFFF08080 #lightCyan 16rFFE0FFFF #lightGoldenrodYellow 16rFFFAFAD2 #lightGray 16rFFD3D3D3 #lightGreen 16rFF90EE90 #lightPink 16rFFFFB6C1 #lightSalmon 16rFFFFA07A #lightSeaGreen 16rFF20B2AA #lightSkyBlue 16rFF87CEFA #lightSlateGray 16rFF778899 #lightSteelBlue 16rFFB0C4DE #lightYellow 16rFFFFFFE0 #lime 16rFF00FF00 #limeGreen 16rFF32CD32 #linen 16rFFFAF0E6 #maroon 16rFF800000 #mediumAquamarine 16rFF66CDAA #mediumBlue 16rFF0000CD #mediumOrchid 16rFFBA55D3 #mediumPurple 16rFF9370DB #mediumSeaGreen 16rFF3CB371 #mediumSlateBlue 16rFF7B68EE #mediumSpringGreen 16rFF00FA9A #mediumTurquoise 16rFF48D1CC #mediumVioletRed 16rFFC71585 #midnightBlue 16rFF191970 #mintCream 16rFFF5FFFA #mistyRose 16rFFFFE4E1 #moccasin 16rFFFFE4B5 #navajoWhite 16rFFFFDEAD #navy 16rFF000080 #oldLace 16rFFFDF5E6 #olive 16rFF808000 #oliveDrab 16rFF6B8E23 #orange 16rFFFFA500 #orangeRed 16rFFFF4500 #orchid 16rFFDA70D6 #paleGoldenrod 16rFFEEE8AA #paleGreen 16rFF98FB98 #paleTurquoise 16rFFAFEEEE #paleVioletRed 16rFFDB7093 #papayaWhip 16rFFFFEFD5 #peachPuff 16rFFFFDAB9 #peru 16rFFCD853F #pink 16rFFFFC0CB #plum 16rFFDDA0DD #powderBlue 16rFFB0E0E6 #purple 16rFF800080 #red 16rFFFF0000 #rosyBrown 16rFFBC8F8F #royalBlue 16rFF4169E1 #saddleBrown 16rFF8B4513 #salmon 16rFFFA8072 #sandyBrown 16rFFF4A460 #seaGreen 16rFF2E8B57 #seaShell 16rFFFFF5EE #sienna 16rFFA0522D #silver 16rFFC0C0C0 #skyBlue 16rFF87CEEB #slateBlue 16rFF6A5ACD #slateGray 16rFF708090 #snow 16rFFFFFAFA #springGreen 16rFF00FF7F #steelBlue 16rFF4682B4 #tan 16rFFD2B48C #teal 16rFF008080 #thistle 16rFFD8BFD8 #tomato 16rFFFF6347 #transparent 16rFFFFFF #turquoise 16rFF40E0D0 #violet 16rFFEE82EE #wheat 16rFFF5DEB3 #white 16rFFFFFFFF #whiteSmoke 16rFFF5F5F5 #yellow 16rFFFFFF00 #yellowGreen 16rFF9ACD32)
+        		pairsDo: 
+        			[:n :v |
+        			| color |
+        			color := (self fromArgbCode: v)
+        						beImmutableObject;
+        						yourself.
+        			self addNamed: n color: color.
+        			color isTransparent ifFalse: [commonColors add: color]].
+        	self addClassVariable: 'CommonColors'
+        		value: (commonColors asSortedArray: 
+        					[:c1 :c2 |
+        					| a b |
+        					a := c1 hsv.
+        					b := c2 hsv.
+        					a first < b first
+        						or: [a first = b first and: [a second < b second or: [a second = b second and: [a third < b third]]]]])
+    ]
+    Color class >> ivory [
+        	^self named: #ivory
+    ]
+    Color class >> khaki [
+        	^self named: #khaki
+    ]
+    Color class >> lavender [
+        	^self named: #lavender
+    ]
+    Color class >> lavenderBlush [
+        	^self named: #lavenderBlush
+    ]
+    Color class >> lawnGreen [
+        	^self named: #lawnGreen
+    ]
+    Color class >> lemonChiffon [
+        	^self named: #lemonChiffon
+    ]
+    Color class >> light3d [
+        "Answer the light 3D system color"
+        ^self named: #light3d
+    ]
+    Color class >> lightBlue [
+        	^self named: #lightBlue
+    ]
+    Color class >> lightCoral [
+        	^self named: #lightCoral
+    ]
+    Color class >> lightCyan [
+        	^self named: #lightCyan
+    ]
+    Color class >> lightGoldenrodYellow [
+        	^self named: #lightGoldenrodYellow
+    ]
+    Color class >> lightGray [
+        	^self named: #lightGray
+    ]
+    Color class >> lightGreen [
+        	^self named: #lightGreen
+    ]
+    Color class >> lightPink [
+        	^self named: #lightPink
+    ]
+    Color class >> lightSalmon [
+        	^self named: #lightSalmon
+    ]
+    Color class >> lightSeaGreen [
+        	^self named: #lightSeaGreen
+    ]
+    Color class >> lightSkyBlue [
+        	^self named: #lightSkyBlue
+    ]
+    Color class >> lightSlateGray [
+        	^self named: #lightSlateGray
+    ]
+    Color class >> lightSteelBlue [
+        	^self named: #lightSteelBlue
+    ]
+    Color class >> lightYellow [
+        	^self named: #lightYellow
+    ]
+    Color class >> lime [
+        	^self named: #lime
+    ]
+    Color class >> limeGreen [
+        	^self named: #limeGreen
+    ]
+    Color class >> linen [
+        	^self named: #linen
+    ]
+    Color class >> magenta [
+        	^self named: #magenta
+    ]
+    Color class >> maroon [
+        	^self named: #maroon
+    ]
+    Color class >> mediumAquamarine [
+        	^self named: #mediumAquamarine
+    ]
+    Color class >> mediumBlue [
+        	^self named: #mediumBlue
+    ]
+    Color class >> mediumOrchid [
+        	^self named: #mediumOrchid
+    ]
+    Color class >> mediumPurple [
+        	^self named: #mediumPurple
+    ]
+    Color class >> mediumSeaGreen [
+        	^self named: #mediumSeaGreen
+    ]
+    Color class >> mediumSlateBlue [
+        	^self named: #mediumSlateBlue
+    ]
+    Color class >> mediumSpringGreen [
+        	^self named: #mediumSpringGreen
+    ]
+    Color class >> mediumTurquoise [
+        	^self named: #mediumTurquoise
+    ]
+    Color class >> mediumVioletRed [
+        	^self named: #mediumVioletRed
+    ]
+    Color class >> menu [
+        "Answer the standard window menu background color."
+        ^self named: #menu
+    ]
+    Color class >> menuBar [
+        "Answer the standard window top-level menu background color."
+        ^self named: #menuBar
+    ]
+    Color class >> menuHilight [
+        "Answer the standard window menu color for hilighted items."
+        ^self named: #menuHilight
+    ]
+    Color class >> menuText [
+        "Answer the 'menu text' system colour (i.e. the foreground colour of text on menus)."
+        ^self named: #menuText
+    ]
+    Color class >> midnightBlue [
+        	^self named: #midnightBlue
+    ]
+    Color class >> mintCream [
+        	^self named: #mintCream
+    ]
+    Color class >> mistyRose [
+        	^self named: #mistyRose
+    ]
+    Color class >> moccasin [
+        	^self named: #moccasin
+    ]
+    Color class >> named: aSymbol [
+        	^NamedColors at: aSymbol
+    ]
+    Color class >> navajoWhite [
+        	^self named: #navajoWhite
+    ]
+    Color class >> navy [
+        	^self named: #navy
+    ]
+    Color class >> new [
+        "Color's are generally immutable and must be instantiated through one of the specific instance creation
+        	methods."
+        ^self shouldNotImplement
+    ]
+    Color class >> none [
+        "Answer the special <ColorRef> respresenting no colour (synonym for #transparent). This is encoded as white with 0 alpha."
+        ^None
+    ]
+    Color class >> oldLace [
+        	^self named: #oldLace
+    ]
+    Color class >> olive [
+        	^self named: #olive
+    ]
+    Color class >> oliveDrab [
+        	^self named: #oliveDrab
+    ]
+    Color class >> orange [
+        	^self named: #orange
+    ]
+    Color class >> orangeRed [
+        	^self named: #orangeRed
+    ]
+    Color class >> orchid [
+        	^self named: #orchid
+    ]
+    Color class >> paleGoldenrod [
+        	^self named: #paleGoldenrod
+    ]
+    Color class >> paleGreen [
+        	^self named: #paleGreen
+    ]
+    Color class >> paleTurquoise [
+        	^self named: #paleTurquoise
+    ]
+    Color class >> paleVioletRed [
+        	^self named: #paleVioletRed
+    ]
+    Color class >> papayaWhip [
+        	^self named: #papayaWhip
+    ]
+    Color class >> peachPuff [
+        	^self named: #peachPuff
+    ]
+    Color class >> peru [
+        	^self named: #peru
+    ]
+    Color class >> pink [
+        	^self named: #pink
+    ]
+    Color class >> plum [
+        	^self named: #plum
+    ]
+    Color class >> powderBlue [
+        	^self named: #powderBlue
+    ]
+    Color class >> purple [
+        	^self named: #purple
+    ]
+    Color class >> r: redValue g: greenValue b: blueValue [
+        "Answer an RGB with the given component values, which are expected to be in the range 0.255."
+        ^self rgbClass
+        		r: redValue
+        		g: greenValue
+        		b: blueValue
+    ]
+    Color class >> red [
+        	^self named: #red
+    ]
+    Color class >> red: redValue green: greenValue blue: blueValue [
+        "Answer an RGB with the given component values, which are clamped to the range 0.255."
+        ^self rgbClass
+        		red: redValue
+        		green: greenValue
+        		blue: blueValue
+    ]
+    Color class >> removeNamed: aSymbol [
+        "Unregister the specified named color."
+        ^NamedColors removeKey: aSymbol ifAbsent: nil
+    ]
+    Color class >> rgbClass [
+        	^RGB
+    ]
+    Color class >> rosyBrown [
+        	^self named: #rosyBrown
+    ]
+    Color class >> royalBlue [
+        	^self named: #royalBlue
+    ]
+    Color class >> saddleBrown [
+        	^self named: #saddleBrown
+    ]
+    Color class >> salmon [
+        	^self named: #salmon
+    ]
+    Color class >> sandyBrown [
+        	^self named: #sandyBrown
+    ]
+    Color class >> seaGreen [
+        	^self named: #seaGreen
+    ]
+    Color class >> seaShell [
+        	^self named: #seaShell
+    ]
+    Color class >> shadow3d [
+        "Answer the 3D shadow system color."
+        ^self named: #shadow3d
+    ]
+    Color class >> sienna [
+        	^self named: #sienna
+    ]
+    Color class >> silver [
+        	^self named: #silver
+    ]
+    Color class >> skyBlue [
+        	^self named: #skyBlue
+    ]
+    Color class >> slateBlue [
+        	^self named: #slateBlue
+    ]
+    Color class >> slateGray [
+        	^self named: #slateGray
+    ]
+    Color class >> snow [
+        	^self named: #snow
+    ]
+    Color class >> springGreen [
+        	^self named: #springGreen
+    ]
+    Color class >> stbReadFrom: anSTBInFiler format: anSTBClassConversion size: anInteger [
+        "Read an instance of the receiver from the binary filer, aSTBInFiler."
+        "Implementation Note: Overridden in order to maintain unique instances without using an
+        	STBSingletonProxy."
+
+        	| answer ref value |
+        	ref := anSTBInFiler register: nil.
+        	value := anSTBInFiler basicNext.
+        	answer := value isInteger ifTrue: [self fromInteger: value] ifFalse: [self named: value].
+        	anSTBInFiler fixup: ref to: answer.
+        	^answer
+    ]
+    Color class >> steelBlue [
+        	^self named: #steelBlue
+    ]
+    Color class >> systemColor: anInteger [
+        "Answer a new sub-instance of the receiver for the specified system colour."
+        ^self systemColorClass withIndex: anInteger
+    ]
+    Color class >> systemColorClass [
+        	^SystemColor
+    ]
+    Color class >> tan [
+        	^self named: #tan
+    ]
+    Color class >> teal [
+        	^self named: #teal
+    ]
+    Color class >> thistle [
+        	^self named: #thistle
+    ]
+    Color class >> tomato [
+        	^self named: #tomato
+    ]
+    Color class >> tooltip [
+        "Answer the standard tooltip background colour."
+        ^self named: #tooltip
+    ]
+    Color class >> tooltipText [
+        "Answer the standard tooltip text colour."
+        ^self named: #tooltipText
+    ]
+    Color class >> transparent [
+        	^None
+    ]
+    Color class >> turquoise [
+        	^self named: #turquoise
+    ]
+    Color class >> violet [
+        	^self named: #violet
+    ]
+    Color class >> wheat [
+        	^self named: #wheat
+    ]
+    Color class >> white [
+        	^White
+    ]
+    Color class >> whiteSmoke [
+        	^self named: #whiteSmoke
+    ]
+    Color class >> window [
+        "Answer the standard window background system color."
+        ^Window
+    ]
+    Color class >> windowText [
+        "Answer the standard window text system color."
+        ^WindowText
+    ]
+    Color class >> withIndex: anInteger [
+        	^self indexedColorClass withIndex: anInteger
+    ]
+    Color class >> yellow [
+        	^self named: #yellow
+    ]
+    Color class >> yellowGreen [
+        	^self named: #yellowGreen
+    ]
+]

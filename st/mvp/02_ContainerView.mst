@@ -91,7 +91,7 @@ View subclass: ContainerView [
         "Private - Answer the default extended window creation style.
         	We use the WS_EX_CONTROLPARENT style for ContainerViews, otherwise tabs only
         	work between siblings in a single level."
-        ^super defaultWindowExStyle bitOr: WS_EX_CONTROLPARENT
+        ^super defaultWindowExStyle bitOr: 65536
     ]
     errorDuplicateName: aString [
         "Report that aString is already in use as the name of a sub-view of the receiver."
@@ -142,14 +142,14 @@ View subclass: ContainerView [
     ]
     isControlParent [
         "Answer whether the receiver can contain controls which may be tabbed to."
-        ^self extendedStyle allMask: WS_EX_CONTROLPARENT
+        ^self extendedStyle allMask: 65536
     ]
     isControlParent: aBoolean [
         "Set whether the receiver can contain controls which may be tabbed to."
         "N.B. Do not disable this for containers that contain controls, otherwise you may find that
         	Windows goes into an infinite loop in IsDialogMessage()."
 
-        	^self exStyleMask: WS_EX_CONTROLPARENT set: aBoolean
+        	^self exStyleMask: 65536 set: aBoolean
     ]
     layout: aLayoutContext [
         "Private - Recalculate the geometry of the receiver"

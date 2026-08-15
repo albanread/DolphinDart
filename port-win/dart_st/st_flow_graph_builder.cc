@@ -658,10 +658,18 @@ class StGraphBuilder {
   intptr_t IvarOffset(const std::string& name) {
     const String& sym =
         String::Handle(zone_, Symbols::New(thread_, name.c_str()));
+    // An ivar whose name shadows an inherited method carries a synthetic FIELD
+    // name — Dart forbids the shadow, Dolphin requires it (st_loader.cc, the
+    // `events` case). The Smalltalk spelling is what appears in source, so
+    // resolve it here by trying the synthetic name too.
+    const String& sym_iv =
+        String::Handle(zone_, Symbols::New(thread_, (name + "$iv").c_str()));
     Field& field = Field::Handle(zone_);
     Class& c = Class::Handle(zone_, pf_->function().Owner());
     while (!c.IsNull()) {
       field = c.LookupInstanceField(sym);
+      if (!field.IsNull()) return field.Offset();
+      field = c.LookupInstanceField(sym_iv);
       if (!field.IsNull()) return field.Offset();
       c = c.SuperClass();
     }
@@ -723,6 +731,9 @@ class StGraphBuilder {
   RawClass* ResolveClassName(const std::string& name);
   Fragment TranslateClassSend(const Class& cls, MessageNode* node);
   Fragment TranslateSuperSend(MessageNode* node);
+  // DolphinDart DD9: the same thing one metalevel up (`Foo class >> new [
+  // ^super new initialize ]`).
+  Fragment TranslateClassSuperSend(MessageNode* node);
   void MetaSplit(const Class& cls, Class& inst, Class& shadow);
   std::string DartSelector(const std::string& st_selector);
   std::string DartGetter(const std::string& st_selector);
@@ -1037,7 +1048,14 @@ Fragment StGraphBuilder::TranslateVariable(VariableNode* node) {
     // Class-side (Sprint 11): `self` is the implicit thisCls parameter — an
     // ordinary local (capturable). Fall through to standard local resolution.
     if (node->name != "self" || locals_.count("self") == 0) {
-      return Unsupported(node, "self/super here");
+      // DD9 sharpened this: class-side `super <sel>` now has its own path in
+      // TranslateMessage, so a `super` arriving HERE is a bare one in value
+      // position, which has no meaning in Smalltalk. Saying so beats the old
+      // catch-all, which named the two cases together and sent DD9 looking for
+      // a missing send path when the send path was the thing that was missing.
+      return Unsupported(node, node->name == "super"
+                                   ? "bare `super` outside a message send"
+                                   : "self/super here");
     }
   }
   LocalVariable* local = LookupLocal(node->name);
@@ -1173,6 +1191,18 @@ Fragment StGraphBuilder::TranslateMessage(MessageNode* node) {
   if (VariableNode* sv = dynamic_cast<VariableNode*>(node->receiver.get())) {
     if (sv->name == "super" && this_var_ != NULL) {
       return TranslateSuperSend(node);
+    }
+    // The same send one metalevel up (DolphinDart DD9). Class-side `super` had
+    // no path at all: it fell past this check (this_var_ is NULL on the class
+    // side), past the class-NAME check below (which excludes "super"), and
+    // reached TranslateVariable, which answered "unsupported self/super here"
+    // and yielded null. Dolphin's universal constructor is
+    // `Foo class >> new [ ^super new initialize ]`, so that gap meant no
+    // translated Dolphin class could be INSTANTIATED. Measured over the dsfork
+    // corpus: 572 class-side `super` sends — `defineFields` 196, `new` 147,
+    // `stbConvertFrom:` 45, `publishedAspects` 32, `helperClassesDo:` 16.
+    if (sv->name == "super" && this_var_ == NULL && locals_.count("self")) {
+      return TranslateClassSuperSend(node);
     }
   }
 
@@ -1808,6 +1838,114 @@ Fragment StGraphBuilder::TranslateSuperSend(MessageNode* node) {
   }
   instructions += StaticCall(fn, 1 + static_cast<intptr_t>(node->args.size()));
   return instructions;
+}
+
+// Class-side `super sel: ..` (DolphinDart DD9) — TranslateSuperSend one
+// metalevel up. Resolution starts in the OWNER SHADOW's superclass and walks
+// the shadow chain, which the loader builds parallel to the instance chain.
+//
+// Argument 0 stays `self` — the RECEIVING class, never the owner. That is what
+// makes an inherited constructor allocate the class the message was actually
+// sent to: `ShellView new` running View's `^super new initialize` must answer a
+// ShellView, and it does because the ancestor it reaches sees self = ShellView.
+Fragment StGraphBuilder::TranslateClassSuperSend(MessageNode* node) {
+  const Class& owner = Class::Handle(zone_, pf_->function().Owner());
+  // Only a genuine `Foo class` shadow HAS a shadow super chain to walk. A
+  // class-side closure can be owned by something else (the reason the `self`
+  // fast path below keeps a runtime stClassSend fallback), and resolving
+  // against the wrong chain would silently call the wrong method — so refuse.
+  {
+    const String& on = String::Handle(zone_, owner.Name());
+    const std::string n(on.ToCString());
+    static const char kSuffix[] = " class";
+    const size_t klen = sizeof(kSuffix) - 1;
+    if (n.size() <= klen || n.compare(n.size() - klen, klen, kSuffix) != 0) {
+      return Unsupported(node, "class-side super send from a non-shadow owner");
+    }
+  }
+  const String& sel = String::ZoneHandle(
+      zone_,
+      Symbols::New(thread_, ::st::MangleSelector(node->selector).c_str()));
+  // Member-finalize each visited class, as TranslateClassSend does: a bare
+  // LookupStaticFunction routes through the Dart parser and crashes on a
+  // TokenStream-less ST class.
+  Function& fn = Function::ZoneHandle(zone_);
+  {
+    Class& c = Class::Handle(zone_, owner.SuperClass());
+    while (!c.IsNull()) {
+      if (!c.is_finalized()) ClassFinalizer::FinalizeClass(c);
+      fn ^= c.LookupStaticFunction(sel);
+      if (!fn.IsNull()) break;
+      c ^= c.SuperClass();
+    }
+  }
+  if (!fn.IsNull()) {
+    Fragment instructions = LoadLocal(locals_["self"]);  // thisCls -> arg 0
+    instructions += PushArgument();
+    for (size_t i = 0; i < node->args.size(); i++) {
+      instructions += TranslateExpression(node->args[i].get());
+      instructions += PushArgument();
+    }
+    instructions +=
+        StaticCall(fn, 1 + static_cast<intptr_t>(node->args.size()));
+    return instructions;
+  }
+  // No ancestor defines it. `new`/`basicNew` is the case that carries the
+  // sprint: Dolphin inherits those from a kernel `Object class` this world does
+  // not translate (st/world/01_object.mst declares no class side at all), so
+  // `^super new initialize` has to mean RAW ALLOCATION of the receiving class.
+  //
+  // It must NOT re-dispatch the selector — stClassNewDispatch would look `new`
+  // up from the receiver, find the very method that is running, and recurse
+  // until the stack ends. That is the trap this fallback exists to avoid.
+  if ((node->selector == "new" || node->selector == "basicNew") &&
+      node->args.empty()) {
+    Class& inst_cls = Class::Handle(zone_);
+    Class& shadow = Class::Handle(zone_);
+    MetaSplit(owner, inst_cls, shadow);
+    if (!inst_cls.IsNull()) {
+      if (!inst_cls.is_finalized()) ClassFinalizer::FinalizeClass(inst_cls);
+      // Guarded inline allocation, exactly as the class-side `self new` path
+      // does: one StrictCompare (Types are canonical) against the owner's
+      // instance class. Equal — every call that NAMES the class — allocates
+      // inline with no native transition; different (a subclass inheriting
+      // this constructor) takes stBasicNew, which allocates that subclass.
+      const Type& owner_type =
+          Type::ZoneHandle(zone_, Type::NewNonParameterizedType(inst_cls));
+      Fragment instructions = LoadLocal(locals_["self"]);  // thisCls
+      instructions += Constant(owner_type);
+      TargetEntryInstr* fast = NULL;
+      TargetEntryInstr* slow = NULL;
+      instructions += BranchIfStrictEqual(&fast, &slow);
+      Fragment fast_f(fast);
+      fast_f += AllocateObject(inst_cls);
+      fast_f += StoreLocal(value_temp_);
+      fast_f += Drop();
+      Fragment slow_f(slow);
+      slow_f += LoadLocal(locals_["self"]);
+      slow_f += PushArgument();
+      slow_f += StaticCall(
+          Function::ZoneHandle(zone_, LookupCocoaFunction("stBasicNew")), 1);
+      slow_f += StoreLocal(value_temp_);
+      slow_f += Drop();
+      JoinEntryInstr* join = BuildJoinEntry();
+      fast_f += Goto(join);
+      slow_f += Goto(join);
+      Fragment result(instructions.entry, join);
+      result += LoadLocal(value_temp_);
+      return result;
+    }
+    Fragment instructions = LoadLocal(locals_["self"]);
+    instructions += PushArgument();
+    instructions += StaticCall(
+        Function::ZoneHandle(zone_, LookupCocoaFunction("stBasicNew")), 1);
+    return instructions;
+  }
+  // Anything else is a genuine miss: no ancestor defines this class-side
+  // method. Refuse rather than restarting dispatch at the RECEIVER — a
+  // subclass override would then capture a `super` send, which is exactly
+  // backwards. Same call the instance side makes.
+  return Unsupported(node, "class-side super send (not found in supers)");
 }
 
 // ST selector -> dart:core selector, where they differ. Selectors that already

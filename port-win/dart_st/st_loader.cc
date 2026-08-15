@@ -967,8 +967,62 @@ bool Loader::Load(std::unique_ptr<ProgramNode> program_owned,
     const Array& fields = Array::Handle(zone, Array::New(e.ivars.size(),
                                                          Heap::kOld));
     for (size_t j = 0; j < e.ivars.size(); j++) {
+      // A Dart field may not shadow an INHERITED method (class_finalizer's
+      // FindSuperOwnerOfFunction). Smalltalk not only allows that, Dolphin
+      // DEPENDS on it: `Object>>events` answers a registry-backed collection
+      // and 17 corpus classes — View, Presenter, Model, ListModel, MessageBox,
+      // CardLayout … — cache theirs in an ivar of the same name and OVERRIDE
+      // the accessor. Without this, `View new` died at finalization with
+      // "field 'events' of class 'View' conflicts with method 'events' of
+      // super class 'Object ext'", and no MVP class could be instantiated.
+      //
+      // The FIELD takes a synthetic name; the ivar keeps its Smalltalk
+      // spelling everywhere else (source, `agg->ivars`, instVarAt: indices,
+      // which are positional and so unaffected). '$' cannot occur in a
+      // Smalltalk identifier, so the synthetic name can never collide with a
+      // real one. IvarOffset tries both spellings.
+      //
+      // Measured over the whole dsfork corpus against every unary method our
+      // Object carries: `events` is the ONLY collision. The check stays
+      // general anyway — tools/check_ivar_collisions.py re-derives the set, so
+      // a compat method added later cannot quietly break a class.
+      std::string ivname = e.ivars[j];
+      {
+        // Mirrors class_finalizer.cc's FindSuperOwnerOfFunction — but scans
+        // each superclass's functions() array DIRECTLY. Class::LookupFunction
+        // routes through EnsureIsFinalized -> Compiler::CompileClass, and an
+        // ST class has no TokenStream to parse: the first attempt here died on
+        // `expected: cls.is_type_finalized()`, the same lazy-parse trap DD0
+        // met in Loader::Load. Nothing is finalized at this point, by design.
+        const String& probe =
+            String::Handle(zone, Symbols::New(thread, ivname.c_str()));
+        Class& sup = Class::Handle(zone, k.SuperClass());
+        Array& sfuncs = Array::Handle(zone);
+        Function& shadowed = Function::Handle(zone);
+        String& sname = String::Handle(zone);
+        bool collides = false;
+        while (!sup.IsNull() && !collides) {
+          sfuncs = sup.functions();
+          if (!sfuncs.IsNull()) {
+            for (intptr_t fi = 0; fi < sfuncs.Length(); fi++) {
+              shadowed ^= sfuncs.At(fi);
+              if (shadowed.IsNull() || shadowed.is_static() ||
+                  shadowed.IsMethodExtractor()) {
+                continue;
+              }
+              sname = shadowed.name();
+              if (sname.Equals(probe)) {
+                collides = true;
+                break;
+              }
+            }
+          }
+          sup = sup.SuperClass();
+        }
+        if (collides) ivname += "$iv";
+      }
       const String& fname =
-          String::Handle(zone, Symbols::New(thread, e.ivars[j].c_str()));
+          String::Handle(zone, Symbols::New(thread, ivname.c_str()));
       const Field& f = Field::Handle(
           zone, Field::New(fname, /*is_static=*/false, /*is_final=*/false,
                            /*is_const=*/false, /*is_reflectable=*/true, k,
