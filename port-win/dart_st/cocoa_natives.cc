@@ -61,6 +61,7 @@ void ST_mvpClick(Dart_NativeArguments args);
 void ST_mvpInvalidate(Dart_NativeArguments args);
 void ST_mvpBumpGeneration(Dart_NativeArguments args);
 void ST_mvpPaintFaults(Dart_NativeArguments args);
+void ST_mvpIsWindow(Dart_NativeArguments args);
 void ST_peekByte(Dart_NativeArguments args);
 void ST_pokeByte(Dart_NativeArguments args);
 void ST_peekF64(Dart_NativeArguments args);
@@ -122,6 +123,7 @@ void ST_symbolFor(Dart_NativeArguments args);   // interned symbol lookup (perf 
   V(ST_mvpClick, 2)                                                       \
   V(ST_mvpInvalidate, 1)                                                  \
   V(ST_mvpBumpGeneration, 0)                                              \
+  V(ST_mvpIsWindow, 1)                                                       \
   V(ST_mvpPaintFaults, 0)                                                 \
   V(ST_peekByte, 1)                                                            \
   V(ST_pokeByte, 2)                                                            \

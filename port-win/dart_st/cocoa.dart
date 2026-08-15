@@ -1333,6 +1333,7 @@ stMvpClick(int h, int id) native "ST_mvpClick";
 stMvpInvalidate(int h) native "ST_mvpInvalidate";
 stMvpBumpGeneration() native "ST_mvpBumpGeneration";
 stMvpPaintFaults() native "ST_mvpPaintFaults";
+stMvpIsWindow(int h) native "ST_mvpIsWindow";
 
 /// Route a door message to the image. `UiSession` is the Smalltalk entry point
 /// (DD8 owns it); until then the spike class answers. A miss must not take the
@@ -1345,9 +1346,17 @@ _mvpToSmalltalk(int wp, int lp) {
   // visible window's paint/command/destroy), lp is that channel's payload.
   // Keeping them separate is what stops a depth-3 probe being read as a
   // WM_DESTROY — measured, after exactly that happened.
-  var box = (wp == 0)
-      ? _stClassSendTry(stClassNamed('MvpDoor'), 'wndProc_with_', [lp, 0])
-      : _stClassSendTry(stClassNamed('MvpWindow'), 'onKind_arg_', [wp, lp]);
+  // UiSession is the real receiver (DD8). The DD7 spike classes remain as a
+  // FALLBACK so the re-entry tortures still run against the raw door: channel 0
+  // is the spike's recursion probe and has no UiSession meaning, and a window
+  // message finds MvpWindow only when no UiSession is loaded.
+  var box;
+  if (wp == 0) {
+    box = _stClassSendTry(stClassNamed('MvpDoor'), 'wndProc_with_', [lp, 0]);
+  } else {
+    box = _stClassSendTry(stClassNamed('UiSession'), 'wndProc_arg_', [wp, lp]);
+    box ??= _stClassSendTry(stClassNamed('MvpWindow'), 'onKind_arg_', [wp, lp]);
+  }
   if (box == null) return 0;
   var v = box[0];
   return v is int ? v : 0;

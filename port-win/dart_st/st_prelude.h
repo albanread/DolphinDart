@@ -107,6 +107,7 @@ Object subclass: Win32 [
     Win32 class >> mvpInvalidate: h [ <stprim: stMvpInvalidate> ]
     Win32 class >> mvpBumpGeneration [ <stprim: stMvpBumpGeneration> ]
     Win32 class >> mvpPaintFaults [ <stprim: stMvpPaintFaults> ]
+    Win32 class >> mvpIsWindow: h [ <stprim: stMvpIsWindow> ]
 ]
 
 "── The system object (corpus surface: Smalltalk millisecondClock) ──"

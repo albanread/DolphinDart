@@ -312,6 +312,12 @@ void ST_mvpBumpGeneration(Dart_NativeArguments args) {
   Dart_SetReturnValue(args, Dart_NewInteger(g_generation));
 }
 
+// Registry hygiene (UiSession purgeDeadWindows): is this handle still a window?
+void ST_mvpIsWindow(Dart_NativeArguments args) {
+  HWND h = (HWND)(intptr_t)ArgInt(args, 0);
+  Dart_SetReturnValue(args, Dart_NewBoolean(h != nullptr && IsWindow(h)));
+}
+
 void ST_mvpPaintFaults(Dart_NativeArguments args) {
   Dart_SetReturnValue(args, Dart_NewInteger(g_paint_faults));
 }

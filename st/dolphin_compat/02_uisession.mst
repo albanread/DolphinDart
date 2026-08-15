@@ -1,0 +1,182 @@
+"02_uisession.mst — the UI session (DolphinDart DD8).
+
+ The image side of the DD7 wndproc door, and the class Dolphin's MVP framework
+ talks to. It replaces the DD7 spike classes (`MvpDoor`, `MvpWindow`), which
+ existed only to prove the door's re-entry contract.
+
+ Responsibilities, all of them Dolphin's own (prior-art G3/V3):
+   * a window REGISTRY, hwnd -> view, with a lastWindow cache;
+   * message ROUTING — the door calls `UiSession wndProc:arg:` for every
+     reflected message and this dispatches to the registered view;
+   * DEFERRED ACTIONS — `postAction:` queues a block to run on the UI thread,
+     drained by the pump rather than run inside the sending entry;
+   * `onIdle` — the pump-empty hook, where Dolphin revalidates commands.
+
+ THE CONSTRAINT THAT SHAPES THIS FILE (measured, DD7): containment is at the
+ DOOR. A raise inside a door entry is contained by the WndProc, which answers a
+ default and keeps pumping — it does NOT reach a handler installed outside the
+ entry. So any protection a view wants must be installed INSIDE its own handler,
+ which is why `dispatch:` wraps the view send here and not somewhere higher."
+
+Object subclass: UiSession [
+    <classVars: Windows LastWindow Actions IdleCount MessageCount>
+
+    UiSession class >> reset [
+        Windows := IdentityDictionary new.
+        Actions := OrderedCollection new.
+        LastWindow := nil. IdleCount := 0. MessageCount := 0
+    ]
+    UiSession class >> windows [
+        Windows isNil ifTrue: [ self reset ]. ^Windows
+    ]
+    UiSession class >> actions [
+        Actions isNil ifTrue: [ self reset ]. ^Actions
+    ]
+
+    "── the registry ────────────────────────────────────────────────────"
+    UiSession class >> register: aView for: anHwnd [
+        self windows at: anHwnd put: aView.
+        LastWindow := aView.
+        ^aView
+    ]
+    UiSession class >> viewFor: anHwnd [ ^self windows at: anHwnd ifAbsent: [ nil ] ]
+    UiSession class >> lastWindow [ ^LastWindow ]
+    UiSession class >> deregister: anHwnd [
+        | v |
+        v := self viewFor: anHwnd.
+        self windows removeKey: anHwnd ifAbsent: [ nil ].
+        (LastWindow == v) ifTrue: [ LastWindow := nil ].
+        ^v
+    ]
+    UiSession class >> windowCount [ ^self windows size ]
+
+    "Registry hygiene: every window the session made must be gone after a close
+     cycle. DD9's gate asserts this is empty."
+    UiSession class >> purgeDeadWindows [
+        | dead |
+        dead := OrderedCollection new.
+        self windows keysAndValuesDo: [ :h :v |
+            (Win32 mvpIsWindow: h) ifFalse: [ dead add: h ] ].
+        dead do: [ :h | self deregister: h ].
+        ^dead size
+    ]
+
+    "── message routing ─────────────────────────────────────────────────
+     The door hands us (channel, payload). Channel 1 = paint, 2 = command,
+     3 = destroy — the kinds win_mvp.cpp reflects."
+    UiSession class >> wndProc: channel arg: arg [
+        MessageCount := (MessageCount ifNil: [ 0 ]) + 1.
+        channel = 1 ifTrue: [ ^self dispatch: #onPaint: arg: arg ].
+        channel = 2 ifTrue: [ ^self dispatch: #onCommand: arg: arg ].
+        channel = 3 ifTrue: [ ^self dispatch: #onDestroy: arg: arg ].
+        ^0
+    ]
+
+    "Route to the current view, protecting the send HERE — inside the entry —
+     because the door contains raises rather than propagating them outward."
+    UiSession class >> dispatch: aSelector arg: arg [
+        | view |
+        view := LastWindow.
+        view isNil ifTrue: [ ^0 ].
+        (view respondsTo: aSelector) ifFalse: [ ^0 ].
+        ^[ view perform: aSelector with: arg ]
+            on: Error
+            do: [ :e | self noteHandlerError: e. 0 ]
+    ]
+
+    UiSession class >> noteHandlerError: anException [
+        Transcript showCr: 'UiSession: handler error — ', anException messageText.
+        ^nil
+    ]
+
+    UiSession class >> messageCount [ ^MessageCount ifNil: [ 0 ] ]
+
+    "── deferred actions ────────────────────────────────────────────────
+     `postAction:` queues work to run on the UI thread OUTSIDE the current
+     entry. Dolphin's own reason applies here too: a handler that rebuilds the
+     window it is being called from must not do so mid-message. Drained by the
+     pump, never inside a dispatch."
+    UiSession class >> postAction: aBlock [ self actions add: aBlock. ^aBlock ]
+    UiSession class >> pendingActions [ ^self actions size ]
+
+    UiSession class >> drainActions [
+        | queued n |
+        "Drain a SNAPSHOT: an action that posts another action must not extend
+         this drain into an unbounded loop."
+        queued := self actions.
+        n := queued size.
+        Actions := OrderedCollection new.
+        1 to: n do: [ :i |
+            [ (queued at: i) value ]
+                on: Error
+                do: [ :e | self noteHandlerError: e ] ].
+        ^n
+    ]
+
+    "── the pump ────────────────────────────────────────────────────────"
+    UiSession class >> pump [
+        | n |
+        n := Win32 mvpPump: 200.
+        self drainActions.
+        n = 0 ifTrue: [ self onIdle ].
+        ^n
+    ]
+
+    "Pump-empty hook. Dolphin revalidates command enablement here; v1 counts
+     visits so a test can prove the hook fires at all."
+    UiSession class >> onIdle [
+        IdleCount := (IdleCount ifNil: [ 0 ]) + 1.
+        LastWindow isNil ifFalse: [
+            (LastWindow respondsTo: #onIdle) ifTrue: [ LastWindow onIdle ] ].
+        ^IdleCount
+    ]
+    UiSession class >> idleCount [ ^IdleCount ifNil: [ 0 ] ]
+
+    "── startup / shutdown ──────────────────────────────────────────────
+     `startUp` re-runs after a generation bump: the HWNDs of the previous
+     generation are stale and stop reaching the image (win_mvp.cpp), so the
+     registry must be emptied rather than left holding dead handles."
+    UiSession class >> startUp [
+        Win32 mvpInstall.
+        self reset.
+        ^self
+    ]
+    UiSession class >> shutDown [
+        self windows keysDo: [ :h | Win32 mvpDestroyWindow: h ].
+        self reset.
+        ^self
+    ]
+]
+
+"The minimal view a session can route to. DD9 replaces this with the translated
+ `UI.View`; it exists now so UiSession's routing has a real receiver and the DD7
+ door tortures can be re-run through the session."
+Object subclass: UiWindow [
+    | hwnd painted commands destroys idles |
+    UiWindow class >> open: width by: height [
+        | w h |
+        w := self basicNew initWindow.
+        h := Win32 mvpCreateTopWindow: width height: height.
+        w setHwnd: h.
+        UiSession register: w for: h.
+        ^w
+    ]
+    initWindow [ painted := 0. commands := 0. destroys := 0. idles := 0 ]
+    setHwnd: h [ hwnd := h ]
+    hwnd [ ^hwnd ]
+    painted [ ^painted ]
+    commands [ ^commands ]
+    destroys [ ^destroys ]
+    idles [ ^idles ]
+
+    show [ ^Win32 mvpShow: hwnd ]
+    invalidate [ ^Win32 mvpInvalidate: hwnd ]
+    addButton: anId [ ^Win32 mvpCreateButton: hwnd id: anId ]
+    click: anId [ ^Win32 mvpClick: hwnd id: anId ]
+    close [ UiSession deregister: hwnd. ^Win32 mvpDestroyWindow: hwnd ]
+
+    onPaint: hdc [ painted := painted + 1. ^0 ]
+    onCommand: controlId [ commands := commands + 1. ^0 ]
+    onDestroy: ignored [ destroys := destroys + 1. ^0 ]
+    onIdle [ idles := idles + 1. ^idles ]
+]
