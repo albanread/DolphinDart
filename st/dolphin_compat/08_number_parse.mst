@@ -1,0 +1,48 @@
+"08_number_parse.mst — `Number class >> fromString:` (DolphinDart DD10).
+
+ Dolphin's type converters parse the view side through it: `NumberToText`'s
+ `rightToLeft:` is `Number fromString: aString`, and that is the call the DD10
+ bad-input path turns into an `InvalidFormat`.
+
+ **It RAISES on unparseable input.** The world's `String>>asInteger` answers
+ nil, which is the right contract for a query but the wrong one here: a
+ converter that answers nil on garbage puts nil into the model, and the failure
+ then surfaces wherever that nil is next used — arbitrarily far from the field
+ the user typed in. Raising is what lets the presenter beep and revert at the
+ point of the mistake.
+
+ `InvalidFormat` (st/dolphin_compat/03_kernel.mst, on DD4's `Error`) is the
+ class Dolphin signals, so `on: InvalidFormat do:` in translated code catches
+ it and so does any existing `on: Error do:`."
+Object subclass: Number [
+    Number class >> fromString: aString [
+        ^self fromString: aString ifInvalid: [
+            InvalidFormat new signal: '''', aString displayString,
+                ''' is not a valid number' ]
+    ]
+
+    "The non-raising form, for a caller that has somewhere better to put the
+     failure. Integers first, then a single decimal point — the two forms the
+     corpus's converters accept."
+    Number class >> fromString: aString ifInvalid: aBlock [
+        | s dot whole frac sign body |
+        s := aString displayString.
+        s isEmpty ifTrue: [ ^aBlock value ].
+        sign := 1. body := s.
+        (body at: 1) = $- ifTrue: [ sign := -1. body := body copyFrom: 2 to: body size ].
+        (body at: 1) = $+ ifTrue: [ body := body copyFrom: 2 to: body size ].
+        body isEmpty ifTrue: [ ^aBlock value ].
+        dot := 0.
+        1 to: body size do: [ :i | (body at: i) = $. ifTrue: [ dot := i ] ].
+        dot = 0 ifTrue: [
+            whole := body asInteger.
+            whole isNil ifTrue: [ ^aBlock value ].
+            ^whole * sign ].
+        "A decimal point at either end, or more than one, is not a number."
+        (dot = 1 or: [ dot = body size ]) ifTrue: [ ^aBlock value ].
+        whole := (body copyFrom: 1 to: dot - 1) asInteger.
+        frac := (body copyFrom: dot + 1 to: body size).
+        (whole isNil or: [ frac asInteger isNil ]) ifTrue: [ ^aBlock value ].
+        ^sign * (whole + (frac asInteger / (10 raisedTo: frac size))) asFloat
+    ]
+]

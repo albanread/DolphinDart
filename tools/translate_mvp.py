@@ -53,6 +53,28 @@ TARGETS = [
     "Core/Object Arts/Dolphin/MVP/Base/Graphics.Rectangle.cls",
     "Core/Object Arts/Dolphin/MVP/Base/UI.LayoutContext.cls",
     "Core/Object Arts/Dolphin/MVP/Base/UI.LayoutPlacement.cls",
+
+    # ── DD10: the MVP triad ────────────────────────────────────────────────
+    # Dolphin's own Core.Model REPLACES the DD8 compat stand-in: the compat
+    # kernel existed so DD8/DD9 had a model side at all, and the moment the
+    # real one is translated, having both would mean two Model classes with a
+    # silent winner decided by load order.
+    "Core/Object Arts/Dolphin/Base/Core.Model.cls",
+    "Core/Object Arts/Dolphin/MVP/Models/Value/UI.ValueModel.cls",
+    "Core/Object Arts/Dolphin/MVP/Models/Value/UI.ValueHolder.cls",
+    "Core/Object Arts/Dolphin/MVP/Models/Value/UI.ValueAdaptor.cls",
+    "Core/Object Arts/Dolphin/MVP/Models/Value/UI.ValueAspectAdaptor.cls",
+    "Core/Object Arts/Dolphin/MVP/Models/Value/UI.ValueBuffer.cls",
+    # Type converters — the acceptance app's bad-input path runs through
+    # NumberToText, which is what makes InvalidFormat fire in anger.
+    "Core/Object Arts/Dolphin/MVP/Type Converters/UI.TypeConverter.cls",
+    "Core/Object Arts/Dolphin/MVP/Type Converters/UI.NullConverter.cls",
+    "Core/Object Arts/Dolphin/MVP/Type Converters/UI.AbstractToTextConverter.cls",
+    "Core/Object Arts/Dolphin/MVP/Presenters/Number/UI.NumberToText.cls",
+    "Core/Object Arts/Dolphin/MVP/Presenters/Number/UI.IntegerToText.cls",
+    # The presenter side.
+    "Core/Object Arts/Dolphin/MVP/Base/UI.Presenter.cls",
+    "Core/Object Arts/Dolphin/MVP/Base/UI.Shell.cls",
 ]
 
 # Parsed for hierarchy + pools, never emitted. DIRECTORIES, deliberately: a
@@ -65,6 +87,9 @@ REFERENCES = [
     "Core/Object Arts/Dolphin/Base",
     "Core/Object Arts/Dolphin/MVP/Base",
     "Core/Object Arts/Dolphin/MVP/Graphics",
+    "Core/Object Arts/Dolphin/MVP/Models/Value",
+    "Core/Object Arts/Dolphin/MVP/Type Converters",
+    "Core/Object Arts/Dolphin/MVP/Presenters/Number",
 ]
 
 

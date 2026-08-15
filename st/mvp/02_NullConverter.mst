@@ -1,0 +1,12 @@
+"NullConverter is a <typeConverter> which applies no transformation to the subject object or result in either direction."
+
+TypeConverter subclass: NullConverter [
+    leftToRight: anObject [
+        "Private - For a NullConverter this does nothing"
+        ^anObject
+    ]
+    rightToLeft: anObject [
+        "Private - For a NullConverter this does nothing"
+        ^anObject
+    ]
+]

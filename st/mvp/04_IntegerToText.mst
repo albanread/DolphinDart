@@ -1,0 +1,9 @@
+"IntegerToText is a <textTypeConverter> which transforms an <integer> subject value to/from a <readableString>. If the subject value is nil it is converted to an empty string and vice versa."
+
+NumberToText subclass: IntegerToText [
+    rightToLeft: aString [
+        "Answers the result of converting aStringOrNil to an Integer. If aStringOrNil is
+        	empty or nil then answer leftExceptionalValue to represent this"
+        ^Integer fromString: aString
+    ]
+]

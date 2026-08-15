@@ -1609,6 +1609,9 @@ stStrLf() => '\n';
 stStrTab() => '\t';
 stStrCr() => '\r';
 stStrSpace() => ' ';
+/// Dolphin's `String empty` — the empty STRING, not `String new`,
+/// which answers a mutable char buffer (a Dart List).
+stStrEmpty() => '';
 
 /// One-hop table snapshot: rows joined on US (char 31) for setRowsJoined:.
 stJoinRows(l) {

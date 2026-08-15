@@ -11,32 +11,13 @@
  elsewhere, often on a class value, and surfaces as `_Type has no instance
  method …`. See docs/HOUSE_PRIMS.md."
 
-"── Model: the root of the MVP model side ───────────────────────────────
- Dolphin's Model is Object + events + a `beDirty`-ish change protocol. The
- events already live on Object (01_events.mst), so this is thin."
-Object subclass: Model [
-    Model class >> new [ ^self basicNew initModel ]
-    initModel [ ^self ]
-    changed [ ^self trigger: #changed ]
-    changed: anAspect [ ^self trigger: #changed with: anAspect ]
-]
-
-"── ValueModel / ValueHolder: the MVP triad's value carrier ─────────────
- DD10 leans on this. `value:` triggers #valueChanged, which is how a presenter
- learns its model moved."
-Model subclass: ValueModel [
-    | value |
-    ValueModel class >> new [ ^self basicNew initModel ]
-    ValueModel class >> withValue: v [ ^self new setValue: v; yourself ]
-    initModel [ value := nil ]
-    value [ ^value ]
-    setValue: v [ value := v ]
-    value: v [
-        value := v.
-        self trigger: #valueChanged.
-        ^v
-    ]
-]
+"── Model / ValueModel are NOT here any more (DD10) ────────────────────
+ They were DD8 stand-ins, written so the compat layer had a model side at all
+ before any of the corpus was translated. DD10 translates Dolphin's own
+ `Core.Model` and `UI.ValueModel` into `st/mvp`, and keeping both would mean
+ two classes of each name with the winner decided by load order — the exact
+ silent-wrong-answer shape this project keeps paying for. Their contracts are
+ now asserted against Dolphin's own classes in `test/st_triad.dart`."
 
 "── SearchPolicy: how a collection compares its elements ────────────────
  Dolphin parameterises Set/Dictionary lookup with one of these. v1 provides the

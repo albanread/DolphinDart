@@ -16,27 +16,12 @@ Object subclass: CompatProbe [
 
 STestCase subclass: TestCompatKernel [
     tests [
-        | m v p g o |
+        | p g o |
 
-        "--- Model: change notification rides the event system ---"
-        p := CompatProbe new.
-        m := Model new.
-        m when: #changed send: #noteChange to: p.
-        m changed.
-        self check: p seen asArray is: #(#changed) label: 'Model changed triggers'.
-
-        "--- ValueModel: value: notifies, setValue: does not ---"
-        p := CompatProbe new.
-        v := ValueModel withValue: 1.
-        v when: #valueChanged send: #noteValue to: p.
-        self check: v value is: 1 label: 'ValueModel carries its value'.
-        v value: 2.
-        self check: v value is: 2 label: 'ValueModel value: updates'.
-        self check: p seen size is: 1 label: 'ValueModel value: notifies once'.
-        v setValue: 3.
-        self check: p seen size is: 1
-             label: 'setValue: updates WITHOUT notifying (buffer writes need this)'.
-        self check: v value is: 3 label: 'setValue: still updated the value'.
+        "Model / ValueModel moved to st/mvp in DD10 — Dolphin's own classes
+         replaced the DD8 stand-ins, and their contracts are asserted against
+         the real ones in test/st_triad.dart. This suite loads world+compat
+         only, so it cannot see them."
 
         "--- SearchPolicy: equality vs identity ---"
         self assert: (SearchPolicy equality compare: 'ab' with: 'a', 'b')

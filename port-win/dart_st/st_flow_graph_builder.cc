@@ -1256,6 +1256,10 @@ Fragment StGraphBuilder::TranslateMessage(MessageNode* node) {
             {"Character", "value:", "stCharValue", 1},
             {"String", "with:", "stStringWith", 1},
             {"String", "lf", "stStrLf", 0},
+            // Dolphin's `String empty` — the empty String. NOT `String new`,
+            // which answers a mutable char buffer; a converter that returns
+            // one where a String is expected fails much later.
+            {"String", "empty", "stStrEmpty", 0},
             {"Character", "lf", "stStrLf", 0},
             {"Character", "nl", "stStrLf", 0},     // nl == lf (10); was missing,
                                                    // so `Character nl` hit the

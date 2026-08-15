@@ -1,0 +1,26 @@
+"A ValueHolder wraps an object and notifies its dependants when that object is replaced. Since ValueHolders are commonly used, there is a short cut available for creating them. Sending #asValue to any object will answer that object wrapped inside a ValueHolder. 
+
+Instance Variables:
+	value	<Object> which is the value held by the receiver."
+
+ValueModel subclass: ValueHolder [
+    | value |
+
+    setValue: anObject [
+        "Private - Assigns the value for the receiver without notifying 
+        	dependents of the change"
+        value := anObject
+    ]
+    value [
+        "Answers the value of the receiver"
+        ^value
+    ]
+    ValueHolder class >> icon [
+        "Answers an Icon that can be used to represent this class"
+        ^(self) defaultIcon
+    ]
+    ValueHolder class >> with: anObject [
+        "Answers an instance of the receiver holding anObject as its value"
+        ^(self new) setValue: anObject; yourself
+    ]
+]
