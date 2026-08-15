@@ -30,6 +30,25 @@ Object subclass: Exception [
     return [ <stprim: stExcReturnNil> ]
     retry [ <stprim: stExcRetry> ]
     pass [ <stprim: stExcPass> ]
+
+    "── Resumability (DolphinDart DD4) ──────────────────────────────────
+     MEASURED DIVERGENCE, recorded rather than hidden. Dolphin's `resume:`
+     returns control to the SIGNAL POINT; here the handler runs only after the
+     protected frames have unwound (probe: with an ensure: inside the protected
+     block the ensure fires FIRST — docs/sprints/dd04_NOTES.md). Restoring true
+     resumption means a raise-time handler search in the front-end.
+     v1 does not do it, because the corpus does not ask for it: `resume:` and
+     `resume` have ZERO sites in the whole Dolphin MVP corpus — all 14 live in
+     Dolphin's own kernel exception classes, which this project replaces.
+     What IS supported is the case the corpus uses (Notification, 41 MVP sites):
+     an unhandled resumable signal answers its default instead of propagating.
+     So `resume:` raises rather than answering something plausible."
+    isResumable [ ^false ]
+    defaultAction [ ^nil ]
+    resume: aValue [
+        ^self error: 'resume: is not supported (DolphinDart v1): the handler runs after unwinding, so there is no signal point to resume to'
+    ]
+    resume [ ^self resume: nil ]
 ]
 
 "Class-side `Error signal: 'msg'` needs no method here: the IL builder
@@ -44,7 +63,20 @@ Exception subclass: Error [ ]
 Error subclass: ArithmeticError [ ]
 ArithmeticError subclass: ZeroDivide [ ]
 Error subclass: MessageNotUnderstood [ ]
-Exception subclass: Warning [ ]
+
+"Notification and Warning are RESUMABLE: signalling one with no handler in
+ scope answers its default rather than terminating. Notification's default is
+ nil; Warning's is nil too (Dolphin beeps and continues, which is a UI concern
+ the compat layer owns, not the exception machinery).
+ Notification is the one resumable class the corpus actually uses — 41 sites
+ across 39 MVP files (DD4 census)."
+Exception subclass: Notification [
+    isResumable [ ^true ]
+    defaultAction [ ^nil ]
+]
+Notification subclass: Warning [
+    defaultAction [ ^nil ]
+]
 
 "── The system object (corpus surface: Smalltalk millisecondClock) ──"
 Object subclass: Smalltalk [

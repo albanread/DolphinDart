@@ -612,7 +612,27 @@ class _STException {
 }
 
 stSignal(instance) {
+  // A RESUMABLE exception with no handler answers its default instead of
+  // propagating (ANSI, and Dolphin relies on it: `Notification` has 41 sites in
+  // the MVP corpus). Non-resumable exceptions are unchanged — they throw, and an
+  // unhandled one is still fatal.
+  //
+  // Measured scope (DD4): `resume:`/`resume` have ZERO sites in the MVP corpus —
+  // all 14 live in Dolphin's own kernel exception classes, which we replace — so
+  // v1 does not resume TO THE SIGNAL POINT. What it does support is the case the
+  // corpus actually uses: an unhandled resumable signal answering its default.
+  if (stIsResumableInstance(instance) && !stAnyHandlerFor(instance)) {
+    return stSendExt0(instance, 'defaultAction');
+  }
   throw new _STException(instance);
+}
+
+bool stIsResumableInstance(instance) {
+  try {
+    return stSendExt0(instance, 'isResumable') == true;
+  } catch (e) {
+    return false;   // an exception class without the protocol is not resumable
+  }
 }
 
 // A handler action (`e return:`/`retry`/`pass`/`return`). Thrown from inside a
@@ -631,7 +651,15 @@ final Expando _stExcTokens = new Expando('stExcTokens');
 // the handler sees a real object (`e messageText`): ZeroDivide for a division by
 // zero, a plain Error otherwise. A narrower handler class simply won't match.
 _stWrapNativeError(e) {
-  var name = (e is IntegerDivisionByZeroException) ? 'ZeroDivide' : 'Error';
+  // A missed send to a NATIVE receiver (`nil fooBar`, `3 fooBar`) never reaches
+  // the world's `Object>>doesNotUnderstand:` — Dart raises NoSuchMethodError
+  // first — so reifying it as a plain Error made the ANSI idiom
+  // `on: MessageNotUnderstood do:` silently unreachable for exactly the
+  // receivers proxy code cares about. MessageNotUnderstood is a subclass of
+  // Error, so every existing `on: Error do:` still matches (DolphinDart DD4).
+  var name = (e is IntegerDivisionByZeroException)
+      ? 'ZeroDivide'
+      : (e is NoSuchMethodError) ? 'MessageNotUnderstood' : 'Error';
   var err = stNew(name);
   try {
     stSend(err, 'messageText:', [e.toString()]);
@@ -639,12 +667,41 @@ _stWrapNativeError(e) {
   return err;
 }
 
+// ACTIVE HANDLER TYPES (DolphinDart DD4). A resumable exception — in practice
+// `Notification` — must answer its default when NOTHING is handling it, rather
+// than propagate as a fatal error. That decision has to be made at the SIGNAL
+// point, because by the time a `throw` reaches a `catch` the protected frames
+// are already gone (measured: with `[[Error signal:'x'] ensure:[...]] on:...`,
+// the ensure runs BEFORE the handler — see docs/sprints/dd04_NOTES.md).
+//
+// So `stOnDo` publishes the type it is handling for the dynamic extent of its
+// protected block, and `stSignal` consults the stack. This is a lookup, not a
+// handler chain: it answers "would anyone catch this?", which is all the
+// resumable-default rule needs.
+final List _stActiveHandlerTypes = [];
+
+bool stAnyHandlerFor(instance) {
+  for (var i = _stActiveHandlerTypes.length - 1; i >= 0; i--) {
+    if (stIsKindOf(instance, _stActiveHandlerTypes[i])) return true;
+  }
+  return false;
+}
+
 stOnDo(protected, type, handler) {
   var token = new Object(); // identifies THIS handler activation (for retry etc.)
   while (true) {
     var exc;
     try {
-      return protected();
+      _stActiveHandlerTypes.add(type);
+      try {
+        return protected();
+      } finally {
+        // Pop by identity, not by length: `retry` re-enters the loop and a
+        // non-local return can leave through here, so a bare removeLast could
+        // pop someone else's entry.
+        var i = _stActiveHandlerTypes.lastIndexOf(type);
+        if (i >= 0) _stActiveHandlerTypes.removeAt(i);
+      }
     } catch (e) {
       if (e is _STNlr) rethrow; // non-local ^ is not an exception
       if (e is _STHandlerAction) rethrow; // belongs to an ancestor handler

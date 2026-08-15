@@ -57,8 +57,14 @@ nil subclass: Object [
     subclassResponsibility [
         self error: 'subclass responsibility'
     ]
+    "A missed send raises MessageNotUnderstood, not a bare Error (DolphinDart
+     DD4). MessageNotUnderstood is a subclass of Error, so every existing
+     `on: Error do:` still catches it and the message text is unchanged; what
+     this adds is the ANSI/Dolphin idiom `on: MessageNotUnderstood do:`, which
+     proxy and forwarding code reaches for. The corpus census found no MVP site
+     using it yet, so this is coverage ahead of demand rather than a fix."
     doesNotUnderstand: aMessage <Message> ^ <Object> [
-        self error: 'does not understand ' , aMessage selector asString
+        ^MessageNotUnderstood new signal: 'does not understand ' , aMessage selector asString
     ]
 
     "── reflective send: call a method by name ───────────────────────────
