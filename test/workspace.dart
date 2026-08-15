@@ -232,7 +232,15 @@ final String repoRoot = _dirOf(scriptDir);                      // <repo>
 final String workRoot = _dirOf(repoRoot);                       // <workRoot>
 final String outDir = () {
   var o = Platform.environment['WINDART_OUT'];
-  var d = (o != null && o.trim().isNotEmpty) ? o.trim() : '$workRoot/shots';
+  // DolphinDart DD1: `workRoot` is the repo's PARENT, which for this repo is
+  // C:\projects — running a capture pass from here dropped a `shots/` directory
+  // straight into the projects root. Honour WINDART_WORKROOT (DD0's explicit
+  // work area, see docs/TOOLCHAIN.md) before falling back to the seed's
+  // repo-relative guess. Generated output belongs in the work area, never in the
+  // repo and never beside it.
+  var wr = Platform.environment['WINDART_WORKROOT'];
+  var base = (wr != null && wr.trim().isNotEmpty) ? wr.trim() : workRoot;
+  var d = (o != null && o.trim().isNotEmpty) ? o.trim() : '$base/shots';
   try { new Directory(d).createSync(recursive: true); } catch (e) { }
   return d;
 }();
@@ -468,11 +476,18 @@ final String _stWorldDir = () {
 }();
 final String _stGalaxigans = '$repoRoot/demos/galaxigans.mst';
 
+// DolphinDart DD1: the world is layered. `st/world` is the default kernel load
+// and the GamePane package lives in `st/ext/gamepane`; galaxigans.mst needs
+// GamePane + Sound, so this host — the INTERIM GamePane host until DD13 re-homes
+// the pane into a Dolphin MVP shell — imports the extension between them.
+final String _stGamePaneDir = '$repoRoot/st/ext/gamepane';
+
 void _loadStWorld() {
   if (_stWorldLoaded || _lang == null) return;
   _stWorldLoaded = true;
   ask('stimport', _stWorldDir).then((imp) {
     print('ST-WORLD: ' + imp.toString());
+    ask('stimport', _stGamePaneDir).then((gp) => print('ST-EXT gamepane: ' + gp.toString()));
     // Galaxigans — the x64-assembler arcade shooter, rewritten in Smalltalk. A
     // filed-in game: import it AFTER the world it needs (GamePane, Sound), then
     // enumerate classes so it is browsable + launchable.
@@ -2068,7 +2083,11 @@ void buildStDebug() {
 // .mst here makes it APPEAR in the gallery — this is the "rolling support".
 List<String> catApps = <String>[];                       // apps -> plain class names
 List<List<String>> catGames = <List<String>>[], catDemos = <List<String>>[];  // [name, description]
-String catPathText = '$_stWorldDir/81_appui.mst';
+// DD1: 81_appui.mst moved to st/attic/ide (the IDE surface this project does not
+// carry forward). This is only the prefilled text of the "Load .mst" box, so a
+// stale path costs nothing but a bad default — point it at the GamePane package,
+// which is what still ships.
+String catPathText = '$_stGamePaneDir/43_gamepane.mst';
 
 List<String> _toStrList(x) => (x is List) ? x.map((e) => e.toString()).toList() : <String>[];
 // games/demos answer [name, description, file] tuples; keep name (launch key) + description.

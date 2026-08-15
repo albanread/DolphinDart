@@ -2,17 +2,31 @@
 // library (collections/streams/numbers/Fraction) to prove it is FUNCTIONAL,
 // not merely loadable. Each line prints its real answer via Transcript (stdout).
 //
-//   dart.exe st_world_run.dart <world-dir>
+//   dart.exe st_world_run.dart <world-dir>[;<layer-dir>...]
+//
+// DolphinDart DD1: the world is LAYERED. `st/world` is the default kernel load;
+// optional packages (`st/ext/gamepane`) are separate directories layered on top
+// in the order given, each sorted internally. Semicolon-separated so one shell
+// argument carries the whole stack and drive letters stay unambiguous.
 import 'dart:cocoa';
 import 'dart:io';
 
+List<String> mstIn(String dir) => new Directory(dir)
+    .listSync()
+    .map((e) => e.path)
+    .where((p) => p.endsWith('.mst'))
+    .toList()
+  ..sort();
+
 main(List<String> args) {
-  var dir = args.isEmpty ? '.' : args[0];
-  var files = new Directory(dir).listSync()
-      .map((e) => e.path).where((p) => p.endsWith('.mst')).toList()..sort();
+  var spec = args.isEmpty ? '.' : args[0];
+  var files = <String>[];
+  for (var d in spec.split(';')) {
+    if (d.trim().isNotEmpty) files.addAll(mstIn(d.trim()));
+  }
   for (var p in files) {
     var r = stRun(new File(p).readAsStringSync());
-    if (r.toString().startsWith('ERR')) { print('BOOT FAIL $p'); exit(1); }
+    if (r.toString().startsWith('ERR')) { print('BOOT FAIL $p: $r'); exit(1); }
   }
   print('world booted (${files.length} files)\n--- exercising the loaded library ---');
 

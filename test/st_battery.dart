@@ -2,7 +2,11 @@
 // feature suite, run each suite and sum failures. The suites hammer class-side
 // sends (OrderedCollection new, Set new, Dictionary new, Array with:with:, self
 // new), so a green battery also gates the class-side DECISION cache.
-//   dart.exe st_battery.dart <world-dir> <features-dir>
+//   dart.exe st_battery.dart <world-dir>[;<layer-dir>...] <features-dir>
+//
+// DolphinDart DD1: the world argument is a semicolon-separated LAYER STACK (see
+// st_world_run.dart) so the battery can run against the default world or against
+// the world plus an extension package.
 import 'dart:cocoa';
 import 'dart:io';
 
@@ -18,7 +22,11 @@ main(List<String> args) {
   var feat = args[1];
 
   // 1) boot the world (every class defined here via class-side sends)
-  for (var p in mstFiles(world)) {
+  var worldFiles = <String>[];
+  for (var d in world.split(';')) {
+    if (d.trim().isNotEmpty) worldFiles.addAll(mstFiles(d.trim()));
+  }
+  for (var p in worldFiles) {
     var r = stRun(new File(p).readAsStringSync());
     if (r.toString().startsWith('ERR')) {
       print('BOOT FAIL ' + p + ': ' + r.toString());

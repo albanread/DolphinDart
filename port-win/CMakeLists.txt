@@ -488,6 +488,18 @@ add_library(dart_st STATIC
 # pump instead of Dart_RunLoop) + dart_win32. Snapshot-based like dart.exe; the
 # snapshot already carries dart:win (gen_snapshot loads it). main.cc also gets
 # DART_PRECOMPILER (per-source) to elide its Observatory-assets zlib path.
+#
+# DEPRECATED for DolphinDart (DD1). This target hosts the seed's 9-tab IDE
+# (test/workspace.dart), which is NOT part of this project — the UI story here is
+# Dolphin's MVP framework (DD7-DD12). It is retained for exactly one reason: it
+# is the INTERIM HOST for the GamePane extension (st/ext/gamepane) until DD13
+# re-homes the pane into an MVP ShellView as a GamePaneView. Nothing new may
+# depend on it, and DD13 may retire it outright.
+#
+# Note that `dart` and `dartui` link the SAME libraries (including dart_win32);
+# they differ only in main.cc's DART_UI_HOST. So "the IDE" is a Dart script plus
+# this entry point, not a body of C++ — there is no IDE code in dart.exe to
+# excise.
 add_executable(dartui
   ${RT}/bin/builtin_nolib.cc ${RT}/bin/builtin_natives.cc ${RT}/bin/error_exit.cc
   ${RT}/bin/main.cc ${RT}/bin/loader.cc ${RT}/bin/snapshot_utils.cc
