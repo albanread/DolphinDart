@@ -2,11 +2,23 @@
  Do not hand-edit: re-run the generator. 114 external methods."
 
 Object subclass: GDILibrary [
-    GDILibrary class >> addFontResource: lpFileName [
+    GDILibrary class >> primAddFontResource: lpFileName [
         <primitive: FFI function: #AddFontResourceW ret: #g args: #( g )>
     ]
-    GDILibrary class >> addFontResourceEx: lpFileName fl: fl res: res [
+    GDILibrary class >> addFontResource: lpFileName [
+        | t0 |
+        t0 := FFICoerce stringTemp: lpFileName.
+        ^[ self primAddFontResource: (FFICoerce addressOf: t0) ]
+            ensure: [ t0 isNil ifFalse: [ t0 free ]. ]
+    ]
+    GDILibrary class >> primAddFontResourceEx: lpFileName fl: fl res: res [
         <primitive: FFI function: #AddFontResourceExW ret: #g args: #( g g g )>
+    ]
+    GDILibrary class >> addFontResourceEx: lpFileName fl: fl res: res [
+        | t0 |
+        t0 := FFICoerce stringTemp: lpFileName.
+        ^[ self primAddFontResourceEx: (FFICoerce addressOf: t0) fl: (FFICoerce word: fl) res: (FFICoerce pointer: res) ]
+            ensure: [ t0 isNil ifFalse: [ t0 free ]. ]
     ]
     GDILibrary class >> beginPath: hdc [
         <primitive: FFI function: #BeginPath ret: #g args: #( g )>
@@ -23,14 +35,26 @@ Object subclass: GDILibrary [
     GDILibrary class >> combineRgn: hrgnDst hrgnSrc1: hrgnSrc1 hrgnSrc2: hrgnSrc2 fnCombineMode: fnCombineMode [
         <primitive: FFI function: #CombineRgn ret: #g args: #( g g g g )>
     ]
-    GDILibrary class >> copyEnhMetaFile: hemf lpszFile: lpszFile [
+    GDILibrary class >> primCopyEnhMetaFile: hemf lpszFile: lpszFile [
         <primitive: FFI function: #CopyEnhMetaFileW ret: #g args: #( g g )>
     ]
-    GDILibrary class >> createBitmap: width nHeight: height cPlanes: planes cBitsPerPel: bps lpvBits: bits [
+    GDILibrary class >> copyEnhMetaFile: hemf lpszFile: lpszFile [
+        | t1 |
+        t1 := FFICoerce stringTemp: lpszFile.
+        ^[ self primCopyEnhMetaFile: (FFICoerce word: hemf) lpszFile: (FFICoerce addressOf: t1) ]
+            ensure: [ t1 isNil ifFalse: [ t1 free ]. ]
+    ]
+    GDILibrary class >> primCreateBitmap: width nHeight: height cPlanes: planes cBitsPerPel: bps lpvBits: bits [
         <primitive: FFI function: #CreateBitmap ret: #g args: #( g g g g g )>
     ]
-    GDILibrary class >> createBrushIndirect: lplb [
+    GDILibrary class >> createBitmap: width nHeight: height cPlanes: planes cBitsPerPel: bps lpvBits: bits [
+        ^self primCreateBitmap: (FFICoerce word: width) nHeight: (FFICoerce word: height) cPlanes: (FFICoerce word: planes) cBitsPerPel: (FFICoerce word: bps) lpvBits: (FFICoerce pointer: bits)
+    ]
+    GDILibrary class >> primCreateBrushIndirect: lplb [
         <primitive: FFI function: #CreateBrushIndirect ret: #g args: #( g )>
+    ]
+    GDILibrary class >> createBrushIndirect: lplb [
+        ^self primCreateBrushIndirect: (FFICoerce pointer: lplb)
     ]
     GDILibrary class >> createCompatibleBitmap: hdc nWidth: nWidth nHeight: nHeight [
         <primitive: FFI function: #CreateCompatibleBitmap ret: #g args: #( g g g )>
@@ -38,38 +62,79 @@ Object subclass: GDILibrary [
     GDILibrary class >> createCompatibleDC: hdc [
         <primitive: FFI function: #CreateCompatibleDC ret: #g args: #( g )>
     ]
-    GDILibrary class >> createDC: lpszDriver lpszDevice: lpszDevice lpszOutput: lpszOutput lpInitData: lpInitData [
+    GDILibrary class >> primCreateDC: lpszDriver lpszDevice: lpszDevice lpszOutput: lpszOutput lpInitData: lpInitData [
         <primitive: FFI function: #CreateDCW ret: #g args: #( g g g g )>
     ]
-    GDILibrary class >> createDIBSection: hdc pbmi: pbmi iUsage: iUsage ppvBits: ppvBits hSection: hSection dwOffset: dwOffset [
+    GDILibrary class >> createDC: lpszDriver lpszDevice: lpszDevice lpszOutput: lpszOutput lpInitData: lpInitData [
+        | t0 t1 t2 |
+        t0 := FFICoerce stringTemp: lpszDriver.
+        t1 := FFICoerce stringTemp: lpszDevice.
+        t2 := FFICoerce stringTemp: lpszOutput.
+        ^[ self primCreateDC: (FFICoerce addressOf: t0) lpszDevice: (FFICoerce addressOf: t1) lpszOutput: (FFICoerce addressOf: t2) lpInitData: (FFICoerce pointer: lpInitData) ]
+            ensure: [ t0 isNil ifFalse: [ t0 free ]. t1 isNil ifFalse: [ t1 free ]. t2 isNil ifFalse: [ t2 free ]. ]
+    ]
+    GDILibrary class >> primCreateDIBSection: hdc pbmi: pbmi iUsage: iUsage ppvBits: ppvBits hSection: hSection dwOffset: dwOffset [
         <primitive: FFI function: #CreateDIBSection ret: #g args: #( g g g g g g )>
     ]
-    GDILibrary class >> createEllipticRgnIndirect: lprc [
+    GDILibrary class >> createDIBSection: hdc pbmi: pbmi iUsage: iUsage ppvBits: ppvBits hSection: hSection dwOffset: dwOffset [
+        ^self primCreateDIBSection: (FFICoerce word: hdc) pbmi: (FFICoerce pointer: pbmi) iUsage: (FFICoerce word: iUsage) ppvBits: (FFICoerce pointer: ppvBits) hSection: (FFICoerce word: hSection) dwOffset: (FFICoerce word: dwOffset)
+    ]
+    GDILibrary class >> primCreateEllipticRgnIndirect: lprc [
         <primitive: FFI function: #CreateEllipticRgnIndirect ret: #g args: #( g )>
     ]
-    GDILibrary class >> createEnhMetaFile: hdc lpFileName: lpFileName lpRect: lpRect lpDescription: lpDescription [
+    GDILibrary class >> createEllipticRgnIndirect: lprc [
+        ^self primCreateEllipticRgnIndirect: (FFICoerce pointer: lprc)
+    ]
+    GDILibrary class >> primCreateEnhMetaFile: hdc lpFileName: lpFileName lpRect: lpRect lpDescription: lpDescription [
         <primitive: FFI function: #CreateEnhMetaFileW ret: #g args: #( g g g g )>
     ]
-    GDILibrary class >> createFontIndirectW: lplf [
+    GDILibrary class >> createEnhMetaFile: hdc lpFileName: lpFileName lpRect: lpRect lpDescription: lpDescription [
+        | t1 t3 |
+        t1 := FFICoerce stringTemp: lpFileName.
+        t3 := FFICoerce stringTemp: lpDescription.
+        ^[ self primCreateEnhMetaFile: (FFICoerce word: hdc) lpFileName: (FFICoerce addressOf: t1) lpRect: (FFICoerce pointer: lpRect) lpDescription: (FFICoerce addressOf: t3) ]
+            ensure: [ t1 isNil ifFalse: [ t1 free ]. t3 isNil ifFalse: [ t3 free ]. ]
+    ]
+    GDILibrary class >> primCreateFontIndirectW: lplf [
         <primitive: FFI function: #CreateFontIndirectW ret: #g args: #( g )>
+    ]
+    GDILibrary class >> createFontIndirectW: lplf [
+        ^self primCreateFontIndirectW: (FFICoerce pointer: lplf)
     ]
     GDILibrary class >> createHatchBrush: anInteger color: aCOLORREF [
         <primitive: FFI function: #CreateHatchBrush ret: #g args: #( g g )>
     ]
-    GDILibrary class >> createIC: lpszDriver lpszDevice: lpszDevice lpszOutput: lpszOutput lpdvminit: lpdvminit [
+    GDILibrary class >> primCreateIC: lpszDriver lpszDevice: lpszDevice lpszOutput: lpszOutput lpdvminit: lpdvminit [
         <primitive: FFI function: #CreateICW ret: #g args: #( g g g g )>
     ]
-    GDILibrary class >> createPalette: lplgpl [
+    GDILibrary class >> createIC: lpszDriver lpszDevice: lpszDevice lpszOutput: lpszOutput lpdvminit: lpdvminit [
+        | t0 t1 t2 |
+        t0 := FFICoerce stringTemp: lpszDriver.
+        t1 := FFICoerce stringTemp: lpszDevice.
+        t2 := FFICoerce stringTemp: lpszOutput.
+        ^[ self primCreateIC: (FFICoerce addressOf: t0) lpszDevice: (FFICoerce addressOf: t1) lpszOutput: (FFICoerce addressOf: t2) lpdvminit: (FFICoerce pointer: lpdvminit) ]
+            ensure: [ t0 isNil ifFalse: [ t0 free ]. t1 isNil ifFalse: [ t1 free ]. t2 isNil ifFalse: [ t2 free ]. ]
+    ]
+    GDILibrary class >> primCreatePalette: lplgpl [
         <primitive: FFI function: #CreatePalette ret: #g args: #( g )>
+    ]
+    GDILibrary class >> createPalette: lplgpl [
+        ^self primCreatePalette: (FFICoerce pointer: lplgpl)
     ]
     GDILibrary class >> createPen: fnPenStyle nWidth: nWidth crColor: crColor [
         <primitive: FFI function: #CreatePen ret: #g args: #( g g g )>
     ]
-    GDILibrary class >> createPenIndirect: lplgpn [
+    GDILibrary class >> primCreatePenIndirect: lplgpn [
         <primitive: FFI function: #CreatePenIndirect ret: #g args: #( g )>
     ]
-    GDILibrary class >> createRectRgnIndirect: lprc [
+    GDILibrary class >> createPenIndirect: lplgpn [
+        ^self primCreatePenIndirect: (FFICoerce pointer: lplgpn)
+    ]
+    GDILibrary class >> primCreateRectRgnIndirect: lprc [
         <primitive: FFI function: #CreateRectRgnIndirect ret: #g args: #( g )>
+    ]
+    GDILibrary class >> createRectRgnIndirect: lprc [
+        ^self primCreateRectRgnIndirect: (FFICoerce pointer: lprc)
     ]
     GDILibrary class >> deleteDC: hdc [
         <primitive: FFI function: #DeleteDC ret: #g args: #( g )>
@@ -92,17 +157,32 @@ Object subclass: GDILibrary [
     GDILibrary class >> endPath: hdc [
         <primitive: FFI function: #EndPath ret: #g args: #( g )>
     ]
-    GDILibrary class >> enumEnhMetaFile: hdc hemf: hemf lpEnhMetaFunc: lpEnhMetaFunc lpData: lpData lpRect: lpRect [
+    GDILibrary class >> primEnumEnhMetaFile: hdc hemf: hemf lpEnhMetaFunc: lpEnhMetaFunc lpData: lpData lpRect: lpRect [
         <primitive: FFI function: #EnumEnhMetaFile ret: #g args: #( g g g g g )>
     ]
-    GDILibrary class >> enumFontFamilies: aHandle lpszFamily: aString lpEnumFontFamProc: anExternalCallbackThunk lParam: anInteger [
+    GDILibrary class >> enumEnhMetaFile: hdc hemf: hemf lpEnhMetaFunc: lpEnhMetaFunc lpData: lpData lpRect: lpRect [
+        ^self primEnumEnhMetaFile: (FFICoerce word: hdc) hemf: (FFICoerce word: hemf) lpEnhMetaFunc: (FFICoerce pointer: lpEnhMetaFunc) lpData: (FFICoerce pointer: lpData) lpRect: (FFICoerce pointer: lpRect)
+    ]
+    GDILibrary class >> primEnumFontFamilies: aHandle lpszFamily: aString lpEnumFontFamProc: anExternalCallbackThunk lParam: anInteger [
         <primitive: FFI function: #EnumFontFamiliesW ret: #g args: #( g g g g )>
+    ]
+    GDILibrary class >> enumFontFamilies: aHandle lpszFamily: aString lpEnumFontFamProc: anExternalCallbackThunk lParam: anInteger [
+        | t1 |
+        t1 := FFICoerce stringTemp: aString.
+        ^[ self primEnumFontFamilies: (FFICoerce word: aHandle) lpszFamily: (FFICoerce addressOf: t1) lpEnumFontFamProc: (FFICoerce pointer: anExternalCallbackThunk) lParam: (FFICoerce word: anInteger) ]
+            ensure: [ t1 isNil ifFalse: [ t1 free ]. ]
     ]
     GDILibrary class >> excludeClipRect: hdc nLeftRect: nLeftRect nTopRect: nTopRect nRightRect: nRightRect nBottomRect: nBottomRect [
         <primitive: FFI function: #ExcludeClipRect ret: #g args: #( g g g g g )>
     ]
-    GDILibrary class >> extTextOut: hdc x: x y: y fuOptions: fuOptions lprc: lprc lpString: lpString cbCount: cbCount lpDx: lpDx [
+    GDILibrary class >> primExtTextOut: hdc x: x y: y fuOptions: fuOptions lprc: lprc lpString: lpString cbCount: cbCount lpDx: lpDx [
         <primitive: FFI function: #ExtTextOutW ret: #g args: #( g g g g g g g g )>
+    ]
+    GDILibrary class >> extTextOut: hdc x: x y: y fuOptions: fuOptions lprc: lprc lpString: lpString cbCount: cbCount lpDx: lpDx [
+        | t5 |
+        t5 := FFICoerce stringTemp: lpString.
+        ^[ self primExtTextOut: (FFICoerce word: hdc) x: (FFICoerce word: x) y: (FFICoerce word: y) fuOptions: (FFICoerce word: fuOptions) lprc: (FFICoerce pointer: lprc) lpString: (FFICoerce addressOf: t5) cbCount: (FFICoerce word: cbCount) lpDx: (FFICoerce pointer: lpDx) ]
+            ensure: [ t5 isNil ifFalse: [ t5 free ]. ]
     ]
     GDILibrary class >> fillRgn: hdc hRgn: hRgn hBr: hBr [
         <primitive: FFI function: #FillRgn ret: #g args: #( g g g )>
@@ -110,14 +190,20 @@ Object subclass: GDILibrary [
     GDILibrary class >> frameRgn: hdc hRgn: hRgn hBr: hBr nWidth: nWidth nHeight: nHeight [
         <primitive: FFI function: #FrameRgn ret: #g args: #( g g g g g )>
     ]
-    GDILibrary class >> gdiGradientFill: hdc pVertex: pVertex nVertex: dwNumVertex pMesh: pMesh nCount: dwNumMesh ulMode: dwMode [
+    GDILibrary class >> primGdiGradientFill: hdc pVertex: pVertex nVertex: dwNumVertex pMesh: pMesh nCount: dwNumMesh ulMode: dwMode [
         <primitive: FFI function: #GdiGradientFill ret: #g args: #( g g g g g g )>
+    ]
+    GDILibrary class >> gdiGradientFill: hdc pVertex: pVertex nVertex: dwNumVertex pMesh: pMesh nCount: dwNumMesh ulMode: dwMode [
+        ^self primGdiGradientFill: (FFICoerce word: hdc) pVertex: (FFICoerce pointer: pVertex) nVertex: (FFICoerce word: dwNumVertex) pMesh: (FFICoerce pointer: pMesh) nCount: (FFICoerce word: dwNumMesh) ulMode: (FFICoerce word: dwMode)
     ]
     GDILibrary class >> gdiTransparentBlt: hdcDest xoriginDest: nXOriginDest yoriginDest: nYOriginDest wDest: nWidthDest hDest: nHeightDest hdcSrc: hdcSrc xoriginSrc: nXOriginSrc yoriginSrc: nYOriginSrc wSrc: nWidthSrc hSrc: nHeightSrc crTransparent: crTransparent [
         <primitive: FFI function: #GdiTransparentBlt ret: #g args: #( g g g g g g g g g g g )>
     ]
-    GDILibrary class >> getBitmapDimensionEx: hbit lpsize: lpsize [
+    GDILibrary class >> primGetBitmapDimensionEx: hbit lpsize: lpsize [
         <primitive: FFI function: #GetBitmapDimensionEx ret: #g args: #( g g )>
+    ]
+    GDILibrary class >> getBitmapDimensionEx: hbit lpsize: lpsize [
+        ^self primGetBitmapDimensionEx: (FFICoerce word: hbit) lpsize: (FFICoerce pointer: lpsize)
     ]
     GDILibrary class >> getBkColor: hdc [
         <primitive: FFI function: #GetBkColor ret: #g args: #( g )>
@@ -125,8 +211,11 @@ Object subclass: GDILibrary [
     GDILibrary class >> getBkMode: hdc [
         <primitive: FFI function: #GetBkMode ret: #g args: #( g )>
     ]
-    GDILibrary class >> getClipBox: hdc lprc: lprc [
+    GDILibrary class >> primGetClipBox: hdc lprc: lprc [
         <primitive: FFI function: #GetClipBox ret: #g args: #( g g )>
+    ]
+    GDILibrary class >> getClipBox: hdc lprc: lprc [
+        ^self primGetClipBox: (FFICoerce word: hdc) lprc: (FFICoerce pointer: lprc)
     ]
     GDILibrary class >> getClipRgn: hdc hrgn: hRegion [
         <primitive: FFI function: #GetClipRgn ret: #g args: #( g g )>
@@ -140,29 +229,56 @@ Object subclass: GDILibrary [
     GDILibrary class >> getDCPenColor: hdc [
         <primitive: FFI function: #GetDCPenColor ret: #g args: #( g )>
     ]
-    GDILibrary class >> getDIBColorTable: hdc uStartIndex: uStartIndex cEntries: cEntries pColors: pColors [
+    GDILibrary class >> primGetDIBColorTable: hdc uStartIndex: uStartIndex cEntries: cEntries pColors: pColors [
         <primitive: FFI function: #GetDIBColorTable ret: #g args: #( g g g g )>
     ]
-    GDILibrary class >> getDIBits: hdc hbm: hbm uStartScan: uStartScan cScanLines: cScanLines lpvBits: lpvBits lpbi: lpbi uUsage: uUsage [
+    GDILibrary class >> getDIBColorTable: hdc uStartIndex: uStartIndex cEntries: cEntries pColors: pColors [
+        ^self primGetDIBColorTable: (FFICoerce word: hdc) uStartIndex: (FFICoerce word: uStartIndex) cEntries: (FFICoerce word: cEntries) pColors: (FFICoerce pointer: pColors)
+    ]
+    GDILibrary class >> primGetDIBits: hdc hbm: hbm uStartScan: uStartScan cScanLines: cScanLines lpvBits: lpvBits lpbi: lpbi uUsage: uUsage [
         <primitive: FFI function: #GetDIBits ret: #g args: #( g g g g g g g )>
+    ]
+    GDILibrary class >> getDIBits: hdc hbm: hbm uStartScan: uStartScan cScanLines: cScanLines lpvBits: lpvBits lpbi: lpbi uUsage: uUsage [
+        ^self primGetDIBits: (FFICoerce word: hdc) hbm: (FFICoerce word: hbm) uStartScan: (FFICoerce word: uStartScan) cScanLines: (FFICoerce word: cScanLines) lpvBits: (FFICoerce pointer: lpvBits) lpbi: (FFICoerce pointer: lpbi) uUsage: (FFICoerce word: uUsage)
     ]
     GDILibrary class >> getDeviceCaps: hdc nIndex: nIndex [
         <primitive: FFI function: #GetDeviceCaps ret: #g args: #( g g )>
     ]
-    GDILibrary class >> getEnhMetaFile: lpszMetaFile [
+    GDILibrary class >> primGetEnhMetaFile: lpszMetaFile [
         <primitive: FFI function: #GetEnhMetaFileW ret: #g args: #( g )>
     ]
-    GDILibrary class >> getEnhMetaFileBits: hemf cbBuffer: cbBuffer lpbBuffer: lpbBuffer [
+    GDILibrary class >> getEnhMetaFile: lpszMetaFile [
+        | t0 |
+        t0 := FFICoerce stringTemp: lpszMetaFile.
+        ^[ self primGetEnhMetaFile: (FFICoerce addressOf: t0) ]
+            ensure: [ t0 isNil ifFalse: [ t0 free ]. ]
+    ]
+    GDILibrary class >> primGetEnhMetaFileBits: hemf cbBuffer: cbBuffer lpbBuffer: lpbBuffer [
         <primitive: FFI function: #GetEnhMetaFileBits ret: #g args: #( g g g )>
     ]
-    GDILibrary class >> getEnhMetaFileDescription: hemf cchBuffer: cchBuffer lpszDescription: lpszDescription [
+    GDILibrary class >> getEnhMetaFileBits: hemf cbBuffer: cbBuffer lpbBuffer: lpbBuffer [
+        ^self primGetEnhMetaFileBits: (FFICoerce word: hemf) cbBuffer: (FFICoerce word: cbBuffer) lpbBuffer: (FFICoerce pointer: lpbBuffer)
+    ]
+    GDILibrary class >> primGetEnhMetaFileDescription: hemf cchBuffer: cchBuffer lpszDescription: lpszDescription [
         <primitive: FFI function: #GetEnhMetaFileDescriptionW ret: #g args: #( g g g )>
     ]
-    GDILibrary class >> getEnhMetaFileHeader: hemf cbBuffer: cbBuffer lpemnh: lpemnh [
+    GDILibrary class >> getEnhMetaFileDescription: hemf cchBuffer: cchBuffer lpszDescription: lpszDescription [
+        | t2 |
+        t2 := FFICoerce stringTemp: lpszDescription.
+        ^[ self primGetEnhMetaFileDescription: (FFICoerce word: hemf) cchBuffer: (FFICoerce word: cchBuffer) lpszDescription: (FFICoerce addressOf: t2) ]
+            ensure: [ t2 isNil ifFalse: [ t2 free ]. ]
+    ]
+    GDILibrary class >> primGetEnhMetaFileHeader: hemf cbBuffer: cbBuffer lpemnh: lpemnh [
         <primitive: FFI function: #GetEnhMetaFileHeader ret: #g args: #( g g g )>
     ]
-    GDILibrary class >> getEnhMetaFilePaletteEntries: hemf cbEntries: cbEntries lppe: lppe [
+    GDILibrary class >> getEnhMetaFileHeader: hemf cbBuffer: cbBuffer lpemnh: lpemnh [
+        ^self primGetEnhMetaFileHeader: (FFICoerce word: hemf) cbBuffer: (FFICoerce word: cbBuffer) lpemnh: (FFICoerce pointer: lpemnh)
+    ]
+    GDILibrary class >> primGetEnhMetaFilePaletteEntries: hemf cbEntries: cbEntries lppe: lppe [
         <primitive: FFI function: #GetEnhMetaFilePaletteEntries ret: #g args: #( g g g )>
+    ]
+    GDILibrary class >> getEnhMetaFilePaletteEntries: hemf cbEntries: cbEntries lppe: lppe [
+        ^self primGetEnhMetaFilePaletteEntries: (FFICoerce word: hemf) cbEntries: (FFICoerce word: cbEntries) lppe: (FFICoerce pointer: lppe)
     ]
     GDILibrary class >> getMapMode: hdc [
         <primitive: FFI function: #GetMapMode ret: #g args: #( g )>
@@ -170,14 +286,23 @@ Object subclass: GDILibrary [
     GDILibrary class >> getNearestPaletteIndex: hpal crColor: crColor [
         <primitive: FFI function: #GetNearestPaletteIndex ret: #g args: #( g g )>
     ]
-    GDILibrary class >> getObjectW: objectHandle cbBuffer: count lpvObject: buffer [
+    GDILibrary class >> primGetObjectW: objectHandle cbBuffer: count lpvObject: buffer [
         <primitive: FFI function: #GetObjectW ret: #g args: #( g g g )>
     ]
-    GDILibrary class >> getOutlineTextMetrics: anExternalHandle cbData: anInteger lpotm: anOUTLINETEXTMETRIC [
+    GDILibrary class >> getObjectW: objectHandle cbBuffer: count lpvObject: buffer [
+        ^self primGetObjectW: (FFICoerce word: objectHandle) cbBuffer: (FFICoerce word: count) lpvObject: (FFICoerce pointer: buffer)
+    ]
+    GDILibrary class >> primGetOutlineTextMetrics: anExternalHandle cbData: anInteger lpotm: anOUTLINETEXTMETRIC [
         <primitive: FFI function: #GetOutlineTextMetricsW ret: #g args: #( g g g )>
     ]
-    GDILibrary class >> getPaletteEntries: hpal iStartIndex: iStartIndex nEntries: nEntries lppe: lppe [
+    GDILibrary class >> getOutlineTextMetrics: anExternalHandle cbData: anInteger lpotm: anOUTLINETEXTMETRIC [
+        ^self primGetOutlineTextMetrics: (FFICoerce word: anExternalHandle) cbData: (FFICoerce word: anInteger) lpotm: (FFICoerce pointer: anOUTLINETEXTMETRIC)
+    ]
+    GDILibrary class >> primGetPaletteEntries: hpal iStartIndex: iStartIndex nEntries: nEntries lppe: lppe [
         <primitive: FFI function: #GetPaletteEntries ret: #g args: #( g g g g )>
+    ]
+    GDILibrary class >> getPaletteEntries: hpal iStartIndex: iStartIndex nEntries: nEntries lppe: lppe [
+        ^self primGetPaletteEntries: (FFICoerce word: hpal) iStartIndex: (FFICoerce word: iStartIndex) nEntries: (FFICoerce word: nEntries) lppe: (FFICoerce pointer: lppe)
     ]
     GDILibrary class >> getPixel: aHandle xPos: xPos yPos: yPos [
         <primitive: FFI function: #GetPixel ret: #g args: #( g g g )>
@@ -185,8 +310,11 @@ Object subclass: GDILibrary [
     GDILibrary class >> getROP2: hdc [
         <primitive: FFI function: #GetROP2 ret: #g args: #( g )>
     ]
-    GDILibrary class >> getRgnBox: hRgn lprc: lprc [
+    GDILibrary class >> primGetRgnBox: hRgn lprc: lprc [
         <primitive: FFI function: #GetRgnBox ret: #g args: #( g g )>
+    ]
+    GDILibrary class >> getRgnBox: hRgn lprc: lprc [
+        ^self primGetRgnBox: (FFICoerce word: hRgn) lprc: (FFICoerce pointer: lprc)
     ]
     GDILibrary class >> getStockObject: fnObject [
         <primitive: FFI function: #GetStockObject ret: #g args: #( g )>
@@ -194,23 +322,44 @@ Object subclass: GDILibrary [
     GDILibrary class >> getTextColor: hdc [
         <primitive: FFI function: #GetTextColor ret: #g args: #( g )>
     ]
-    GDILibrary class >> getTextExtentPoint32: hdc lpString: lpString c: cbString lpSize: lpSize [
+    GDILibrary class >> primGetTextExtentPoint32: hdc lpString: lpString c: cbString lpSize: lpSize [
         <primitive: FFI function: #GetTextExtentPoint32W ret: #g args: #( g g g g )>
     ]
-    GDILibrary class >> getTextMetrics: hdc lptm: lptm [
+    GDILibrary class >> getTextExtentPoint32: hdc lpString: lpString c: cbString lpSize: lpSize [
+        | t1 |
+        t1 := FFICoerce stringTemp: lpString.
+        ^[ self primGetTextExtentPoint32: (FFICoerce word: hdc) lpString: (FFICoerce addressOf: t1) c: (FFICoerce word: cbString) lpSize: (FFICoerce pointer: lpSize) ]
+            ensure: [ t1 isNil ifFalse: [ t1 free ]. ]
+    ]
+    GDILibrary class >> primGetTextMetrics: hdc lptm: lptm [
         <primitive: FFI function: #GetTextMetricsW ret: #g args: #( g g )>
     ]
-    GDILibrary class >> getViewportExtEx: hdc lpSize: lpSize [
+    GDILibrary class >> getTextMetrics: hdc lptm: lptm [
+        ^self primGetTextMetrics: (FFICoerce word: hdc) lptm: (FFICoerce pointer: lptm)
+    ]
+    GDILibrary class >> primGetViewportExtEx: hdc lpSize: lpSize [
         <primitive: FFI function: #GetViewportExtEx ret: #g args: #( g g )>
     ]
-    GDILibrary class >> getViewportOrgEx: hdc lppt: lppt [
+    GDILibrary class >> getViewportExtEx: hdc lpSize: lpSize [
+        ^self primGetViewportExtEx: (FFICoerce word: hdc) lpSize: (FFICoerce pointer: lpSize)
+    ]
+    GDILibrary class >> primGetViewportOrgEx: hdc lppt: lppt [
         <primitive: FFI function: #GetViewportOrgEx ret: #g args: #( g g )>
     ]
-    GDILibrary class >> getWindowExtEx: hdc lpSize: lpSize [
+    GDILibrary class >> getViewportOrgEx: hdc lppt: lppt [
+        ^self primGetViewportOrgEx: (FFICoerce word: hdc) lppt: (FFICoerce pointer: lppt)
+    ]
+    GDILibrary class >> primGetWindowExtEx: hdc lpSize: lpSize [
         <primitive: FFI function: #GetWindowExtEx ret: #g args: #( g g )>
     ]
-    GDILibrary class >> getWindowOrgEx: hdc lppt: lppt [
+    GDILibrary class >> getWindowExtEx: hdc lpSize: lpSize [
+        ^self primGetWindowExtEx: (FFICoerce word: hdc) lpSize: (FFICoerce pointer: lpSize)
+    ]
+    GDILibrary class >> primGetWindowOrgEx: hdc lppt: lppt [
         <primitive: FFI function: #GetWindowOrgEx ret: #g args: #( g g )>
+    ]
+    GDILibrary class >> getWindowOrgEx: hdc lppt: lppt [
+        ^self primGetWindowOrgEx: (FFICoerce word: hdc) lppt: (FFICoerce pointer: lppt)
     ]
     GDILibrary class >> intersectClipRect: hdc nLeftRect: left nTopRect: top nRightRect: right nBottomRect: bottom [
         <primitive: FFI function: #IntersectClipRect ret: #g args: #( g g g g g )>
@@ -221,11 +370,17 @@ Object subclass: GDILibrary [
     GDILibrary class >> lineTo: hdc nXEnd: newX nYEnd: newY [
         <primitive: FFI function: #LineTo ret: #g args: #( g g g )>
     ]
-    GDILibrary class >> moveToEx: hdc x: x y: y lpPoint: lpPoint [
+    GDILibrary class >> primMoveToEx: hdc x: x y: y lpPoint: lpPoint [
         <primitive: FFI function: #MoveToEx ret: #g args: #( g g g g )>
     ]
-    GDILibrary class >> offsetWindowOrgEx: hdc nXOrg: x nYOrg: y lppt: aPOINT [
+    GDILibrary class >> moveToEx: hdc x: x y: y lpPoint: lpPoint [
+        ^self primMoveToEx: (FFICoerce word: hdc) x: (FFICoerce word: x) y: (FFICoerce word: y) lpPoint: (FFICoerce pointer: lpPoint)
+    ]
+    GDILibrary class >> primOffsetWindowOrgEx: hdc nXOrg: x nYOrg: y lppt: aPOINT [
         <primitive: FFI function: #OffsetWindowOrgEx ret: #g args: #( g g g g )>
+    ]
+    GDILibrary class >> offsetWindowOrgEx: hdc nXOrg: x nYOrg: y lppt: aPOINT [
+        ^self primOffsetWindowOrgEx: (FFICoerce word: hdc) nXOrg: (FFICoerce word: x) nYOrg: (FFICoerce word: y) lppt: (FFICoerce pointer: aPOINT)
     ]
     GDILibrary class >> paintRgn: hdc hRgn: hRgn [
         <primitive: FFI function: #PaintRgn ret: #g args: #( g g )>
@@ -233,17 +388,29 @@ Object subclass: GDILibrary [
     GDILibrary class >> patBlt: hdc nXLeft: x nYLeft: y nWidth: width nHeight: height dwRop: rop [
         <primitive: FFI function: #PatBlt ret: #g args: #( g g g g g g )>
     ]
-    GDILibrary class >> playEnhMetaFile: hdc hemf: hemf lpRect: lpRect [
+    GDILibrary class >> primPlayEnhMetaFile: hdc hemf: hemf lpRect: lpRect [
         <primitive: FFI function: #PlayEnhMetaFile ret: #g args: #( g g g )>
     ]
-    GDILibrary class >> playEnhMetaFileRecord: hdc lpHandletable: lpHandletable lpEnhMetaRecord: lpEnhMetaRecord nHandles: nHandles [
+    GDILibrary class >> playEnhMetaFile: hdc hemf: hemf lpRect: lpRect [
+        ^self primPlayEnhMetaFile: (FFICoerce word: hdc) hemf: (FFICoerce word: hemf) lpRect: (FFICoerce pointer: lpRect)
+    ]
+    GDILibrary class >> primPlayEnhMetaFileRecord: hdc lpHandletable: lpHandletable lpEnhMetaRecord: lpEnhMetaRecord nHandles: nHandles [
         <primitive: FFI function: #PlayEnhMetaFileRecord ret: #g args: #( g g g g )>
     ]
-    GDILibrary class >> plgBlt: hdcDest lpPoint: lpPoint hdcSrc: hdcSrc nXSrc: nXSrc nYSrc: nYSrc nWidth: nWidth nHeight: nHeight hbmMask: hbmMask sMask: sMask yMask: yMask [
+    GDILibrary class >> playEnhMetaFileRecord: hdc lpHandletable: lpHandletable lpEnhMetaRecord: lpEnhMetaRecord nHandles: nHandles [
+        ^self primPlayEnhMetaFileRecord: (FFICoerce word: hdc) lpHandletable: (FFICoerce pointer: lpHandletable) lpEnhMetaRecord: (FFICoerce pointer: lpEnhMetaRecord) nHandles: (FFICoerce word: nHandles)
+    ]
+    GDILibrary class >> primPlgBlt: hdcDest lpPoint: lpPoint hdcSrc: hdcSrc nXSrc: nXSrc nYSrc: nYSrc nWidth: nWidth nHeight: nHeight hbmMask: hbmMask sMask: sMask yMask: yMask [
         <primitive: FFI function: #PlgBlt ret: #g args: #( g g g g g g g g g g )>
     ]
-    GDILibrary class >> polygon: hdc lpPoints: points nCount: count [
+    GDILibrary class >> plgBlt: hdcDest lpPoint: lpPoint hdcSrc: hdcSrc nXSrc: nXSrc nYSrc: nYSrc nWidth: nWidth nHeight: nHeight hbmMask: hbmMask sMask: sMask yMask: yMask [
+        ^self primPlgBlt: (FFICoerce word: hdcDest) lpPoint: (FFICoerce pointer: lpPoint) hdcSrc: (FFICoerce word: hdcSrc) nXSrc: (FFICoerce word: nXSrc) nYSrc: (FFICoerce word: nYSrc) nWidth: (FFICoerce word: nWidth) nHeight: (FFICoerce word: nHeight) hbmMask: (FFICoerce word: hbmMask) sMask: (FFICoerce word: sMask) yMask: (FFICoerce word: yMask)
+    ]
+    GDILibrary class >> primPolygon: hdc lpPoints: points nCount: count [
         <primitive: FFI function: #Polygon ret: #g args: #( g g g )>
+    ]
+    GDILibrary class >> polygon: hdc lpPoints: points nCount: count [
+        ^self primPolygon: (FFICoerce word: hdc) lpPoints: (FFICoerce pointer: points) nCount: (FFICoerce word: count)
     ]
     GDILibrary class >> ptInRegion: hdc x: x y: y [
         <primitive: FFI function: #PtInRegion ret: #g args: #( g g g )>
@@ -251,17 +418,32 @@ Object subclass: GDILibrary [
     GDILibrary class >> realizePalette: hdc [
         <primitive: FFI function: #RealizePalette ret: #g args: #( g )>
     ]
-    GDILibrary class >> rectVisible: hdc lprc: aRECT [
+    GDILibrary class >> primRectVisible: hdc lprc: aRECT [
         <primitive: FFI function: #RectVisible ret: #g args: #( g g )>
+    ]
+    GDILibrary class >> rectVisible: hdc lprc: aRECT [
+        ^self primRectVisible: (FFICoerce word: hdc) lprc: (FFICoerce pointer: aRECT)
     ]
     GDILibrary class >> rectangle: hdc nLeftRect: l nTopRect: t nRightRect: r nBottomRect: b [
         <primitive: FFI function: #Rectangle ret: #g args: #( g g g g g )>
     ]
-    GDILibrary class >> removeFontResource: lpFileName [
+    GDILibrary class >> primRemoveFontResource: lpFileName [
         <primitive: FFI function: #RemoveFontResourceW ret: #g args: #( g )>
     ]
-    GDILibrary class >> removeFontResourceEx: lpFileName fl: fl pdv: pdv [
+    GDILibrary class >> removeFontResource: lpFileName [
+        | t0 |
+        t0 := FFICoerce stringTemp: lpFileName.
+        ^[ self primRemoveFontResource: (FFICoerce addressOf: t0) ]
+            ensure: [ t0 isNil ifFalse: [ t0 free ]. ]
+    ]
+    GDILibrary class >> primRemoveFontResourceEx: lpFileName fl: fl pdv: pdv [
         <primitive: FFI function: #RemoveFontResourceExW ret: #g args: #( g g g )>
+    ]
+    GDILibrary class >> removeFontResourceEx: lpFileName fl: fl pdv: pdv [
+        | t0 |
+        t0 := FFICoerce stringTemp: lpFileName.
+        ^[ self primRemoveFontResourceEx: (FFICoerce addressOf: t0) fl: (FFICoerce word: fl) pdv: (FFICoerce pointer: pdv) ]
+            ensure: [ t0 isNil ifFalse: [ t0 free ]. ]
     ]
     GDILibrary class >> restoreDC: hDC nSavedDC: nSavedDC [
         <primitive: FFI function: #RestoreDC ret: #g args: #( g g )>
@@ -290,17 +472,29 @@ Object subclass: GDILibrary [
     GDILibrary class >> setBkMode: hdc iBkMode: mode [
         <primitive: FFI function: #SetBkMode ret: #g args: #( g g )>
     ]
-    GDILibrary class >> setBrushOrgEx: hdc nXOrg: x nYOrg: y lppt: aPOINT [
+    GDILibrary class >> primSetBrushOrgEx: hdc nXOrg: x nYOrg: y lppt: aPOINT [
         <primitive: FFI function: #SetBrushOrgEx ret: #g args: #( g g g g )>
     ]
-    GDILibrary class >> setDIBColorTable: hdc uStartIndex: uStartIndex cEntries: cEntries pColors: pColors [
+    GDILibrary class >> setBrushOrgEx: hdc nXOrg: x nYOrg: y lppt: aPOINT [
+        ^self primSetBrushOrgEx: (FFICoerce word: hdc) nXOrg: (FFICoerce word: x) nYOrg: (FFICoerce word: y) lppt: (FFICoerce pointer: aPOINT)
+    ]
+    GDILibrary class >> primSetDIBColorTable: hdc uStartIndex: uStartIndex cEntries: cEntries pColors: pColors [
         <primitive: FFI function: #SetDIBColorTable ret: #g args: #( g g g g )>
     ]
-    GDILibrary class >> setDIBits: hdc hbmp: hbmp uStartScan: uStartScan cScanLines: cScanLines lpvBits: lpvBits lpbmi: lpbmi fuColorUse: fuColorUse [
+    GDILibrary class >> setDIBColorTable: hdc uStartIndex: uStartIndex cEntries: cEntries pColors: pColors [
+        ^self primSetDIBColorTable: (FFICoerce word: hdc) uStartIndex: (FFICoerce word: uStartIndex) cEntries: (FFICoerce word: cEntries) pColors: (FFICoerce pointer: pColors)
+    ]
+    GDILibrary class >> primSetDIBits: hdc hbmp: hbmp uStartScan: uStartScan cScanLines: cScanLines lpvBits: lpvBits lpbmi: lpbmi fuColorUse: fuColorUse [
         <primitive: FFI function: #SetDIBits ret: #g args: #( g g g g g g g )>
     ]
-    GDILibrary class >> setEnhMetaFileBits: cbBuffer lpData: lpData [
+    GDILibrary class >> setDIBits: hdc hbmp: hbmp uStartScan: uStartScan cScanLines: cScanLines lpvBits: lpvBits lpbmi: lpbmi fuColorUse: fuColorUse [
+        ^self primSetDIBits: (FFICoerce word: hdc) hbmp: (FFICoerce word: hbmp) uStartScan: (FFICoerce word: uStartScan) cScanLines: (FFICoerce word: cScanLines) lpvBits: (FFICoerce pointer: lpvBits) lpbmi: (FFICoerce pointer: lpbmi) fuColorUse: (FFICoerce word: fuColorUse)
+    ]
+    GDILibrary class >> primSetEnhMetaFileBits: cbBuffer lpData: lpData [
         <primitive: FFI function: #SetEnhMetaFileBits ret: #g args: #( g g )>
+    ]
+    GDILibrary class >> setEnhMetaFileBits: cbBuffer lpData: lpData [
+        ^self primSetEnhMetaFileBits: (FFICoerce word: cbBuffer) lpData: (FFICoerce pointer: lpData)
     ]
     GDILibrary class >> setMapMode: hdc fnMapMode: fnMapMode [
         <primitive: FFI function: #SetMapMode ret: #g args: #( g g )>
@@ -317,20 +511,35 @@ Object subclass: GDILibrary [
     GDILibrary class >> setTextColor: hdc crColor: colour [
         <primitive: FFI function: #SetTextColor ret: #g args: #( g g )>
     ]
-    GDILibrary class >> setViewportExtEx: hdc nXExtent: nXExtent nYExtent: nYExtent lpSize: lpSize [
+    GDILibrary class >> primSetViewportExtEx: hdc nXExtent: nXExtent nYExtent: nYExtent lpSize: lpSize [
         <primitive: FFI function: #SetViewportExtEx ret: #g args: #( g g g g )>
     ]
-    GDILibrary class >> setViewportOrgEx: hdc nXOrg: x nYOrg: y lppt: aPOINT [
+    GDILibrary class >> setViewportExtEx: hdc nXExtent: nXExtent nYExtent: nYExtent lpSize: lpSize [
+        ^self primSetViewportExtEx: (FFICoerce word: hdc) nXExtent: (FFICoerce word: nXExtent) nYExtent: (FFICoerce word: nYExtent) lpSize: (FFICoerce pointer: lpSize)
+    ]
+    GDILibrary class >> primSetViewportOrgEx: hdc nXOrg: x nYOrg: y lppt: aPOINT [
         <primitive: FFI function: #SetViewportOrgEx ret: #g args: #( g g g g )>
     ]
-    GDILibrary class >> setWindowExtEx: hdc nXExtent: nXExtent nYExtent: nYExtent lpSize: lpSize [
+    GDILibrary class >> setViewportOrgEx: hdc nXOrg: x nYOrg: y lppt: aPOINT [
+        ^self primSetViewportOrgEx: (FFICoerce word: hdc) nXOrg: (FFICoerce word: x) nYOrg: (FFICoerce word: y) lppt: (FFICoerce pointer: aPOINT)
+    ]
+    GDILibrary class >> primSetWindowExtEx: hdc nXExtent: nXExtent nYExtent: nYExtent lpSize: lpSize [
         <primitive: FFI function: #SetWindowExtEx ret: #g args: #( g g g g )>
     ]
-    GDILibrary class >> setWindowOrgEx: hdc nXOrg: x nYOrg: y lppt: aPOINT [
+    GDILibrary class >> setWindowExtEx: hdc nXExtent: nXExtent nYExtent: nYExtent lpSize: lpSize [
+        ^self primSetWindowExtEx: (FFICoerce word: hdc) nXExtent: (FFICoerce word: nXExtent) nYExtent: (FFICoerce word: nYExtent) lpSize: (FFICoerce pointer: lpSize)
+    ]
+    GDILibrary class >> primSetWindowOrgEx: hdc nXOrg: x nYOrg: y lppt: aPOINT [
         <primitive: FFI function: #SetWindowOrgEx ret: #g args: #( g g g g )>
     ]
-    GDILibrary class >> startDoc: hdc lpdi: info [
+    GDILibrary class >> setWindowOrgEx: hdc nXOrg: x nYOrg: y lppt: aPOINT [
+        ^self primSetWindowOrgEx: (FFICoerce word: hdc) nXOrg: (FFICoerce word: x) nYOrg: (FFICoerce word: y) lppt: (FFICoerce pointer: aPOINT)
+    ]
+    GDILibrary class >> primStartDoc: hdc lpdi: info [
         <primitive: FFI function: #StartDocW ret: #g args: #( g g )>
+    ]
+    GDILibrary class >> startDoc: hdc lpdi: info [
+        ^self primStartDoc: (FFICoerce word: hdc) lpdi: (FFICoerce pointer: info)
     ]
     GDILibrary class >> startPage: hdc [
         <primitive: FFI function: #StartPage ret: #g args: #( g )>
@@ -338,10 +547,19 @@ Object subclass: GDILibrary [
     GDILibrary class >> stretchBlt: hdc nXOriginDest: x nYOriginDest: y nWidthDest: w nHeightDest: h hdcSrc: hdcSrc nXOriginSrc: sx nYOriginSrc: sy nWidthSrc: sw nHeightSrc: sh dwRop: dwRop [
         <primitive: FFI function: #StretchBlt ret: #g args: #( g g g g g g g g g g g )>
     ]
-    GDILibrary class >> stretchDIBits: hdc xDest: xDest yDest: yDest nDestWidth: nDestWidth nDestHeight: nDestHeight xSrc: xSrc ySrc: ySrc nSrcWidth: nSrcWidth nSrcHeight: nSrcHeight lpBits: lpBits lpBitsInfo: lpBitsInfo iUsage: iUsage dwRop: dwRop [
+    GDILibrary class >> primStretchDIBits: hdc xDest: xDest yDest: yDest nDestWidth: nDestWidth nDestHeight: nDestHeight xSrc: xSrc ySrc: ySrc nSrcWidth: nSrcWidth nSrcHeight: nSrcHeight lpBits: lpBits lpBitsInfo: lpBitsInfo iUsage: iUsage dwRop: dwRop [
         <primitive: FFI function: #StretchDIBits ret: #g args: #( g g g g g g g g g g g g g )>
     ]
-    GDILibrary class >> textOut: hdc nXStart: nXStart nYStart: nYStart lpString: lpString cbString: cbString [
+    GDILibrary class >> stretchDIBits: hdc xDest: xDest yDest: yDest nDestWidth: nDestWidth nDestHeight: nDestHeight xSrc: xSrc ySrc: ySrc nSrcWidth: nSrcWidth nSrcHeight: nSrcHeight lpBits: lpBits lpBitsInfo: lpBitsInfo iUsage: iUsage dwRop: dwRop [
+        ^self primStretchDIBits: (FFICoerce word: hdc) xDest: (FFICoerce word: xDest) yDest: (FFICoerce word: yDest) nDestWidth: (FFICoerce word: nDestWidth) nDestHeight: (FFICoerce word: nDestHeight) xSrc: (FFICoerce word: xSrc) ySrc: (FFICoerce word: ySrc) nSrcWidth: (FFICoerce word: nSrcWidth) nSrcHeight: (FFICoerce word: nSrcHeight) lpBits: (FFICoerce pointer: lpBits) lpBitsInfo: (FFICoerce pointer: lpBitsInfo) iUsage: (FFICoerce word: iUsage) dwRop: (FFICoerce word: dwRop)
+    ]
+    GDILibrary class >> primTextOut: hdc nXStart: nXStart nYStart: nYStart lpString: lpString cbString: cbString [
         <primitive: FFI function: #TextOutW ret: #g args: #( g g g g g )>
+    ]
+    GDILibrary class >> textOut: hdc nXStart: nXStart nYStart: nYStart lpString: lpString cbString: cbString [
+        | t3 |
+        t3 := FFICoerce stringTemp: lpString.
+        ^[ self primTextOut: (FFICoerce word: hdc) nXStart: (FFICoerce word: nXStart) nYStart: (FFICoerce word: nYStart) lpString: (FFICoerce addressOf: t3) cbString: (FFICoerce word: cbString) ]
+            ensure: [ t3 isNil ifFalse: [ t3 free ]. ]
     ]
 ]

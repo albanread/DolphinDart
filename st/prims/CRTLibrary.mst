@@ -23,8 +23,14 @@ Object subclass: CRTLibrary [
     CRTLibrary class >> _errno [
         <primitive: FFI function: #_errno ret: #g args: #(  )>
     ]
-    CRTLibrary class >> _fdopen: anInteger mode: aString [
+    CRTLibrary class >> prim_fdopen: anInteger mode: aString [
         <primitive: FFI function: #_fdopen ret: #g args: #( g g )>
+    ]
+    CRTLibrary class >> _fdopen: anInteger mode: aString [
+        | t1 |
+        t1 := FFICoerce stringTemp: aString.
+        ^[ self prim_fdopen: (FFICoerce word: anInteger) mode: (FFICoerce addressOf: t1) ]
+            ensure: [ t1 isNil ifFalse: [ t1 free ]. ]
     ]
     CRTLibrary class >> _filelengthi64: handleInteger [
         <primitive: FFI function: #_filelengthi64 ret: #g args: #( g )>
@@ -47,8 +53,18 @@ Object subclass: CRTLibrary [
     CRTLibrary class >> _isatty: anInteger [
         <primitive: FFI function: #_isatty ret: #g args: #( g )>
     ]
-    CRTLibrary class >> _makepath_s: path bufferSize: sizeInBytes drive: drive dir: dir fname: fname ext: ext [
+    CRTLibrary class >> prim_makepath_s: path bufferSize: sizeInBytes drive: drive dir: dir fname: fname ext: ext [
         <primitive: FFI function: #_makepath_s ret: #g args: #( g g g g g g )>
+    ]
+    CRTLibrary class >> _makepath_s: path bufferSize: sizeInBytes drive: drive dir: dir fname: fname ext: ext [
+        | t0 t2 t3 t4 t5 |
+        t0 := FFICoerce stringTemp: path.
+        t2 := FFICoerce stringTemp: drive.
+        t3 := FFICoerce stringTemp: dir.
+        t4 := FFICoerce stringTemp: fname.
+        t5 := FFICoerce stringTemp: ext.
+        ^[ self prim_makepath_s: (FFICoerce addressOf: t0) bufferSize: (FFICoerce word: sizeInBytes) drive: (FFICoerce addressOf: t2) dir: (FFICoerce addressOf: t3) fname: (FFICoerce addressOf: t4) ext: (FFICoerce addressOf: t5) ]
+            ensure: [ t0 isNil ifFalse: [ t0 free ]. t2 isNil ifFalse: [ t2 free ]. t3 isNil ifFalse: [ t3 free ]. t4 isNil ifFalse: [ t4 free ]. t5 isNil ifFalse: [ t5 free ]. ]
     ]
     CRTLibrary class >> _open_osfhandle: osfhandle flags: flags [
         <primitive: FFI function: #_open_osfhandle ret: #g args: #( g g )>
@@ -56,23 +72,59 @@ Object subclass: CRTLibrary [
     CRTLibrary class >> _setmode: fd mode: modeFlag [
         <primitive: FFI function: #_setmode ret: #g args: #( g g )>
     ]
-    CRTLibrary class >> _splitpath_s: path drive: drive driveLen: driveInteger dir: dir dirLen: dirInteger fname: fname fnameLen: nameInteger ext: ext extLen: extInteger [
+    CRTLibrary class >> prim_splitpath_s: path drive: drive driveLen: driveInteger dir: dir dirLen: dirInteger fname: fname fnameLen: nameInteger ext: ext extLen: extInteger [
         <primitive: FFI function: #_splitpath_s ret: #g args: #( g g g g g g g g g )>
+    ]
+    CRTLibrary class >> _splitpath_s: path drive: drive driveLen: driveInteger dir: dir dirLen: dirInteger fname: fname fnameLen: nameInteger ext: ext extLen: extInteger [
+        | t0 t1 t3 t5 t7 |
+        t0 := FFICoerce stringTemp: path.
+        t1 := FFICoerce stringTemp: drive.
+        t3 := FFICoerce stringTemp: dir.
+        t5 := FFICoerce stringTemp: fname.
+        t7 := FFICoerce stringTemp: ext.
+        ^[ self prim_splitpath_s: (FFICoerce addressOf: t0) drive: (FFICoerce addressOf: t1) driveLen: (FFICoerce word: driveInteger) dir: (FFICoerce addressOf: t3) dirLen: (FFICoerce word: dirInteger) fname: (FFICoerce addressOf: t5) fnameLen: (FFICoerce word: nameInteger) ext: (FFICoerce addressOf: t7) extLen: (FFICoerce word: extInteger) ]
+            ensure: [ t0 isNil ifFalse: [ t0 free ]. t1 isNil ifFalse: [ t1 free ]. t3 isNil ifFalse: [ t3 free ]. t5 isNil ifFalse: [ t5 free ]. t7 isNil ifFalse: [ t7 free ]. ]
     ]
     CRTLibrary class >> _statusfp [
         <primitive: FFI function: #_statusfp ret: #g args: #(  )>
     ]
-    CRTLibrary class >> _wcserror_s: buffer sizeInWords: sizeInWords errnum: errnum [
+    CRTLibrary class >> prim_wcserror_s: buffer sizeInWords: sizeInWords errnum: errnum [
         <primitive: FFI function: #_wcserror_s ret: #g args: #( g g g )>
     ]
-    CRTLibrary class >> _wcsicmp: string1 string2: string2 [
+    CRTLibrary class >> _wcserror_s: buffer sizeInWords: sizeInWords errnum: errnum [
+        | t0 |
+        t0 := FFICoerce stringTemp: buffer.
+        ^[ self prim_wcserror_s: (FFICoerce addressOf: t0) sizeInWords: (FFICoerce word: sizeInWords) errnum: (FFICoerce word: errnum) ]
+            ensure: [ t0 isNil ifFalse: [ t0 free ]. ]
+    ]
+    CRTLibrary class >> prim_wcsicmp: string1 string2: string2 [
         <primitive: FFI function: #_wcsicmp ret: #g args: #( g g )>
     ]
-    CRTLibrary class >> _wfsopen: nameString mode: modeString shflag: shflagInteger [
+    CRTLibrary class >> _wcsicmp: string1 string2: string2 [
+        | t0 t1 |
+        t0 := FFICoerce stringTemp: string1.
+        t1 := FFICoerce stringTemp: string2.
+        ^[ self prim_wcsicmp: (FFICoerce addressOf: t0) string2: (FFICoerce addressOf: t1) ]
+            ensure: [ t0 isNil ifFalse: [ t0 free ]. t1 isNil ifFalse: [ t1 free ]. ]
+    ]
+    CRTLibrary class >> prim_wfsopen: nameString mode: modeString shflag: shflagInteger [
         <primitive: FFI function: #_wfsopen ret: #g args: #( g g g )>
     ]
-    CRTLibrary class >> atoi: aString [
+    CRTLibrary class >> _wfsopen: nameString mode: modeString shflag: shflagInteger [
+        | t0 t1 |
+        t0 := FFICoerce stringTemp: nameString.
+        t1 := FFICoerce stringTemp: modeString.
+        ^[ self prim_wfsopen: (FFICoerce addressOf: t0) mode: (FFICoerce addressOf: t1) shflag: (FFICoerce word: shflagInteger) ]
+            ensure: [ t0 isNil ifFalse: [ t0 free ]. t1 isNil ifFalse: [ t1 free ]. ]
+    ]
+    CRTLibrary class >> primAtoi: aString [
         <primitive: FFI function: #atoi ret: #g args: #( g )>
+    ]
+    CRTLibrary class >> atoi: aString [
+        | t0 |
+        t0 := FFICoerce stringTemp: aString.
+        ^[ self primAtoi: (FFICoerce addressOf: t0) ]
+            ensure: [ t0 isNil ifFalse: [ t0 free ]. ]
     ]
     CRTLibrary class >> fclose: anAddress [
         <primitive: FFI function: #fclose ret: #g args: #( g )>
@@ -86,56 +138,111 @@ Object subclass: CRTLibrary [
     CRTLibrary class >> fgetc: aFILE [
         <primitive: FFI function: #fgetc ret: #g args: #( g )>
     ]
-    CRTLibrary class >> fgets: buf n: bufsize stream: aFILE [
+    CRTLibrary class >> primFgets: buf n: bufsize stream: aFILE [
         <primitive: FFI function: #fgets ret: #g args: #( g g g )>
+    ]
+    CRTLibrary class >> fgets: buf n: bufsize stream: aFILE [
+        | t0 |
+        t0 := FFICoerce stringTemp: buf.
+        ^[ self primFgets: (FFICoerce addressOf: t0) n: (FFICoerce word: bufsize) stream: (FFICoerce word: aFILE) ]
+            ensure: [ t0 isNil ifFalse: [ t0 free ]. ]
     ]
     CRTLibrary class >> fgetwc: aFILE [
         <primitive: FFI function: #fgetwc ret: #g args: #( g )>
     ]
-    CRTLibrary class >> fgetws: buf n: bufsize stream: aFILE [
+    CRTLibrary class >> primFgetws: buf n: bufsize stream: aFILE [
         <primitive: FFI function: #fgetws ret: #g args: #( g g g )>
+    ]
+    CRTLibrary class >> fgetws: buf n: bufsize stream: aFILE [
+        | t0 |
+        t0 := FFICoerce stringTemp: buf.
+        ^[ self primFgetws: (FFICoerce addressOf: t0) n: (FFICoerce word: bufsize) stream: (FFICoerce word: aFILE) ]
+            ensure: [ t0 isNil ifFalse: [ t0 free ]. ]
     ]
     CRTLibrary class >> fputc: charValue stream: aFILE [
         <primitive: FFI function: #fputc ret: #g args: #( g g )>
     ]
-    CRTLibrary class >> fputs: str stream: aFILE [
+    CRTLibrary class >> primFputs: str stream: aFILE [
         <primitive: FFI function: #fputs ret: #g args: #( g g )>
+    ]
+    CRTLibrary class >> fputs: str stream: aFILE [
+        | t0 |
+        t0 := FFICoerce stringTemp: str.
+        ^[ self primFputs: (FFICoerce addressOf: t0) stream: (FFICoerce word: aFILE) ]
+            ensure: [ t0 isNil ifFalse: [ t0 free ]. ]
     ]
     CRTLibrary class >> fputwc: charValue stream: aFILE [
         <primitive: FFI function: #fputwc ret: #g args: #( g g )>
     ]
-    CRTLibrary class >> fputws: str stream: aFILE [
+    CRTLibrary class >> primFputws: str stream: aFILE [
         <primitive: FFI function: #fputws ret: #g args: #( g g )>
     ]
-    CRTLibrary class >> fread_s: buffer bufferSize: bufsizeInteger elementSize: elemSizeInteger count: countInteger stream: aFILE [
+    CRTLibrary class >> fputws: str stream: aFILE [
+        | t0 |
+        t0 := FFICoerce stringTemp: str.
+        ^[ self primFputws: (FFICoerce addressOf: t0) stream: (FFICoerce word: aFILE) ]
+            ensure: [ t0 isNil ifFalse: [ t0 free ]. ]
+    ]
+    CRTLibrary class >> primFread_s: buffer bufferSize: bufsizeInteger elementSize: elemSizeInteger count: countInteger stream: aFILE [
         <primitive: FFI function: #fread_s ret: #g args: #( g g g g g )>
     ]
-    CRTLibrary class >> free: memblock [
+    CRTLibrary class >> fread_s: buffer bufferSize: bufsizeInteger elementSize: elemSizeInteger count: countInteger stream: aFILE [
+        ^self primFread_s: (FFICoerce pointer: buffer) bufferSize: (FFICoerce word: bufsizeInteger) elementSize: (FFICoerce word: elemSizeInteger) count: (FFICoerce word: countInteger) stream: (FFICoerce word: aFILE)
+    ]
+    CRTLibrary class >> primFree: memblock [
         <primitive: FFI function: #free ret: #v args: #( g )>
     ]
-    CRTLibrary class >> fwrite: data size: sizeInteger count: countInteger stream: aFILE [
+    CRTLibrary class >> free: memblock [
+        ^self primFree: (FFICoerce pointer: memblock)
+    ]
+    CRTLibrary class >> primFwrite: data size: sizeInteger count: countInteger stream: aFILE [
         <primitive: FFI function: #fwrite ret: #g args: #( g g g g )>
     ]
-    CRTLibrary class >> memcmp: buf1 buf2: buf2 count: count [
+    CRTLibrary class >> fwrite: data size: sizeInteger count: countInteger stream: aFILE [
+        ^self primFwrite: (FFICoerce pointer: data) size: (FFICoerce word: sizeInteger) count: (FFICoerce word: countInteger) stream: (FFICoerce word: aFILE)
+    ]
+    CRTLibrary class >> primMemcmp: buf1 buf2: buf2 count: count [
         <primitive: FFI function: #memcmp ret: #g args: #( g g g )>
     ]
-    CRTLibrary class >> memcpy_s: dest destSize: destSize src: src count: count [
+    CRTLibrary class >> memcmp: buf1 buf2: buf2 count: count [
+        ^self primMemcmp: (FFICoerce pointer: buf1) buf2: (FFICoerce pointer: buf2) count: (FFICoerce word: count)
+    ]
+    CRTLibrary class >> primMemcpy_s: dest destSize: destSize src: src count: count [
         <primitive: FFI function: #memcpy_s ret: #g args: #( g g g g )>
+    ]
+    CRTLibrary class >> memcpy_s: dest destSize: destSize src: src count: count [
+        ^self primMemcpy_s: (FFICoerce pointer: dest) destSize: (FFICoerce word: destSize) src: (FFICoerce pointer: src) count: (FFICoerce word: count)
     ]
     CRTLibrary class >> rand [
         <primitive: FFI function: #rand ret: #g args: #(  )>
     ]
-    CRTLibrary class >> setlocale: category locale: localeString [
+    CRTLibrary class >> primSetlocale: category locale: localeString [
         <primitive: FFI function: #setlocale ret: #g args: #( g g )>
+    ]
+    CRTLibrary class >> setlocale: category locale: localeString [
+        | t1 |
+        t1 := FFICoerce stringTemp: localeString.
+        ^[ self primSetlocale: (FFICoerce word: category) locale: (FFICoerce addressOf: t1) ]
+            ensure: [ t1 isNil ifFalse: [ t1 free ]. ]
     ]
     CRTLibrary class >> srand: anInteger [
         <primitive: FFI function: #srand ret: #v args: #( g )>
     ]
-    CRTLibrary class >> strcmp: string1 string2: string2 [
+    CRTLibrary class >> primStrcmp: string1 string2: string2 [
         <primitive: FFI function: #strcmp ret: #g args: #( g g )>
     ]
-    CRTLibrary class >> strlen: aString [
+    CRTLibrary class >> strcmp: string1 string2: string2 [
+        | t0 t1 |
+        t0 := FFICoerce stringTemp: string1.
+        t1 := FFICoerce stringTemp: string2.
+        ^[ self primStrcmp: (FFICoerce addressOf: t0) string2: (FFICoerce addressOf: t1) ]
+            ensure: [ t0 isNil ifFalse: [ t0 free ]. t1 isNil ifFalse: [ t1 free ]. ]
+    ]
+    CRTLibrary class >> primStrlen: aString [
         <primitive: FFI function: #strlen ret: #g args: #( g )>
+    ]
+    CRTLibrary class >> strlen: aString [
+        ^self primStrlen: (FFICoerce pointer: aString)
     ]
     CRTLibrary class >> ungetc: c stream: stream [
         <primitive: FFI function: #ungetc ret: #g args: #( g g )>
@@ -143,10 +250,19 @@ Object subclass: CRTLibrary [
     CRTLibrary class >> ungetwc: c stream: stream [
         <primitive: FFI function: #ungetwc ret: #g args: #( g g )>
     ]
-    CRTLibrary class >> wcslen: aString [
+    CRTLibrary class >> primWcslen: aString [
         <primitive: FFI function: #wcslen ret: #g args: #( g )>
     ]
-    CRTLibrary class >> wcsncpy_s: strDestination bufferSize: numberOfElements strSource: strSource count: count [
+    CRTLibrary class >> wcslen: aString [
+        ^self primWcslen: (FFICoerce pointer: aString)
+    ]
+    CRTLibrary class >> primWcsncpy_s: strDestination bufferSize: numberOfElements strSource: strSource count: count [
         <primitive: FFI function: #wcsncpy_s ret: #g args: #( g g g g )>
+    ]
+    CRTLibrary class >> wcsncpy_s: strDestination bufferSize: numberOfElements strSource: strSource count: count [
+        | t2 |
+        t2 := FFICoerce stringTemp: strSource.
+        ^[ self primWcsncpy_s: (FFICoerce pointer: strDestination) bufferSize: (FFICoerce word: numberOfElements) strSource: (FFICoerce addressOf: t2) count: (FFICoerce word: count) ]
+            ensure: [ t2 isNil ifFalse: [ t2 free ]. ]
     ]
 ]

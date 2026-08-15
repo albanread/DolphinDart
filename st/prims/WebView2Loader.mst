@@ -2,16 +2,39 @@
  Do not hand-edit: re-run the generator. 4 external methods."
 
 Object subclass: WebView2Loader [
-    WebView2Loader class >> compareBrowserVersions: version1 version2: version2 result: result [
+    WebView2Loader class >> primCompareBrowserVersions: version1 version2: version2 result: result [
         <primitive: FFI function: #CompareBrowserVersions ret: #g args: #( g g g )>
     ]
-    WebView2Loader class >> createCoreWebView2Environment: environmentCreatedHandler [
+    WebView2Loader class >> compareBrowserVersions: version1 version2: version2 result: result [
+        | t0 t1 |
+        t0 := FFICoerce stringTemp: version1.
+        t1 := FFICoerce stringTemp: version2.
+        ^[ self primCompareBrowserVersions: (FFICoerce addressOf: t0) version2: (FFICoerce addressOf: t1) result: (FFICoerce pointer: result) ]
+            ensure: [ t0 isNil ifFalse: [ t0 free ]. t1 isNil ifFalse: [ t1 free ]. ]
+    ]
+    WebView2Loader class >> primCreateCoreWebView2Environment: environmentCreatedHandler [
         <primitive: FFI function: #CreateCoreWebView2Environment ret: #g args: #( g )>
     ]
-    WebView2Loader class >> createCoreWebView2EnvironmentWithOptions: browserExecutableFolder userDataFolder: userDataFolder environmentOptions: environmentOptions environmentCreatedHandler: environmentCreatedHandler [
+    WebView2Loader class >> createCoreWebView2Environment: environmentCreatedHandler [
+        ^self primCreateCoreWebView2Environment: (FFICoerce pointer: environmentCreatedHandler)
+    ]
+    WebView2Loader class >> primCreateCoreWebView2EnvironmentWithOptions: browserExecutableFolder userDataFolder: userDataFolder environmentOptions: environmentOptions environmentCreatedHandler: environmentCreatedHandler [
         <primitive: FFI function: #CreateCoreWebView2EnvironmentWithOptions ret: #g args: #( g g g g )>
     ]
-    WebView2Loader class >> getAvailableCoreWebView2BrowserVersionString: browserExecutableFolder versionInfo: versionInfo [
+    WebView2Loader class >> createCoreWebView2EnvironmentWithOptions: browserExecutableFolder userDataFolder: userDataFolder environmentOptions: environmentOptions environmentCreatedHandler: environmentCreatedHandler [
+        | t0 t1 |
+        t0 := FFICoerce stringTemp: browserExecutableFolder.
+        t1 := FFICoerce stringTemp: userDataFolder.
+        ^[ self primCreateCoreWebView2EnvironmentWithOptions: (FFICoerce addressOf: t0) userDataFolder: (FFICoerce addressOf: t1) environmentOptions: (FFICoerce pointer: environmentOptions) environmentCreatedHandler: (FFICoerce pointer: environmentCreatedHandler) ]
+            ensure: [ t0 isNil ifFalse: [ t0 free ]. t1 isNil ifFalse: [ t1 free ]. ]
+    ]
+    WebView2Loader class >> primGetAvailableCoreWebView2BrowserVersionString: browserExecutableFolder versionInfo: versionInfo [
         <primitive: FFI function: #GetAvailableCoreWebView2BrowserVersionString ret: #g args: #( g g )>
+    ]
+    WebView2Loader class >> getAvailableCoreWebView2BrowserVersionString: browserExecutableFolder versionInfo: versionInfo [
+        | t0 |
+        t0 := FFICoerce stringTemp: browserExecutableFolder.
+        ^[ self primGetAvailableCoreWebView2BrowserVersionString: (FFICoerce addressOf: t0) versionInfo: (FFICoerce pointer: versionInfo) ]
+            ensure: [ t0 isNil ifFalse: [ t0 free ]. ]
     ]
 ]

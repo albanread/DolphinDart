@@ -44,14 +44,23 @@ Object subclass: CommCtrlLibrary [
     CommCtrlLibrary class >> imageList_GetIcon: himl i: i flags: flags [
         <primitive: FFI function: #ImageList_GetIcon ret: #g args: #( g g g )>
     ]
-    CommCtrlLibrary class >> imageList_GetIconSize: himl cx: cx cy: cy [
+    CommCtrlLibrary class >> primImageList_GetIconSize: himl cx: cx cy: cy [
         <primitive: FFI function: #ImageList_GetIconSize ret: #g args: #( g g g )>
+    ]
+    CommCtrlLibrary class >> imageList_GetIconSize: himl cx: cx cy: cy [
+        ^self primImageList_GetIconSize: (FFICoerce word: himl) cx: (FFICoerce pointer: cx) cy: (FFICoerce pointer: cy)
     ]
     CommCtrlLibrary class >> imageList_GetImageCount: himl [
         <primitive: FFI function: #ImageList_GetImageCount ret: #g args: #( g )>
     ]
-    CommCtrlLibrary class >> imageList_LoadImage: hi lpbmp: lpbmp cx: cx cGrow: cGrow crMask: crMask uType: uType uFlags: uFlags [
+    CommCtrlLibrary class >> primImageList_LoadImage: hi lpbmp: lpbmp cx: cx cGrow: cGrow crMask: crMask uType: uType uFlags: uFlags [
         <primitive: FFI function: #ImageList_LoadImageW ret: #g args: #( g g g g g g g )>
+    ]
+    CommCtrlLibrary class >> imageList_LoadImage: hi lpbmp: lpbmp cx: cx cGrow: cGrow crMask: crMask uType: uType uFlags: uFlags [
+        | t1 |
+        t1 := FFICoerce stringTemp: lpbmp.
+        ^[ self primImageList_LoadImage: (FFICoerce word: hi) lpbmp: (FFICoerce addressOf: t1) cx: (FFICoerce word: cx) cGrow: (FFICoerce word: cGrow) crMask: (FFICoerce word: crMask) uType: (FFICoerce word: uType) uFlags: (FFICoerce word: uFlags) ]
+            ensure: [ t1 isNil ifFalse: [ t1 free ]. ]
     ]
     CommCtrlLibrary class >> imageList_ReplaceIcon: himl i: i hicon: hicon [
         <primitive: FFI function: #ImageList_ReplaceIcon ret: #g args: #( g g g )>
@@ -62,13 +71,22 @@ Object subclass: CommCtrlLibrary [
     CommCtrlLibrary class >> imageList_SetDragCursorImage: himlDrag iDrag: iDrag dxHotspot: dxHotspot dyHotspot: dyHotspot [
         <primitive: FFI function: #ImageList_SetDragCursorImage ret: #g args: #( g g g g )>
     ]
-    CommCtrlLibrary class >> initCommonControlsEx: anINITCOMMONCONTROLSEX [
+    CommCtrlLibrary class >> primInitCommonControlsEx: anINITCOMMONCONTROLSEX [
         <primitive: FFI function: #InitCommonControlsEx ret: #g args: #( g )>
     ]
-    CommCtrlLibrary class >> loadIconWithScaleDown: hInst pszName: pszName cx: cx cy: cy phico: phico [
+    CommCtrlLibrary class >> initCommonControlsEx: anINITCOMMONCONTROLSEX [
+        ^self primInitCommonControlsEx: (FFICoerce pointer: anINITCOMMONCONTROLSEX)
+    ]
+    CommCtrlLibrary class >> primLoadIconWithScaleDown: hInst pszName: pszName cx: cx cy: cy phico: phico [
         <primitive: FFI function: #LoadIconWithScaleDown ret: #g args: #( g g g g g )>
     ]
-    CommCtrlLibrary class >> taskDialogIndirect: pTaskConfig pnButton: pnButton pnRadioButton: pnRadioButton pfVerificationFlagChecked: pfVerificationFlagChecked [
+    CommCtrlLibrary class >> loadIconWithScaleDown: hInst pszName: pszName cx: cx cy: cy phico: phico [
+        ^self primLoadIconWithScaleDown: (FFICoerce word: hInst) pszName: (FFICoerce pointer: pszName) cx: (FFICoerce word: cx) cy: (FFICoerce word: cy) phico: (FFICoerce pointer: phico)
+    ]
+    CommCtrlLibrary class >> primTaskDialogIndirect: pTaskConfig pnButton: pnButton pnRadioButton: pnRadioButton pfVerificationFlagChecked: pfVerificationFlagChecked [
         <primitive: FFI function: #TaskDialogIndirect ret: #g args: #( g g g g )>
+    ]
+    CommCtrlLibrary class >> taskDialogIndirect: pTaskConfig pnButton: pnButton pnRadioButton: pnRadioButton pfVerificationFlagChecked: pfVerificationFlagChecked [
+        ^self primTaskDialogIndirect: (FFICoerce pointer: pTaskConfig) pnButton: (FFICoerce pointer: pnButton) pnRadioButton: (FFICoerce pointer: pnRadioButton) pfVerificationFlagChecked: (FFICoerce pointer: pfVerificationFlagChecked)
     ]
 ]

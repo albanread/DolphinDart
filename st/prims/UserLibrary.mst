@@ -2,8 +2,11 @@
  Do not hand-edit: re-run the generator. 232 external methods."
 
 Object subclass: UserLibrary [
-    UserLibrary class >> adjustWindowRectExForDpi: rect dwStyle: styleFlags bMenu: menuPresent dwExStyle: exStyleFlags dpi: dpi [
+    UserLibrary class >> primAdjustWindowRectExForDpi: rect dwStyle: styleFlags bMenu: menuPresent dwExStyle: exStyleFlags dpi: dpi [
         <primitive: FFI function: #AdjustWindowRectExForDpi ret: #g args: #( g g g g g )>
+    ]
+    UserLibrary class >> adjustWindowRectExForDpi: rect dwStyle: styleFlags bMenu: menuPresent dwExStyle: exStyleFlags dpi: dpi [
+        ^self primAdjustWindowRectExForDpi: (FFICoerce pointer: rect) dwStyle: (FFICoerce word: styleFlags) bMenu: (FFICoerce word: menuPresent) dwExStyle: (FFICoerce word: exStyleFlags) dpi: (FFICoerce word: dpi)
     ]
     UserLibrary class >> animateWindow: hwnd dwTime: dwTime dwFlags: dwFlags [
         <primitive: FFI function: #AnimateWindow ret: #g args: #( g g g )>
@@ -17,8 +20,11 @@ Object subclass: UserLibrary [
     UserLibrary class >> beginDeferWindowPos: nNumWindows [
         <primitive: FFI function: #BeginDeferWindowPos ret: #g args: #( g )>
     ]
-    UserLibrary class >> beginPaint: hWindow lpPaint: aPAINTSTRUCT [
+    UserLibrary class >> primBeginPaint: hWindow lpPaint: aPAINTSTRUCT [
         <primitive: FFI function: #BeginPaint ret: #g args: #( g g )>
+    ]
+    UserLibrary class >> beginPaint: hWindow lpPaint: aPAINTSTRUCT [
+        ^self primBeginPaint: (FFICoerce word: hWindow) lpPaint: (FFICoerce pointer: aPAINTSTRUCT)
     ]
     UserLibrary class >> blockInput: aBoolean [
         <primitive: FFI function: #BlockInput ret: #g args: #( g )>
@@ -29,8 +35,11 @@ Object subclass: UserLibrary [
     UserLibrary class >> callWindowProc: lpPrevWndFunc hWnd: hWnd msg: msg wParam: wParam lParam: lParam [
         <primitive: FFI function: #CallWindowProcW ret: #g args: #( g g g g g )>
     ]
-    UserLibrary class >> clientToScreen: hwnd lpPoint: lpPoint [
+    UserLibrary class >> primClientToScreen: hwnd lpPoint: lpPoint [
         <primitive: FFI function: #ClientToScreen ret: #g args: #( g g )>
+    ]
+    UserLibrary class >> clientToScreen: hwnd lpPoint: lpPoint [
+        ^self primClientToScreen: (FFICoerce word: hwnd) lpPoint: (FFICoerce pointer: lpPoint)
     ]
     UserLibrary class >> closeClipboard [
         <primitive: FFI function: #CloseClipboard ret: #g args: #(  )>
@@ -41,14 +50,23 @@ Object subclass: UserLibrary [
     UserLibrary class >> countClipboardFormats [
         <primitive: FFI function: #CountClipboardFormats ret: #g args: #(  )>
     ]
-    UserLibrary class >> createAcceleratorTable: pTable cEntries: tableSize [
+    UserLibrary class >> primCreateAcceleratorTable: pTable cEntries: tableSize [
         <primitive: FFI function: #CreateAcceleratorTableW ret: #g args: #( g g )>
     ]
-    UserLibrary class >> createDialogParam: hInstance lpTemplate: template hWndParent: hParent lpDialogFunc: dlgProc dwInitParam: lParam [
+    UserLibrary class >> createAcceleratorTable: pTable cEntries: tableSize [
+        ^self primCreateAcceleratorTable: (FFICoerce pointer: pTable) cEntries: (FFICoerce word: tableSize)
+    ]
+    UserLibrary class >> primCreateDialogParam: hInstance lpTemplate: template hWndParent: hParent lpDialogFunc: dlgProc dwInitParam: lParam [
         <primitive: FFI function: #CreateDialogParamW ret: #g args: #( g g g g g )>
     ]
-    UserLibrary class >> createIconIndirect: piconinfo [
+    UserLibrary class >> createDialogParam: hInstance lpTemplate: template hWndParent: hParent lpDialogFunc: dlgProc dwInitParam: lParam [
+        ^self primCreateDialogParam: (FFICoerce word: hInstance) lpTemplate: (FFICoerce pointer: template) hWndParent: (FFICoerce word: hParent) lpDialogFunc: (FFICoerce pointer: dlgProc) dwInitParam: (FFICoerce word: lParam)
+    ]
+    UserLibrary class >> primCreateIconIndirect: piconinfo [
         <primitive: FFI function: #CreateIconIndirect ret: #g args: #( g )>
+    ]
+    UserLibrary class >> createIconIndirect: piconinfo [
+        ^self primCreateIconIndirect: (FFICoerce pointer: piconinfo)
     ]
     UserLibrary class >> createMenu [
         <primitive: FFI function: #CreateMenu ret: #g args: #(  )>
@@ -56,8 +74,14 @@ Object subclass: UserLibrary [
     UserLibrary class >> createPopupMenu [
         <primitive: FFI function: #CreatePopupMenu ret: #g args: #(  )>
     ]
-    UserLibrary class >> createWindowEx: exstyle lpClassName: classname lpWindowName: windowname dwStyle: style x: x y: y nWidth: width nHeight: height hWndParent: parent hMenu: menu hInstance: instance lpParam: lpParam [
+    UserLibrary class >> primCreateWindowEx: exstyle lpClassName: classname lpWindowName: windowname dwStyle: style x: x y: y nWidth: width nHeight: height hWndParent: parent hMenu: menu hInstance: instance lpParam: lpParam [
         <primitive: FFI function: #CreateWindowExW ret: #g args: #( g g g g g g g g g g g g )>
+    ]
+    UserLibrary class >> createWindowEx: exstyle lpClassName: classname lpWindowName: windowname dwStyle: style x: x y: y nWidth: width nHeight: height hWndParent: parent hMenu: menu hInstance: instance lpParam: lpParam [
+        | t2 |
+        t2 := FFICoerce stringTemp: windowname.
+        ^[ self primCreateWindowEx: (FFICoerce word: exstyle) lpClassName: (FFICoerce pointer: classname) lpWindowName: (FFICoerce addressOf: t2) dwStyle: (FFICoerce word: style) x: (FFICoerce word: x) y: (FFICoerce word: y) nWidth: (FFICoerce word: width) nHeight: (FFICoerce word: height) hWndParent: (FFICoerce word: parent) hMenu: (FFICoerce word: menu) hInstance: (FFICoerce word: instance) lpParam: (FFICoerce pointer: lpParam) ]
+            ensure: [ t2 isNil ifFalse: [ t2 free ]. ]
     ]
     UserLibrary class >> defDlgProc: hWnd msg: msg wParam: wParam lParam: lParam [
         <primitive: FFI function: #DefDlgProcW ret: #g args: #( g g g g )>
@@ -89,17 +113,29 @@ Object subclass: UserLibrary [
     UserLibrary class >> disableProcessWindowsGhosting [
         <primitive: FFI function: #DisableProcessWindowsGhosting ret: #v args: #(  )>
     ]
-    UserLibrary class >> dispatchMessage: aMSG [
+    UserLibrary class >> primDispatchMessage: aMSG [
         <primitive: FFI function: #DispatchMessageW ret: #g args: #( g )>
     ]
-    UserLibrary class >> drawEdge: hdc qrc: qrc edge: edge grfFlags: grfFlags [
+    UserLibrary class >> dispatchMessage: aMSG [
+        ^self primDispatchMessage: (FFICoerce pointer: aMSG)
+    ]
+    UserLibrary class >> primDrawEdge: hdc qrc: qrc edge: edge grfFlags: grfFlags [
         <primitive: FFI function: #DrawEdge ret: #g args: #( g g g g )>
     ]
-    UserLibrary class >> drawFocusRect: hdc lprc: aRECT [
+    UserLibrary class >> drawEdge: hdc qrc: qrc edge: edge grfFlags: grfFlags [
+        ^self primDrawEdge: (FFICoerce word: hdc) qrc: (FFICoerce pointer: qrc) edge: (FFICoerce word: edge) grfFlags: (FFICoerce word: grfFlags)
+    ]
+    UserLibrary class >> primDrawFocusRect: hdc lprc: aRECT [
         <primitive: FFI function: #DrawFocusRect ret: #g args: #( g g )>
     ]
-    UserLibrary class >> drawFrameControl: hdc lprc: lprc uType: uType uState: uState [
+    UserLibrary class >> drawFocusRect: hdc lprc: aRECT [
+        ^self primDrawFocusRect: (FFICoerce word: hdc) lprc: (FFICoerce pointer: aRECT)
+    ]
+    UserLibrary class >> primDrawFrameControl: hdc lprc: lprc uType: uType uState: uState [
         <primitive: FFI function: #DrawFrameControl ret: #g args: #( g g g g )>
+    ]
+    UserLibrary class >> drawFrameControl: hdc lprc: lprc uType: uType uState: uState [
+        ^self primDrawFrameControl: (FFICoerce word: hdc) lprc: (FFICoerce pointer: lprc) uType: (FFICoerce word: uType) uState: (FFICoerce word: uState)
     ]
     UserLibrary class >> drawIconEx: hDC xLeft: x yTop: y hIcon: hIcon cxWidth: w cyHeight: h istepIfAniCur: anInteger hbrFlickerFreeDraw: brush diFlags: flags [
         <primitive: FFI function: #DrawIconEx ret: #g args: #( g g g g g g g g g )>
@@ -107,11 +143,20 @@ Object subclass: UserLibrary [
     UserLibrary class >> drawMenuBar: aWindowHandle [
         <primitive: FFI function: #DrawMenuBar ret: #g args: #( g )>
     ]
-    UserLibrary class >> drawState: hdc hbr: hbr lpOutputFunc: lpOutputFunc lData: lData wData: wData x: x y: y cx: cx cy: cy fuFlags: fuFlags [
+    UserLibrary class >> primDrawState: hdc hbr: hbr lpOutputFunc: lpOutputFunc lData: lData wData: wData x: x y: y cx: cx cy: cy fuFlags: fuFlags [
         <primitive: FFI function: #DrawStateW ret: #g args: #( g g g g g g g g g g )>
     ]
-    UserLibrary class >> drawTextEx: hdc lpchText: lpchText cchText: cchText lprc: lprc dwDTFormat: dwDTFormat lpDTParams: lpdtParams [
+    UserLibrary class >> drawState: hdc hbr: hbr lpOutputFunc: lpOutputFunc lData: lData wData: wData x: x y: y cx: cx cy: cy fuFlags: fuFlags [
+        ^self primDrawState: (FFICoerce word: hdc) hbr: (FFICoerce word: hbr) lpOutputFunc: (FFICoerce pointer: lpOutputFunc) lData: (FFICoerce word: lData) wData: (FFICoerce word: wData) x: (FFICoerce word: x) y: (FFICoerce word: y) cx: (FFICoerce word: cx) cy: (FFICoerce word: cy) fuFlags: (FFICoerce word: fuFlags)
+    ]
+    UserLibrary class >> primDrawTextEx: hdc lpchText: lpchText cchText: cchText lprc: lprc dwDTFormat: dwDTFormat lpDTParams: lpdtParams [
         <primitive: FFI function: #DrawTextExW ret: #g args: #( g g g g g g )>
+    ]
+    UserLibrary class >> drawTextEx: hdc lpchText: lpchText cchText: cchText lprc: lprc dwDTFormat: dwDTFormat lpDTParams: lpdtParams [
+        | t1 |
+        t1 := FFICoerce stringTemp: lpchText.
+        ^[ self primDrawTextEx: (FFICoerce word: hdc) lpchText: (FFICoerce addressOf: t1) cchText: (FFICoerce word: cchText) lprc: (FFICoerce pointer: lprc) dwDTFormat: (FFICoerce word: dwDTFormat) lpDTParams: (FFICoerce pointer: lpdtParams) ]
+            ensure: [ t1 isNil ifFalse: [ t1 free ]. ]
     ]
     UserLibrary class >> emptyClipboard [
         <primitive: FFI function: #EmptyClipboard ret: #g args: #(  )>
@@ -131,38 +176,75 @@ Object subclass: UserLibrary [
     UserLibrary class >> endDialog: dialogHandle nResult: anInteger [
         <primitive: FFI function: #EndDialog ret: #g args: #( g g )>
     ]
-    UserLibrary class >> endPaint: hWindow lpPaint: aPAINTSTRUCT [
+    UserLibrary class >> primEndPaint: hWindow lpPaint: aPAINTSTRUCT [
         <primitive: FFI function: #EndPaint ret: #g args: #( g g )>
     ]
-    UserLibrary class >> enumChildWindows: hwndParent lpEnumFunction: lpEnumFunction lParam: lParam [
+    UserLibrary class >> endPaint: hWindow lpPaint: aPAINTSTRUCT [
+        ^self primEndPaint: (FFICoerce word: hWindow) lpPaint: (FFICoerce pointer: aPAINTSTRUCT)
+    ]
+    UserLibrary class >> primEnumChildWindows: hwndParent lpEnumFunction: lpEnumFunction lParam: lParam [
         <primitive: FFI function: #EnumChildWindows ret: #g args: #( g g g )>
+    ]
+    UserLibrary class >> enumChildWindows: hwndParent lpEnumFunction: lpEnumFunction lParam: lParam [
+        ^self primEnumChildWindows: (FFICoerce word: hwndParent) lpEnumFunction: (FFICoerce pointer: lpEnumFunction) lParam: (FFICoerce word: lParam)
     ]
     UserLibrary class >> enumClipboardFormats: knownFormat [
         <primitive: FFI function: #EnumClipboardFormats ret: #g args: #( g )>
     ]
-    UserLibrary class >> enumDisplayDevices: lpDevice iDevNum: iDevNum lpDisplayDevice: lpDisplayDevice dwFlags: dwFlags [
+    UserLibrary class >> primEnumDisplayDevices: lpDevice iDevNum: iDevNum lpDisplayDevice: lpDisplayDevice dwFlags: dwFlags [
         <primitive: FFI function: #EnumDisplayDevicesW ret: #g args: #( g g g g )>
     ]
-    UserLibrary class >> enumDisplayMonitors: hDC lprcClip: lprcClip lpfnEnum: lpfnEnum dwData: dwData [
+    UserLibrary class >> enumDisplayDevices: lpDevice iDevNum: iDevNum lpDisplayDevice: lpDisplayDevice dwFlags: dwFlags [
+        | t0 |
+        t0 := FFICoerce stringTemp: lpDevice.
+        ^[ self primEnumDisplayDevices: (FFICoerce addressOf: t0) iDevNum: (FFICoerce word: iDevNum) lpDisplayDevice: (FFICoerce pointer: lpDisplayDevice) dwFlags: (FFICoerce word: dwFlags) ]
+            ensure: [ t0 isNil ifFalse: [ t0 free ]. ]
+    ]
+    UserLibrary class >> primEnumDisplayMonitors: hDC lprcClip: lprcClip lpfnEnum: lpfnEnum dwData: dwData [
         <primitive: FFI function: #EnumDisplayMonitors ret: #g args: #( g g g g )>
     ]
-    UserLibrary class >> enumThreadWindows: dwThreadId lpfn: aCallbackThunk lParam: lParam [
+    UserLibrary class >> enumDisplayMonitors: hDC lprcClip: lprcClip lpfnEnum: lpfnEnum dwData: dwData [
+        ^self primEnumDisplayMonitors: (FFICoerce word: hDC) lprcClip: (FFICoerce pointer: lprcClip) lpfnEnum: (FFICoerce pointer: lpfnEnum) dwData: (FFICoerce word: dwData)
+    ]
+    UserLibrary class >> primEnumThreadWindows: dwThreadId lpfn: aCallbackThunk lParam: lParam [
         <primitive: FFI function: #EnumThreadWindows ret: #g args: #( g g g )>
     ]
-    UserLibrary class >> enumWindows: lpEnumFunction lParam: lParam [
+    UserLibrary class >> enumThreadWindows: dwThreadId lpfn: aCallbackThunk lParam: lParam [
+        ^self primEnumThreadWindows: (FFICoerce word: dwThreadId) lpfn: (FFICoerce pointer: aCallbackThunk) lParam: (FFICoerce word: lParam)
+    ]
+    UserLibrary class >> primEnumWindows: lpEnumFunction lParam: lParam [
         <primitive: FFI function: #EnumWindows ret: #g args: #( g g )>
     ]
-    UserLibrary class >> fillRect: hdc lprc: aRECT hbr: hBrush [
+    UserLibrary class >> enumWindows: lpEnumFunction lParam: lParam [
+        ^self primEnumWindows: (FFICoerce pointer: lpEnumFunction) lParam: (FFICoerce word: lParam)
+    ]
+    UserLibrary class >> primFillRect: hdc lprc: aRECT hbr: hBrush [
         <primitive: FFI function: #FillRect ret: #g args: #( g g g )>
     ]
-    UserLibrary class >> findWindow: lpClassName lpWindowName: lpWindowName [
+    UserLibrary class >> fillRect: hdc lprc: aRECT hbr: hBrush [
+        ^self primFillRect: (FFICoerce word: hdc) lprc: (FFICoerce pointer: aRECT) hbr: (FFICoerce word: hBrush)
+    ]
+    UserLibrary class >> primFindWindow: lpClassName lpWindowName: lpWindowName [
         <primitive: FFI function: #FindWindowW ret: #g args: #( g g )>
     ]
-    UserLibrary class >> flashWindowEx: pfwi [
+    UserLibrary class >> findWindow: lpClassName lpWindowName: lpWindowName [
+        | t0 t1 |
+        t0 := FFICoerce stringTemp: lpClassName.
+        t1 := FFICoerce stringTemp: lpWindowName.
+        ^[ self primFindWindow: (FFICoerce addressOf: t0) lpWindowName: (FFICoerce addressOf: t1) ]
+            ensure: [ t0 isNil ifFalse: [ t0 free ]. t1 isNil ifFalse: [ t1 free ]. ]
+    ]
+    UserLibrary class >> primFlashWindowEx: pfwi [
         <primitive: FFI function: #FlashWindowEx ret: #g args: #( g )>
     ]
-    UserLibrary class >> frameRect: hdc lprc: aRECT hbr: hBrush [
+    UserLibrary class >> flashWindowEx: pfwi [
+        ^self primFlashWindowEx: (FFICoerce pointer: pfwi)
+    ]
+    UserLibrary class >> primFrameRect: hdc lprc: aRECT hbr: hBrush [
         <primitive: FFI function: #FrameRect ret: #g args: #( g g g )>
+    ]
+    UserLibrary class >> frameRect: hdc lprc: aRECT hbr: hBrush [
+        ^self primFrameRect: (FFICoerce word: hdc) lprc: (FFICoerce pointer: aRECT) hbr: (FFICoerce word: hBrush)
     ]
     UserLibrary class >> getActiveWindow [
         <primitive: FFI function: #GetActiveWindow ret: #g args: #(  )>
@@ -185,23 +267,38 @@ Object subclass: UserLibrary [
     UserLibrary class >> getClassLongPtr: hWnd nIndex: nIndex [
         <primitive: FFI function: #GetClassLongW ret: #g args: #( g g )>
     ]
-    UserLibrary class >> getClassName: aWindowHandle lpClassName: aByteBuffer nMaxCount: anInteger [
+    UserLibrary class >> primGetClassName: aWindowHandle lpClassName: aByteBuffer nMaxCount: anInteger [
         <primitive: FFI function: #GetClassNameW ret: #g args: #( g g g )>
     ]
-    UserLibrary class >> getClientRect: aWindowHandle lpRect: aRECT [
+    UserLibrary class >> getClassName: aWindowHandle lpClassName: aByteBuffer nMaxCount: anInteger [
+        ^self primGetClassName: (FFICoerce word: aWindowHandle) lpClassName: (FFICoerce pointer: aByteBuffer) nMaxCount: (FFICoerce word: anInteger)
+    ]
+    UserLibrary class >> primGetClientRect: aWindowHandle lpRect: aRECT [
         <primitive: FFI function: #GetClientRect ret: #g args: #( g g )>
+    ]
+    UserLibrary class >> getClientRect: aWindowHandle lpRect: aRECT [
+        ^self primGetClientRect: (FFICoerce word: aWindowHandle) lpRect: (FFICoerce pointer: aRECT)
     ]
     UserLibrary class >> getClipboardData: format [
         <primitive: FFI function: #GetClipboardData ret: #g args: #( g )>
     ]
-    UserLibrary class >> getClipboardFormatName: format lpszFormatName: lpszFormatName cchMaxCount: cchMaxCount [
+    UserLibrary class >> primGetClipboardFormatName: format lpszFormatName: lpszFormatName cchMaxCount: cchMaxCount [
         <primitive: FFI function: #GetClipboardFormatNameW ret: #g args: #( g g g )>
+    ]
+    UserLibrary class >> getClipboardFormatName: format lpszFormatName: lpszFormatName cchMaxCount: cchMaxCount [
+        | t1 |
+        t1 := FFICoerce stringTemp: lpszFormatName.
+        ^[ self primGetClipboardFormatName: (FFICoerce word: format) lpszFormatName: (FFICoerce addressOf: t1) cchMaxCount: (FFICoerce word: cchMaxCount) ]
+            ensure: [ t1 isNil ifFalse: [ t1 free ]. ]
     ]
     UserLibrary class >> getCursor [
         <primitive: FFI function: #GetCursor ret: #g args: #(  )>
     ]
-    UserLibrary class >> getCursorPos: aPOINT [
+    UserLibrary class >> primGetCursorPos: aPOINT [
         <primitive: FFI function: #GetCursorPos ret: #g args: #( g )>
+    ]
+    UserLibrary class >> getCursorPos: aPOINT [
+        ^self primGetCursorPos: (FFICoerce pointer: aPOINT)
     ]
     UserLibrary class >> getDC: aWindowHandle [
         <primitive: FFI function: #GetDC ret: #g args: #( g )>
@@ -239,11 +336,20 @@ Object subclass: UserLibrary [
     UserLibrary class >> getForegroundWindow [
         <primitive: FFI function: #GetForegroundWindow ret: #g args: #(  )>
     ]
-    UserLibrary class >> getIconInfo: hIcon piconinfo: anICONINFO [
+    UserLibrary class >> primGetIconInfo: hIcon piconinfo: anICONINFO [
         <primitive: FFI function: #GetIconInfo ret: #g args: #( g g )>
     ]
-    UserLibrary class >> getKeyNameText: lParam lpString: aString nSize: anInteger [
+    UserLibrary class >> getIconInfo: hIcon piconinfo: anICONINFO [
+        ^self primGetIconInfo: (FFICoerce word: hIcon) piconinfo: (FFICoerce pointer: anICONINFO)
+    ]
+    UserLibrary class >> primGetKeyNameText: lParam lpString: aString nSize: anInteger [
         <primitive: FFI function: #GetKeyNameTextW ret: #g args: #( g g g )>
+    ]
+    UserLibrary class >> getKeyNameText: lParam lpString: aString nSize: anInteger [
+        | t1 |
+        t1 := FFICoerce stringTemp: aString.
+        ^[ self primGetKeyNameText: (FFICoerce word: lParam) lpString: (FFICoerce addressOf: t1) nSize: (FFICoerce word: anInteger) ]
+            ensure: [ t1 isNil ifFalse: [ t1 free ]. ]
     ]
     UserLibrary class >> getKeyState: virtualKeyCodeInteger [
         <primitive: FFI function: #GetKeyState ret: #g args: #( g )>
@@ -251,32 +357,59 @@ Object subclass: UserLibrary [
     UserLibrary class >> getKeyboardLayout: anInteger [
         <primitive: FFI function: #GetKeyboardLayout ret: #g args: #( g )>
     ]
-    UserLibrary class >> getKeyboardLayoutName: pwszKLID [
+    UserLibrary class >> primGetKeyboardLayoutName: pwszKLID [
         <primitive: FFI function: #GetKeyboardLayoutNameW ret: #g args: #( g )>
     ]
-    UserLibrary class >> getKeyboardState: a256ByteArray [
+    UserLibrary class >> getKeyboardLayoutName: pwszKLID [
+        | t0 |
+        t0 := FFICoerce stringTemp: pwszKLID.
+        ^[ self primGetKeyboardLayoutName: (FFICoerce addressOf: t0) ]
+            ensure: [ t0 isNil ifFalse: [ t0 free ]. ]
+    ]
+    UserLibrary class >> primGetKeyboardState: a256ByteArray [
         <primitive: FFI function: #GetKeyboardState ret: #g args: #( g )>
+    ]
+    UserLibrary class >> getKeyboardState: a256ByteArray [
+        ^self primGetKeyboardState: (FFICoerce pointer: a256ByteArray)
     ]
     UserLibrary class >> getLastActivePopup: aHandle [
         <primitive: FFI function: #GetLastActivePopup ret: #g args: #( g )>
     ]
-    UserLibrary class >> getLastInputInfo: plii [
+    UserLibrary class >> primGetLastInputInfo: plii [
         <primitive: FFI function: #GetLastInputInfo ret: #g args: #( g )>
     ]
-    UserLibrary class >> getMenuInfo: hMenu lpcmi: aMenuItemInfo [
+    UserLibrary class >> getLastInputInfo: plii [
+        ^self primGetLastInputInfo: (FFICoerce pointer: plii)
+    ]
+    UserLibrary class >> primGetMenuInfo: hMenu lpcmi: aMenuItemInfo [
         <primitive: FFI function: #GetMenuInfo ret: #g args: #( g g )>
     ]
-    UserLibrary class >> getMenuItemInfo: hMenu uItem: anInteger fByPosition: aBoolean lpmii: aMenuItemInfo [
+    UserLibrary class >> getMenuInfo: hMenu lpcmi: aMenuItemInfo [
+        ^self primGetMenuInfo: (FFICoerce word: hMenu) lpcmi: (FFICoerce pointer: aMenuItemInfo)
+    ]
+    UserLibrary class >> primGetMenuItemInfo: hMenu uItem: anInteger fByPosition: aBoolean lpmii: aMenuItemInfo [
         <primitive: FFI function: #GetMenuItemInfoW ret: #g args: #( g g g g )>
     ]
-    UserLibrary class >> getMenuItemRect: hWnd hMenu: hMenu uItem: uItem lprcItem: lprcItem [
+    UserLibrary class >> getMenuItemInfo: hMenu uItem: anInteger fByPosition: aBoolean lpmii: aMenuItemInfo [
+        ^self primGetMenuItemInfo: (FFICoerce word: hMenu) uItem: (FFICoerce word: anInteger) fByPosition: (FFICoerce word: aBoolean) lpmii: (FFICoerce pointer: aMenuItemInfo)
+    ]
+    UserLibrary class >> primGetMenuItemRect: hWnd hMenu: hMenu uItem: uItem lprcItem: lprcItem [
         <primitive: FFI function: #GetMenuItemRect ret: #g args: #( g g g g )>
     ]
-    UserLibrary class >> getMessage: aMSG hWnd: aWindowHandle wMsgFilterMin: anIntFilterMin wMsgFilterMax: anIntFilterMax [
+    UserLibrary class >> getMenuItemRect: hWnd hMenu: hMenu uItem: uItem lprcItem: lprcItem [
+        ^self primGetMenuItemRect: (FFICoerce word: hWnd) hMenu: (FFICoerce word: hMenu) uItem: (FFICoerce word: uItem) lprcItem: (FFICoerce pointer: lprcItem)
+    ]
+    UserLibrary class >> primGetMessage: aMSG hWnd: aWindowHandle wMsgFilterMin: anIntFilterMin wMsgFilterMax: anIntFilterMax [
         <primitive: FFI function: #GetMessageW ret: #g args: #( g g g g )>
     ]
-    UserLibrary class >> getMonitorInfo: hmonitor lpmi: lpmi [
+    UserLibrary class >> getMessage: aMSG hWnd: aWindowHandle wMsgFilterMin: anIntFilterMin wMsgFilterMax: anIntFilterMax [
+        ^self primGetMessage: (FFICoerce pointer: aMSG) hWnd: (FFICoerce word: aWindowHandle) wMsgFilterMin: (FFICoerce word: anIntFilterMin) wMsgFilterMax: (FFICoerce word: anIntFilterMax)
+    ]
+    UserLibrary class >> primGetMonitorInfo: hmonitor lpmi: lpmi [
         <primitive: FFI function: #GetMonitorInfoW ret: #g args: #( g g )>
+    ]
+    UserLibrary class >> getMonitorInfo: hmonitor lpmi: lpmi [
+        ^self primGetMonitorInfo: (FFICoerce word: hmonitor) lpmi: (FFICoerce pointer: lpmi)
     ]
     UserLibrary class >> getNextDlgGroupItem: p1 hCtl: p2 bPrevious: p3 [
         <primitive: FFI function: #GetNextDlgGroupItem ret: #g args: #( g g g )>
@@ -287,14 +420,23 @@ Object subclass: UserLibrary [
     UserLibrary class >> getParent: hWnd [
         <primitive: FFI function: #GetParent ret: #g args: #( g )>
     ]
-    UserLibrary class >> getProp: aWindowHandle lpString: name [
+    UserLibrary class >> primGetProp: aWindowHandle lpString: name [
         <primitive: FFI function: #GetPropW ret: #g args: #( g g )>
+    ]
+    UserLibrary class >> getProp: aWindowHandle lpString: name [
+        | t1 |
+        t1 := FFICoerce stringTemp: name.
+        ^[ self primGetProp: (FFICoerce word: aWindowHandle) lpString: (FFICoerce addressOf: t1) ]
+            ensure: [ t1 isNil ifFalse: [ t1 free ]. ]
     ]
     UserLibrary class >> getQueueStatus: integerFlags [
         <primitive: FFI function: #GetQueueStatus ret: #g args: #( g )>
     ]
-    UserLibrary class >> getScrollInfo: hwnd nBar: nBar lpsi: lpsi [
+    UserLibrary class >> primGetScrollInfo: hwnd nBar: nBar lpsi: lpsi [
         <primitive: FFI function: #GetScrollInfo ret: #g args: #( g g g )>
+    ]
+    UserLibrary class >> getScrollInfo: hwnd nBar: nBar lpsi: lpsi [
+        ^self primGetScrollInfo: (FFICoerce word: hwnd) nBar: (FFICoerce word: nBar) lpsi: (FFICoerce pointer: lpsi)
     ]
     UserLibrary class >> getSysColor: index [
         <primitive: FFI function: #GetSysColor ret: #g args: #( g )>
@@ -323,8 +465,11 @@ Object subclass: UserLibrary [
     UserLibrary class >> getTopWindow: aHandle [
         <primitive: FFI function: #GetTopWindow ret: #g args: #( g )>
     ]
-    UserLibrary class >> getUpdateRect: hWnd lpRect: lpRect bErase: bErase [
+    UserLibrary class >> primGetUpdateRect: hWnd lpRect: lpRect bErase: bErase [
         <primitive: FFI function: #GetUpdateRect ret: #g args: #( g g g )>
+    ]
+    UserLibrary class >> getUpdateRect: hWnd lpRect: lpRect bErase: bErase [
+        ^self primGetUpdateRect: (FFICoerce word: hWnd) lpRect: (FFICoerce pointer: lpRect) bErase: (FFICoerce word: bErase)
     ]
     UserLibrary class >> getWindow: hWnd uCmd: flags [
         <primitive: FFI function: #GetWindow ret: #g args: #( g g )>
@@ -344,20 +489,32 @@ Object subclass: UserLibrary [
     UserLibrary class >> getWindowLongPtr: aWindowHandle nIndex: zeroBasedIntegerOffset [
         <primitive: FFI function: #GetWindowLongPtrW ret: #g args: #( g g )>
     ]
-    UserLibrary class >> getWindowPlacement: hWnd lpwndpl: lpwndpl [
+    UserLibrary class >> primGetWindowPlacement: hWnd lpwndpl: lpwndpl [
         <primitive: FFI function: #GetWindowPlacement ret: #g args: #( g g )>
     ]
-    UserLibrary class >> getWindowRect: aWindowHandle lpRect: aRECT [
+    UserLibrary class >> getWindowPlacement: hWnd lpwndpl: lpwndpl [
+        ^self primGetWindowPlacement: (FFICoerce word: hWnd) lpwndpl: (FFICoerce pointer: lpwndpl)
+    ]
+    UserLibrary class >> primGetWindowRect: aWindowHandle lpRect: aRECT [
         <primitive: FFI function: #GetWindowRect ret: #g args: #( g g )>
     ]
-    UserLibrary class >> getWindowText: aWindow lpString: aBuffer nMaxCount: len [
+    UserLibrary class >> getWindowRect: aWindowHandle lpRect: aRECT [
+        ^self primGetWindowRect: (FFICoerce word: aWindowHandle) lpRect: (FFICoerce pointer: aRECT)
+    ]
+    UserLibrary class >> primGetWindowText: aWindow lpString: aBuffer nMaxCount: len [
         <primitive: FFI function: #GetWindowTextW ret: #g args: #( g g g )>
+    ]
+    UserLibrary class >> getWindowText: aWindow lpString: aBuffer nMaxCount: len [
+        ^self primGetWindowText: (FFICoerce word: aWindow) lpString: (FFICoerce pointer: aBuffer) nMaxCount: (FFICoerce word: len)
     ]
     UserLibrary class >> getWindowTextLength: hWnd [
         <primitive: FFI function: #GetWindowTextLengthW ret: #g args: #( g )>
     ]
-    UserLibrary class >> getWindowThreadProcessId: hwnd lpdwProcessId: lpdwProcessId [
+    UserLibrary class >> primGetWindowThreadProcessId: hwnd lpdwProcessId: lpdwProcessId [
         <primitive: FFI function: #GetWindowThreadProcessId ret: #g args: #( g g )>
+    ]
+    UserLibrary class >> getWindowThreadProcessId: hwnd lpdwProcessId: lpdwProcessId [
+        ^self primGetWindowThreadProcessId: (FFICoerce word: hwnd) lpdwProcessId: (FFICoerce pointer: lpdwProcessId)
     ]
     UserLibrary class >> getWindowULong: aWindowHandle nIndex: zeroBasedIntegerOffset [
         <primitive: FFI function: #GetWindowLongW ret: #g args: #( g g )>
@@ -371,17 +528,26 @@ Object subclass: UserLibrary [
     UserLibrary class >> inheritWindowMonitor: hwnd hwndInherit: hwndInherit [
         <primitive: FFI function: #InheritWindowMonitor ret: #g args: #( g g )>
     ]
-    UserLibrary class >> insertMenuItem: hMenu uItem: anInteger fByPosition: aBoolean lpmii: aMENUITEMINFOW [
+    UserLibrary class >> primInsertMenuItem: hMenu uItem: anInteger fByPosition: aBoolean lpmii: aMENUITEMINFOW [
         <primitive: FFI function: #InsertMenuItemW ret: #g args: #( g g g g )>
     ]
-    UserLibrary class >> invalidate: hWnd lpRect: aRECT bErase: aBoolean [
+    UserLibrary class >> insertMenuItem: hMenu uItem: anInteger fByPosition: aBoolean lpmii: aMENUITEMINFOW [
+        ^self primInsertMenuItem: (FFICoerce word: hMenu) uItem: (FFICoerce word: anInteger) fByPosition: (FFICoerce word: aBoolean) lpmii: (FFICoerce pointer: aMENUITEMINFOW)
+    ]
+    UserLibrary class >> primInvalidate: hWnd lpRect: aRECT bErase: aBoolean [
         <primitive: FFI function: #InvalidateRect ret: #g args: #( g g g )>
+    ]
+    UserLibrary class >> invalidate: hWnd lpRect: aRECT bErase: aBoolean [
+        ^self primInvalidate: (FFICoerce word: hWnd) lpRect: (FFICoerce pointer: aRECT) bErase: (FFICoerce word: aBoolean)
     ]
     UserLibrary class >> invalidateRgn: hWnd hRgn: aRegion bErase: aBoolean [
         <primitive: FFI function: #InvalidateRgn ret: #g args: #( g g g )>
     ]
-    UserLibrary class >> invertRect: hdc lprc: aRECT [
+    UserLibrary class >> primInvertRect: hdc lprc: aRECT [
         <primitive: FFI function: #InvertRect ret: #g args: #( g g )>
+    ]
+    UserLibrary class >> invertRect: hdc lprc: aRECT [
+        ^self primInvertRect: (FFICoerce word: hdc) lprc: (FFICoerce pointer: aRECT)
     ]
     UserLibrary class >> isChild: hWndParent hWnd: hWnd [
         <primitive: FFI function: #IsChild ret: #g args: #( g g )>
@@ -389,8 +555,11 @@ Object subclass: UserLibrary [
     UserLibrary class >> isClipboardFormatAvailable: format [
         <primitive: FFI function: #IsClipboardFormatAvailable ret: #g args: #( g )>
     ]
-    UserLibrary class >> isDialogMessage: aHandle lpMsg: aMSG [
+    UserLibrary class >> primIsDialogMessage: aHandle lpMsg: aMSG [
         <primitive: FFI function: #IsDialogMessageW ret: #g args: #( g g )>
+    ]
+    UserLibrary class >> isDialogMessage: aHandle lpMsg: aMSG [
+        ^self primIsDialogMessage: (FFICoerce word: aHandle) lpMsg: (FFICoerce pointer: aMSG)
     ]
     UserLibrary class >> isIconic: aWindowHandle [
         <primitive: FFI function: #IsIconic ret: #g args: #( g )>
@@ -419,35 +588,65 @@ Object subclass: UserLibrary [
     UserLibrary class >> killTimer: aWindowHandle uIDEvent: anInteger [
         <primitive: FFI function: #KillTimer ret: #g args: #( g g )>
     ]
-    UserLibrary class >> loadAccelerators: anExternalHandle lpTableName: anIntegerOrString [
+    UserLibrary class >> primLoadAccelerators: anExternalHandle lpTableName: anIntegerOrString [
         <primitive: FFI function: #LoadAcceleratorsW ret: #g args: #( g g )>
     ]
-    UserLibrary class >> loadCursor: anInstanceHandle lpCursorName: anIntegerID [
+    UserLibrary class >> loadAccelerators: anExternalHandle lpTableName: anIntegerOrString [
+        ^self primLoadAccelerators: (FFICoerce word: anExternalHandle) lpTableName: (FFICoerce pointer: anIntegerOrString)
+    ]
+    UserLibrary class >> primLoadCursor: anInstanceHandle lpCursorName: anIntegerID [
         <primitive: FFI function: #LoadCursorW ret: #g args: #( g g )>
     ]
-    UserLibrary class >> loadIcon: anInstanceHandle lpIconName: anIntegerID [
+    UserLibrary class >> loadCursor: anInstanceHandle lpCursorName: anIntegerID [
+        ^self primLoadCursor: (FFICoerce word: anInstanceHandle) lpCursorName: (FFICoerce pointer: anIntegerID)
+    ]
+    UserLibrary class >> primLoadIcon: anInstanceHandle lpIconName: anIntegerID [
         <primitive: FFI function: #LoadIconW ret: #g args: #( g g )>
     ]
-    UserLibrary class >> loadImage: hInst lpszName: filename uType: type cxDesired: w cyDesired: h fuLoad: flags [
+    UserLibrary class >> loadIcon: anInstanceHandle lpIconName: anIntegerID [
+        ^self primLoadIcon: (FFICoerce word: anInstanceHandle) lpIconName: (FFICoerce pointer: anIntegerID)
+    ]
+    UserLibrary class >> primLoadImage: hInst lpszName: filename uType: type cxDesired: w cyDesired: h fuLoad: flags [
         <primitive: FFI function: #LoadImageW ret: #g args: #( g g g g g g )>
     ]
-    UserLibrary class >> loadKeyboardLayout: pwszKLID flags: flags [
+    UserLibrary class >> loadImage: hInst lpszName: filename uType: type cxDesired: w cyDesired: h fuLoad: flags [
+        ^self primLoadImage: (FFICoerce word: hInst) lpszName: (FFICoerce pointer: filename) uType: (FFICoerce word: type) cxDesired: (FFICoerce word: w) cyDesired: (FFICoerce word: h) fuLoad: (FFICoerce word: flags)
+    ]
+    UserLibrary class >> primLoadKeyboardLayout: pwszKLID flags: flags [
         <primitive: FFI function: #LoadKeyboardLayoutW ret: #g args: #( g g )>
     ]
-    UserLibrary class >> loadMenu: anExternalHandle lpMenuName: anIntegerOrString [
+    UserLibrary class >> loadKeyboardLayout: pwszKLID flags: flags [
+        | t0 |
+        t0 := FFICoerce stringTemp: pwszKLID.
+        ^[ self primLoadKeyboardLayout: (FFICoerce addressOf: t0) flags: (FFICoerce word: flags) ]
+            ensure: [ t0 isNil ifFalse: [ t0 free ]. ]
+    ]
+    UserLibrary class >> primLoadMenu: anExternalHandle lpMenuName: anIntegerOrString [
         <primitive: FFI function: #LoadMenuW ret: #g args: #( g g )>
     ]
-    UserLibrary class >> loadString: anExternalHandle uID: anIntegerID lpBuffer: aString nBufferMax: anIntegerLength [
+    UserLibrary class >> loadMenu: anExternalHandle lpMenuName: anIntegerOrString [
+        ^self primLoadMenu: (FFICoerce word: anExternalHandle) lpMenuName: (FFICoerce pointer: anIntegerOrString)
+    ]
+    UserLibrary class >> primLoadString: anExternalHandle uID: anIntegerID lpBuffer: aString nBufferMax: anIntegerLength [
         <primitive: FFI function: #LoadStringW ret: #g args: #( g g g g )>
+    ]
+    UserLibrary class >> loadString: anExternalHandle uID: anIntegerID lpBuffer: aString nBufferMax: anIntegerLength [
+        ^self primLoadString: (FFICoerce word: anExternalHandle) uID: (FFICoerce word: anIntegerID) lpBuffer: (FFICoerce pointer: aString) nBufferMax: (FFICoerce word: anIntegerLength)
     ]
     UserLibrary class >> lockWindowUpdate: anExternalHandle [
         <primitive: FFI function: #LockWindowUpdate ret: #g args: #( g )>
     ]
-    UserLibrary class >> logicalToPhysicalPoint: hwnd lpPoint: lpPoint [
+    UserLibrary class >> primLogicalToPhysicalPoint: hwnd lpPoint: lpPoint [
         <primitive: FFI function: #LogicalToPhysicalPoint ret: #g args: #( g g )>
     ]
-    UserLibrary class >> logicalToPhysicalPointForPerMonitorDPI: hwnd lpPoint: lpPoint [
+    UserLibrary class >> logicalToPhysicalPoint: hwnd lpPoint: lpPoint [
+        ^self primLogicalToPhysicalPoint: (FFICoerce word: hwnd) lpPoint: (FFICoerce pointer: lpPoint)
+    ]
+    UserLibrary class >> primLogicalToPhysicalPointForPerMonitorDPI: hwnd lpPoint: lpPoint [
         <primitive: FFI function: #LogicalToPhysicalPointForPerMonitorDPI ret: #g args: #( g g )>
+    ]
+    UserLibrary class >> logicalToPhysicalPointForPerMonitorDPI: hwnd lpPoint: lpPoint [
+        ^self primLogicalToPhysicalPointForPerMonitorDPI: (FFICoerce word: hwnd) lpPoint: (FFICoerce pointer: lpPoint)
     ]
     UserLibrary class >> makeDragList: aWindowHandle [
         <primitive: FFI function: #MakeDragList ret: #g args: #( g )>
@@ -455,41 +654,75 @@ Object subclass: UserLibrary [
     UserLibrary class >> mapVirtualKey: keyCode uMapType: mapType [
         <primitive: FFI function: #MapVirtualKeyW ret: #g args: #( g g )>
     ]
-    UserLibrary class >> mapWindowPoints: fromHwnd hWndTo: toHwnd lpPoints: points cPoints: count [
+    UserLibrary class >> primMapWindowPoints: fromHwnd hWndTo: toHwnd lpPoints: points cPoints: count [
         <primitive: FFI function: #MapWindowPoints ret: #g args: #( g g g g )>
+    ]
+    UserLibrary class >> mapWindowPoints: fromHwnd hWndTo: toHwnd lpPoints: points cPoints: count [
+        ^self primMapWindowPoints: (FFICoerce word: fromHwnd) hWndTo: (FFICoerce word: toHwnd) lpPoints: (FFICoerce pointer: points) cPoints: (FFICoerce word: count)
     ]
     UserLibrary class >> messageBeep: anInteger [
         <primitive: FFI function: #MessageBeep ret: #g args: #( g )>
     ]
-    UserLibrary class >> messageBox: hWnd lpText: lpText lpCaption: lpCaption uType: uType [
+    UserLibrary class >> primMessageBox: hWnd lpText: lpText lpCaption: lpCaption uType: uType [
         <primitive: FFI function: #MessageBoxW ret: #g args: #( g g g g )>
     ]
-    UserLibrary class >> messageBoxIndirect: aMSGBOXPARAMS [
+    UserLibrary class >> messageBox: hWnd lpText: lpText lpCaption: lpCaption uType: uType [
+        | t1 t2 |
+        t1 := FFICoerce stringTemp: lpText.
+        t2 := FFICoerce stringTemp: lpCaption.
+        ^[ self primMessageBox: (FFICoerce word: hWnd) lpText: (FFICoerce addressOf: t1) lpCaption: (FFICoerce addressOf: t2) uType: (FFICoerce word: uType) ]
+            ensure: [ t1 isNil ifFalse: [ t1 free ]. t2 isNil ifFalse: [ t2 free ]. ]
+    ]
+    UserLibrary class >> primMessageBoxIndirect: aMSGBOXPARAMS [
         <primitive: FFI function: #MessageBoxIndirectW ret: #g args: #( g )>
     ]
-    UserLibrary class >> modifyMenu: hMenuDrop uPosition: position uFlags: styleFlags uIDNewItem: menuId lpNewItem: menuText [
+    UserLibrary class >> messageBoxIndirect: aMSGBOXPARAMS [
+        ^self primMessageBoxIndirect: (FFICoerce pointer: aMSGBOXPARAMS)
+    ]
+    UserLibrary class >> primModifyMenu: hMenuDrop uPosition: position uFlags: styleFlags uIDNewItem: menuId lpNewItem: menuText [
         <primitive: FFI function: #ModifyMenuW ret: #g args: #( g g g g g )>
     ]
-    UserLibrary class >> monitorFromRect: lprc dwFlags: dwFlags [
+    UserLibrary class >> modifyMenu: hMenuDrop uPosition: position uFlags: styleFlags uIDNewItem: menuId lpNewItem: menuText [
+        | t4 |
+        t4 := FFICoerce stringTemp: menuText.
+        ^[ self primModifyMenu: (FFICoerce word: hMenuDrop) uPosition: (FFICoerce word: position) uFlags: (FFICoerce word: styleFlags) uIDNewItem: (FFICoerce word: menuId) lpNewItem: (FFICoerce addressOf: t4) ]
+            ensure: [ t4 isNil ifFalse: [ t4 free ]. ]
+    ]
+    UserLibrary class >> primMonitorFromRect: lprc dwFlags: dwFlags [
         <primitive: FFI function: #MonitorFromRect ret: #g args: #( g g )>
+    ]
+    UserLibrary class >> monitorFromRect: lprc dwFlags: dwFlags [
+        ^self primMonitorFromRect: (FFICoerce pointer: lprc) dwFlags: (FFICoerce word: dwFlags)
     ]
     UserLibrary class >> monitorFromWindow: hwnd dwFlags: dwFlags [
         <primitive: FFI function: #MonitorFromWindow ret: #g args: #( g g )>
     ]
-    UserLibrary class >> msgWaitForMultipleObjectsEx: countInteger pHandles: handles dwMilliseconds: millisecsInteger dwWakeMask: maskInteger dwFlags: aBoolean [
+    UserLibrary class >> primMsgWaitForMultipleObjectsEx: countInteger pHandles: handles dwMilliseconds: millisecsInteger dwWakeMask: maskInteger dwFlags: aBoolean [
         <primitive: FFI function: #MsgWaitForMultipleObjectsEx ret: #g args: #( g g g g g )>
+    ]
+    UserLibrary class >> msgWaitForMultipleObjectsEx: countInteger pHandles: handles dwMilliseconds: millisecsInteger dwWakeMask: maskInteger dwFlags: aBoolean [
+        ^self primMsgWaitForMultipleObjectsEx: (FFICoerce word: countInteger) pHandles: (FFICoerce pointer: handles) dwMilliseconds: (FFICoerce word: millisecsInteger) dwWakeMask: (FFICoerce word: maskInteger) dwFlags: (FFICoerce word: aBoolean)
     ]
     UserLibrary class >> openClipboard: hWnd [
         <primitive: FFI function: #OpenClipboard ret: #g args: #( g )>
     ]
-    UserLibrary class >> peekMessage: aMSG hWnd: aWindowHandle uMsgFilterMin: anIntFilterMin uMsgFilterMax: uMsgFilterMax wRemoveMsg: anIntFlags [
+    UserLibrary class >> primPeekMessage: aMSG hWnd: aWindowHandle uMsgFilterMin: anIntFilterMin uMsgFilterMax: uMsgFilterMax wRemoveMsg: anIntFlags [
         <primitive: FFI function: #PeekMessageW ret: #g args: #( g g g g g )>
     ]
-    UserLibrary class >> physicalToLogicalPoint: hwnd lpPoint: lpPoint [
+    UserLibrary class >> peekMessage: aMSG hWnd: aWindowHandle uMsgFilterMin: anIntFilterMin uMsgFilterMax: uMsgFilterMax wRemoveMsg: anIntFlags [
+        ^self primPeekMessage: (FFICoerce pointer: aMSG) hWnd: (FFICoerce word: aWindowHandle) uMsgFilterMin: (FFICoerce word: anIntFilterMin) uMsgFilterMax: (FFICoerce word: uMsgFilterMax) wRemoveMsg: (FFICoerce word: anIntFlags)
+    ]
+    UserLibrary class >> primPhysicalToLogicalPoint: hwnd lpPoint: lpPoint [
         <primitive: FFI function: #PhysicalToLogicalPoint ret: #g args: #( g g )>
     ]
-    UserLibrary class >> physicalToLogicalPointForPerMonitorDPI: hwnd lpPoint: lpPoint [
+    UserLibrary class >> physicalToLogicalPoint: hwnd lpPoint: lpPoint [
+        ^self primPhysicalToLogicalPoint: (FFICoerce word: hwnd) lpPoint: (FFICoerce pointer: lpPoint)
+    ]
+    UserLibrary class >> primPhysicalToLogicalPointForPerMonitorDPI: hwnd lpPoint: lpPoint [
         <primitive: FFI function: #PhysicalToLogicalPointForPerMonitorDPI ret: #g args: #( g g )>
+    ]
+    UserLibrary class >> physicalToLogicalPointForPerMonitorDPI: hwnd lpPoint: lpPoint [
+        ^self primPhysicalToLogicalPointForPerMonitorDPI: (FFICoerce word: hwnd) lpPoint: (FFICoerce pointer: lpPoint)
     ]
     UserLibrary class >> postMessage: aWindowHandle msg: msg wParam: wParam lParam: lParam [
         <primitive: FFI function: #PostMessageW ret: #g args: #( g g g g )>
@@ -503,20 +736,38 @@ Object subclass: UserLibrary [
     UserLibrary class >> printWindow: hwnd hdcBlt: hDC nFlags: anInteger [
         <primitive: FFI function: #PrintWindow ret: #g args: #( g g g )>
     ]
-    UserLibrary class >> redrawWindow: hWnd lprcUpdate: lprcUpdate hrgnUpdate: hrgnUpdate flags: flags [
+    UserLibrary class >> primRedrawWindow: hWnd lprcUpdate: lprcUpdate hrgnUpdate: hrgnUpdate flags: flags [
         <primitive: FFI function: #RedrawWindow ret: #g args: #( g g g g )>
     ]
-    UserLibrary class >> registerClass: aWNDCLASS [
+    UserLibrary class >> redrawWindow: hWnd lprcUpdate: lprcUpdate hrgnUpdate: hrgnUpdate flags: flags [
+        ^self primRedrawWindow: (FFICoerce word: hWnd) lprcUpdate: (FFICoerce pointer: lprcUpdate) hrgnUpdate: (FFICoerce word: hrgnUpdate) flags: (FFICoerce word: flags)
+    ]
+    UserLibrary class >> primRegisterClass: aWNDCLASS [
         <primitive: FFI function: #RegisterClassW ret: #g args: #( g )>
     ]
-    UserLibrary class >> registerClipboardFormat: formatName [
+    UserLibrary class >> registerClass: aWNDCLASS [
+        ^self primRegisterClass: (FFICoerce pointer: aWNDCLASS)
+    ]
+    UserLibrary class >> primRegisterClipboardFormat: formatName [
         <primitive: FFI function: #RegisterClipboardFormatW ret: #g args: #( g )>
+    ]
+    UserLibrary class >> registerClipboardFormat: formatName [
+        | t0 |
+        t0 := FFICoerce stringTemp: formatName.
+        ^[ self primRegisterClipboardFormat: (FFICoerce addressOf: t0) ]
+            ensure: [ t0 isNil ifFalse: [ t0 free ]. ]
     ]
     UserLibrary class >> registerHotKey: aWindowHandle id: anIntegerId fsModifiers: anIntegerFlags vk: anIntegerVk [
         <primitive: FFI function: #RegisterHotKey ret: #g args: #( g g g g )>
     ]
-    UserLibrary class >> registerWindowMessage: aString [
+    UserLibrary class >> primRegisterWindowMessage: aString [
         <primitive: FFI function: #RegisterWindowMessageW ret: #g args: #( g )>
+    ]
+    UserLibrary class >> registerWindowMessage: aString [
+        | t0 |
+        t0 := FFICoerce stringTemp: aString.
+        ^[ self primRegisterWindowMessage: (FFICoerce addressOf: t0) ]
+            ensure: [ t0 isNil ifFalse: [ t0 free ]. ]
     ]
     UserLibrary class >> releaseCapture [
         <primitive: FFI function: #ReleaseCapture ret: #g args: #(  )>
@@ -527,14 +778,23 @@ Object subclass: UserLibrary [
     UserLibrary class >> removeMenu: aMenu uPosition: idOrPos uFlags: flags [
         <primitive: FFI function: #RemoveMenu ret: #g args: #( g g g )>
     ]
-    UserLibrary class >> removeProp: aWindowHandle lpString: name [
+    UserLibrary class >> primRemoveProp: aWindowHandle lpString: name [
         <primitive: FFI function: #RemovePropW ret: #g args: #( g g )>
     ]
-    UserLibrary class >> screenToClient: hwnd lpPoint: lpPoint [
+    UserLibrary class >> removeProp: aWindowHandle lpString: name [
+        ^self primRemoveProp: (FFICoerce word: aWindowHandle) lpString: (FFICoerce pointer: name)
+    ]
+    UserLibrary class >> primScreenToClient: hwnd lpPoint: lpPoint [
         <primitive: FFI function: #ScreenToClient ret: #g args: #( g g )>
     ]
-    UserLibrary class >> scrollWindowEx: hwnd dx: dx dy: dy prcScroll: prcScroll prcClip: prcClip hrgnUpdate: hrgnUpdate prcUpdate: prcUpdate flags: flags [
+    UserLibrary class >> screenToClient: hwnd lpPoint: lpPoint [
+        ^self primScreenToClient: (FFICoerce word: hwnd) lpPoint: (FFICoerce pointer: lpPoint)
+    ]
+    UserLibrary class >> primScrollWindowEx: hwnd dx: dx dy: dy prcScroll: prcScroll prcClip: prcClip hrgnUpdate: hrgnUpdate prcUpdate: prcUpdate flags: flags [
         <primitive: FFI function: #ScrollWindowEx ret: #g args: #( g g g g g g g g )>
+    ]
+    UserLibrary class >> scrollWindowEx: hwnd dx: dx dy: dy prcScroll: prcScroll prcClip: prcClip hrgnUpdate: hrgnUpdate prcUpdate: prcUpdate flags: flags [
+        ^self primScrollWindowEx: (FFICoerce word: hwnd) dx: (FFICoerce word: dx) dy: (FFICoerce word: dy) prcScroll: (FFICoerce pointer: prcScroll) prcClip: (FFICoerce pointer: prcClip) hrgnUpdate: (FFICoerce word: hrgnUpdate) prcUpdate: (FFICoerce pointer: prcUpdate) flags: (FFICoerce word: flags)
     ]
     UserLibrary class >> sendDlgItemMessage: aWindowHandle nIDDlgItem: anIntegerId msg: aString wParam: wParam lParam: lParam [
         <primitive: FFI function: #SendDlgItemMessageW ret: #g args: #( g g g g g )>
@@ -542,17 +802,26 @@ Object subclass: UserLibrary [
     UserLibrary class >> sendMessage: aWindowHandle msg: msg wParam: wParam lParam: lParam [
         <primitive: FFI function: #SendMessageW ret: #g args: #( g g g g )>
     ]
+    UserLibrary class >> primSendMessage: aWindowHandle msg: msg wParam: wParam lpParam: lParam [
+        <primitive: FFI function: #SendMessageW ret: #g args: #( g g g g )>
+    ]
     UserLibrary class >> sendMessage: aWindowHandle msg: msg wParam: wParam lpParam: lParam [
+        ^self primSendMessage: (FFICoerce word: aWindowHandle) msg: (FFICoerce word: msg) wParam: (FFICoerce word: wParam) lpParam: (FFICoerce pointer: lParam)
+    ]
+    UserLibrary class >> primSendMessage: aWindowHandle msg: msg wpParam: wParam lpParam: lParam [
         <primitive: FFI function: #SendMessageW ret: #g args: #( g g g g )>
     ]
     UserLibrary class >> sendMessage: aWindowHandle msg: msg wpParam: wParam lpParam: lParam [
-        <primitive: FFI function: #SendMessageW ret: #g args: #( g g g g )>
+        ^self primSendMessage: (FFICoerce word: aWindowHandle) msg: (FFICoerce word: msg) wpParam: (FFICoerce pointer: wParam) lpParam: (FFICoerce pointer: lParam)
     ]
     UserLibrary class >> sendMessageU: aWindowHandle msg: msg wParam: wParam lParam: lParam [
         <primitive: FFI function: #SendMessageW ret: #g args: #( g g g g )>
     ]
-    UserLibrary class >> sendMessageU: aWindowHandle msg: msg wParam: wParam lpParam: lParam [
+    UserLibrary class >> primSendMessageU: aWindowHandle msg: msg wParam: wParam lpParam: lParam [
         <primitive: FFI function: #SendMessageW ret: #g args: #( g g g g )>
+    ]
+    UserLibrary class >> sendMessageU: aWindowHandle msg: msg wParam: wParam lpParam: lParam [
+        ^self primSendMessageU: (FFICoerce word: aWindowHandle) msg: (FFICoerce word: msg) wParam: (FFICoerce word: wParam) lpParam: (FFICoerce pointer: lParam)
     ]
     UserLibrary class >> setActiveWindow: aHandle [
         <primitive: FFI function: #SetActiveWindow ret: #g args: #( g )>
@@ -581,8 +850,14 @@ Object subclass: UserLibrary [
     UserLibrary class >> setDlgItemInt: hDlg nIDDlgItem: anIntegerId uValue: uValue bSigned: bSigned [
         <primitive: FFI function: #SetDlgItemInt ret: #g args: #( g g g g )>
     ]
-    UserLibrary class >> setDlgItemText: aWindowHandle nIDDlgItem: anIntegerId lpString: aString [
+    UserLibrary class >> primSetDlgItemText: aWindowHandle nIDDlgItem: anIntegerId lpString: aString [
         <primitive: FFI function: #SetDlgItemTextW ret: #g args: #( g g g )>
+    ]
+    UserLibrary class >> setDlgItemText: aWindowHandle nIDDlgItem: anIntegerId lpString: aString [
+        | t2 |
+        t2 := FFICoerce stringTemp: aString.
+        ^[ self primSetDlgItemText: (FFICoerce word: aWindowHandle) nIDDlgItem: (FFICoerce word: anIntegerId) lpString: (FFICoerce addressOf: t2) ]
+            ensure: [ t2 isNil ifFalse: [ t2 free ]. ]
     ]
     UserLibrary class >> setFocus: aWindowHandle [
         <primitive: FFI function: #SetFocus ret: #g args: #( g )>
@@ -590,8 +865,11 @@ Object subclass: UserLibrary [
     UserLibrary class >> setForegroundWindow: aHandle [
         <primitive: FFI function: #SetForegroundWindow ret: #g args: #( g )>
     ]
-    UserLibrary class >> setKeyboardState: a256ByteArray [
+    UserLibrary class >> primSetKeyboardState: a256ByteArray [
         <primitive: FFI function: #SetKeyboardState ret: #g args: #( g )>
+    ]
+    UserLibrary class >> setKeyboardState: a256ByteArray [
+        ^self primSetKeyboardState: (FFICoerce pointer: a256ByteArray)
     ]
     UserLibrary class >> setLayeredWindowAttributes: aWindowHandle lcrKey: crKey bAlpha: bAlpha dwFlags: flags [
         <primitive: FFI function: #SetLayeredWindowAttributes ret: #g args: #( g g g g )>
@@ -602,11 +880,17 @@ Object subclass: UserLibrary [
     UserLibrary class >> setMenuDefaultItem: hMenu uItem: uItem fByPos: fByPos [
         <primitive: FFI function: #SetMenuDefaultItem ret: #g args: #( g g g )>
     ]
-    UserLibrary class >> setMenuInfo: hMenu lpcmi: aMenuItemInfo [
+    UserLibrary class >> primSetMenuInfo: hMenu lpcmi: aMenuItemInfo [
         <primitive: FFI function: #SetMenuInfo ret: #g args: #( g g )>
     ]
-    UserLibrary class >> setMenuItemInfo: hMenu uItem: anInteger fByPosition: aBoolean lpmii: aMenuItemInfo [
+    UserLibrary class >> setMenuInfo: hMenu lpcmi: aMenuItemInfo [
+        ^self primSetMenuInfo: (FFICoerce word: hMenu) lpcmi: (FFICoerce pointer: aMenuItemInfo)
+    ]
+    UserLibrary class >> primSetMenuItemInfo: hMenu uItem: anInteger fByPosition: aBoolean lpmii: aMenuItemInfo [
         <primitive: FFI function: #SetMenuItemInfoW ret: #g args: #( g g g g )>
+    ]
+    UserLibrary class >> setMenuItemInfo: hMenu uItem: anInteger fByPosition: aBoolean lpmii: aMenuItemInfo [
+        ^self primSetMenuItemInfo: (FFICoerce word: hMenu) uItem: (FFICoerce word: anInteger) fByPosition: (FFICoerce word: aBoolean) lpmii: (FFICoerce pointer: aMenuItemInfo)
     ]
     UserLibrary class >> setParent: hWndChild hWndNewParent: hWndParent [
         <primitive: FFI function: #SetParent ret: #g args: #( g g )>
@@ -617,11 +901,17 @@ Object subclass: UserLibrary [
     UserLibrary class >> setProcessDpiAwarenessContext: value [
         <primitive: FFI function: #SetProcessDpiAwarenessContext ret: #g args: #( g )>
     ]
-    UserLibrary class >> setProp: aWindowHandle lpString: name hData: anObject [
+    UserLibrary class >> primSetProp: aWindowHandle lpString: name hData: anObject [
         <primitive: FFI function: #SetPropW ret: #g args: #( g g g )>
     ]
-    UserLibrary class >> setScrollInfo: hwnd nBar: nBar lpsi: lpsi redraw: redraw [
+    UserLibrary class >> setProp: aWindowHandle lpString: name hData: anObject [
+        ^self primSetProp: (FFICoerce word: aWindowHandle) lpString: (FFICoerce pointer: name) hData: (FFICoerce word: anObject)
+    ]
+    UserLibrary class >> primSetScrollInfo: hwnd nBar: nBar lpsi: lpsi redraw: redraw [
         <primitive: FFI function: #SetScrollInfo ret: #g args: #( g g g g )>
+    ]
+    UserLibrary class >> setScrollInfo: hwnd nBar: nBar lpsi: lpsi redraw: redraw [
+        ^self primSetScrollInfo: (FFICoerce word: hwnd) nBar: (FFICoerce word: nBar) lpsi: (FFICoerce pointer: lpsi) redraw: (FFICoerce word: redraw)
     ]
     UserLibrary class >> setThreadDpiAwarenessContext: dpiContext [
         <primitive: FFI function: #SetThreadDpiAwarenessContext ret: #g args: #( g )>
@@ -629,8 +919,11 @@ Object subclass: UserLibrary [
     UserLibrary class >> setThreadDpiHostingBehavior: value [
         <primitive: FFI function: #SetThreadDpiHostingBehavior ret: #g args: #( g )>
     ]
-    UserLibrary class >> setTimer: aWindowHandle nIDEvent: anIntegerId uElapse: anInteger lpTimerFunc: callbackProc [
+    UserLibrary class >> primSetTimer: aWindowHandle nIDEvent: anIntegerId uElapse: anInteger lpTimerFunc: callbackProc [
         <primitive: FFI function: #SetTimer ret: #g args: #( g g g g )>
+    ]
+    UserLibrary class >> setTimer: aWindowHandle nIDEvent: anIntegerId uElapse: anInteger lpTimerFunc: callbackProc [
+        ^self primSetTimer: (FFICoerce word: aWindowHandle) nIDEvent: (FFICoerce word: anIntegerId) uElapse: (FFICoerce word: anInteger) lpTimerFunc: (FFICoerce pointer: callbackProc)
     ]
     UserLibrary class >> setWindowLong: hWnd nIndex: nIndex dwNewLong: dwNewLong [
         <primitive: FFI function: #SetWindowLongW ret: #g args: #( g g g )>
@@ -638,14 +931,23 @@ Object subclass: UserLibrary [
     UserLibrary class >> setWindowLongPtr: hWnd nIndex: nIndex dwNewLong: dwNewLong [
         <primitive: FFI function: #SetWindowLongPtrW ret: #g args: #( g g g )>
     ]
-    UserLibrary class >> setWindowPlacement: aWindowHandle lpwndpl: aWinWINDOWPLACEMENT [
+    UserLibrary class >> primSetWindowPlacement: aWindowHandle lpwndpl: aWinWINDOWPLACEMENT [
         <primitive: FFI function: #SetWindowPlacement ret: #g args: #( g g )>
+    ]
+    UserLibrary class >> setWindowPlacement: aWindowHandle lpwndpl: aWinWINDOWPLACEMENT [
+        ^self primSetWindowPlacement: (FFICoerce word: aWindowHandle) lpwndpl: (FFICoerce pointer: aWinWINDOWPLACEMENT)
     ]
     UserLibrary class >> setWindowPos: aWindowHandle hWndInsertAfter: hwndInsertAfter x: x y: y cx: cx cy: cy uFlags: flags [
         <primitive: FFI function: #SetWindowPos ret: #g args: #( g g g g g g g )>
     ]
-    UserLibrary class >> setWindowText: aWindowHandle lpString: aString [
+    UserLibrary class >> primSetWindowText: aWindowHandle lpString: aString [
         <primitive: FFI function: #SetWindowTextW ret: #g args: #( g g )>
+    ]
+    UserLibrary class >> setWindowText: aWindowHandle lpString: aString [
+        | t1 |
+        t1 := FFICoerce stringTemp: aString.
+        ^[ self primSetWindowText: (FFICoerce word: aWindowHandle) lpString: (FFICoerce addressOf: t1) ]
+            ensure: [ t1 isNil ifFalse: [ t1 free ]. ]
     ]
     UserLibrary class >> setWindowULong: hWnd nIndex: nIndex dwNewLong: dwNewLong [
         <primitive: FFI function: #SetWindowLongW ret: #g args: #( g g g )>
@@ -662,29 +964,53 @@ Object subclass: UserLibrary [
     UserLibrary class >> showWindow: aWindowHandle nCmdShow: flags [
         <primitive: FFI function: #ShowWindow ret: #g args: #( g g )>
     ]
-    UserLibrary class >> subtractRect: lprcDst lprcSrc1: lprcSrc1 lprcSrc2: lprcSrc2 [
+    UserLibrary class >> primSubtractRect: lprcDst lprcSrc1: lprcSrc1 lprcSrc2: lprcSrc2 [
         <primitive: FFI function: #SubtractRect ret: #g args: #( g g g )>
     ]
-    UserLibrary class >> systemParametersInfo: uiAction uiParam: param1 pvParam: param2 fWinIni: update [
+    UserLibrary class >> subtractRect: lprcDst lprcSrc1: lprcSrc1 lprcSrc2: lprcSrc2 [
+        ^self primSubtractRect: (FFICoerce pointer: lprcDst) lprcSrc1: (FFICoerce pointer: lprcSrc1) lprcSrc2: (FFICoerce pointer: lprcSrc2)
+    ]
+    UserLibrary class >> primSystemParametersInfo: uiAction uiParam: param1 pvParam: param2 fWinIni: update [
         <primitive: FFI function: #SystemParametersInfoW ret: #g args: #( g g g g )>
     ]
-    UserLibrary class >> systemParametersInfoForDpi: uiAction uiParam: param1 pvParam: param2 fWinIni: update dpi: dpi [
+    UserLibrary class >> systemParametersInfo: uiAction uiParam: param1 pvParam: param2 fWinIni: update [
+        ^self primSystemParametersInfo: (FFICoerce word: uiAction) uiParam: (FFICoerce word: param1) pvParam: (FFICoerce pointer: param2) fWinIni: (FFICoerce word: update)
+    ]
+    UserLibrary class >> primSystemParametersInfoForDpi: uiAction uiParam: param1 pvParam: param2 fWinIni: update dpi: dpi [
         <primitive: FFI function: #SystemParametersInfoForDpi ret: #g args: #( g g g g g )>
     ]
-    UserLibrary class >> trackMouseEvent: lpEventTrack [
+    UserLibrary class >> systemParametersInfoForDpi: uiAction uiParam: param1 pvParam: param2 fWinIni: update dpi: dpi [
+        ^self primSystemParametersInfoForDpi: (FFICoerce word: uiAction) uiParam: (FFICoerce word: param1) pvParam: (FFICoerce pointer: param2) fWinIni: (FFICoerce word: update) dpi: (FFICoerce word: dpi)
+    ]
+    UserLibrary class >> primTrackMouseEvent: lpEventTrack [
         <primitive: FFI function: #TrackMouseEvent ret: #g args: #( g )>
     ]
-    UserLibrary class >> trackPopupMenu: hMenu uFlags: uFlags x: x y: y nReserved: reserved hWnd: hWnd prcRect: aRect [
+    UserLibrary class >> trackMouseEvent: lpEventTrack [
+        ^self primTrackMouseEvent: (FFICoerce pointer: lpEventTrack)
+    ]
+    UserLibrary class >> primTrackPopupMenu: hMenu uFlags: uFlags x: x y: y nReserved: reserved hWnd: hWnd prcRect: aRect [
         <primitive: FFI function: #TrackPopupMenu ret: #g args: #( g g g g g g g )>
     ]
-    UserLibrary class >> translateAccelerator: handleWindow haccl: handleAccelerators lpmsg: aMSG [
+    UserLibrary class >> trackPopupMenu: hMenu uFlags: uFlags x: x y: y nReserved: reserved hWnd: hWnd prcRect: aRect [
+        ^self primTrackPopupMenu: (FFICoerce word: hMenu) uFlags: (FFICoerce word: uFlags) x: (FFICoerce word: x) y: (FFICoerce word: y) nReserved: (FFICoerce word: reserved) hWnd: (FFICoerce word: hWnd) prcRect: (FFICoerce pointer: aRect)
+    ]
+    UserLibrary class >> primTranslateAccelerator: handleWindow haccl: handleAccelerators lpmsg: aMSG [
         <primitive: FFI function: #TranslateAccelerator ret: #g args: #( g g g )>
     ]
-    UserLibrary class >> translateMessage: aMSG [
+    UserLibrary class >> translateAccelerator: handleWindow haccl: handleAccelerators lpmsg: aMSG [
+        ^self primTranslateAccelerator: (FFICoerce word: handleWindow) haccl: (FFICoerce word: handleAccelerators) lpmsg: (FFICoerce pointer: aMSG)
+    ]
+    UserLibrary class >> primTranslateMessage: aMSG [
         <primitive: FFI function: #TranslateMessage ret: #g args: #( g )>
     ]
-    UserLibrary class >> unregisterClass: classAtomOrStringName hInstance: instanceHandle [
+    UserLibrary class >> translateMessage: aMSG [
+        ^self primTranslateMessage: (FFICoerce pointer: aMSG)
+    ]
+    UserLibrary class >> primUnregisterClass: classAtomOrStringName hInstance: instanceHandle [
         <primitive: FFI function: #UnregisterClassW ret: #g args: #( g g )>
+    ]
+    UserLibrary class >> unregisterClass: classAtomOrStringName hInstance: instanceHandle [
+        ^self primUnregisterClass: (FFICoerce pointer: classAtomOrStringName) hInstance: (FFICoerce word: instanceHandle)
     ]
     UserLibrary class >> unregisterHotKey: aWindowHandle id: anIntegerId [
         <primitive: FFI function: #UnregisterHotKey ret: #g args: #( g g )>
@@ -692,8 +1018,11 @@ Object subclass: UserLibrary [
     UserLibrary class >> updateWindow: hWnd [
         <primitive: FFI function: #UpdateWindow ret: #g args: #( g )>
     ]
-    UserLibrary class >> validate: hWnd lpRect: aRECT [
+    UserLibrary class >> primValidate: hWnd lpRect: aRECT [
         <primitive: FFI function: #ValidateRect ret: #g args: #( g g )>
+    ]
+    UserLibrary class >> validate: hWnd lpRect: aRECT [
+        ^self primValidate: (FFICoerce word: hWnd) lpRect: (FFICoerce pointer: aRECT)
     ]
     UserLibrary class >> windowFromDC: hDC [
         <primitive: FFI function: #WindowFromDC ret: #g args: #( g )>

@@ -2,16 +2,42 @@
  Do not hand-edit: re-run the generator. 4 external methods."
 
 Object subclass: URLMonLibrary [
-    URLMonLibrary class >> urlDownloadToCacheFile: pCaller szURL: szURL szFilename: szFilename dwBufLength: dwBufLegth dwReserved: dwReserved pBSC: pBsc [
+    URLMonLibrary class >> primUrlDownloadToCacheFile: pCaller szURL: szURL szFilename: szFilename dwBufLength: dwBufLegth dwReserved: dwReserved pBSC: pBsc [
         <primitive: FFI function: #URLDownloadToCacheFileW ret: #g args: #( g g g g g g )>
     ]
-    URLMonLibrary class >> urlDownloadToFile: pCaller szURL: szURL szFilename: szFilename dwReserved: dwReserved pBSC: pBsc [
+    URLMonLibrary class >> urlDownloadToCacheFile: pCaller szURL: szURL szFilename: szFilename dwBufLength: dwBufLegth dwReserved: dwReserved pBSC: pBsc [
+        | t1 t2 |
+        t1 := FFICoerce stringTemp: szURL.
+        t2 := FFICoerce stringTemp: szFilename.
+        ^[ self primUrlDownloadToCacheFile: (FFICoerce pointer: pCaller) szURL: (FFICoerce addressOf: t1) szFilename: (FFICoerce addressOf: t2) dwBufLength: (FFICoerce word: dwBufLegth) dwReserved: (FFICoerce word: dwReserved) pBSC: (FFICoerce pointer: pBsc) ]
+            ensure: [ t1 isNil ifFalse: [ t1 free ]. t2 isNil ifFalse: [ t2 free ]. ]
+    ]
+    URLMonLibrary class >> primUrlDownloadToFile: pCaller szURL: szURL szFilename: szFilename dwReserved: dwReserved pBSC: pBsc [
         <primitive: FFI function: #URLDownloadToFileW ret: #g args: #( g g g g g )>
     ]
-    URLMonLibrary class >> urlOpenBlockingStream: pCaller szURL: szURL ppStream: ppStream dwReserved: dwReserved lpfnCB: lpfnCB [
+    URLMonLibrary class >> urlDownloadToFile: pCaller szURL: szURL szFilename: szFilename dwReserved: dwReserved pBSC: pBsc [
+        | t1 t2 |
+        t1 := FFICoerce stringTemp: szURL.
+        t2 := FFICoerce stringTemp: szFilename.
+        ^[ self primUrlDownloadToFile: (FFICoerce pointer: pCaller) szURL: (FFICoerce addressOf: t1) szFilename: (FFICoerce addressOf: t2) dwReserved: (FFICoerce word: dwReserved) pBSC: (FFICoerce pointer: pBsc) ]
+            ensure: [ t1 isNil ifFalse: [ t1 free ]. t2 isNil ifFalse: [ t2 free ]. ]
+    ]
+    URLMonLibrary class >> primUrlOpenBlockingStream: pCaller szURL: szURL ppStream: ppStream dwReserved: dwReserved lpfnCB: lpfnCB [
         <primitive: FFI function: #URLOpenBlockingStreamW ret: #g args: #( g g g g g )>
     ]
-    URLMonLibrary class >> urlOpenPullStream: pCaller szURL: szURL ppStream: ppStream dwReserved: dwReserved lpfnCB: lpfnCB [
+    URLMonLibrary class >> urlOpenBlockingStream: pCaller szURL: szURL ppStream: ppStream dwReserved: dwReserved lpfnCB: lpfnCB [
+        | t1 |
+        t1 := FFICoerce stringTemp: szURL.
+        ^[ self primUrlOpenBlockingStream: (FFICoerce pointer: pCaller) szURL: (FFICoerce addressOf: t1) ppStream: (FFICoerce pointer: ppStream) dwReserved: (FFICoerce word: dwReserved) lpfnCB: (FFICoerce pointer: lpfnCB) ]
+            ensure: [ t1 isNil ifFalse: [ t1 free ]. ]
+    ]
+    URLMonLibrary class >> primUrlOpenPullStream: pCaller szURL: szURL ppStream: ppStream dwReserved: dwReserved lpfnCB: lpfnCB [
         <primitive: FFI function: #URLOpenPullStreamW ret: #g args: #( g g g g g )>
+    ]
+    URLMonLibrary class >> urlOpenPullStream: pCaller szURL: szURL ppStream: ppStream dwReserved: dwReserved lpfnCB: lpfnCB [
+        | t1 |
+        t1 := FFICoerce stringTemp: szURL.
+        ^[ self primUrlOpenPullStream: (FFICoerce pointer: pCaller) szURL: (FFICoerce addressOf: t1) ppStream: (FFICoerce pointer: ppStream) dwReserved: (FFICoerce word: dwReserved) lpfnCB: (FFICoerce pointer: lpfnCB) ]
+            ensure: [ t1 isNil ifFalse: [ t1 free ]. ]
     ]
 ]

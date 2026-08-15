@@ -2,7 +2,13 @@
  Do not hand-edit: re-run the generator. 1 external methods."
 
 Object subclass: HTMLHelpLibrary [
-    HTMLHelpLibrary class >> htmlHelp: hwndCaller pszFile: pszFile uCommand: uCommand dwData: dwData [
+    HTMLHelpLibrary class >> primHtmlHelp: hwndCaller pszFile: pszFile uCommand: uCommand dwData: dwData [
         <primitive: FFI function: #HtmlHelpW ret: #g args: #( g g g g )>
+    ]
+    HTMLHelpLibrary class >> htmlHelp: hwndCaller pszFile: pszFile uCommand: uCommand dwData: dwData [
+        | t1 |
+        t1 := FFICoerce stringTemp: pszFile.
+        ^[ self primHtmlHelp: (FFICoerce word: hwndCaller) pszFile: (FFICoerce addressOf: t1) uCommand: (FFICoerce word: uCommand) dwData: (FFICoerce pointer: dwData) ]
+            ensure: [ t1 isNil ifFalse: [ t1 free ]. ]
     ]
 ]

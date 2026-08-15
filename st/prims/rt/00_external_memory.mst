@@ -103,7 +103,10 @@ ExternalMemory subclass: Utf16Buffer [
         n := aString size.
         buf := self new: (n + 1) * 2.
         1 to: n do: [ :i |
-            cu := (aString at: i) asUnicodeValue.
+            "`value` is this dialect's code-point accessor on Character
+             (st/world/09_character.mst); Dolphin spells it asUnicodeValue,
+             which is a compat alias DD8 will add rather than a name to assume."
+            cu := (aString at: i) value.
             buf byteAt: (i - 1) * 2 + 1 put: (cu bitAnd: 255).
             buf byteAt: (i - 1) * 2 + 2 put: ((cu bitShift: -8) bitAnd: 255) ].
         buf byteAt: n * 2 + 1 put: 0.
@@ -112,8 +115,15 @@ ExternalMemory subclass: Utf16Buffer [
     ]
 
     "Read back a null-terminated UTF-16 string — the out-direction of the same
-     marshalling (GetWindowTextW and friends fill a buffer we supplied)."
-    asString [
+     marshalling (GetWindowTextW and friends fill a buffer we supplied).
+
+     NOT named `asString`: that selector is a universal helper the IL builder
+     rewrites at the call site, so a method of that name is never reached and
+     the send silently answers the printString instead. Measured — the first
+     version of this method was called `asString` and returned
+     'an ExternalMemory(6 bytes @ …)'. Dolphin's own spelling is `asString`, so
+     DD8's compat layer must route it here rather than define it."
+    stringValue [
         | ws i cu done |
         ws := WriteStream on: String new.
         i := 0. done := false.

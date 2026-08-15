@@ -2,38 +2,72 @@
  Do not hand-edit: re-run the generator. 41 external methods."
 
 Object subclass: WSockLibrary [
-    WSockLibrary class >> accept: p1 addr: p2 addrlen: p3 [
+    WSockLibrary class >> primAccept: p1 addr: p2 addrlen: p3 [
         <primitive: FFI function: #accept ret: #g args: #( g g g )>
     ]
-    WSockLibrary class >> bind: p1 addr: p2 namelen: p3 [
+    WSockLibrary class >> accept: p1 addr: p2 addrlen: p3 [
+        ^self primAccept: (FFICoerce word: p1) addr: (FFICoerce pointer: p2) addrlen: (FFICoerce pointer: p3)
+    ]
+    WSockLibrary class >> primBind: p1 addr: p2 namelen: p3 [
         <primitive: FFI function: #bind ret: #g args: #( g g g )>
+    ]
+    WSockLibrary class >> bind: p1 addr: p2 namelen: p3 [
+        ^self primBind: (FFICoerce word: p1) addr: (FFICoerce pointer: p2) namelen: (FFICoerce pointer: p3)
     ]
     WSockLibrary class >> closesocket: p1 [
         <primitive: FFI function: #closesocket ret: #g args: #( g )>
     ]
-    WSockLibrary class >> gethostname: p1 namelen: p2 [
+    WSockLibrary class >> primGethostname: p1 namelen: p2 [
         <primitive: FFI function: #gethostname ret: #g args: #( g g )>
     ]
-    WSockLibrary class >> getpeername: p1 name: p2 namelen: p3 [
+    WSockLibrary class >> gethostname: p1 namelen: p2 [
+        ^self primGethostname: (FFICoerce pointer: p1) namelen: (FFICoerce word: p2)
+    ]
+    WSockLibrary class >> primGetpeername: p1 name: p2 namelen: p3 [
         <primitive: FFI function: #getpeername ret: #g args: #( g g g )>
     ]
-    WSockLibrary class >> getprotobyname: p1 [
+    WSockLibrary class >> getpeername: p1 name: p2 namelen: p3 [
+        ^self primGetpeername: (FFICoerce word: p1) name: (FFICoerce pointer: p2) namelen: (FFICoerce pointer: p3)
+    ]
+    WSockLibrary class >> primGetprotobyname: p1 [
         <primitive: FFI function: #getprotobyname ret: #g args: #( g )>
+    ]
+    WSockLibrary class >> getprotobyname: p1 [
+        ^self primGetprotobyname: (FFICoerce pointer: p1)
     ]
     WSockLibrary class >> getprotobynumber: p1 [
         <primitive: FFI function: #getprotobynumber ret: #g args: #( g )>
     ]
-    WSockLibrary class >> getservbyname: name proto: proto [
+    WSockLibrary class >> primGetservbyname: name proto: proto [
         <primitive: FFI function: #getservbyname ret: #g args: #( g g )>
     ]
-    WSockLibrary class >> getservbyport: port proto: proto [
+    WSockLibrary class >> getservbyname: name proto: proto [
+        | t0 t1 |
+        t0 := FFICoerce stringTemp: name.
+        t1 := FFICoerce stringTemp: proto.
+        ^[ self primGetservbyname: (FFICoerce addressOf: t0) proto: (FFICoerce addressOf: t1) ]
+            ensure: [ t0 isNil ifFalse: [ t0 free ]. t1 isNil ifFalse: [ t1 free ]. ]
+    ]
+    WSockLibrary class >> primGetservbyport: port proto: proto [
         <primitive: FFI function: #getservbyport ret: #g args: #( g g )>
     ]
-    WSockLibrary class >> getsockname: p1 name: p2 namelen: p3 [
+    WSockLibrary class >> getservbyport: port proto: proto [
+        | t1 |
+        t1 := FFICoerce stringTemp: proto.
+        ^[ self primGetservbyport: (FFICoerce word: port) proto: (FFICoerce addressOf: t1) ]
+            ensure: [ t1 isNil ifFalse: [ t1 free ]. ]
+    ]
+    WSockLibrary class >> primGetsockname: p1 name: p2 namelen: p3 [
         <primitive: FFI function: #getsockname ret: #g args: #( g g g )>
     ]
-    WSockLibrary class >> getsockopt: p1 level: p2 optname: p3 optval: p4 optlen: p5 [
+    WSockLibrary class >> getsockname: p1 name: p2 namelen: p3 [
+        ^self primGetsockname: (FFICoerce word: p1) name: (FFICoerce pointer: p2) namelen: (FFICoerce pointer: p3)
+    ]
+    WSockLibrary class >> primGetsockopt: p1 level: p2 optname: p3 optval: p4 optlen: p5 [
         <primitive: FFI function: #getsockopt ret: #g args: #( g g g g g )>
+    ]
+    WSockLibrary class >> getsockopt: p1 level: p2 optname: p3 optval: p4 optlen: p5 [
+        ^self primGetsockopt: (FFICoerce word: p1) level: (FFICoerce word: p2) optname: (FFICoerce word: p3) optval: (FFICoerce pointer: p4) optlen: (FFICoerce pointer: p5)
     ]
     WSockLibrary class >> htonl: p1 [
         <primitive: FFI function: #htonl ret: #g args: #( g )>
@@ -41,14 +75,23 @@ Object subclass: WSockLibrary [
     WSockLibrary class >> htons: p1 [
         <primitive: FFI function: #htons ret: #g args: #( g )>
     ]
-    WSockLibrary class >> inet_addr: p1 [
+    WSockLibrary class >> primInet_addr: p1 [
         <primitive: FFI function: #inet_addr ret: #g args: #( g )>
     ]
-    WSockLibrary class >> inetntoa: p1 [
+    WSockLibrary class >> inet_addr: p1 [
+        ^self primInet_addr: (FFICoerce pointer: p1)
+    ]
+    WSockLibrary class >> primInetntoa: p1 [
         <primitive: FFI function: #inet_ntoa ret: #g args: #( g )>
     ]
-    WSockLibrary class >> ioctlsocket: p1 cmd: p2 argp: p3 [
+    WSockLibrary class >> inetntoa: p1 [
+        ^self primInetntoa: (FFICoerce pointer: p1)
+    ]
+    WSockLibrary class >> primIoctlsocket: p1 cmd: p2 argp: p3 [
         <primitive: FFI function: #ioctlsocket ret: #g args: #( g g g )>
+    ]
+    WSockLibrary class >> ioctlsocket: p1 cmd: p2 argp: p3 [
+        ^self primIoctlsocket: (FFICoerce word: p1) cmd: (FFICoerce word: p2) argp: (FFICoerce pointer: p3)
     ]
     WSockLibrary class >> listen: p1 backlog: p2 [
         <primitive: FFI function: #listen ret: #g args: #( g g )>
@@ -59,23 +102,41 @@ Object subclass: WSockLibrary [
     WSockLibrary class >> ntohs: p1 [
         <primitive: FFI function: #ntohs ret: #g args: #( g )>
     ]
-    WSockLibrary class >> recv: p1 buf: p2 len: p3 flags: p4 [
+    WSockLibrary class >> primRecv: p1 buf: p2 len: p3 flags: p4 [
         <primitive: FFI function: #recv ret: #g args: #( g g g g )>
     ]
-    WSockLibrary class >> recvfrom: p1 buf: p2 len: p3 flags: p4 from: p5 fromlen: p6 [
+    WSockLibrary class >> recv: p1 buf: p2 len: p3 flags: p4 [
+        ^self primRecv: (FFICoerce word: p1) buf: (FFICoerce pointer: p2) len: (FFICoerce word: p3) flags: (FFICoerce word: p4)
+    ]
+    WSockLibrary class >> primRecvfrom: p1 buf: p2 len: p3 flags: p4 from: p5 fromlen: p6 [
         <primitive: FFI function: #recvfrom ret: #g args: #( g g g g g g )>
     ]
-    WSockLibrary class >> select: p1 readfds: p2 writefds: p3 exceptfds: p4 timeout: p5 [
+    WSockLibrary class >> recvfrom: p1 buf: p2 len: p3 flags: p4 from: p5 fromlen: p6 [
+        ^self primRecvfrom: (FFICoerce word: p1) buf: (FFICoerce pointer: p2) len: (FFICoerce word: p3) flags: (FFICoerce word: p4) from: (FFICoerce pointer: p5) fromlen: (FFICoerce pointer: p6)
+    ]
+    WSockLibrary class >> primSelect: p1 readfds: p2 writefds: p3 exceptfds: p4 timeout: p5 [
         <primitive: FFI function: #select ret: #g args: #( g g g g g )>
     ]
-    WSockLibrary class >> send: p1 buf: p2 len: p3 flags: p4 [
+    WSockLibrary class >> select: p1 readfds: p2 writefds: p3 exceptfds: p4 timeout: p5 [
+        ^self primSelect: (FFICoerce word: p1) readfds: (FFICoerce pointer: p2) writefds: (FFICoerce pointer: p3) exceptfds: (FFICoerce pointer: p4) timeout: (FFICoerce pointer: p5)
+    ]
+    WSockLibrary class >> primSend: p1 buf: p2 len: p3 flags: p4 [
         <primitive: FFI function: #send ret: #g args: #( g g g g )>
     ]
-    WSockLibrary class >> sendto: p1 buf: p2 len: p3 flags: p4 to: p5 tolen: p6 [
+    WSockLibrary class >> send: p1 buf: p2 len: p3 flags: p4 [
+        ^self primSend: (FFICoerce word: p1) buf: (FFICoerce pointer: p2) len: (FFICoerce word: p3) flags: (FFICoerce word: p4)
+    ]
+    WSockLibrary class >> primSendto: p1 buf: p2 len: p3 flags: p4 to: p5 tolen: p6 [
         <primitive: FFI function: #sendto ret: #g args: #( g g g g g g )>
     ]
-    WSockLibrary class >> setsockopt: p1 level: p2 optname: p3 optval: p4 optlen: p5 [
+    WSockLibrary class >> sendto: p1 buf: p2 len: p3 flags: p4 to: p5 tolen: p6 [
+        ^self primSendto: (FFICoerce word: p1) buf: (FFICoerce pointer: p2) len: (FFICoerce word: p3) flags: (FFICoerce word: p4) to: (FFICoerce pointer: p5) tolen: (FFICoerce word: p6)
+    ]
+    WSockLibrary class >> primSetsockopt: p1 level: p2 optname: p3 optval: p4 optlen: p5 [
         <primitive: FFI function: #setsockopt ret: #g args: #( g g g g g )>
+    ]
+    WSockLibrary class >> setsockopt: p1 level: p2 optname: p3 optval: p4 optlen: p5 [
+        ^self primSetsockopt: (FFICoerce word: p1) level: (FFICoerce word: p2) optname: (FFICoerce word: p3) optval: (FFICoerce pointer: p4) optlen: (FFICoerce word: p5)
     ]
     WSockLibrary class >> shutdown: p1 how: p2 [
         <primitive: FFI function: #shutdown ret: #g args: #( g g )>
@@ -83,23 +144,41 @@ Object subclass: WSockLibrary [
     WSockLibrary class >> socket: p1 type: p2 protocol: p3 [
         <primitive: FFI function: #socket ret: #g args: #( g g g )>
     ]
-    WSockLibrary class >> wsaAsyncGetHostByAddr: p1 wMsg: p2 addr: p3 len: p4 type: p5 buf: p6 buflen: p7 [
+    WSockLibrary class >> primWsaAsyncGetHostByAddr: p1 wMsg: p2 addr: p3 len: p4 type: p5 buf: p6 buflen: p7 [
         <primitive: FFI function: #WSAAsyncGetHostByAddr ret: #g args: #( g g g g g g g )>
     ]
-    WSockLibrary class >> wsaAsyncGetHostByName: p1 wMsg: p2 name: p3 buf: p4 buflen: p5 [
+    WSockLibrary class >> wsaAsyncGetHostByAddr: p1 wMsg: p2 addr: p3 len: p4 type: p5 buf: p6 buflen: p7 [
+        ^self primWsaAsyncGetHostByAddr: (FFICoerce word: p1) wMsg: (FFICoerce word: p2) addr: (FFICoerce pointer: p3) len: (FFICoerce word: p4) type: (FFICoerce word: p5) buf: (FFICoerce pointer: p6) buflen: (FFICoerce word: p7)
+    ]
+    WSockLibrary class >> primWsaAsyncGetHostByName: p1 wMsg: p2 name: p3 buf: p4 buflen: p5 [
         <primitive: FFI function: #WSAAsyncGetHostByName ret: #g args: #( g g g g g )>
     ]
-    WSockLibrary class >> wsaAsyncGetProtoByName: p1 wMsg: p2 name: p3 buf: p4 buflen: p5 [
+    WSockLibrary class >> wsaAsyncGetHostByName: p1 wMsg: p2 name: p3 buf: p4 buflen: p5 [
+        ^self primWsaAsyncGetHostByName: (FFICoerce word: p1) wMsg: (FFICoerce word: p2) name: (FFICoerce pointer: p3) buf: (FFICoerce pointer: p4) buflen: (FFICoerce word: p5)
+    ]
+    WSockLibrary class >> primWsaAsyncGetProtoByName: p1 wMsg: p2 name: p3 buf: p4 buflen: p5 [
         <primitive: FFI function: #WSAAsyncGetProtoByName ret: #g args: #( g g g g g )>
     ]
-    WSockLibrary class >> wsaAsyncGetProtoByNumber: p1 wMsg: p2 number: p3 buf: p4 buflen: p5 [
+    WSockLibrary class >> wsaAsyncGetProtoByName: p1 wMsg: p2 name: p3 buf: p4 buflen: p5 [
+        ^self primWsaAsyncGetProtoByName: (FFICoerce word: p1) wMsg: (FFICoerce word: p2) name: (FFICoerce pointer: p3) buf: (FFICoerce pointer: p4) buflen: (FFICoerce word: p5)
+    ]
+    WSockLibrary class >> primWsaAsyncGetProtoByNumber: p1 wMsg: p2 number: p3 buf: p4 buflen: p5 [
         <primitive: FFI function: #WSAAsyncGetProtoByNumber ret: #g args: #( g g g g g )>
     ]
-    WSockLibrary class >> wsaAsyncGetServByName: p1 wMsg: p2 name: p3 proto: p4 buf: p5 buflen: p6 [
+    WSockLibrary class >> wsaAsyncGetProtoByNumber: p1 wMsg: p2 number: p3 buf: p4 buflen: p5 [
+        ^self primWsaAsyncGetProtoByNumber: (FFICoerce word: p1) wMsg: (FFICoerce word: p2) number: (FFICoerce word: p3) buf: (FFICoerce pointer: p4) buflen: (FFICoerce word: p5)
+    ]
+    WSockLibrary class >> primWsaAsyncGetServByName: p1 wMsg: p2 name: p3 proto: p4 buf: p5 buflen: p6 [
         <primitive: FFI function: #WSAAsyncGetServByName ret: #g args: #( g g g g g g )>
     ]
-    WSockLibrary class >> wsaAsyncGetServByPort: p1 wMsg: p2 port: p3 proto: p4 buf: p5 buflen: p6 [
+    WSockLibrary class >> wsaAsyncGetServByName: p1 wMsg: p2 name: p3 proto: p4 buf: p5 buflen: p6 [
+        ^self primWsaAsyncGetServByName: (FFICoerce word: p1) wMsg: (FFICoerce word: p2) name: (FFICoerce pointer: p3) proto: (FFICoerce pointer: p4) buf: (FFICoerce pointer: p5) buflen: (FFICoerce word: p6)
+    ]
+    WSockLibrary class >> primWsaAsyncGetServByPort: p1 wMsg: p2 port: p3 proto: p4 buf: p5 buflen: p6 [
         <primitive: FFI function: #WSAAsyncGetServByPort ret: #g args: #( g g g g g g )>
+    ]
+    WSockLibrary class >> wsaAsyncGetServByPort: p1 wMsg: p2 port: p3 proto: p4 buf: p5 buflen: p6 [
+        ^self primWsaAsyncGetServByPort: (FFICoerce word: p1) wMsg: (FFICoerce word: p2) port: (FFICoerce word: p3) proto: (FFICoerce pointer: p4) buf: (FFICoerce pointer: p5) buflen: (FFICoerce word: p6)
     ]
     WSockLibrary class >> wsaAsyncSelect: p1 hWnd: p2 wMsg: p3 lEvent: p4 [
         <primitive: FFI function: #WSAAsyncSelect ret: #g args: #( g g g g )>
@@ -122,7 +201,10 @@ Object subclass: WSockLibrary [
     WSockLibrary class >> wsaSetLastError: p1 [
         <primitive: FFI function: #WSASetLastError ret: #v args: #( g )>
     ]
-    WSockLibrary class >> wsaStartup: p1 lpWSAData: p2 [
+    WSockLibrary class >> primWsaStartup: p1 lpWSAData: p2 [
         <primitive: FFI function: #WSAStartup ret: #g args: #( g g )>
+    ]
+    WSockLibrary class >> wsaStartup: p1 lpWSAData: p2 [
+        ^self primWsaStartup: (FFICoerce word: p1) lpWSAData: (FFICoerce pointer: p2)
     ]
 ]

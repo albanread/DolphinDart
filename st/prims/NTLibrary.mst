@@ -2,11 +2,17 @@
  Do not hand-edit: re-run the generator. 3 external methods."
 
 Object subclass: NTLibrary [
-    NTLibrary class >> ntQueryTimerResolution: pulMinimumResolution maximum: pulMaximumResolution actual: pulActualResolution [
+    NTLibrary class >> primNtQueryTimerResolution: pulMinimumResolution maximum: pulMaximumResolution actual: pulActualResolution [
         <primitive: FFI function: #NtQueryTimerResolution ret: #g args: #( g g g )>
     ]
-    NTLibrary class >> setTimerResolution: anInteger set: aBoolean actualResolution: actualResolution [
+    NTLibrary class >> ntQueryTimerResolution: pulMinimumResolution maximum: pulMaximumResolution actual: pulActualResolution [
+        ^self primNtQueryTimerResolution: (FFICoerce pointer: pulMinimumResolution) maximum: (FFICoerce pointer: pulMaximumResolution) actual: (FFICoerce pointer: pulActualResolution)
+    ]
+    NTLibrary class >> primSetTimerResolution: anInteger set: aBoolean actualResolution: actualResolution [
         <primitive: FFI function: #NtSetTimerResolution ret: #g args: #( g g g )>
+    ]
+    NTLibrary class >> setTimerResolution: anInteger set: aBoolean actualResolution: actualResolution [
+        ^self primSetTimerResolution: (FFICoerce word: anInteger) set: (FFICoerce word: aBoolean) actualResolution: (FFICoerce pointer: actualResolution)
     ]
     NTLibrary class >> wineGetVersion [
         <primitive: FFI function: #wine_get_version ret: #g args: #(  )>
