@@ -2,6 +2,11 @@
  Do not hand-edit: re-run the generator. 3 external methods."
 
 Object subclass: LexillaLibrary [
+    "Dolphin writes both `LexillaLibrary foo` and `LexillaLibrary default foo`
+     (the latter at only 10 sites in all of MVP). `default`
+     answers the class itself so both spellings reach the same
+     generated methods."
+    LexillaLibrary class >> default [ ^self ]
     LexillaLibrary class >> primCreateLexer: aString [
         <primitive: FFI function: #CreateLexer ret: #g args: #( g )>
     ]

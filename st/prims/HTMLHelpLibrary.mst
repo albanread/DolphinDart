@@ -2,6 +2,11 @@
  Do not hand-edit: re-run the generator. 1 external methods."
 
 Object subclass: HTMLHelpLibrary [
+    "Dolphin writes both `HTMLHelpLibrary foo` and `HTMLHelpLibrary default foo`
+     (the latter at only 10 sites in all of MVP). `default`
+     answers the class itself so both spellings reach the same
+     generated methods."
+    HTMLHelpLibrary class >> default [ ^self ]
     HTMLHelpLibrary class >> primHtmlHelp: hwndCaller pszFile: pszFile uCommand: uCommand dwData: dwData [
         <primitive: FFI function: #HtmlHelpW ret: #g args: #( g g g g )>
     ]

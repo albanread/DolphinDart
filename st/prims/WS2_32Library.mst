@@ -2,6 +2,11 @@
  Do not hand-edit: re-run the generator. 27 external methods."
 
 Object subclass: WS2_32Library [
+    "Dolphin writes both `WS2_32Library foo` and `WS2_32Library default foo`
+     (the latter at only 10 sites in all of MVP). `default`
+     answers the class itself so both spellings reach the same
+     generated methods."
+    WS2_32Library class >> default [ ^self ]
     WS2_32Library class >> closesocket: s [
         <primitive: FFI function: #closesocket ret: #g args: #( g )>
     ]

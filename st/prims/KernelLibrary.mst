@@ -2,6 +2,11 @@
  Do not hand-edit: re-run the generator. 162 external methods."
 
 Object subclass: KernelLibrary [
+    "Dolphin writes both `KernelLibrary foo` and `KernelLibrary default foo`
+     (the latter at only 10 sites in all of MVP). `default`
+     answers the class itself so both spellings reach the same
+     generated methods."
+    KernelLibrary class >> default [ ^self ]
     KernelLibrary class >> primAddAtom: aString [
         <primitive: FFI function: #AddAtomW ret: #g args: #( g )>
     ]

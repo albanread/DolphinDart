@@ -2,6 +2,11 @@
  Do not hand-edit: re-run the generator. 41 external methods."
 
 Object subclass: WSockLibrary [
+    "Dolphin writes both `WSockLibrary foo` and `WSockLibrary default foo`
+     (the latter at only 10 sites in all of MVP). `default`
+     answers the class itself so both spellings reach the same
+     generated methods."
+    WSockLibrary class >> default [ ^self ]
     WSockLibrary class >> primAccept: p1 addr: p2 addrlen: p3 [
         <primitive: FFI function: #accept ret: #g args: #( g g g )>
     ]

@@ -2,6 +2,11 @@
  Do not hand-edit: re-run the generator. 232 external methods."
 
 Object subclass: UserLibrary [
+    "Dolphin writes both `UserLibrary foo` and `UserLibrary default foo`
+     (the latter at only 10 sites in all of MVP). `default`
+     answers the class itself so both spellings reach the same
+     generated methods."
+    UserLibrary class >> default [ ^self ]
     UserLibrary class >> primAdjustWindowRectExForDpi: rect dwStyle: styleFlags bMenu: menuPresent dwExStyle: exStyleFlags dpi: dpi [
         <primitive: FFI function: #AdjustWindowRectExForDpi ret: #g args: #( g g g g g )>
     ]

@@ -2,6 +2,11 @@
  Do not hand-edit: re-run the generator. 34 external methods."
 
 Object subclass: HttpApiLibrary [
+    "Dolphin writes both `HttpApiLibrary foo` and `HttpApiLibrary default foo`
+     (the latter at only 10 sites in all of MVP). `default`
+     answers the class itself so both spellings reach the same
+     generated methods."
+    HttpApiLibrary class >> default [ ^self ]
     HttpApiLibrary class >> primHttpAddFragmentToCache: requestQueueHandle urlPrefix: urlPrefix dataChunk: dataChunk cachePolicy: cachePolicy overlapped: overlapped [
         <primitive: FFI function: #HttpAddFragmentToCache ret: #g args: #( g g g g g )>
     ]

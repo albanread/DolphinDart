@@ -2,6 +2,11 @@
  Do not hand-edit: re-run the generator. 24 external methods."
 
 Object subclass: VMLibrary [
+    "Dolphin writes both `VMLibrary foo` and `VMLibrary default foo`
+     (the latter at only 10 sites in all of MVP). `default`
+     answers the class itself so both spellings reach the same
+     generated methods."
+    VMLibrary class >> default [ ^self ]
     VMLibrary class >> prim_snprintf_s: buffer bufferSize: sizeInteger count: countInteger format: format with: arg [
         <primitive: FFI function: #_snprintf_s ret: #g args: #( g g g g g )>
     ]

@@ -2,6 +2,11 @@
  Do not hand-edit: re-run the generator. 4 external methods."
 
 Object subclass: URLMonLibrary [
+    "Dolphin writes both `URLMonLibrary foo` and `URLMonLibrary default foo`
+     (the latter at only 10 sites in all of MVP). `default`
+     answers the class itself so both spellings reach the same
+     generated methods."
+    URLMonLibrary class >> default [ ^self ]
     URLMonLibrary class >> primUrlDownloadToCacheFile: pCaller szURL: szURL szFilename: szFilename dwBufLength: dwBufLegth dwReserved: dwReserved pBSC: pBsc [
         <primitive: FFI function: #URLDownloadToCacheFileW ret: #g args: #( g g g g g g )>
     ]

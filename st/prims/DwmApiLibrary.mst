@@ -2,6 +2,11 @@
  Do not hand-edit: re-run the generator. 3 external methods."
 
 Object subclass: DwmApiLibrary [
+    "Dolphin writes both `DwmApiLibrary foo` and `DwmApiLibrary default foo`
+     (the latter at only 10 sites in all of MVP). `default`
+     answers the class itself so both spellings reach the same
+     generated methods."
+    DwmApiLibrary class >> default [ ^self ]
     DwmApiLibrary class >> primDwmGetWindowAttribute: hwnd dwAttribute: dwAttribute pvAttribute: pvAttribute cbAttribute: cbAttribute [
         <primitive: FFI function: #DwmGetWindowAttribute ret: #g args: #( g g g g )>
     ]

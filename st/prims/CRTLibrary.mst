@@ -2,6 +2,11 @@
  Do not hand-edit: re-run the generator. 49 external methods."
 
 Object subclass: CRTLibrary [
+    "Dolphin writes both `CRTLibrary foo` and `CRTLibrary default foo`
+     (the latter at only 10 sites in all of MVP). `default`
+     answers the class itself so both spellings reach the same
+     generated methods."
+    CRTLibrary class >> default [ ^self ]
     CRTLibrary class >> _chsize_s: fdInteger size: sizeInteger [
         <primitive: FFI function: #_chsize_s ret: #g args: #( g g )>
     ]

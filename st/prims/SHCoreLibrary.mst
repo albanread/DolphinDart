@@ -2,6 +2,11 @@
  Do not hand-edit: re-run the generator. 2 external methods."
 
 Object subclass: SHCoreLibrary [
+    "Dolphin writes both `SHCoreLibrary foo` and `SHCoreLibrary default foo`
+     (the latter at only 10 sites in all of MVP). `default`
+     answers the class itself so both spellings reach the same
+     generated methods."
+    SHCoreLibrary class >> default [ ^self ]
     SHCoreLibrary class >> primGetDpiForMonitor: hmonitor dpiType: dpiType dpiX: dpiX dpiY: dpiY [
         <primitive: FFI function: #GetDpiForMonitor ret: #g args: #( g g g g )>
     ]

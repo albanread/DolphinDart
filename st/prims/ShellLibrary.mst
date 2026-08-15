@@ -2,6 +2,11 @@
  Do not hand-edit: re-run the generator. 15 external methods."
 
 Object subclass: ShellLibrary [
+    "Dolphin writes both `ShellLibrary foo` and `ShellLibrary default foo`
+     (the latter at only 10 sites in all of MVP). `default`
+     answers the class itself so both spellings reach the same
+     generated methods."
+    ShellLibrary class >> default [ ^self ]
     ShellLibrary class >> primSHBrowseForFolder: aWin32BROWSEINFO [
         <primitive: FFI function: #SHBrowseForFolderW ret: #g args: #( g )>
     ]

@@ -2,6 +2,11 @@
  Do not hand-edit: re-run the generator. 21 external methods."
 
 Object subclass: ICULibrary [
+    "Dolphin writes both `ICULibrary foo` and `ICULibrary default foo`
+     (the latter at only 10 sites in all of MVP). `default`
+     answers the class itself so both spellings reach the same
+     generated methods."
+    ICULibrary class >> default [ ^self ]
     ICULibrary class >> primU_charAge: aCharacter versionArray: versionArray [
         <primitive: FFI function: #u_charAge ret: #v args: #( g g )>
     ]

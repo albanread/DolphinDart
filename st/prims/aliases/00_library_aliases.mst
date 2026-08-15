@@ -1,0 +1,44 @@
+"00_library_aliases.mst — the library global names the Dolphin corpus writes (DD9).
+
+ HAND-WRITTEN, and it must load AFTER the generated libraries — hence its own
+ layer rather than a file in `rt/`, which loads BEFORE them. Measured: with the
+ aliases in `rt/` every global bound nil, because `UserLibrary` did not exist
+ yet when the assignments ran. The layer stack is therefore
+ `st/world;st/dolphin_compat;st/prims/rt;st/prims/structs;st/prims;st/prims/aliases`.
+
+ Dolphin's MVP code does NOT say `UserLibrary default beginPaint: …`. It says
+ `User32 beginPaint: …` — a bare global naming the module. Censused over the
+ whole corpus rather than guessed:
+
+     User32   434    OleAut32  53    ComCtl32  22
+     Kernel32 209    Ole32     44    Shell32   21
+     Gdi32    148    AdvApi32  36    ComDlg32  13
+                     UxTheme   26    Shlwapi   13
+                                     Version    2
+
+ versus `XxxLibrary default …` at **10 sites in all of MVP**. So the alias is
+ the idiom that matters, and translated code binds through these names.
+
+ They are GLOBALS, not classes: the loader puts a global on STGlobals and class
+ names win reads, so a name that is not a class (no class is called `User32`)
+ resolves to the global. Assigning the class object itself means `User32 foo:`
+ is a class-side send to the generated library — exactly what the generated
+ methods are.
+
+ A module the corpus names but this build cannot resolve (ICU, WebView2,
+ Scintilla — see st/prims/README.md) is deliberately absent here: binding it
+ would turn a clear `unresolved symbol` at the call into a confusing
+ doesNotUnderstand on a nil global."
+
+User32   := UserLibrary.
+Kernel32 := KernelLibrary.
+Gdi32    := GDILibrary.
+OleAut32 := OLEAutLibrary.
+Ole32    := OLELibrary.
+AdvApi32 := AdvApiLibrary.
+UxTheme  := ThemeLibrary.
+ComCtl32 := CommCtrlLibrary.
+Shell32  := ShellLibrary.
+ComDlg32 := ComDlgLibrary.
+Shlwapi  := ShlwapiLibrary.
+Version  := VersionLibrary.

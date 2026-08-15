@@ -2,6 +2,11 @@
  Do not hand-edit: re-run the generator. 52 external methods."
 
 Object subclass: OLELibrary [
+    "Dolphin writes both `OLELibrary foo` and `OLELibrary default foo`
+     (the latter at only 10 sites in all of MVP). `default`
+     answers the class itself so both spellings reach the same
+     generated methods."
+    OLELibrary class >> default [ ^self ]
     OLELibrary class >> primClsidFromProgID: lpszProgID lpclsid: lpclsid [
         <primitive: FFI function: #CLSIDFromProgID ret: #g args: #( g g )>
     ]

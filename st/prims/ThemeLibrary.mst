@@ -2,6 +2,11 @@
  Do not hand-edit: re-run the generator. 62 external methods."
 
 Object subclass: ThemeLibrary [
+    "Dolphin writes both `ThemeLibrary foo` and `ThemeLibrary default foo`
+     (the latter at only 10 sites in all of MVP). `default`
+     answers the class itself so both spellings reach the same
+     generated methods."
+    ThemeLibrary class >> default [ ^self ]
     ThemeLibrary class >> primBeginBufferedAnimation: hwnd hdcTarget: hdcTarget prcTarget: prcTarget dwFormat: dwFormat pPaintParams: pPaintParams pAnimationParams: pAnimationParams phdcFrom: phdcFrom phdcTo: phdcTo [
         <primitive: FFI function: #BeginBufferedAnimation ret: #g args: #( g g g g g g g g )>
     ]

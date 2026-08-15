@@ -2,6 +2,11 @@
  Do not hand-edit: re-run the generator. 10 external methods."
 
 Object subclass: ComDlgLibrary [
+    "Dolphin writes both `ComDlgLibrary foo` and `ComDlgLibrary default foo`
+     (the latter at only 10 sites in all of MVP). `default`
+     answers the class itself so both spellings reach the same
+     generated methods."
+    ComDlgLibrary class >> default [ ^self ]
     ComDlgLibrary class >> primChooseColor: aWinCHOOSECOLOR [
         <primitive: FFI function: #ChooseColorW ret: #g args: #( g )>
     ]
