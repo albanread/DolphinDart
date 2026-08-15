@@ -75,6 +75,39 @@ def flatten_refs(src: str, renames: Dict[str, str]) -> str:
     return "".join(out)
 
 
+# --- rewrite: selector spellings ---------------------------------------------
+# Where Dolphin and the house dialect differ only in the NAME of a method,
+# rewrite at ingestion rather than adding a compat method. Two reasons, both
+# measured: a compat method on a BRIDGED class (Character, String, Integer) does
+# not reach the native receiver's ext-holder from a later file at all; and a
+# rewrite costs nothing at runtime.
+#
+# Only unambiguous, whole-selector renames belong here. Anything whose SEMANTICS
+# differ needs a compat method, not a rename.
+SELECTOR_RENAMES = {
+    "asUnicodeValue": "value",      # Character code point (DD6c/DD8)
+}
+
+_SEL = re.compile(r"(?<![\w:])([A-Za-z_]\w*)(?![\w:])")
+
+
+def rewrite_selectors(src: str, renames=None) -> str:
+    table = SELECTOR_RENAMES if renames is None else renames
+    if not table:
+        return src
+    blanked = strip_code(src)
+    out, last = [], 0
+    for m in _SEL.finditer(blanked):
+        name = src[m.start(1):m.end(1)]
+        if name not in table:
+            continue
+        out.append(src[last:m.start(1)])
+        out.append(table[name])
+        last = m.end(1)
+    out.append(src[last:])
+    return "".join(out)
+
+
 # --- rewrite: `??` -> ifNil: -------------------------------------------------
 # Dolphin's binary `??` answers the receiver unless it is nil, in which case it
 # answers the argument: `^cause ?? #unknown`. 133 sites / 65 files (DD2).
@@ -401,6 +434,7 @@ def emit_class(pf: ParsedFile, renames: Dict[str, str],
             body, r = rewrite_pool_constants(
                 body, where, own_imports, pool_table, shadowed | set(m.arg_names))
             refusals.extend(r)
+            body = rewrite_selectors(body)
             body, r = rewrite_hashhash(body, where); refusals.extend(r)
             body, r = rewrite_qq(body, where); refusals.extend(r)
             body = flatten_refs(body, renames)

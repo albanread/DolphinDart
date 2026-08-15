@@ -122,6 +122,17 @@ check("hashhash: refuses a non-constant", len(ref), 1)
 check("hashhash: leaves the expression parenthesised after refusing",
       out.strip(), "^(Behavior _GetSpecialMask bitOr: 4)")
 
+# --- rewrite: selector spellings ---------------------------------------------
+from emit import rewrite_selectors
+check("selectors: asUnicodeValue -> value",
+      rewrite_selectors("^aChar asUnicodeValue"), "^aChar value")
+check("selectors: leaves comments alone",
+      rewrite_selectors('"asUnicodeValue here" ^1'), '"asUnicodeValue here" ^1')
+check("selectors: leaves strings alone",
+      rewrite_selectors("^'asUnicodeValue'"), "^'asUnicodeValue'")
+check("selectors: does not touch a keyword part of the same spelling",
+      rewrite_selectors("^x asUnicodeValue: 1"), "^x asUnicodeValue: 1")
+
 # --- rewrite: namespace flattening -------------------------------------------
 check("flatten: dotted reference",
       flatten_refs("^Graphics.Point x: 1 y: 2", {}), "^Point x: 1 y: 2")

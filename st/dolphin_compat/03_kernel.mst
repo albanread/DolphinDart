@@ -1,0 +1,161 @@
+"03_kernel.mst — the compat kernel classes (DolphinDart DD8).
+
+ The bridge classes Dolphin's MVP corpus assumes but this VM's world does not
+ provide, per the prior-art G3 inventory. Everything here is small and
+ hand-written; anything large enough to be worth translating is not here.
+
+ NAMING RULE, learned four times over in this sprint: before naming a compat
+ method, check the selector is not a UNIVERSAL HELPER. The IL builder rewrites
+ selectors like `at:`, `at:put:`, `size`, `asString`, `valueWithArguments:` AT
+ THE CALL SITE, so a method of that name is never reached — the send lands
+ elsewhere, often on a class value, and surfaces as `_Type has no instance
+ method …`. See docs/HOUSE_PRIMS.md."
+
+"── Model: the root of the MVP model side ───────────────────────────────
+ Dolphin's Model is Object + events + a `beDirty`-ish change protocol. The
+ events already live on Object (01_events.mst), so this is thin."
+Object subclass: Model [
+    Model class >> new [ ^self basicNew initModel ]
+    initModel [ ^self ]
+    changed [ ^self trigger: #changed ]
+    changed: anAspect [ ^self trigger: #changed with: anAspect ]
+]
+
+"── ValueModel / ValueHolder: the MVP triad's value carrier ─────────────
+ DD10 leans on this. `value:` triggers #valueChanged, which is how a presenter
+ learns its model moved."
+Model subclass: ValueModel [
+    | value |
+    ValueModel class >> new [ ^self basicNew initModel ]
+    ValueModel class >> withValue: v [ ^self new setValue: v; yourself ]
+    initModel [ value := nil ]
+    value [ ^value ]
+    setValue: v [ value := v ]
+    value: v [
+        value := v.
+        self trigger: #valueChanged.
+        ^v
+    ]
+]
+
+"── SearchPolicy: how a collection compares its elements ────────────────
+ Dolphin parameterises Set/Dictionary lookup with one of these. v1 provides the
+ two the corpus uses; anything needing a custom policy can subclass."
+Object subclass: SearchPolicy [
+    SearchPolicy class >> equality [ ^EqualitySearchPolicy new ]
+    SearchPolicy class >> identity [ ^IdentitySearchPolicy new ]
+    compare: a with: b [ ^self subclassResponsibility ]
+    hashOf: anObject [ ^self subclassResponsibility ]
+]
+SearchPolicy subclass: EqualitySearchPolicy [
+    compare: a with: b [ ^a = b ]
+    hashOf: anObject [ ^anObject hash ]
+]
+SearchPolicy subclass: IdentitySearchPolicy [
+    compare: a with: b [ ^a == b ]
+    hashOf: anObject [ ^anObject identityHash ]
+]
+
+"── DeafObject: swallows everything ─────────────────────────────────────
+ Dolphin uses it as a null-object for torn-down views: sends land and do
+ nothing rather than raising. Built on doesNotUnderstand:, which this VM
+ reaches for ST receivers (DD4)."
+Object subclass: DeafObject [
+    <classVars: Current>
+    DeafObject class >> current [
+        Current isNil ifTrue: [ Current := self basicNew ]. ^Current
+    ]
+    doesNotUnderstand: aMessage [ ^nil ]
+    isNil [ ^false ]
+    notNil [ ^true ]
+]
+
+"── GUID: `GUID newUnique` is all the corpus needs ──────────────────────
+ Real uniqueness comes from CoCreateGuid; v1 composes one from the clock and a
+ counter, which is enough for the registry keys Dolphin uses it for and needs
+ no COM. Recorded as a v1 shortcut, not a hidden approximation."
+Object subclass: GUID [
+    <classVars: Counter>
+    | text |
+    GUID class >> newUnique [
+        Counter := (Counter ifNil: [ 0 ]) + 1.
+        ^self basicNew setText:
+            '{', Smalltalk millisecondClock printString, '-',
+            Counter printString, '}'
+    ]
+    setText: t [ text := t ]
+    printOn: aStream [ aStream nextPutAll: text ]
+    = other [ ^(other isKindOf: GUID) and: [ other asText = text ] ]
+    hash [ ^text hash ]
+    asText [ ^text ]
+]
+
+"── property bags ───────────────────────────────────────────────────────
+ Dolphin hangs arbitrary named properties off any object. Same registry shape
+ as the event system, and the same v1 strong-reference decision."
+Object subclass: PropertyRegistry [
+    <classVars: Table>
+    PropertyRegistry class >> table [
+        Table isNil ifTrue: [ Table := IdentityDictionary new ]. ^Table
+    ]
+    PropertyRegistry class >> propertiesOf: anObject [
+        | p |
+        p := self table at: anObject ifAbsent: [ nil ].
+        p isNil ifTrue: [ p := Dictionary new. self table at: anObject put: p ].
+        ^p
+    ]
+    PropertyRegistry class >> reset [ Table := IdentityDictionary new ]
+]
+
+nil subclass: Object [
+    propertyAt: aKey [ ^(PropertyRegistry propertiesOf: self) at: aKey ifAbsent: [ nil ] ]
+    propertyAt: aKey ifAbsent: aBlock [
+        ^(PropertyRegistry propertiesOf: self) at: aKey ifAbsent: aBlock
+    ]
+    propertyAt: aKey put: aValue [
+        ^(PropertyRegistry propertiesOf: self) at: aKey put: aValue
+    ]
+
+    "Dolphin's `expandMacros` fills %1..%9 from an argument array. The corpus
+     uses it for status text and dialog captions."
+    expandMacrosWith: anArray [
+        | out |
+        out := self.
+        1 to: (anArray size min: 9) do: [ :i |
+            out := out copyReplaceAll: '%', i printString
+                        with: (anArray at: i) displayString ].
+        ^out
+    ]
+    expandMacrosWith: a with: b [ ^self expandMacrosWith: (Array with: a with: b) ]
+    expandMacros [ ^self ]
+]
+
+"── exception compat, on DD4's hierarchy ────────────────────────────────
+ Dolphin's own error classes. They subclass our Error (DD4), so every existing
+ `on: Error do:` still catches them.
+
+ `InvalidFormat` is the one DD10's gate uses in anger: a type converter that
+ cannot parse its input signals it, and the presenter beeps and reverts."
+Error subclass: Win32Error [
+    | code |
+    Win32Error class >> signalLastError [
+        ^self new setCode: Win32 lastError; signalWithCode
+    ]
+    setCode: c [ code := c ]
+    code [ ^code ]
+    signalWithCode [ ^self signal: 'Win32 error ', code printString ]
+]
+Error subclass: InvalidFormat [ ]
+Error subclass: OperationAborted [ ]
+
+"── Character>>asUnicodeValue is NOT here ──────────────────────────────
+ It is a SELECTOR difference, not a missing class, so the translator rewrites
+ it (tools/dolphin2mst/emit.py, `rewrite_selectors`) exactly as it rewrites
+ `??` and `##()`. Reopening `Character` from this file does not work anyway: a
+ character literal is a native StChar whose ST protocol lives on the bridged
+ `Character ext` holder, and a cross-file reopen of a bridged class does not
+ reach it (measured — `$A asUnicodeValue` stayed a doesNotUnderstand under both
+ `nil subclass:` and `Magnitude subclass:`).
+
+ The general rule: when Dolphin and the house dialect differ only in SPELLING,
+ rewrite at ingestion. Compat classes are for missing BEHAVIOUR."

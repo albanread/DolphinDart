@@ -1,0 +1,92 @@
+"Feature test: the DD8 compat kernel classes.
+
+ These are the bridge classes Dolphin's MVP corpus assumes. Each assertion
+ states the contract a translated consumer will rely on — so if one of these is
+ ever reimplemented (or hits a helper-selector collision like the four this
+ sprint met), it fails here rather than inside a View three sprints later."
+
+Object subclass: CompatProbe [
+    | seen |
+    CompatProbe class >> new [ ^self basicNew initProbe ]
+    initProbe [ seen := OrderedCollection new ]
+    seen [ ^seen ]
+    noteChange [ seen add: #changed. ^#ok ]
+    noteValue [ seen add: #valueChanged. ^#ok ]
+]
+
+STestCase subclass: TestCompatKernel [
+    tests [
+        | m v p g o |
+
+        "--- Model: change notification rides the event system ---"
+        p := CompatProbe new.
+        m := Model new.
+        m when: #changed send: #noteChange to: p.
+        m changed.
+        self check: p seen asArray is: #(#changed) label: 'Model changed triggers'.
+
+        "--- ValueModel: value: notifies, setValue: does not ---"
+        p := CompatProbe new.
+        v := ValueModel withValue: 1.
+        v when: #valueChanged send: #noteValue to: p.
+        self check: v value is: 1 label: 'ValueModel carries its value'.
+        v value: 2.
+        self check: v value is: 2 label: 'ValueModel value: updates'.
+        self check: p seen size is: 1 label: 'ValueModel value: notifies once'.
+        v setValue: 3.
+        self check: p seen size is: 1
+             label: 'setValue: updates WITHOUT notifying (buffer writes need this)'.
+        self check: v value is: 3 label: 'setValue: still updated the value'.
+
+        "--- SearchPolicy: equality vs identity ---"
+        self assert: (SearchPolicy equality compare: 'ab' with: 'a', 'b')
+             label: 'equality policy compares by value'.
+        self deny: (SearchPolicy identity compare: 'ab' with: 'a', 'b')
+             label: 'identity policy does not'.
+        o := Object new.
+        self assert: (SearchPolicy identity compare: o with: o)
+             label: 'identity policy matches the same object'.
+        self assert: ((SearchPolicy identity hashOf: o) = o identityHash)
+             label: 'identity policy hashes by identityHash'.
+
+        "--- DeafObject swallows sends instead of raising ---"
+        self check: (DeafObject current anythingAtAll) is: nil
+             label: 'DeafObject swallows an unknown unary send'.
+        self check: (DeafObject current foo: 1 bar: 2) is: nil
+             label: 'DeafObject swallows an unknown keyword send'.
+        self deny: (DeafObject current isNil) label: 'DeafObject is not nil'.
+
+        "--- GUID newUnique is unique ---"
+        g := GUID newUnique.
+        self deny: (g asText = GUID newUnique asText)
+             label: 'GUID newUnique differs each time'.
+        self assert: (g = g) label: 'a GUID equals itself'.
+
+        "--- properties hang off any object, per identity ---"
+        o := Object new.
+        self check: (o propertyAt: #missing) is: nil label: 'absent property is nil'.
+        o propertyAt: #k put: 42.
+        self check: (o propertyAt: #k) is: 42 label: 'property round-trips'.
+        self check: (Object new propertyAt: #k) is: nil
+             label: 'properties are per-object, not shared'.
+
+        "--- expandMacrosWith: fills %1..%n ---"
+        self check: ('hello %1' expandMacrosWith: (Array with: 'world'))
+             is: 'hello world' label: 'expandMacrosWith: fills %1'.
+        self check: ('%1 and %2' expandMacrosWith: 'a' with: 'b')
+             is: 'a and b' label: 'expandMacrosWith:with: fills both'.
+
+        "--- the exception compat classes sit under DD4's Error ---"
+        self assert: (InvalidFormat new isKindOf: Error)
+             label: 'InvalidFormat is an Error'.
+        self assert: (OperationAborted new isKindOf: Error)
+             label: 'OperationAborted is an Error'.
+        self assert: (Win32Error new isKindOf: Error) label: 'Win32Error is an Error'.
+        self check: ([ InvalidFormat new signal: 'bad' ]
+                        on: InvalidFormat do: [ :e | e messageText ])
+             is: 'bad' label: 'InvalidFormat is catchable by its own class'.
+        self check: ([ InvalidFormat new signal: 'bad' ] on: Error do: [ :e | #asError ])
+             is: #asError label: 'and by Error, since it is one'.
+
+    ]
+]
