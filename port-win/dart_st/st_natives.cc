@@ -41,6 +41,56 @@
 #include "st_parser.h"
 #include "st_prelude.h"
 
+#if defined(_WIN32)
+#include <windows.h>   // LoadLibrary/GetProcAddress/GetLastError — the FFI floor
+
+namespace st {
+
+// The system DLLs an external method may name (DolphinDart DD6). The corpus's
+// whole MVP-base demand set lands in this handful, so resolution searches them
+// in order rather than requiring every call site to be qualified. Adding a
+// module here is the supported way to widen the surface; loading an ARBITRARY
+// caller-named DLL is deliberately NOT offered — that would let image code pull
+// any binary on the machine into the process.
+static const char* kWinFfiModules[] = {
+    "user32.dll", "gdi32.dll", "kernel32.dll", "comctl32.dll",
+    "shell32.dll", "ole32.dll", "oleaut32.dll", "comdlg32.dll",
+    "advapi32.dll", "uxtheme.dll", "msimg32.dll",
+};
+
+void* WinResolveSymbol(const char* name) {
+  static std::mutex m;
+  static std::unordered_map<std::string, void*> cache;
+  static std::vector<HMODULE> mods;
+  std::lock_guard<std::mutex> lock(m);
+  std::unordered_map<std::string, void*>::iterator it = cache.find(name);
+  if (it != cache.end()) return it->second;
+  if (mods.empty()) {
+    for (size_t i = 0; i < sizeof(kWinFfiModules) / sizeof(kWinFfiModules[0]); i++) {
+      // GetModuleHandle first so an already-loaded module is not re-referenced;
+      // LoadLibrary only for those this process has not pulled in yet.
+      HMODULE h = ::GetModuleHandleA(kWinFfiModules[i]);
+      if (h == NULL) h = ::LoadLibraryA(kWinFfiModules[i]);
+      if (h != NULL) mods.push_back(h);
+    }
+  }
+  void* found = NULL;
+  for (size_t i = 0; i < mods.size() && found == NULL; i++) {
+    found = reinterpret_cast<void*>(::GetProcAddress(mods[i], name));
+  }
+  cache[name] = found;   // negative results cache too: a miss stays a miss
+  return found;
+}
+
+// Thread-local because GetLastError is per-thread: the UI thread and a worker
+// isolate must never see each other's codes.
+static thread_local uint32_t g_last_ffi_error = 0;
+void WinSetLastFfiError(uint32_t e) { g_last_ffi_error = e; }
+uint32_t WinGetLastFfiError() { return g_last_ffi_error; }
+
+}  // namespace st
+#endif  // _WIN32
+
 namespace dart {
 namespace bin {
 
@@ -1457,12 +1507,144 @@ __asm__(
 // (stage C). Fails SAFE via STThrow (catchable) on an unresolved symbol or an
 // unsupported type — a bad binding must never segv the isolate. Runs in native
 // state; the Dart embedding API used here is valid there.
+// The value GetLastError held IMMEDIATELY after the most recent FFI call on
+// THIS thread. Read separately rather than returned alongside every call: most
+// calls do not care, and Win32's contract is that the code is only meaningful
+// when the call's own return value says it failed.
+void ST_winLastError(Dart_NativeArguments args) {
+#if defined(_WIN32)
+  Dart_SetReturnValue(args, Dart_NewInteger(
+      static_cast<int64_t>(st::WinGetLastFfiError())));
+#else
+  Dart_SetReturnValue(args, Dart_NewInteger(0));
+#endif
+}
+
 void ST_ffiCall(Dart_NativeArguments args) {
 #if defined(_WIN32)
-  // windart FFI floor: the AAPCS64 trampoline + dlsym are POSIX/arm64-only. Fail
-  // SAFE (catchable) until a Win64 (GetProcAddress + MS-x64 ABI) trampoline lands.
-  (void)args;
-  STThrow("FFI: not yet supported on windart (Win64 trampoline pending)");
+  // ── The Windows FFI floor (DolphinDart DD6) ───────────────────────────────
+  //
+  // No assembly, and none needed. The POSIX side hand-rolls an AAPCS64
+  // trampoline because it sorts arguments into registers itself; here we cast
+  // the resolved address to a function-pointer type of the right ARITY and let
+  // the C++ compiler emit the call. That is correct by construction on BOTH
+  // x64 and ARM64 — the compiler knows each ABI — and it is why this port does
+  // not need the "Win64 trampoline" the old stub was waiting for.
+  //
+  // The trade is that every argument and the return value must be word-sized
+  // (integer, pointer, handle, BOOL). That is exactly the Win32 window/GDI
+  // surface: DD2 measured `<stdcall:` at 667 sites across 29 files, and the
+  // MVP-base demand set is user32/gdi32/kernel32 calls of this shape. Doubles
+  // are REFUSED rather than approximated: on x64 a float argument travels in
+  // XMM by position, so casting it through a word would be silently wrong, and
+  // silence is the failure mode this project keeps paying for.
+  //
+  // Variadics are refused for the same reason (Win32's `wsprintfW`): the
+  // register/stack split for variadic arguments differs from the fixed case on
+  // ARM64.
+  Dart_Handle list_h = Dart_GetNativeArgument(args, 0);
+  Dart_Handle desc_h = Dart_GetNativeArgument(args, 1);
+  const char* desc_c = NULL;
+  if (Dart_IsError(Dart_StringToCString(desc_h, &desc_c)) || desc_c == NULL) {
+    STThrow("FFI: bad descriptor");
+    return;
+  }
+  const std::string desc(desc_c);
+  const size_t p1 = desc.find('|');
+  const size_t p2 = (p1 == std::string::npos) ? p1 : desc.find('|', p1 + 1);
+  if (p1 == std::string::npos || p2 == std::string::npos) {
+    STThrow("FFI: malformed descriptor");
+    return;
+  }
+  const std::string name = desc.substr(0, p1);
+  const char ret = desc[p1 + 1];
+  const std::string codes = desc.substr(p2 + 1);
+
+  void* fn = st::WinResolveSymbol(name.c_str());
+  if (fn == NULL) {
+    STThrow(("FFI: unresolved symbol '" + name +
+             "' (searched the system DLL set; see st::kWinFfiModules)").c_str());
+    return;
+  }
+
+  intptr_t n = 0;
+  Dart_ListLength(list_h, &n);
+  if (n > 12) {
+    STThrow("FFI: more than 12 arguments is unsupported");
+    return;
+  }
+  uint64_t a[12] = {0};
+  for (intptr_t i = 0; i < n; i++) {
+    const char code = (i < static_cast<intptr_t>(codes.size())) ? codes[i] : 'g';
+    if (code != 'g') {
+      STThrow(("FFI: argument code '" + std::string(1, code) +
+               "' is unsupported on Windows (word arguments only; a float "
+               "travels in a different register class and would be silently "
+               "wrong)").c_str());
+      return;
+    }
+    Dart_Handle e = Dart_ListGetAt(list_h, i);
+    int64_t v = 0;
+    if (Dart_IsError(Dart_IntegerToInt64(e, &v))) {
+      // A non-integer argument is a marshalling bug at the call site, not
+      // something to coerce quietly.
+      STThrow("FFI: non-integer argument (expected a word)");
+      return;
+    }
+    a[i] = static_cast<uint64_t>(v);
+  }
+
+  typedef uint64_t(*F0)();
+  typedef uint64_t(*F1)(uint64_t);
+  typedef uint64_t(*F2)(uint64_t, uint64_t);
+  typedef uint64_t(*F3)(uint64_t, uint64_t, uint64_t);
+  typedef uint64_t(*F4)(uint64_t, uint64_t, uint64_t, uint64_t);
+  typedef uint64_t(*F5)(uint64_t, uint64_t, uint64_t, uint64_t, uint64_t);
+  typedef uint64_t(*F6)(uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t);
+  typedef uint64_t(*F7)(uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t,
+                        uint64_t);
+  typedef uint64_t(*F8)(uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t,
+                        uint64_t, uint64_t);
+  typedef uint64_t(*F9)(uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t,
+                        uint64_t, uint64_t, uint64_t);
+  typedef uint64_t(*F10)(uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t,
+                         uint64_t, uint64_t, uint64_t, uint64_t);
+  typedef uint64_t(*F11)(uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t,
+                         uint64_t, uint64_t, uint64_t, uint64_t, uint64_t);
+  typedef uint64_t(*F12)(uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t,
+                         uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t);
+  uint64_t r = 0;
+  switch (n) {
+    case 0:  r = reinterpret_cast<F0>(fn)(); break;
+    case 1:  r = reinterpret_cast<F1>(fn)(a[0]); break;
+    case 2:  r = reinterpret_cast<F2>(fn)(a[0], a[1]); break;
+    case 3:  r = reinterpret_cast<F3>(fn)(a[0], a[1], a[2]); break;
+    case 4:  r = reinterpret_cast<F4>(fn)(a[0], a[1], a[2], a[3]); break;
+    case 5:  r = reinterpret_cast<F5>(fn)(a[0], a[1], a[2], a[3], a[4]); break;
+    case 6:  r = reinterpret_cast<F6>(fn)(a[0], a[1], a[2], a[3], a[4], a[5]); break;
+    case 7:  r = reinterpret_cast<F7>(fn)(a[0], a[1], a[2], a[3], a[4], a[5], a[6]);
+             break;
+    case 8:  r = reinterpret_cast<F8>(fn)(a[0], a[1], a[2], a[3], a[4], a[5], a[6],
+                                          a[7]); break;
+    case 9:  r = reinterpret_cast<F9>(fn)(a[0], a[1], a[2], a[3], a[4], a[5], a[6],
+                                          a[7], a[8]); break;
+    case 10: r = reinterpret_cast<F10>(fn)(a[0], a[1], a[2], a[3], a[4], a[5], a[6],
+                                           a[7], a[8], a[9]); break;
+    case 11: r = reinterpret_cast<F11>(fn)(a[0], a[1], a[2], a[3], a[4], a[5], a[6],
+                                           a[7], a[8], a[9], a[10]); break;
+    default: r = reinterpret_cast<F12>(fn)(a[0], a[1], a[2], a[3], a[4], a[5], a[6],
+                                           a[7], a[8], a[9], a[10], a[11]); break;
+  }
+  // CAPTURE GetLastError IMMEDIATELY. Anything at all between the call and this
+  // read — an allocation, a Dart transition, another native — can clobber it,
+  // and a stale error code is worse than none because it looks authoritative.
+  st::WinSetLastFfiError(static_cast<uint32_t>(::GetLastError()));
+
+  if (ret == 'v') {
+    Dart_SetReturnValue(args, Dart_Null());
+  } else {
+    Dart_SetReturnValue(args, Dart_NewInteger(static_cast<int64_t>(r)));
+  }
 #else
   Dart_Handle list_h = Dart_GetNativeArgument(args, 0);
   Dart_Handle desc_h = Dart_GetNativeArgument(args, 1);

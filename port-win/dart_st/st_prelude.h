@@ -78,6 +78,15 @@ Notification subclass: Warning [
     defaultAction [ ^nil ]
 ]
 
+"── Win32 (DolphinDart DD6) ─────────────────────────────────────────
+ The FFI floor's Smalltalk face. `Win32 lastError` answers GetLastError as
+ captured IMMEDIATELY after the most recent external call on this thread —
+ Win32 does not clear it on success, so it is only meaningful once the call's
+ own return value has reported failure."
+Object subclass: Win32 [
+    Win32 class >> lastError [ <stprim: stWinLastError> ]
+]
+
 "── The system object (corpus surface: Smalltalk millisecondClock) ──"
 Object subclass: Smalltalk [
     Smalltalk class >> millisecondClock [ <stprim: stMillisecondClock> ]

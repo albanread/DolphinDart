@@ -45,6 +45,7 @@ void ST_blockNumArgs(Dart_NativeArguments args);
 void ST_classNamed(Dart_NativeArguments args);
 void ST_asSymbol(Dart_NativeArguments args);
 void ST_ffiCall(Dart_NativeArguments args);
+void ST_winLastError(Dart_NativeArguments args);
 void ST_peekByte(Dart_NativeArguments args);
 void ST_pokeByte(Dart_NativeArguments args);
 void ST_peekF64(Dart_NativeArguments args);
@@ -91,6 +92,7 @@ void ST_symbolFor(Dart_NativeArguments args);   // interned symbol lookup (perf 
   V(ST_classNamed, 1)                                                          \
   V(ST_asSymbol, 1)                                                            \
   V(ST_ffiCall, 2)                                                             \
+  V(ST_winLastError, 0)                                                        \
   V(ST_peekByte, 1)                                                            \
   V(ST_pokeByte, 2)                                                            \
   V(ST_peekF64, 1)                                                             \

@@ -1293,6 +1293,11 @@ _stAsSymSlow(s) => s.asSymbol();
 /// Time); doubles (Accel) arrive with the FPR trampoline.
 stFfiCall(List args, String desc) native "ST_ffiCall";
 
+/// GetLastError as captured immediately after the most recent FFI call on this
+/// thread (DolphinDart DD6). Meaningful only when the call's own return value
+/// reports failure — Win32 does not clear it on success.
+stWinLastError() native "ST_winLastError";
+
 /// Alien peek/poke (stage b): raw read/write at an ABSOLUTE address (an int).
 /// The prelude's Alien bounds-checks against its span before calling these.
 stPeekByte(a) native "ST_peekByte";

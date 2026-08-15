@@ -1,0 +1,37 @@
+"DD6 conformance probe — real Win32 through the FFI floor."
+Object subclass: Win32Probe [
+    Win32Probe class >> getSystemMetrics: i [
+        <primitive: FFI function: #GetSystemMetrics ret: #g args: #( g )>
+    ]
+    Win32Probe class >> messageBeep: t [
+        <primitive: FFI function: #MessageBeep ret: #g args: #( g )>
+    ]
+    Win32Probe class >> getCurrentThreadId [
+        <primitive: FFI function: #GetCurrentThreadId ret: #g args: #( )>
+    ]
+    Win32Probe class >> getTickCount [
+        <primitive: FFI function: #GetTickCount ret: #g args: #( )>
+    ]
+    Win32Probe class >> getDesktopWindow [
+        <primitive: FFI function: #GetDesktopWindow ret: #g args: #( )>
+    ]
+    Win32Probe class >> isWindow: h [
+        <primitive: FFI function: #IsWindow ret: #g args: #( g )>
+    ]
+    Win32Probe class >> setLastError: e [
+        <primitive: FFI function: #SetLastError ret: #v args: #( g )>
+    ]
+    Win32Probe class >> closeHandle: h [
+        <primitive: FFI function: #CloseHandle ret: #g args: #( g )>
+    ]
+]
+
+"Refusal gates: the floor must fail LOUDLY where it cannot be correct."
+Object subclass: Win32Refuse [
+    Win32Refuse class >> bogusFunction [
+        <primitive: FFI function: #ThisFunctionDoesNotExistAnywhere ret: #g args: #( )>
+    ]
+    Win32Refuse class >> floatArg: d [
+        <primitive: FFI function: #GetSystemMetrics ret: #g args: #( f )>
+    ]
+]
