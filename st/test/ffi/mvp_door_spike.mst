@@ -1,0 +1,62 @@
+"mvp_door_spike.mst — the DD7 re-entry spike.
+
+ Win32 sends are SYNCHRONOUS: a handler that calls CreateWindowExW /
+ SendMessageW / DestroyWindow re-enters the image from inside its own call, to
+ arbitrary depth. This measures whether the door survives that, BEFORE any GUI
+ code leans on it — the lesson WINVM's G0 paid for, where nesting was proven
+ with test doubles and the production seam was never built.
+
+ Every recursion here goes through a real message-only window and a real
+ SendMessageW. It is the production path, not a simulation of it."
+
+Object subclass: MvpDoor [
+    <classVars: Window Trace Mode>
+
+    MvpDoor class >> open [
+        Win32 mvpInstall.
+        Window := Win32 mvpCreateWindow.
+        Trace := OrderedCollection new.
+        Mode := #plain.
+        ^Window
+    ]
+    MvpDoor class >> close [
+        Window isNil ifFalse: [ Win32 mvpDestroyWindow: Window. Window := nil ]
+    ]
+    MvpDoor class >> window [ ^Window ]
+    MvpDoor class >> trace [ ^Trace ]
+    MvpDoor class >> mode: aSymbol [ Mode := aSymbol ]
+    MvpDoor class >> reset [ Trace := OrderedCollection new. Win32 mvpResetStats ]
+
+    "Send a message and get the image's answer back through Win32."
+    MvpDoor class >> send: w with: l [ ^Win32 mvpSend: Window wparam: w lparam: l ]
+
+    "THE DOOR'S IMAGE SIDE. Called by the WndProc for every message.
+     wp = the remaining depth to recurse, lp = a tag."
+    MvpDoor class >> wndProc: wp with: lp [
+        Trace add: wp.
+        "Each level allocates, so a GC during a nested entry is possible rather
+         than hypothetical — the thing a depth test is really for."
+        (OrderedCollection new addAll: #(1 2 3 4 5); yourself) size.
+
+        (Mode == #dnuAt3 and: [ wp = 3 ]) ifTrue: [
+            "A doesNotUnderstand at depth 3. The entry must answer its default
+             and the entries around it must carry on — containment, not
+             unwind-to-top."
+            ^nil totallyBogusSelectorForTheSpike ].
+
+        (Mode == #raiseAt2 and: [ wp = 2 ]) ifTrue: [
+            ^Error signal: 'spike raise at depth 2' ].
+
+        wp <= 1 ifTrue: [ ^100 ].
+        "RECURSE THROUGH WIN32: this send re-enters the wndproc, which re-enters
+         the image. Nothing simulated."
+        ^(self send: wp - 1 with: lp) + 1
+    ]
+
+    "The image catching its own raise INSIDE a nested entry: the handler must
+     run at that depth and the outer entries must be unaffected."
+    MvpDoor class >> guardedAt2 [
+        Mode := #raiseAt2.
+        ^[ self send: 4 with: 0 ] on: Error do: [ :e | #caught ]
+    ]
+]

@@ -90,6 +90,15 @@ Object subclass: Win32 [
      marshalling runtime (st/prims/rt) composes wider fields from these."
     Win32 class >> peek: anAddress [ <stprim: stPeekByte> ]
     Win32 class >> poke: anAddress put: aByte [ <stprim: stPokeByte> ]
+
+    "The MVP wndproc door (DD7). `install` publishes the Dart funnel; the door
+     then calls MvpDoor class >> wndProc: w with: l for every message."
+    Win32 class >> mvpInstall [ <stprim: stMvpInstallDispatch> ]
+    Win32 class >> mvpCreateWindow [ <stprim: stMvpCreateWindow> ]
+    Win32 class >> mvpDestroyWindow: h [ <stprim: stMvpDestroyWindow> ]
+    Win32 class >> mvpSend: h wparam: w lparam: l [ <stprim: stMvpSend> ]
+    Win32 class >> mvpStats [ <stprim: stMvpStats> ]
+    Win32 class >> mvpResetStats [ <stprim: stMvpResetStats> ]
 ]
 
 "── The system object (corpus surface: Smalltalk millisecondClock) ──"

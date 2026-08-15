@@ -442,6 +442,7 @@ add_library(dart_win32 STATIC
   ${WIN32DIR}/win_host.cpp        # Win32 UI-thread pump + wake + host reload
   ${WIN32DIR}/win_natives.cpp     # WIN_NATIVE_LIST resolver + op-catalog + materialize entry
   ${WIN32DIR}/win_callbacks.cpp   # WNDPROC/subclass -> ticket -> _winDispatch; key-state
+  ${WIN32DIR}/win_mvp.cpp         # DD7: the MVP wndproc door — re-entrant image dispatch
   ${WIN32DIR}/win_view.cpp        # the materializer (ViewServer registry) — S4 net-new
   ${WIN32DIR}/win_canvas.cpp      # Direct2D canvas: demo draw-cmd replay + WIC PNG readback (S5)
   ${WIN32DIR}/win_toolbar.cpp     # icon toolbar (ToolbarWindow32 + D2D icons) (polish)

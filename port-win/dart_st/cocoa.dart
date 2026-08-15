@@ -1301,6 +1301,33 @@ stWinLastError() native "ST_winLastError";
 /// Address of `name` via the floor's own resolver, 0 if absent (DD6b harness).
 stFfiResolve(String name) native "ST_ffiResolve";
 
+// ── The MVP wndproc door (DolphinDart DD7) ──────────────────────────────────
+// A single Dart closure is the funnel, as the view-server does: C++ invokes it
+// from the WndProc, it forwards to Smalltalk. Nothing here may hold a Dart
+// handle across the Smalltalk send — that is the constraint win_view.h
+// documents, and the reason the door lives outside the view-server.
+_mvpRegisterDispatch(f) native "ST_mvpRegisterDispatch";
+stMvpCreateWindow() native "ST_mvpCreateWindow";
+stMvpDestroyWindow(int h) native "ST_mvpDestroyWindow";
+stMvpSend(int h, int wp, int lp) native "ST_mvpSend";
+stMvpStats() native "ST_mvpStats";
+stMvpResetStats() native "ST_mvpResetStats";
+
+/// Route a door message to the image. `UiSession` is the Smalltalk entry point
+/// (DD8 owns it); until then the spike class answers. A miss must not take the
+/// pump down, so the send is a TRY and a null answer becomes 0.
+_mvpToSmalltalk(int wp, int lp) {
+  var box = _stClassSendTry(stClassNamed('MvpDoor'), 'wndProc_with_', [wp, lp]);
+  if (box == null) return 0;
+  var v = box[0];
+  return v is int ? v : 0;
+}
+
+stMvpInstallDispatch() {
+  _mvpRegisterDispatch(_mvpToSmalltalk);
+  return true;
+}
+
 /// Alien peek/poke (stage b): raw read/write at an ABSOLUTE address (an int).
 /// The prelude's Alien bounds-checks against its span before calling these.
 stPeekByte(a) native "ST_peekByte";
