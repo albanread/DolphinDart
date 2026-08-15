@@ -473,9 +473,35 @@ class StGraphBuilder {
     instructions += Fragment(load);
     return instructions;
   }
+  // A BACKGROUND-compiled method may not hold the ORIGINAL Field — the
+  // original belongs to the mutator, which may be changing it while the
+  // background compiler reads it, so `StoreStaticFieldInstr::CheckField`
+  // asserts `!IsBackgroundCompilation() || !field.IsOriginal()`. Dart's own
+  // builders route every such field through MayCloneField (ast.cc:32,
+  // kernel_to_il.cc:2598); this builder did not, so the first class variable
+  // written from a HOT method killed the VM:
+  //
+  //   intermediate_language.cc: 51: error:
+  //     expected: !Compiler::IsBackgroundCompilation() || !field.IsOriginal()
+  //
+  // Found by the DD9 storm probe — `UiSession wndProc:arg:` does
+  // `MessageCount := MessageCount + 1`, and 20,000 sends is enough to promote
+  // it to optimizing background compilation. It is not specific to that
+  // method: ANY class-variable assignment in a hot path would have done it,
+  // which is most of the compat kernel's registries and every Dolphin class
+  // that counts something.
+  //
+  // Loads are safe as they stand: LoadStaticFieldInstr takes a Value (the
+  // field arrives as a Constant) and never calls CheckField. The instance-side
+  // store is safe too — this builder uses the OFFSET constructor, which holds
+  // no Field at all.
   Fragment StoreStaticField(const Field& field) {
+    const Field& target =
+        (Compiler::IsBackgroundCompilation() && field.IsOriginal())
+            ? Field::ZoneHandle(zone_, field.CloneFromOriginal())
+            : field;
     StoreStaticFieldInstr* store = new (zone_)
-        StoreStaticFieldInstr(field, Pop(), TokenPosition::kNoSource);
+        StoreStaticFieldInstr(target, Pop(), TokenPosition::kNoSource);
     return Fragment(store);  // a store produces no value (no Push)
   }
   Fragment PushArgument() {

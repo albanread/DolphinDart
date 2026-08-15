@@ -1331,9 +1331,20 @@ stMvpShow(int h) native "ST_mvpShow";
 stMvpPump(int budget) native "ST_mvpPump";
 stMvpClick(int h, int id) native "ST_mvpClick";
 stMvpInvalidate(int h) native "ST_mvpInvalidate";
-stMvpBumpGeneration() native "ST_mvpBumpGeneration";
+_mvpBumpGeneration() native "ST_mvpBumpGeneration";
 stMvpPaintFaults() native "ST_mvpPaintFaults";
 stMvpIsWindow(int h) native "ST_mvpIsWindow";
+
+/// The DD9 storm census: how many high-rate messages the door actually sees,
+/// and what routing one into the image costs.
+/// `stMvpStormCounts()` -> [mouseMove, ncHitTest, setCursor, size, moving,
+/// eraseBkgnd, other, total].
+stMvpStormCounts() native "ST_mvpStormCounts";
+stMvpResetStormCounts() native "ST_mvpResetStormCounts";
+stMvpSetStormRouting(bool on) native "ST_mvpSetStormRouting";
+/// Send `msg` to `h` `n` times; answers the elapsed NANOSECONDS. Timed in
+/// native code so the number is the wndproc's cost, not the FFI call's.
+stMvpStormBurst(int h, int msg, int n) native "ST_mvpStormBurst";
 
 /// Route a door message to the image. `UiSession` is the Smalltalk entry point
 /// (DD8 owns it); until then the spike class answers. A miss must not take the
@@ -1352,17 +1363,57 @@ _mvpToSmalltalk(int wp, int lp) {
   // message finds MvpWindow only when no UiSession is loaded.
   var box;
   if (wp == 0) {
-    box = _stClassSendTry(stClassNamed('MvpDoor'), 'wndProc_with_', [lp, 0]);
+    _doorMvpDoor ??= stClassNamed('MvpDoor');
+    if (_doorMvpDoor != null) {
+      box = _stClassSendTry(_doorMvpDoor, 'wndProc_with_', [lp, 0]);
+    }
   } else {
-    box = _stClassSendTry(stClassNamed('UiSession'), 'wndProc_arg_', [wp, lp]);
-    box ??= _stClassSendTry(stClassNamed('MvpWindow'), 'onKind_arg_', [wp, lp]);
+    _doorUiSession ??= stClassNamed('UiSession');
+    if (_doorUiSession != null) {
+      box = _stClassSendTry(_doorUiSession, 'wndProc_arg_', [wp, lp]);
+    }
+    if (box == null) {
+      _doorMvpWindow ??= stClassNamed('MvpWindow');
+      if (_doorMvpWindow != null) {
+        box = _stClassSendTry(_doorMvpWindow, 'onKind_arg_', [wp, lp]);
+      }
+    }
   }
   if (box == null) return 0;
   var v = box[0];
   return v is int ? v : 0;
 }
 
+/// The door's receivers, resolved ONCE.
+///
+/// `stClassNamed` is a by-name lookup across every loaded `st:` library, and
+/// the funnel called it on EVERY message — twice, when UiSession answered
+/// null. The DD9 storm probe measured the funnel at ~345 microseconds per
+/// routed message with those lookups on the path, against ~0.1 for
+/// DefWindowProcW; a drag generates these by the hundred, so that is the
+/// difference between a window that resizes and one that does not.
+///
+/// Caching only NON-NULL results is what keeps it correct: a class that is not
+/// loaded yet must stay unresolved so it can be found once it is. A world
+/// reload can replace a class outright, so both entry points that mark a new
+/// world — installing the dispatch and bumping the generation — forget them.
+var _doorUiSession;
+var _doorMvpWindow;
+var _doorMvpDoor;
+
+_doorForgetClasses() {
+  _doorUiSession = null;
+  _doorMvpWindow = null;
+  _doorMvpDoor = null;
+}
+
+stMvpBumpGeneration() {
+  _doorForgetClasses();
+  return _mvpBumpGeneration();
+}
+
 stMvpInstallDispatch() {
+  _doorForgetClasses();
   _mvpRegisterDispatch(_mvpToSmalltalk);
   return true;
 }

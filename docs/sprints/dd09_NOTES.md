@@ -156,6 +156,72 @@ block after its `:arg` list. Refusals fell 38 → 32.
   `st/test/features/test_integer_bits.mst` against hand-computed literals,
   including that `mask:set:` does not mutate its receiver.
 
+## The storm probe — and the two bugs it found
+
+`test/st_storm.dart`, with a per-message census and a routing switch in the
+door (`win_mvp.cpp`). Routing stays **off** by default: the census counts and
+classifies, the switch exists so the same message can be timed both ways in
+one run, one variable apart.
+
+### The measurement (arm64, 20,000 sends each)
+
+| message | DefWindowProcW | routed to the image | ratio |
+|---|--:|--:|--:|
+| WM_NCHITTEST | 4810 ns | 28318 ns | 5.9x |
+| WM_MOUSEMOVE | 94 ns | 26616 ns | 283x |
+| WM_SETCURSOR | 1018 ns | 25792 ns | 25x |
+| WM_SIZE | 102 ns | 24504 ns | 241x |
+
+The prior art's ~154x on WINARM is the right order of magnitude. The absolute
+number is what matters for the gate: **~26 µs per routed message**, so a drag
+producing a few hundred messages a second spends a few percent of a core in
+the door. That is survivable for WM_SIZE relayout — which is what DD9 needs —
+and it is why storms stay unrouted by default. WM_NCHITTEST is nearly free to
+route in relative terms only because DefWindowProcW's own handling of it is
+expensive.
+
+The probe asserts its own integrity: a routed 500-message burst must produce
+exactly 500 image entries, and an unrouted one exactly 0. Without those, the
+"routed" column could be timing the DefWindowProc path twice and the ratio
+would be meaningless.
+
+### 7. A class-variable store in a hot method killed the VM
+
+```
+intermediate_language.cc: 51: error:
+  expected: !Compiler::IsBackgroundCompilation() || !field.IsOriginal()
+```
+
+A background-compiled method may not hold the ORIGINAL `Field` — the mutator
+may be changing it. Dart's own builders route every such field through
+`MayCloneField` (ast.cc:32, kernel_to_il.cc:2598); this builder did not.
+`UiSession wndProc:arg:` does `MessageCount := MessageCount + 1`, and 20,000
+sends is enough to promote it to optimizing background compilation.
+
+**Not specific to that method.** Any class-variable assignment in a hot path
+would have done it — which is most of the compat kernel's registries and every
+Dolphin class that counts something. It had simply never run hot before.
+Loads are safe (`LoadStaticFieldInstr` takes a Value and never calls
+`CheckField`) and so is the instance-side store (this builder uses the OFFSET
+constructor, which holds no Field at all).
+
+### 8. The door resolved its receiver classes BY NAME, per message
+
+`stClassNamed` searches every loaded `st:` library, and the funnel called it on
+every message — twice when `UiSession` answered null. First measurement:
+**345 µs per routed message**, 3651x DefWindowProcW for WM_MOUSEMOVE.
+Resolving once took it to 26 µs — a **13x** improvement from three cached
+variables.
+
+Only non-null results are cached, so a class not yet loaded stays unresolved
+and is found when it arrives; and both entry points that mark a new world
+(installing the dispatch, bumping the generation) forget them, because a world
+reload can replace a class outright.
+
+This is the shape of finding the probe exists for. Neither bug was reachable
+by any correctness test — one needs a method to run 20,000 times, the other is
+invisible until you ask what a message costs.
+
 ### Also landed
 
 `tools/translate_mvp.py` — the regeneration command for `st/mvp`, which was

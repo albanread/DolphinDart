@@ -59,6 +59,51 @@ int g_generation = 1;
 int g_paint_faults = 0;
 bool g_top_registered = false;
 
+// --- THE STORM CENSUS (DolphinDart DD9) -------------------------------------
+//
+// Resize relayout is this sprint's gate, and resize is exactly where the
+// high-rate messages live. WM_MOUSEMOVE, WM_NCHITTEST, WM_SETCURSOR and
+// WM_SIZE arrive in bursts during a drag; if each one costs an image entry,
+// the drag stops being interactive. The prior art measured a door entry at
+// ~154x DefWindowProcW on WINARM, which is the kind of number that decides an
+// architecture — so measure it HERE, on this door, before any View code
+// depends on the answer.
+//
+// Two instruments, both off the hot path when unused:
+//   * a per-message CENSUS, so we know what actually arrives and how often;
+//   * a routing SWITCH, so the same message can be timed both ways in one run.
+// The switch is the honest way to do the comparison: same window, same
+// messages, same process, one flag apart.
+const int kKindStorm = 4;      // a storm message reflected, when routing is on
+
+// Census slots. Indexed by kStormMsgs order; the last slot is everything else.
+enum {
+  kStormMouseMove = 0,
+  kStormNcHitTest,
+  kStormSetCursor,
+  kStormSize,
+  kStormMoving,
+  kStormEraseBkgnd,
+  kStormOther,
+  kStormSlots
+};
+const UINT kStormMsgs[] = {
+    WM_MOUSEMOVE, WM_NCHITTEST, WM_SETCURSOR,
+    WM_SIZE,      WM_MOVING,    WM_ERASEBKGND,
+};
+int64_t g_storm_counts[kStormSlots] = {0};
+int64_t g_storm_total = 0;
+// When false (the default) a storm message never enters the image — it goes
+// straight to DefWindowProcW, which is what the door has always done.
+bool g_storm_route = false;
+
+int StormSlot(UINT msg) {
+  for (int i = 0; i < kStormOther; i++) {
+    if (kStormMsgs[i] == msg) return i;
+  }
+  return kStormOther;
+}
+
 LRESULT CALLBACK MvpWndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
   if (msg != kMvpCall || g_mvp_dispatch == nullptr) {
     return DefWindowProcW(hwnd, msg, wp, lp);
@@ -152,8 +197,19 @@ LRESULT CALLBACK MvpTopWndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
     case WM_DESTROY:
       if (live) CallImage(kKindDestroy, 0, nullptr);
       return 0;
-    default:
+    default: {
+      // The storm census (DD9). Counting is two loads and a store — cheap
+      // enough to leave on, and the point is to know the real message mix
+      // rather than to reason about it. Routing stays OFF unless a probe
+      // turns it on, so this branch is DefWindowProcW as before by default.
+      const int slot = StormSlot(msg);
+      g_storm_counts[slot]++;
+      g_storm_total++;
+      if (g_storm_route && live && slot != kStormOther) {
+        CallImage(kKindStorm, (int64_t)msg, nullptr);
+      }
       return DefWindowProcW(hwnd, msg, wp, lp);
+    }
   }
 }
 
@@ -320,6 +376,54 @@ void ST_mvpIsWindow(Dart_NativeArguments args) {
 
 void ST_mvpPaintFaults(Dart_NativeArguments args) {
   Dart_SetReturnValue(args, Dart_NewInteger(g_paint_faults));
+}
+
+// --- the storm probe's instruments (DD9) ------------------------------------
+
+// (mouseMove, ncHitTest, setCursor, size, moving, eraseBkgnd, other, total)
+void ST_mvpStormCounts(Dart_NativeArguments args) {
+  Dart_Handle list = Dart_NewList(kStormSlots + 1);
+  for (int i = 0; i < kStormSlots; i++) {
+    Dart_ListSetAt(list, i, Dart_NewInteger(g_storm_counts[i]));
+  }
+  Dart_ListSetAt(list, kStormSlots, Dart_NewInteger(g_storm_total));
+  Dart_SetReturnValue(args, list);
+}
+
+void ST_mvpResetStormCounts(Dart_NativeArguments args) {
+  for (int i = 0; i < kStormSlots; i++) g_storm_counts[i] = 0;
+  g_storm_total = 0;
+  Dart_SetReturnValue(args, Dart_True());
+}
+
+// Route storm messages into the image, or not. The probe times the SAME
+// message both ways so the comparison has one variable.
+void ST_mvpSetStormRouting(Dart_NativeArguments args) {
+  bool on = false;
+  Dart_BooleanValue(Dart_GetNativeArgument(args, 0), &on);
+  g_storm_route = on;
+  Dart_SetReturnValue(args, Dart_NewBoolean(on));
+}
+
+// Send `msg` to `hwnd` `n` times and answer the elapsed NANOSECONDS. Timed in
+// native code deliberately: a Dart-side loop would time the FFI call overhead
+// as well as the wndproc, and the whole question is what the wndproc costs.
+void ST_mvpStormBurst(Dart_NativeArguments args) {
+  HWND h = (HWND)(intptr_t)ArgInt(args, 0);
+  UINT msg = (UINT)ArgInt(args, 1);
+  int64_t n = ArgInt(args, 2);
+  LARGE_INTEGER freq, t0, t1;
+  QueryPerformanceFrequency(&freq);
+  QueryPerformanceCounter(&t0);
+  for (int64_t i = 0; i < n; i++) {
+    SendMessageW(h, msg, 0, 0);
+  }
+  QueryPerformanceCounter(&t1);
+  const int64_t ticks = t1.QuadPart - t0.QuadPart;
+  Dart_SetReturnValue(
+      args, Dart_NewInteger(freq.QuadPart > 0
+                                ? (ticks * 1000000000LL) / freq.QuadPart
+                                : 0));
 }
 
 }  // namespace bin
