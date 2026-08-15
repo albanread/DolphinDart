@@ -1,7 +1,29 @@
 # House primitives — the substrate's own numbering (DD2)
 
 Extracted mechanically from `st/world`, `st/ext/gamepane` and `st/attic/ide`
-on 2026-08-15. **This is the authoritative numbering in this VM.** Dolphin's
+on 2026-08-15.
+
+> ## ⚠ CORRECTION (DD8, measured 2026-08-15)
+>
+> **A numbered `<primitive: N>` pragma is NOT a dispatch mechanism in this
+> front-end.** `st_flow_graph_builder.cc` handles only the `"primitive: FFI "`
+> form; a bare `<primitive: N>` body compiles to an empty method, which
+> **answers `self`**.
+>
+> Measured: `Object new identityHash == thatObject` -> **true**.
+>
+> Most such methods work anyway because their SELECTOR is independently
+> special-cased (the helper-rewrite table, a named `<stprim:>`, or a native) —
+> `3 asDouble` -> 3.0 and `12 bitAnd: 10` -> 8 both pass. The numbers document
+> intent; the selectors do the work.
+>
+> Where a selector has no such handling the method silently answers self, which
+> is how `Object>>identityHash` came to answer its own receiver and break every
+> identity collection keyed by a plain object (`IdentityDictionary at: Object new`
+> raises "does not understand &", because `29_identity_collections.mst` indexes
+> with `key identityHash bitAnd: cap - 1`).
+>
+> So read the table below as **an inventory of intent**, not as a dispatch map. Dolphin's
 numbering is a *different space* that collides on nearly every low number
 (house 1 = `SmallInteger>>+`; Dolphin 1 = `^self`), which is why translation
 goes through `PRIM_MAP.md` and an unmapped number is a hard error, never a
