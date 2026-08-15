@@ -1,0 +1,32 @@
+"DD6 struct/out-param gate — GetClientRect fills a real RECT.
+ The FFI floor allocates its own external memory through kernel32, so no new
+ native is needed: LocalAlloc/LocalFree ARE the struct allocator."
+Object subclass: W32 [
+    W32 class >> localAlloc: flags size: n [
+        <primitive: FFI function: #LocalAlloc ret: #g args: #( g g )>
+    ]
+    W32 class >> localFree: p [
+        <primitive: FFI function: #LocalFree ret: #g args: #( g )>
+    ]
+    W32 class >> getDesktopWindow [
+        <primitive: FFI function: #GetDesktopWindow ret: #g args: #( )>
+    ]
+    W32 class >> getClientRect: hwnd into: lpRect [
+        <primitive: FFI function: #GetClientRect ret: #g args: #( g g )>
+    ]
+    W32 class >> byteAt: addr [ <stprim: stPeekByte> ]
+    W32 class >> byteAt: addr put: v [ <stprim: stPokeByte> ]
+
+    "A RECT is four 32-bit LONGs. Compose from bytes: peek is byte-wise, which
+     is all an Alien-shaped floor guarantees."
+    W32 class >> int32At: addr [
+        | v |
+        v := 0.
+        3 to: 0 by: -1 do: [ :i | v := (v bitShift: 8) bitOr: (self byteAt: addr + i) ].
+        ^v > 2147483647 ifTrue: [ v - 4294967296 ] ifFalse: [ v ]
+    ]
+    W32 class >> rectFieldsAt: p [
+        ^Array with: (self int32At: p) with: (self int32At: p + 4)
+               with: (self int32At: p + 8) with: (self int32At: p + 12)
+    ]
+]
