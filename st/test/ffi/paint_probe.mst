@@ -1,0 +1,66 @@
+"paint_probe.mst — drawing through the WM_PAINT HDC (DolphinDart DD9).
+
+ The door has delivered the HDC since DD7; nothing had yet DRAWN with it. This
+ is the smallest thing that proves the whole chain — real WM_PAINT -> door ->
+ UiSession -> a Smalltalk handler -> a GDI call through the generated prims —
+ and it proves it by READING THE RESULT BACK, not by counting that the handler
+ ran.
+
+ A paint count only says a handler was entered. `SetPixelV` followed by
+ `GetPixel` at the same coordinate says the device context we were handed is a
+ real one, that the call reached GDI with the right argument order, and that
+ the pixel landed where we asked. If any link is broken the readback answers
+ CLR_INVALID (16rFFFFFFFF) or the wrong colour — it cannot answer the value we
+ wrote by accident."
+UiWindow subclass: PaintProbe [
+    | probed readback textOk |
+
+    "COLORREF is 0x00BBGGRR, so this is pure blue — deliberately not the window
+     background, not black and not white, so a matching readback cannot be
+     matching something that was already there."
+    PaintProbe class >> inkColor [ ^16rFF0000 ]
+    PaintProbe class >> inkX [ ^12 ]
+    PaintProbe class >> inkY [ ^9 ]
+
+    initWindow [ super initWindow. probed := 0. readback := nil. textOk := false ]
+    probed [ ^probed ]
+    readback [ ^readback ]
+    textOk [ ^textOk ]
+
+    onPaint: hdc [
+        | s |
+        super onPaint: hdc.
+        probed := probed + 1.
+        Gdi32
+            setPixelV: hdc
+            x: PaintProbe inkX
+            y: PaintProbe inkY
+            crColor: PaintProbe inkColor.
+        "Read it straight back, inside the same BeginPaint/EndPaint pair — the
+         HDC is only valid here, and reading later would test a different DC."
+        readback := Gdi32
+            getPixel: hdc
+            xPos: PaintProbe inkX
+            yPos: PaintProbe inkY.
+        "And some text, which is what the gate's snapshot will show.
+
+         The STRING goes in, not its address: the generated wrapper marshals it
+         (`FFICoerce stringTemp:` -> a Utf16Buffer freed under `ensure:`), and
+         handing it a raw address instead is refused outright — 'FFI: cannot
+         pass SmallInteger as a string argument'. That refusal is the floor
+         working as designed; a wrapper that accepted an integer here would
+         hand TextOutW whatever happened to be at that address.
+
+         `cbString` is a CHARACTER count, not a byte count. The two differ by a
+         factor of two for UTF-16, and passing bytes draws trailing garbage
+         from past the end of the string."
+        s := 'DolphinDart'.
+        textOk := (Gdi32
+            textOut: hdc
+            nXStart: 20
+            nYStart: 24
+            lpString: s
+            cbString: s size) ~= 0.
+        ^0
+    ]
+]

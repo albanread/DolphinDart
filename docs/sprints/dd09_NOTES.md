@@ -222,6 +222,34 @@ This is the shape of finding the probe exists for. Neither bug was reachable
 by any correctness test — one needs a method to run 20,000 times, the other is
 invisible until you ask what a message costs.
 
+## Drawing through the WM_PAINT HDC
+
+`test/st_paint.dart` + `st/test/ffi/paint_probe.mst`. The door has handed the
+image a real HDC since DD7 and nothing had drawn with it; this closes the
+chain — real `WM_PAINT` -> door -> `UiSession` -> a Smalltalk handler -> GDI
+through the generated prims.
+
+**Verified by readback, not by counting.** A paint count proves a handler was
+entered and nothing more. `SetPixelV` followed by `GetPixel` at the same
+coordinate, inside the same `BeginPaint`/`EndPaint` pair, proves the device
+context is real, the arguments reached GDI in the right order, and the pixel
+landed where we asked. A broken link answers `CLR_INVALID` (16rFFFFFFFF) or the
+background colour — it cannot answer the exact COLORREF we wrote by accident.
+The ink is pure blue (16rFF0000, COLORREF being 0x00BBGGRR) precisely because
+it is neither the background, nor black, nor white.
+
+Also asserted: a SECOND paint after `invalidate` draws too (so this is not a
+one-shot that worked during window creation), and the door's paint-fault
+counter is zero (so no handler raised and got backstopped by `ValidateRect`).
+
+One finding: `TextOutW` takes the STRING, not its address. The generated
+wrapper marshals it itself (`FFICoerce stringTemp:` -> a `Utf16Buffer` freed
+under `ensure:`), and handing it a raw address is refused outright — *"FFI:
+cannot pass SmallInteger as a string argument"*. That refusal is the floor
+working as designed: a wrapper that accepted an integer there would hand
+TextOutW whatever happened to be at that address. `cbString` is a CHARACTER
+count, not a byte count.
+
 ### Also landed
 
 `tools/translate_mvp.py` — the regeneration command for `st/mvp`, which was
