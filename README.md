@@ -1,4 +1,27 @@
-# WINDART
+# DolphinDart
+
+**This repo's mission: Dolphin Smalltalk on the Dart VM** — the Dolphin dialect
+and the Windows primitives it needs, running fast and portably (Windows x64 +
+ARM64) on the substrate described below, with **the Dolphin MVP GUI running**
+as the goal gate and our own GamePane kept as the games-with-sound extension.
+
+- **Plan of record:** [DOLPHIN_PORT.md](DOLPHIN_PORT.md)
+- **Sprint ladder:** [DOLPHIN_SPRINTS.md](DOLPHIN_SPRINTS.md) · per-sprint
+  agent briefs in [docs/sprints/](docs/sprints/)
+- **Prior art:** [docs/prior_art/winvm/](docs/prior_art/winvm/README.md)
+  (the WINVM attempt's corpus, with standing notes)
+- **Dolphin sources:** `C:\projects\dsfork` (MIT; MVP verified byte-identical
+  to upstream D8). The fork's own VM does not work and is reading material
+  only — we port the language layer, never its bytecode interpreter.
+
+Seeded 2026-08-15 from WINDARTTALK @ `c2aec79` (fresh history; provenance in
+the seed commit and `st/PROVENANCE.md`). Everything below this line is the
+seed's own README, kept intact — it describes the substrate this project
+builds on.
+
+---
+
+# WINDART (the substrate)
 
 A native **Windows x64 JIT** port of the **Dart 1.24.3** virtual machine — the last
 release of the **V1** Dart language (optional typing, in-VM parser), from December
