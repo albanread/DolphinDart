@@ -1,4 +1,22 @@
-# DD5 — The primitive campaign (rolling) `L`
+# DD5 — The primitive campaign (rolling) ~~`L`~~ → `S`
+
+> **DD2 RESCOPED THIS SPRINT (measured 2026-08-15). Read
+> [PRIM_MAP.md](../PRIM_MAP.md) before anything below.**
+>
+> A direct scan of the corpus found **32 `<primitive:` sites in the whole MVP
+> tree, all of them D157** (`primitiveNewInitializedObject`) — one distinct
+> number. The other 212 numbers live in `Base/**`, Dolphin's kernel, which this
+> project replaces with `st/world` rather than porting.
+>
+> So this is not a 215-row campaign. It is **one translator lowering rule**
+> (D157 → `basicNew` + instance-variable stores, per PRIM_MAP) plus whatever
+> DD3's refusal reports actually surface. Everything below stands as the
+> *method* for any row that does turn up — the two-tests-minimum discipline
+> especially — but the wave plan is superseded: no speculative primitive work,
+> rows opened on measured demand only.
+>
+> `docs/prior_art/winvm/dolphin_win_prims.md` remains a good reference for
+> **Dolphin's kernel**; it is not this project's to-do list.
 
 **Objective:** make `docs/PRIM_MAP.md` real: every Dolphin primitive the
 translated corpus executes is either aliased to a house primitive, implemented

@@ -56,14 +56,33 @@ inheritance offset wrong and objects are built with fields shifted by one — a
 defect that shows up arbitrarily far away. Test with a subclass, not just a root
 class.
 
-## Caveat on the method
+## The cross-check — measured, and stronger than the map
 
 The bucketing above reads the "Key classes" column of the prior-art inventory,
-which is representative and **truncated** (D157's own entry ends "+60 more").
-The authoritative cross-check is a direct scan of the MVP closure for
-`<primitive:` pragma sites — see `dd02_NOTES.md` for that measurement. Treat
-this table as the map and that scan as the territory; where they disagree, the
-scan wins.
+which is representative and **truncated** (D157's own entry ends "+60 more"), so
+it was recorded as provisional. A direct scan of the corpus settles it, and the
+territory is cleaner than the map:
+
+| Tree | `<primitive:` sites | Files | Distinct numbers |
+|---|--:|--:|--:|
+| **`MVP/**` (what we translate)** | **32** | 28 | **1 — D157, and nothing else** |
+| `Base/**` (the kernel we replace) | 354 | 59 | 212 |
+
+*(Comments and string literals stripped with a character-level scanner that
+handles `""`, `''` and `$"`/`$'` character literals; `Tests`, `Deprecated` and
+`Gdiplus` subtrees excluded.)*
+
+**`primitiveNewInitializedObject` is the only primitive number in the entire MVP
+tree.** Its 28 files are exactly the value-object and initialiser classes you
+would expect: `Graphics.Point`, `Graphics.Rectangle`, `Graphics.ARGB`,
+`UI.CreateWindow`, `UI.LayoutPlacement`, `UI.WindowsEvent`, `UI.CreateDialog`,
+`UI.STBViewContext`, and the `Graphics.*Initializer` family.
+
+D172 (`OS.COM.VARIANT>>value`) sits under `Base` in this split, and COM is a v1
+non-goal either way.
+
+So the disposition is final, not provisional: **one lowering rule is the whole
+primitive demand of this port.**
 
 ## The numbering collision (why translation must go through this table)
 

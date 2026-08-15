@@ -6,6 +6,15 @@ don't: **`ST_ffiCall` is stubbed on Windows** ("Win64 trampoline pending",
 `st_natives.cc:14-18`); the working precedent is per-function C++ natives
 (`port-win/dart_win32/`). Gates DD7.
 
+> **DD2 correction (measured 2026-08-15): `<virtual:` and `<overlap>` are NOT
+> standalone pragmas.** They are *modifiers inside* an external-call pragma:
+> `<virtual stdcall: …>` (6 sites, 2 COM print-dialog callback classes) and
+> `<overlap stdcall:/cdecl: …>` (13 sites, 3 files — `OS.KernelLibrary`,
+> `OS.CRTLibraryNonBlocking`, `OS.UserLibrary`). The prior art and this brief's
+> first draft both had the syntax wrong. Corpus demand: `<stdcall:` 667 sites in
+> 29 files, `<cdecl:` 77 in 4 — so the generator's real workload is the stdcall
+> surface, and `overlap` (async, non-blocking) is a v1 refusal, not a feature.
+
 **Read first:** `st_natives.cc` (the POSIX dlsym floor + the stub),
 `st_flow_graph_builder.cc:3058` (the existing `"primitive: FFI "` pragma —
 the house binding form), `port-win/dart_win32/` (natives precedent),
