@@ -252,10 +252,19 @@ check("prim157: offsets past the superclass's fields", got,
       "^self basicNew instVarAt: 4 put: xc; instVarAt: 5 put: yc; yourself")
 check("prim157: no refusal once the count is known", ref, [])
 
-m_bad = Method(selector="x:", arg_names=["only"], pattern="x: only", comment="",
+# FEWER args than ivars is well defined: the first N are set, the rest stay nil.
+# Refusing this left LayoutContext unable to make a placement at all.
+m_few = Method(selector="x:", arg_names=["only"], pattern="x: only", comment="",
                body="", class_side=True, line=1)
-got, ref = lower_prim157(m_bad, cd157, "t:1", 0)
-check("prim157: refuses an arg/ivar count mismatch", (got, len(ref)), (None, 1))
+got, ref = lower_prim157(m_few, cd157, "t:1", 0)
+check("prim157: fewer args than ivars sets the first ones", got,
+      "^self basicNew instVarAt: 1 put: only; yourself")
+check("prim157: and is not a refusal", ref, [])
+# MORE args than ivars has nowhere to put them.
+cd0 = ClassDef(name="Graphics.ARGB", superclass="Graphics.AbstractRGB", ivars=[],
+               cvars=[], civars=[], imports=[], class_constants="{}")
+got, ref = lower_prim157(m_few, cd0, "t:1", 1)
+check("prim157: more args than ivars is still refused", (got, len(ref)), (None, 1))
 
 # --- report ------------------------------------------------------------------
 if FAILS:

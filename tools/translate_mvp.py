@@ -52,6 +52,7 @@ TARGETS = [
     # hands them to a LayoutContext, so both are load-bearing here.
     "Core/Object Arts/Dolphin/MVP/Base/Graphics.Rectangle.cls",
     "Core/Object Arts/Dolphin/MVP/Base/UI.LayoutContext.cls",
+    "Core/Object Arts/Dolphin/MVP/Base/UI.LayoutPlacement.cls",
 ]
 
 # Parsed for hierarchy + pools, never emitted. DIRECTORIES, deliberately: a

@@ -445,3 +445,65 @@ One thing worth not misreading: `LayoutContext>>apply` translates to
 `true ifFalse: [^self]`. That is the constant folder working — the original is
 `DeferRectangles ifFalse: [^self]` and `DeferRectangles` is a class constant
 whose value is `true`. The branch is genuinely dead in Dolphin too.
+
+## THE DD9 GATE IS GREEN — the acceptance shell
+
+`test/st_shell.dart` + `st/test/ffi/shell_probe.mst`. A code-built window with
+three real Win32 controls, arranged by **Dolphin's own `BorderLayout` running
+unmodified**, relaid on every real `WM_SIZE` through Dolphin's own message map.
+
+What is Dolphin's: the layout algorithm (`UI.BorderLayout`), the deferred
+batching (`UI.LayoutContext`, `UI.LayoutPlacement`, which routes through the
+real `BeginDeferWindowPos`/`DeferWindowPos`/`EndDeferWindowPos`), the geometry
+(`Graphics.Rectangle`, `Point`), and the dispatch (`buildMessageMap`). What is
+ours: the window, its controls, and `WinView` — the adapter answering Dolphin's
+view protocol from Win32 calls.
+
+Asserted against what the north/center/south rules REQUIRE, computed in the
+gate independently of the implementation, from `GetWindowRect` — where Windows
+actually put the controls, not where the layout intended to:
+
+```
+north  [0, 0,   384, 28]     after resize  [0, 0,   624, 28]
+centre [0, 28,  384, 205]                  [0, 28,  624, 385]
+south  [0, 233, 384, 28]                   [0, 413, 624, 28]
+```
+
+Plus: focus moves and a relayout does not steal it (that is what
+`SWP_NOACTIVATE` buys, and without the assertion a regression there is
+invisible); clean destroy takes the controls with it; the registry empties; and
+zero paint faults across the run.
+
+### What the adapter needed, in the order it asked
+
+Each of these was a real gap found by running Dolphin's code, not by reading it:
+
+1. **`LayoutPlacement class >> view:`** — refused by `lower_prim157` as "1 arg
+   vs 3 instance variables". But primitive 157 copies arguments into the FIRST
+   N instance variables, so fewer arguments than variables is well defined and
+   the rest stay nil. Refusing it left `LayoutContext` unable to make a
+   placement at all, which took the whole layout down. More arguments than
+   variables is still refused.
+2. **`WriteStream>>position`** — the ivar was always there, never exposed.
+   `repositionSubViewsOf:` uses it as the placement count.
+3. **`Object>>species`** — ANSI; a growing stream asks its collection for it.
+4. **Stream growth must preserve the backing collection's IDENTITY.** Dolphin
+   writes `stream := WriteStream on: (newPlacements := Array new)` and then
+   reads back through `newPlacements at: i`. The world's `growTo:` allocates a
+   replacement, so that reference stayed the original empty Array and the loop
+   raised. Dolphin grows arrays in place; a Dart List does too, so appending
+   preserves identity exactly. Two traps inside this one: `(Array new) isKindOf:
+   Array` answers **false** (Array is bridged, its instances are Dart Lists), so
+   the first version's kind test silently never fired; and `Array>>add:` mangles
+   to `add_`, which no Dart List has — hence
+   `Smalltalk class >> arrayAppend:with:` in the prelude.
+5. **A cross-file reopen cannot call `super`.** `super nextPut:` looks in the
+   SUPERCLASS, not at the definition being replaced. The other branch repeats
+   the world's two lines instead.
+6. **`screenOrigin` is the CLIENT origin, not the window origin.** A child is
+   positioned relative to the client area, which the border and caption inset
+   from the frame. Using `GetWindowRect`'s top-left put every control out by
+   exactly the frame thickness — (8, 31) here — while every width, height and
+   *relative* position was already correct. That is the signature of a
+   coordinate-space error: the layout looks right and sits in the wrong place.
+   `ClientToScreen` on (0,0) is the offset to subtract.

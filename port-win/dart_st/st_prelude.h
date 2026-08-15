@@ -117,6 +117,12 @@ Object subclass: Win32 [
 
 "── The system object (corpus surface: Smalltalk millisecondClock) ──"
 Object subclass: Smalltalk [
+    "Append to an Array IN PLACE, preserving its identity. A growable Dart
+     List supports this natively, but a Smalltalk `add:` mangles to `add_`
+     and never reaches it. Dolphin's LayoutContext writes through a
+     WriteStream and reads back through its OWN reference to the same Array,
+     so the identity is load-bearing — see st/dolphin_compat/07_streams.mst."
+    Smalltalk class >> arrayAppend: aCollection with: anObject [ <stprim: stListAppend> ]
     Smalltalk class >> millisecondClock [ <stprim: stMillisecondClock> ]
     Smalltalk class >> microsecondClock [ <stprim: stMicrosecondClock> ]
     Smalltalk class >> gcScavenge [ <stprim: stGcScavenge> ]

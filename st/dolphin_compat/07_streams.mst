@@ -1,0 +1,71 @@
+"07_streams.mst — the stream position protocol (DolphinDart DD9).
+
+ `WriteStream` already TRACKS its position — the ivar is right there in
+ `st/world/18_writestream.mst` — it simply never exposed it. ANSI and Dolphin
+ both put `position` / `position:` on PositionableStream, and Dolphin's own
+ `LayoutContext>>repositionSubViewsOf:` uses it as the count of placements
+ accumulated so far:
+
+     count := stream position.
+     count == 0 ifTrue: [^self].
+
+ Found by running that method: `does not understand position`, from inside a
+ layout pass."
+Object subclass: WriteStream [
+    position [ ^position ]
+
+    "Setting the position back is how Dolphin truncates a stream in place. It
+     may only move WITHIN what has been written — seeking past the end would
+     expose whatever the backing collection happens to hold there."
+    position: anInteger [
+        (anInteger < 0 or: [ anInteger > position ])
+            ifTrue: [ ^self error: 'position out of range' ].
+        position := anInteger
+    ]
+
+    "── growing must PRESERVE THE BACKING COLLECTION'S IDENTITY ──────────
+     The world's `growTo:` allocates a replacement and rebinds `collection`,
+     which is the usual Smalltalk implementation and is invisible to any code
+     that reads the result through `contents`. Dolphin's is not such code:
+
+         stream := WriteStream on: (newPlacements := Array new).
+         ... stream nextPut: placement ...
+         1 to: count do: [:i | (newPlacements at: i) deferWindowPos: hdwp]
+
+     — `UI.LayoutContext>>repositionSubViewsOf:`, verbatim. It writes through
+     the stream and reads back through its OWN reference to the collection, so
+     a replacement leaves it holding the original empty Array and the loop
+     fails with an index error. Dolphin grows arrays in place, so the two
+     references stay the same object.
+
+     An Array here is a Dart List, which grows in place too, so appending
+     preserves identity exactly as Dolphin does. Only the Array case is
+     overridden: a String-backed stream has no such caller and the world's
+     bulk-copy growth is faster.
+
+     Found by running Dolphin's layout: `RangeError (index): Valid value range
+     is empty: 0`, from inside a WM_SIZE.
+
+     The non-Array branch repeats the world's two lines rather than calling
+     `super nextPut:`: this is a cross-file REOPEN of the same class, so
+     `super` looks in the SUPERCLASS, not at the definition being replaced —
+     the front-end says so plainly (`unsupported super send (not found in
+     supers)`).
+
+     The test is on the class NAME. `(Array new) isKindOf: Array` answers
+     FALSE — Array is a bridged class whose instances are Dart Lists — so a
+     kind test here silently never fires, which is how the first version of
+     this method looked correct and changed nothing."
+    nextPut: e [
+        collection class name = 'Array'
+            ifTrue: [
+                position = collection size
+                    ifTrue: [ Smalltalk arrayAppend: collection with: e ]
+                    ifFalse: [ collection at: position + 1 put: e ] ]
+            ifFalse: [
+                position = collection size ifTrue: [ self grow ].
+                collection at: position + 1 put: e ].
+        position := position + 1.
+        ^e
+    ]
+]

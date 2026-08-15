@@ -1,0 +1,75 @@
+Object subclass: LayoutPlacement [
+    | view rectangle show |
+
+    deferWindowPos: aHandle [
+        	^rectangle
+        		ifNil: 
+        			[User32
+        				deferWindowPos: aHandle
+        				hwnd: view asParameter
+        				hwndInsertAfter: 0
+        				x: 0
+        				y: 0
+        				cx: 0
+        				cy: 0
+        				uFlags: (show
+        						ifNil: [23]
+        						ifNotNil: 
+        							[show
+        								ifTrue: [87]
+        								ifFalse: [151]])]
+        		ifNotNil: 
+        			[| rect |
+        			rect := view adjustRectangle: rectangle.
+        			User32
+        				deferWindowPos: aHandle
+        				hwnd: view asParameter
+        				hwndInsertAfter: 0
+        				x: rect left
+        				y: rect top
+        				cx: rect width
+        				cy: rect height
+        				uFlags: (show
+        						ifNil: [20]
+        						ifNotNil: 
+        							[show
+        								ifTrue: [84]
+        								ifFalse: [148]])]
+    ]
+    hasDeferredChange [
+        "Does the receiver describe a deferred change of view rectangle or visibility?"
+        ^(rectangle notNil and: [view getRect ~= rectangle])
+        		or: [show notNil and: [view hasVisibleStyle ~~ show]]
+    ]
+    isVisible [
+        	^show ifNil: [view hasVisibleStyle]
+    ]
+    rectangle [
+        	^rectangle
+    ]
+    rectangle: aRectangle [
+        	rectangle := aRectangle
+    ]
+    show [
+        	^show
+    ]
+    show: aBoolean [
+        	show := aBoolean
+    ]
+    view [
+        	^view
+    ]
+    view: aView [
+        	view := aView.
+        	^self
+    ]
+    visibleExtent [
+        "Answer a <point> representing the extent of the associated view that is expected to be visible after the placement has been applied. This doesn't take into account partial visibility; if the view is to be visible it is assumed the whole extent will be visible. This is intended for use in determining the amount of space that should be reserved for a view as part of a layout calculation."
+        self isVisible ifFalse: [^Zero].
+        	rectangle ifNotNil: [:rect | ^rect extent].
+        	^view getWindowRect extent
+    ]
+    LayoutPlacement class >> view: aView [
+        | _casc1 | _casc1 := self basicNew. _casc1 instVarAt: 1 put: aView. ^_casc1 yourself
+    ]
+]

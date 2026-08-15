@@ -33,7 +33,7 @@ C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.View.cls:5705: [binding-
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.View.cls:5721: [cascade] cascade on a receiver this rewriter cannot bound — splitting it could change evaluation
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.View.cls:5902: [hashhash] `##(self)` is not a foldable constant
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.View.cls:5968: [hashhash] `##('DolphinWindow' asUtf16String)` is not a foldable constant
-C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Graphics\Graphics.ARGB.cls:128: [prim157] Graphics.ARGB>>fromArgbCode:: 1 args vs 0 instance variables — refusing to guess the mapping
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Graphics\Graphics.ARGB.cls:128: [prim157] Graphics.ARGB>>fromArgbCode:: 1 args vs 0 instance variables — nowhere to put them
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Graphics\Graphics.Color.cls:75: [cascade] cascade on a receiver this rewriter cannot bound — splitting it could change evaluation
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Graphics\Graphics.Color.cls:211: [hashhash] `##(255.0 * 2)` is not a foldable constant
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Graphics\Graphics.Color.cls:211: [hashhash] `##(255.0 * 2)` is not a foldable constant

@@ -555,10 +555,19 @@ def lower_prim157(m: Method, cd: ClassDef, where: str,
         return None, [Refusal(where, "prim157",
                               f"{cd.name}>>{m.selector}: superclass ivar count unknown "
                               f"({cd.superclass}); cannot place fields safely")]
-    if n_args != len(cd.ivars):
+    # Primitive 157 copies the argument list into the first N instance
+    # variables IN ORDER, so FEWER arguments than variables is well defined —
+    # the remainder simply stay nil. `UI.LayoutPlacement class >> view:` is one
+    # argument against `| view rectangle show |`, and refusing it left
+    # `LayoutContext` unable to make a placement at all, which took the whole
+    # layout down. MORE arguments than variables has nowhere to put them and is
+    # still refused (`Graphics.ARGB>>fromArgbCode:` — 1 against 0 own — remains
+    # a refusal, since its target is an inherited field this lowering does not
+    # address).
+    if n_args > len(cd.ivars):
         return None, [Refusal(where, "prim157",
                               f"{cd.name}>>{m.selector}: {n_args} args vs {len(cd.ivars)} "
-                              f"instance variables — refusing to guess the mapping")]
+                              f"instance variables — nowhere to put them")]
     # `instVarAt:` is 1-based over the FULL instance-variable order, inherited
     # fields first, so this class's own variables start after the superclass's.
     # Getting the offset wrong shifts every field by one — a defect that surfaces

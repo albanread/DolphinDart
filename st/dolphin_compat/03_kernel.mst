@@ -118,6 +118,13 @@ nil subclass: Object [
      initialize, needs it for the same reason — 8 more sites."
     initialize [ ^self ]
 
+    "ANSI `species`: the class to use when deriving a new object of the same
+     kind — `copyFrom:to:`, `collect:`, and a WriteStream growing its backing
+     collection all go through it. Absent from the world; found when Dolphin's
+     `LayoutContext>>repositionSubViewsOf:` streamed into an Array and the
+     stream tried to grow."
+    species [ ^self class ]
+
     propertyAt: aKey [ ^(PropertyRegistry propertiesOf: self) at: aKey ifAbsent: [ nil ] ]
     propertyAt: aKey ifAbsent: aBlock [
         ^(PropertyRegistry propertiesOf: self) at: aKey ifAbsent: aBlock

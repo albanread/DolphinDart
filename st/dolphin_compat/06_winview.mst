@@ -1,0 +1,160 @@
+"06_winview.mst — the substrate adapter (DolphinDart DD9).
+
+ Dolphin's `BorderLayout` and `LayoutContext` are translated and run unmodified.
+ They talk to their subjects through a small protocol — `clientRectangle`,
+ `rectangle:`, `hasVisibleStyle`, `calcClientRectangleFromRectangle:` — and
+ `UI.View` implements it against a Dolphin window handle.
+
+ `WinView` implements the SAME protocol against a raw HWND. That is what lets
+ the real Dolphin layout algorithm arrange real Win32 windows before `UI.View`
+ owns its own window: the algorithm is Dolphin's, the geometry is Dolphin's
+ (`Graphics.Rectangle`), and only the four calls that touch the OS are ours.
+
+ It is an adapter, not a reimplementation. Nothing here decides layout — every
+ number it returns comes from Win32, and every number it is given comes from
+ `BorderLayout`.
+
+ `Dictionary>>lookup:` rides along because `LayoutContext` asks its placement
+ table for it; Dolphin's LookupTable answers nil for an absent key where this
+ world's `at:` raises."
+Object subclass: Dictionary [
+    "Dolphin: answer nil rather than raising when the key is absent."
+    lookup: aKey [ ^self at: aKey ifAbsent: [ nil ] ]
+]
+Object subclass: IdentityDictionary [
+    lookup: aKey [ ^self at: aKey ifAbsent: [ nil ] ]
+]
+
+Object subclass: WinView [
+    | hwnd parent subViews preferred |
+
+    WinView class >> onHandle: h [ ^self basicNew setHandle: h parent: nil ]
+    WinView class >> onHandle: h parent: aWinView [
+        | v |
+        v := self basicNew setHandle: h parent: aWinView.
+        aWinView isNil ifFalse: [ aWinView addSubView: v ].
+        ^v
+    ]
+    setHandle: h parent: p [ hwnd := h. parent := p. subViews := OrderedCollection new ]
+    handle [ ^hwnd ]
+    parentView [ ^parent ]
+
+    "── the container protocol LayoutContext walks ──────────────────────
+     `repositionSubViewsOf:` recurses through these and batches each level
+     into its own DeferWindowPos, which is Dolphin's own reason: the API
+     requires every window in a batch to share a parent."
+    addSubView: aView [ ^subViews add: aView ]
+    subViews [ ^subViews ]
+    subViewsDo: aBlock [ ^subViews do: aBlock ]
+
+    "`asParameter` is how Dolphin passes a view to an external call — the
+     handle. LayoutPlacement's DeferWindowPos path sends it."
+    asParameter [ ^hwnd ]
+
+    "No adjustment: `UI.View` uses this to compensate for a border or a
+     scrollbar, and this adapter's windows have neither. Answering the
+     rectangle unchanged is the honest identity, not a stub."
+    adjustRectangle: aRectangle [ ^aRectangle ]
+
+    "`getRect` / `rectangle` are the current window rectangle. LayoutPlacement
+     compares against it to decide whether a placement is a real change, so an
+     unchanged layout costs no SetWindowPos calls at all."
+    getRect [ ^self getWindowRect ]
+    rectangle [ ^self getWindowRect ]
+
+    "── the geometry LayoutContext asks for ─────────────────────────────
+     GetWindowRect answers SCREEN coordinates; a child's rectangle must be in
+     its PARENT's client coordinates, which is what BorderLayout computes in
+     and what MoveWindow expects. Converting here — once, in the adapter —
+     keeps every caller in one coordinate system. Getting this wrong does not
+     raise: the controls simply land somewhere else, so the gate asserts
+     positions rather than trusting them."
+    getWindowRect [
+        | r x y w h origin |
+        r := RECTL new.
+        User32 getWindowRect: hwnd lpRect: r address.
+        x := r left. y := r top. w := r right - x. h := r bottom - y.
+        origin := parent isNil
+            ifTrue: [ 0 @ 0 ]
+            ifFalse: [ parent screenOrigin ].
+        ^Rectangle origin: (x - origin x) @ (y - origin y) extent: w @ h
+    ]
+
+    "This view's CLIENT origin in screen coordinates — what a child subtracts.
+
+     Not GetWindowRect's top-left: that is the outer frame, and a child window
+     is positioned relative to the CLIENT area, which the border and caption
+     inset from it. Using the window origin put every control out by exactly
+     the frame thickness — (8, 31) on this desktop — while every width, height
+     and relative position was already correct. That is the shape of a
+     coordinate-space error: the layout looks right and sits in the wrong
+     place, which is why the gate asserts absolute positions and not just
+     sizes.
+
+     ClientToScreen maps the client-space point (0,0) to screen space, which is
+     precisely the offset a child's screen rectangle must lose."
+    screenOrigin [
+        | p |
+        p := POINTL new.
+        p x: 0. p y: 0.
+        User32 clientToScreen: hwnd lpPoint: p address.
+        ^p x @ p y
+    ]
+
+    "The client area, origin always 0@0 — Win32's own convention."
+    clientRectangle [
+        | r |
+        r := RECTL new.
+        User32 getClientRect: hwnd lpRect: r address.
+        ^Rectangle origin: 0 @ 0 extent: (r right - r left) @ (r bottom - r top)
+    ]
+
+    "A container has no border in this adapter, so the client rectangle of a
+     given window rectangle is that rectangle at the origin. `UI.View` computes
+     this from the window styles; when a real View owns the window, its version
+     runs instead of this one."
+    calcClientRectangleFromRectangle: aRectangle [
+        ^Rectangle origin: 0 @ 0 extent: aRectangle extent
+    ]
+
+    hasVisibleStyle [ ^(User32 isWindowVisible: hwnd) ~= 0 ]
+
+    "The setter LayoutContext applies at the end of a layout pass.
+
+     SetWindowPos rather than MoveWindow: the generated prims carry the former
+     (MoveWindow is not in Dolphin's own pragma set, so genprims never saw it).
+     SWP_NOZORDER | SWP_NOACTIVATE = 16r14 keeps a relayout from reordering the
+     controls or stealing focus — which would break the tab-order assertions
+     in the same gate that checks the positions."
+    rectangle: aRectangle [
+        User32
+            setWindowPos: hwnd
+            hWndInsertAfter: 0
+            x: aRectangle origin x
+            y: aRectangle origin y
+            cx: aRectangle width
+            cy: aRectangle height
+            uFlags: 16r14.
+        ^aRectangle
+    ]
+
+    "── what BorderLayout asks an EDGE view for ─────────────────────────
+     `heightForEdge:ofWidth:inContext:` answers `(aView layoutExtent: ctx) y`,
+     so this is the size the docked view WANTS. Dolphin's `View` computes it
+     from the preferred extent or the current one; here it is settable, and
+     defaults to the view's current window extent so an unset control keeps its
+     size rather than collapsing."
+    preferredExtent: aPoint [ preferred := aPoint ]
+    preferredExtent [ ^preferred ifNil: [ self getWindowRect extent ] ]
+    layoutExtent: aLayoutContext [ ^self preferredExtent ]
+
+    "── the container protocol BorderLayout reads ───────────────────────
+     Dolphin's `View>>actualInsets:` answers the border to inset sub-views by.
+     Zero here: the door's window has no border of its own, and a non-zero
+     value would silently shift every control."
+    actualInsets: aLayoutContext [ ^Rectangle origin: 0 @ 0 corner: 0 @ 0 ]
+
+    setFocus [ ^User32 setFocus: hwnd ]
+    hasFocus [ ^(User32 getFocus) = hwnd ]
+    isWindow [ ^(User32 isWindow: hwnd) ~= 0 ]
+]

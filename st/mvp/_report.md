@@ -1,11 +1,11 @@
 # dolphin2mst run report
 
-- inputs: **13** source files (`.cls` + `.pax`)
+- inputs: **14** source files (`.cls` + `.pax`)
 - shared-pool constants available: **5463** from **155** pools
 - loose methods adopted from `.pax`: **0**
-- parsed: **13**  (unbalanced/skipped: 0)
-- emitted: **13** `.mst`
-- methods: **1332**
+- parsed: **14**  (unbalanced/skipped: 0)
+- emitted: **14** `.mst`
+- methods: **1343**
 - refusals: **48**
 
 ## Refusals by rewrite class
@@ -31,6 +31,7 @@
 | `ContainerView` | 37 | 3 |
 | `LayoutContext` | 16 | 0 |
 | `LayoutManager` | 11 | 0 |
+| `LayoutPlacement` | 11 | 0 |
 | `Rectangle` | 98 | 2 |
 | `ShellView` | 156 | 11 |
 | `View` | 667 | 18 |
