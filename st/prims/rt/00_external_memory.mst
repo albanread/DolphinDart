@@ -28,7 +28,11 @@ Object subclass: Win32Rt [
 ]
 
 Object subclass: ExternalMemory [
-    | address size |
+    "`owned` is the lifetime bit, not a subclass: a VIEW onto a nested field
+     must be an instance of that field's own struct class (PAINTSTRUCT's
+     rcPaint is a RECT, with RECT's accessors), so view-ness cannot live in the
+     class. Freeing a view would free the enclosing block."
+    | address size owned |
 
     "LMEM_FIXED | LMEM_ZEROINIT = 0 | 64."
     ExternalMemory class >> new: nBytes [
@@ -37,10 +41,16 @@ Object subclass: ExternalMemory [
         p := Win32Rt localAlloc: 64 size: nBytes.
         p = 0 ifTrue: [ ^self error: 'ExternalMemory: LocalAlloc failed, GetLastError=',
                                      Win32 lastError printString ].
-        ^self basicNew setAddress: p size: nBytes
+        ^self basicNew setAddress: p size: nBytes owned: true
     ]
 
-    setAddress: p size: n [ address := p. size := n ]
+    "A typed window onto memory someone else owns."
+    ExternalMemory class >> viewOn: parent at: byteOffset size: n [
+        ^self basicNew setAddress: parent address + byteOffset size: n owned: false
+    ]
+
+    setAddress: p size: n owned: aBool [ address := p. size := n. owned := aBool ]
+    isView [ ^owned ~~ true ]
     address [ ^address ]
     size [ ^size ]
     isNull [ ^address isNil or: [ address = 0 ] ]
@@ -49,7 +59,8 @@ Object subclass: ExternalMemory [
      mourning are backlog), so whoever allocates frees — and the generated
      wrappers do, for the temporaries they create."
     free [
-        self isNull ifFalse: [ Win32Rt localFree: address. address := 0 ]
+        (self isNull or: [ self isView ]) ifFalse: [
+            Win32Rt localFree: address. address := 0 ]
     ]
 
     byteAt: i [ ^Win32 peek: address + i - 1 ]
@@ -74,11 +85,37 @@ Object subclass: ExternalMemory [
         0 to: 3 do: [ :k | self byteAt: i + k put: (x bitAnd: 255). x := x bitShift: -8 ].
         ^v
     ]
+    int8At: i [
+        | v |
+        v := self byteAt: i.
+        ^v > 127 ifTrue: [ v - 256 ] ifFalse: [ v ]
+    ]
+    uint16At: i [
+        ^(self byteAt: i) bitOr: ((self byteAt: i + 1) bitShift: 8)
+    ]
+    int16At: i [
+        | v |
+        v := self uint16At: i.
+        ^v > 32767 ifTrue: [ v - 65536 ] ifFalse: [ v ]
+    ]
+    uint16At: i put: v [
+        self byteAt: i put: (v bitAnd: 255).
+        self byteAt: i + 1 put: ((v bitShift: -8) bitAnd: 255).
+        ^v
+    ]
     intptrAt: i [
         | v b |
         v := 0.
         7 to: 0 by: -1 do: [ :k | b := self byteAt: i + k. v := (v bitShift: 8) bitOr: b ].
         ^v
+    ]
+
+    "A NON-OWNING window onto part of this block — a nested struct field
+     (PAINTSTRUCT's rcPaint is a RECT at offset 12) is a view, not a copy, so
+     writes through it reach the enclosing structure. `free` on a view is a
+     no-op: the block belongs to whoever allocated it."
+    viewAt: byteOffset size: n [
+        ^ExternalMemory viewOn: self at: byteOffset size: n
     ]
 
     printOn: aStream [
