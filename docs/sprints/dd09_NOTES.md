@@ -370,3 +370,78 @@ from a translated `buildMessageMap`, and give `UI.View` a real window.
   is not attempted yet — it needs `UI.View`.
 - Still open from the brief: the storm-message probe, and drawing through the
   `WM_PAINT` HDC the door already delivers.
+
+## Dolphin's own message map drives the door
+
+`test/st_mapped.dart`. `UI.View class >> buildMessageMap` is Dolphin's own
+method, translated unmodified, answering a 1024-slot Array from message number
++ 1 to a handler selector. `UiSession routeMessagesFrom: View` installs it and
+derives the door's routed set from it in one step — **66 messages**, which is
+the whole affordability argument made concrete.
+
+Asserted: the map runs and WM_PAINT maps to `#wmPaint:wParam:lParam:`; the
+routed set and the map AGREE (a map entry whose message is not routed never
+arrives, and that is the silent half of the pair); WM_SIZE and WM_SETCURSOR
+reach *different* selectors, so the map is choosing rather than funnelling; a
+mapped message the view does not implement DECLINES to DefWindowProcW, which is
+how every real Dolphin view behaves since the map is built once on `View` and
+each subclass handles its own subset.
+
+## THE D157 CONSTRUCTOR BUG — a silent wrong answer in the translator
+
+Found by asking `Rectangle origin: 3@4 extent: 10@20` for its corner.
+
+`lower_prim157` emits Dolphin's constructor as
+
+```smalltalk
+^self basicNew instVarAt: 1 put: a; instVarAt: 2 put: b; yourself
+```
+
+and `rewrite_cascades` then split it into
+
+```smalltalk
+self basicNew instVarAt: 1 put: a. self instVarAt: 2 put: b. ^self yourself
+```
+
+**The cascade receiver is the receiver of the LAST message in the head segment,
+not its first token.** Here that is `self basicNew`, not `self`. So the
+constructor allocated an object, wrote the first field into it, threw it away,
+wrote the remaining fields into the CLASS, and answered the class.
+
+`Rectangle` raised — "class 'Rectangle' has no class-side method
+'instVarAt:put:'" — which is the lucky case. A class that happened to
+understand the selector would have corrupted itself in silence. This is the
+D157 lowering, which is how EVERY Dolphin constructor with a numbered
+primitive is translated.
+
+The rewriter now splits the head properly: a keyword message starts at the
+first top-level `keyword:` token, a binary at the first top-level operator,
+and an all-unary head's final message is its last token — everything before
+that is the receiver. A receiver that is a bare primary is repeated as before
+(re-evaluating `self` costs nothing); **anything else is bound to a fresh
+temporary**, because repeating `self basicNew` would allocate one object per
+cascade part. The temporary is merged into the method's own declaration.
+
+Two golden cases pin it, including the exact D157 shape. Refusals moved 13 to
+15 — the two new ones are parenthesised receivers, which the rewriter declines
+rather than guesses.
+
+## Geometry: the world's omission, reversed
+
+`st/world/28_point.mst` records that `extent:`/`corner:`/`insetRect:` were
+"DELIBERATELY NOT ported — they return/accept a Rectangle, Strongtalk's own
+UI-toolkit geometry class, which MACVM has no use for at all: the GUI is
+HTML/JS-rendered". Correct for MACVM; **this project's goal reverses it**.
+`BorderLayout` computes in Rectangles and builds every one of them with
+`left @ top extent: width @ height`.
+
+So `Graphics.Rectangle` and `UI.LayoutContext` are translated (not
+reimplemented), and the Point-side constructors come back in the compat layer —
+`st/dolphin_compat/05_point_rect.mst` — rather than in the world, whose
+rationale still holds for the world. Verified: `(Rectangle origin: 3@4 extent:
+10@20) corner` -> `13@24`, printing in Dolphin's own format.
+
+One thing worth not misreading: `LayoutContext>>apply` translates to
+`true ifFalse: [^self]`. That is the constant folder working — the original is
+`DeferRectangles ifFalse: [^self]` and `DeferRectangles` is a class constant
+whose value is `true`. The branch is genuinely dead in Dolphin too.

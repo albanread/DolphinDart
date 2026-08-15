@@ -240,9 +240,8 @@ ContainerView subclass: ShellView [
         ^self close
     ]
     filerProxyIn: anSTxOutFiler [
-        	| proxy |
-        	proxy := super filerProxyIn: anSTxOutFiler.proxy instVars
-        		at: (self indexOfInstVar: 'lastFocus') put: nil. proxy at: (self indexOfInstVar: 'combinedAcceleratorTable') put: nil. proxy at: (self indexOfInstVar: 'defaultButton') put: 0. proxy at: (self indexOfInstVar: 'actualIcons') put: nil.
+        	| proxy _casc1 | 
+        	proxy := super filerProxyIn: anSTxOutFiler._casc1 := proxy instVars. _casc1 at: (self indexOfInstVar: 'lastFocus') put: nil. _casc1 at: (self indexOfInstVar: 'combinedAcceleratorTable') put: nil. _casc1 at: (self indexOfInstVar: 'defaultButton') put: 0. _casc1 at: (self indexOfInstVar: 'actualIcons') put: nil.
         	^proxy
     ]
     flash: anInteger [
@@ -253,7 +252,7 @@ ContainerView subclass: ShellView [
         "Flash the receiver the number of times specified by the <integer> argument, flashCountInteger,
         	configured by the FLASHWINFO flags in the <integer>, flagsInteger.
         	Answer a <boolean> indicating whether the window caption was drawn as active before the call."
-        | params |
+        | params | 
         	params := FLASHWINFO new.params hwnd: handle. params uCount: flashCountInteger. params dwFlags: flagsInteger.
         	^(User32 flashWindowEx: params) ~= 0
     ]
@@ -478,8 +477,7 @@ ContainerView subclass: ShellView [
     ]
     menuBar: aMenuBarOrNil [
         "Set the menu bar for this window to aMenuBarOrNil"
-         aMenuBarOrNil notNil 
-        		ifTrue: 
+        | _casc1 | _casc1 := aMenuBarOrNil notNil. _casc1 ifTrue: 
         			[menuBar := aMenuBarOrNil.
         			self updateMenuBar]
         		ifFalse: 
@@ -1093,7 +1091,7 @@ ContainerView subclass: ShellView [
     ]
     ShellView class >> stbConvertFromVersion0: anArray [
         "Private - Perform an STB conversion from a version 0 <View> to version 1 (Dolphin 2.0). i.e. insert largeIcon/smallIcon inst vars, initially nil."
-        | data size |
+        | data size | 
         	data := super stbConvertFromVersion0: anArray.
         	size := data size + 2.
         	^(Array new: size)
@@ -1110,7 +1108,7 @@ ContainerView subclass: ShellView [
     ShellView class >> stbConvertFromVersion4: anArray [
         "Private - Perform an STB conversion from a version 4 (or earlier) <View> to version 5,
         	i.e. insert maxExtent/minExtent inst vars in ShellView and subclasses."
-        | data size |
+        | data size | 
         	data := super stbConvertFromVersion4: anArray.
         	size := data size + 2.
         	^(Array new: size)
@@ -1136,7 +1134,7 @@ ContainerView subclass: ShellView [
     ShellView class >> stbConvertFromVersion9: anArray [
         "Private - Perform an STB conversion from a version 9 (or earlier) <ShellView> to version 10,
         	i.e. append 'flashes' and a couple of dummy instance variables."
-        | data size |
+        | data size | 
         	data := super stbConvertFromVersion9: anArray.
         	size := data size + 3.	"3 instance variables were added"
         	^(Array new: size)

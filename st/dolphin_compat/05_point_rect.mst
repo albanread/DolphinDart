@@ -1,0 +1,37 @@
+"05_point_rect.mst — Point's rectangle-making protocol (DolphinDart DD9).
+
+ `st/world/28_point.mst` says of `extent:` / `corner:` / `insetRect:` /
+ `expandRect:`:
+
+     DELIBERATELY NOT ported — they return/accept a Rectangle, Strongtalk's own
+     UI-toolkit geometry class, which MACVM has no use for at all: the GUI is
+     HTML/JS-rendered, not Smalltalk-Rectangle-based.
+
+ That was the right call for MACVM. **This project reverses it**: the goal is
+ Dolphin's MVP GUI, `BorderLayout` computes in Rectangles, and
+ `left @ top extent: width @ height` is how every one of its five branches
+ builds one. So the protocol comes back — in the compat layer rather than in
+ the world, because the world's rationale still holds for the world.
+
+ `Rectangle` itself is NOT reimplemented here: it is Dolphin's own
+ `Graphics.Rectangle`, translated into `st/mvp`. This file is only the two
+ constructors that live on the Point side, and they are Dolphin's own bodies.
+
+ `Rectangle` is unbound when this file loads (st/mvp comes later in the layer
+ order) and that is fine — the name is resolved when the method RUNS, the same
+ way every reference to `Win32` in this layer is."
+Object subclass: Point [
+    "Dolphin: `^Rectangle origin: self extent: aPoint`."
+    extent: aPoint [ ^Rectangle origin: self extent: aPoint ]
+
+    "Dolphin: `^Rectangle origin: self corner: aPoint`."
+    corner: aPoint [ ^Rectangle origin: self corner: aPoint ]
+
+    "Dolphin's `Point>>rect:` answers the rectangle spanning the two points,
+     normalised so origin is the top-left whichever order they arrive in."
+    rect: aPoint [
+        ^Rectangle
+            origin: ((self x min: aPoint x) @ (self y min: aPoint y))
+            corner: ((self x max: aPoint x) @ (self y max: aPoint y))
+    ]
+]

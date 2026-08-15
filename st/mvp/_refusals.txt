@@ -1,3 +1,5 @@
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\Graphics.Rectangle.cls:666: [cascade] cascade on a receiver this rewriter cannot bound — splitting it could change evaluation
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\Graphics.Rectangle.cls:696: [binding-literal] `#{...}` variable-binding literal has no house equivalent
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.ContainerView.cls:104: [hashhash] `##(350 @ 250)` is not a foldable constant
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.ContainerView.cls:364: [hashhash] `##(self)` is not a foldable constant
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.ContainerView.cls:369: [binding-literal] `#{...}` variable-binding literal has no house equivalent
@@ -9,38 +11,39 @@ C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.ShellView.cls:287: [hash
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.ShellView.cls:287: [hashhash] `##(self indexOfInstVar: 'actualIcons')` is not a foldable constant
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.ShellView.cls:433: [hashhash] `##(1024 bitInvert)` is not a foldable constant
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.ShellView.cls:1379: [hashhash] `##(self defaultIcon)` is not a foldable constant
-C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.ShellView.cls:1406: [cascade] cascade on a non-primary receiver — splitting it would evaluate the receiver once per part
-C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.ShellView.cls:1423: [cascade] cascade on a non-primary receiver — splitting it would evaluate the receiver once per part
-C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.ShellView.cls:1441: [cascade] cascade on a non-primary receiver — splitting it would evaluate the receiver once per part
-C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.ShellView.cls:1451: [cascade] cascade on a non-primary receiver — splitting it would evaluate the receiver once per part
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.ShellView.cls:1406: [cascade] cascade on a receiver this rewriter cannot bound — splitting it could change evaluation
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.ShellView.cls:1423: [cascade] cascade on a receiver this rewriter cannot bound — splitting it could change evaluation
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.ShellView.cls:1441: [cascade] cascade on a receiver this rewriter cannot bound — splitting it could change evaluation
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.ShellView.cls:1451: [cascade] cascade on a receiver this rewriter cannot bound — splitting it could change evaluation
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.View.cls:369: [hashhash] `##(1 bitInvert)` is not a foldable constant
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.View.cls:503: [hashhash] `##(2 @ 2)` is not a foldable constant
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.View.cls:583: [hashhash] `##(48 bitInvert)` is not a foldable constant
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.View.cls:846: [hashhash] `##(100 @ 100)` is not a foldable constant
-C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.View.cls:3503: [cascade] cascade on a non-primary receiver — splitting it would evaluate the receiver once per part
-C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.View.cls:5375: [cascade] cascade on a non-primary receiver — splitting it would evaluate the receiver once per part
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.View.cls:2225: [cascade] cascade on a receiver this rewriter cannot bound — splitting it could change evaluation
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.View.cls:3503: [cascade] cascade on a receiver this rewriter cannot bound — splitting it could change evaluation
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.View.cls:5375: [cascade] cascade on a receiver this rewriter cannot bound — splitting it could change evaluation
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.View.cls:5457: [binding-literal] `#{...}` variable-binding literal has no house equivalent
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.View.cls:5484: [hashhash] `##(Message selector: #iconImageIndex)` is not a foldable constant
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.View.cls:5489: [hashhash] `##(Message selector: #displayString)` is not a foldable constant
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.View.cls:5600: [hashhash] `##(self)` is not a foldable constant
-C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.View.cls:5605: [cascade] cascade on a non-primary receiver — splitting it would evaluate the receiver once per part
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.View.cls:5624: [hashhash] `##(self)` is not a foldable constant
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.View.cls:5655: [hashhash] `##(External.Handle new)` is not a foldable constant
-C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.View.cls:5663: [cascade] cascade on a non-primary receiver — splitting it would evaluate the receiver once per part
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.View.cls:5663: [cascade] cascade on a receiver this rewriter cannot bound — splitting it could change evaluation
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.View.cls:5705: [binding-literal] `#{...}` variable-binding literal has no house equivalent
-C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.View.cls:5721: [cascade] cascade on a non-primary receiver — splitting it would evaluate the receiver once per part
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.View.cls:5721: [cascade] cascade on a receiver this rewriter cannot bound — splitting it could change evaluation
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.View.cls:5902: [hashhash] `##(self)` is not a foldable constant
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.View.cls:5968: [hashhash] `##('DolphinWindow' asUtf16String)` is not a foldable constant
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Graphics\Graphics.ARGB.cls:128: [prim157] Graphics.ARGB>>fromArgbCode:: 1 args vs 0 instance variables — refusing to guess the mapping
-C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Graphics\Graphics.Color.cls:75: [cascade] cascade on a non-primary receiver — splitting it would evaluate the receiver once per part
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Graphics\Graphics.Color.cls:75: [cascade] cascade on a receiver this rewriter cannot bound — splitting it could change evaluation
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Graphics\Graphics.Color.cls:211: [hashhash] `##(255.0 * 2)` is not a foldable constant
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Graphics\Graphics.Color.cls:211: [hashhash] `##(255.0 * 2)` is not a foldable constant
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Graphics\Graphics.Color.cls:238: [hashhash] `##(255.0 * 2)` is not a foldable constant
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Graphics\Graphics.Color.cls:364: [hashhash] `##(255.0 * 2)` is not a foldable constant
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Graphics\Graphics.Color.cls:373: [hashhash] `##(1000.0 * 255.0)` is not a foldable constant
-C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Graphics\Graphics.Color.cls:447: [cascade] cascade on a non-primary receiver — splitting it would evaluate the receiver once per part
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Graphics\Graphics.Color.cls:447: [cascade] cascade on a receiver this rewriter cannot bound — splitting it could change evaluation
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Graphics\Graphics.Color.cls:503: [hashhash] `##(self)` is not a foldable constant
-C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Graphics\Graphics.Color.cls:913: [cascade] cascade on a non-primary receiver — splitting it would evaluate the receiver once per part
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Graphics\Graphics.Color.cls:913: [cascade] cascade on a receiver this rewriter cannot bound — splitting it could change evaluation
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Graphics\Graphics.Color.cls:1147: [hashhash] `##(self)` is not a foldable constant
-C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Graphics\Graphics.Color.cls:1185: [cascade] cascade on a non-primary receiver — splitting it would evaluate the receiver once per part
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Graphics\Graphics.Color.cls:1166: [cascade] cascade on a receiver this rewriter cannot bound — splitting it could change evaluation
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Graphics\Graphics.Color.cls:1185: [cascade] cascade on a receiver this rewriter cannot bound — splitting it could change evaluation
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Graphics\Graphics.ColorDefault.cls:74: [hashhash] `##(self)` is not a foldable constant

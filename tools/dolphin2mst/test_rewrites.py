@@ -148,6 +148,28 @@ out, ref = rewrite_cascades("^self a; b", "t:1")
 check("cascade: the last part carries the return", out.strip(), "self a. ^self b")
 out, ref = rewrite_cascades("^self foo", "t:1")
 check("cascade: untouched when there is no cascade", out, "^self foo")
+# THE CASCADE RECEIVER IS THE RECEIVER OF THE LAST MESSAGE, not the first token.
+# This is the shape lower_prim157 emits, and reading only `self` made every
+# D157 constructor write its fields into the CLASS and answer the class.
+out, ref = rewrite_cascades(
+    "^self basicNew instVarAt: 1 put: a; instVarAt: 2 put: b; yourself", "t:1")
+check("cascade: a `primary unary` receiver is bound to a temp, once",
+      out.strip(),
+      "| _casc1 | _casc1 := self basicNew. _casc1 instVarAt: 1 put: a. "
+      "_casc1 instVarAt: 2 put: b. ^_casc1 yourself")
+check("cascade: and that is not a refusal", ref, [])
+out, ref = rewrite_cascades("| x | ^x foo bar baz; qux", "t:1")
+check("cascade: several unaries all belong to the receiver",
+      out.strip(),
+      "| x _casc1 | _casc1 := x foo bar. _casc1 baz. ^_casc1 qux")
+out, ref = rewrite_cascades("^self basicNew setA: 1; setB: 2; yourself", "t:1")
+check("cascade: keyword parts bind the same way", out.strip(),
+      "| _casc1 | _casc1 := self basicNew. _casc1 setA: 1. _casc1 setB: 2. "
+      "^_casc1 yourself")
+# A temp name already in the body must not be reused.
+out, ref = rewrite_cascades("| _casc1 | ^self basicNew a; b", "t:1")
+check("cascade: the temp name avoids one already present",
+      "_casc2 := self basicNew" in out, True)
 out, ref = rewrite_cascades('"a ; b" ^1', "t:1")
 check("cascade: ignores a `;` inside a comment", out, '"a ; b" ^1')
 # A non-primary receiver would be evaluated once PER PART if split, so refuse.

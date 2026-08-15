@@ -1,0 +1,42 @@
+"mapped_probe.mst — dispatch through Dolphin's own message map (DD9).
+
+ `UI.View class >> buildMessageMap` is a translated Dolphin method that answers
+ a 1024-slot Array mapping message number + 1 to a handler selector —
+ `wmPaint:wParam:lParam:` and some ninety siblings. It runs unmodified on this
+ VM. This probe answers those selectors, so the gate can prove the whole path:
+ the door's routed set comes from the map, the message arrives, the map picks
+ the selector, and the view's answer is what Windows sees.
+
+ The probe deliberately implements only SOME of the map's selectors. A view
+ that has a map entry but no method must decline — Dolphin's own views are
+ exactly like this, since `buildMessageMap` is built once on `View` and its
+ subclasses handle their own subset."
+UiWindow subclass: MappedProbe [
+    | sizes hits lastW lastL |
+
+    MappedProbe class >> claimValue [ ^4242 ]
+
+    initWindow [ super initWindow. sizes := 0. hits := 0. lastW := lastL := nil ]
+    sizes [ ^sizes ]
+    hits [ ^hits ]
+    lastW [ ^lastW ]
+    lastL [ ^lastL ]
+
+    "WM_SIZE — the one DD9's relayout gate rides on."
+    wmSize: msg wParam: wp lParam: lp [
+        sizes := sizes + 1. hits := hits + 1.
+        lastW := wp. lastL := lp.
+        ^MappedProbe claimValue
+    ]
+
+    "WM_SETCURSOR, to show the map picking a DIFFERENT selector for a
+     different message rather than funnelling everything to one handler."
+    wmSetCursor: msg wParam: wp lParam: lp [
+        hits := hits + 1. lastW := wp. lastL := lp.
+        ^MappedProbe claimValue
+    ]
+
+    "Deliberately absent: wmMouseMove:wParam:lParam: and the rest. They are in
+     the map, so they route — and they must decline, because this view has no
+     method for them."
+]

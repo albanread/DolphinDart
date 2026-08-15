@@ -404,7 +404,7 @@ Object subclass: View [
     ]
     binaryStoreUsing: anSTXOutFiler [
         "Stores the receiver in a serialized form using the <STxOutFiler> argument such that it can be reconstituted to an equivalent view. For Views we need to store a proxy that captures any external state not represented directly in the Smalltalk object."
-         DpiAwareness unaware inContextDo: 
+        | _casc1 | _casc1 := DpiAwareness unaware. _casc1 inContextDo: 
         			[| viewProxy |
         			viewProxy := self whileInvisibleDo: 
         							[(self filerProxyIn: anSTXOutFiler)
@@ -1909,9 +1909,12 @@ Object subclass: View [
         		forEdit: isLoadingForEdit
     ]
     loadViewResource: aResourceArray withContext: aViewContext forEdit: isLoadingForEdit [
-        	| filer child |
-        	filer := aResourceArray stbInFiler.child := filer
-        				isUpgrading: isLoadingForEdit. child context: aViewContext. child basicNext.
+        	| filer child | 
+        	filer := aResourceArray stbInFiler.
+        	child := filer
+        				isUpgrading: isLoadingForEdit;
+        				context: aViewContext;
+        				basicNext.
         	[filer evaluateDeferredActions] ifCurtailed: [child destroy].
         	^child
     ]
@@ -2734,9 +2737,8 @@ Object subclass: View [
     requestLayoutRectangle: aRectangle [
         "Request that the receiver occupies aRectangle. If under the control of a layout manager we
         	have to delegate the request through this"
-        | parentLayoutManager |
-        	parentLayoutManager := self parentView layoutManager. parentLayoutManager isNil 
-        		ifTrue: 
+        | parentLayoutManager _casc1 | 
+        	parentLayoutManager := self parentView layoutManager._casc1 := parentLayoutManager isNil. _casc1 ifTrue: 
         			[self
         				position: aRectangle topLeft;
         				extent: aRectangle extent]
@@ -3006,7 +3008,7 @@ Object subclass: View [
     ]
     showShell [
         "Private - Show the receiver within a shell"
-        | shell |
+        | shell | 
         	shell := ShellView new
         				create;
         				yourself.
@@ -3522,7 +3524,7 @@ Object subclass: View [
         "Private - Handles a WM_DPICHANGED message. This is only sent to top-level windows (e.g. ShellViews in Dolphin), so we don't actually expect to handle it at this level.
         		- wParam encodes the new DPI with the X-axis value in the low word, and y-axis in the high word (although the docs make clear that both will always be the same value)
         		- lParam is a pointer to a RECTL providing the suggested new rectangle for the window."
-         ^self presenter onDpiChanged: ((DpiChangedEvent
+        | _casc1 | _casc1 := self presenter. ^_casc1 onDpiChanged: ((DpiChangedEvent
         				window: self
         				message: message
         				wParam: wParam
@@ -4293,7 +4295,7 @@ Object subclass: View [
         	to its parent, even if that parent is also unknown, and so on.
         	See also #withHandle:, which answers only registered (known)
         	Views."
-        ^SessionManager. Current inputState windowAt: aHandle
+        | _casc1 | ^SessionManager._casc1 := Current inputState. _casc1 windowAt: aHandle
         		ifAbsent: 
         			[(self newUnregistered: aHandle)
         				parentView: (View fromHandle: (User32 getParent: aHandle));
@@ -4312,11 +4314,9 @@ Object subclass: View [
     View class >> initialize [
         "Private - Initialize the receiver's class variables:
         		View initialize"
-        NextId := 0.
-        	ViewClosedError := Signal description: 'View closed'.
-        	"Note that the message map is not const variable, since view packages may add new messages they want to receive, although must do so by sending #registerMessageMappings:"
-        	MessageMap isNil
-        		ifTrue: 
+        | _casc1 | NextId := 0.
+        	ViewClosedError := Signal description: 'View closed'._casc1 := "Note that the message map is not const variable, since view packages may add new messages they want to receive, although must do so by sending #registerMessageMappings:"
+        	MessageMap isNil. _casc1 ifTrue: 
         			[MessageMap := self buildMessageMap
         						beImmutableObject;
         						yourself]
@@ -4365,7 +4365,7 @@ Object subclass: View [
     View class >> registerClass [
         "Private - Register the receiver's corresponding Win32 class - answer the class atom.
         	Will work for subclasses that implement at least #winClassName, and optionally #winClassStyle and #winClassBrush"
-        | atom classStruct |
+        | atom classStruct | 
         	classStruct := WNDCLASS new
         				className: self wndClassName;
         				lpfnWndProc: VM getWndProc;
@@ -4510,7 +4510,7 @@ Object subclass: View [
     View class >> stbConvertFromVersion7: anArray [
         "Private - Perform an STB conversion from a version 7 (or earlier) <View> to version 8,
         	i.e. Add events and unused inst. vars to View."
-        | newArray |
+        | newArray | 
         	newArray := Array new: anArray size + 2.newArray replaceFrom: 1
         			to: 10
         			with: anArray

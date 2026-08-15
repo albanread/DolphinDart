@@ -19,7 +19,7 @@
  which is why `dispatch:` wraps the view send here and not somewhere higher."
 
 Object subclass: UiSession [
-    <classVars: Windows LastWindow Actions IdleCount MessageCount>
+    <classVars: Windows LastWindow Actions IdleCount MessageCount MessageMap>
 
     UiSession class >> reset [
         Windows := IdentityDictionary new.
@@ -86,27 +86,73 @@ Object subclass: UiSession [
         ^self wndProc: kind a: arg b: 0 c: 0
     ]
 
-    "A reflected Windows message. The view answers nil for anything it does not
-     handle, and that nil rides all the way back out to DefWindowProcW."
+    "A reflected Windows message.
+
+     With a Dolphin MESSAGE MAP installed the selector comes from the map —
+     `wmPaint:wParam:lParam:` and its 90-odd siblings — which is Dolphin's own
+     dispatch shape. Without one, a view may offer the flat
+     `onMessage:wParam:lParam:` hook instead; the DD7/DD9 probes use that, and
+     it keeps the door testable without dragging the whole View wave in.
+
+     Either way the view answers nil for anything it does not handle, and that
+     nil rides all the way back out to DefWindowProcW."
     UiSession class >> dispatchMessage: msg wParam: wp lParam: lp [
-        | view |
+        | view sel |
         view := LastWindow.
         view isNil ifTrue: [ ^nil ].
-        (view respondsTo: #onMessage:wParam:lParam:) ifFalse: [ ^nil ].
-        ^[ view onMessage: msg wParam: wp lParam: lp ]
+        sel := self selectorForMessage: msg.
+        sel isNil ifTrue: [
+            (view respondsTo: #onMessage:wParam:lParam:) ifFalse: [ ^nil ].
+            ^[ view onMessage: msg wParam: wp lParam: lp ]
+                on: Error
+                do: [ :e | self noteHandlerError: e. nil ] ].
+        (view respondsTo: sel) ifFalse: [ ^nil ].
+        ^[ view perform: sel with: msg with: wp with: lp ]
             on: Error
             do: [ :e | self noteHandlerError: e. nil ]
     ]
 
-    "The set of messages the door reflects. Dolphin's `buildMessageMap` is
-     exactly this list; until the View wave drives it, a caller passes the ids
-     it wants. Answers the number the door ACCEPTED, which a caller should
-     compare against what it sent — a half-installed message map looks exactly
-     like handlers that never fire."
-    UiSession class >> routeMessages: anArray [
-        ^Win32 mvpSetRoutedMessages: anArray asArray
+    "The map is a 1024-slot Array indexed by (message number + 1) — Dolphin's
+     own layout, so a translated `buildMessageMap` drops straight in."
+    UiSession class >> selectorForMessage: msg [
+        MessageMap isNil ifTrue: [ ^nil ].
+        (msg < 0 or: [ msg + 1 > MessageMap size ]) ifTrue: [ ^nil ].
+        ^MessageMap at: msg + 1
+    ]
+    UiSession class >> messageMap [ ^MessageMap ]
+
+    "── the routed set ──────────────────────────────────────────────────
+     Which messages the door reflects at all. The storm probe measured a
+     routed message at ~26 microseconds, so the message COUNT is the only
+     lever — and Dolphin hands us the minimal count for free, because
+     `buildMessageMap` is an explicit list of exactly what the class handles.
+
+     `routeMessages:` answers how many ids the door ACCEPTED. Compare it
+     against what you sent: a half-installed map looks exactly like handlers
+     that never fire."
+    UiSession class >> routeMessages: aCollection [
+        ^Win32 mvpSetRoutedMessages: aCollection asArray
     ]
     UiSession class >> routedMessageCount [ ^Win32 mvpRoutedMessageCount ]
+
+    "Install a class's Dolphin message map AND the routed set it implies, in
+     one step — they must agree. A routed message with no map entry falls
+     through to DefWindowProcW (harmless but pointless); a map entry whose
+     message is not routed never arrives at all, which is the silent half of
+     the pair and the reason these are set together."
+    UiSession class >> routeMessagesFrom: aBehavior [
+        | map ids |
+        map := aBehavior buildMessageMap.
+        ids := OrderedCollection new.
+        1 to: map size do: [ :i |
+            (map at: i) isNil ifFalse: [ ids add: i - 1 ] ].
+        MessageMap := map.
+        ^self routeMessages: ids
+    ]
+    UiSession class >> clearMessageMap [
+        MessageMap := nil.
+        ^self routeMessages: (Array new: 0)
+    ]
 
     "Route to the current view, protecting the send HERE — inside the entry —
      because the door contains raises rather than propagating them outward."

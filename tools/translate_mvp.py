@@ -45,6 +45,13 @@ TARGETS = [
     "Core/Object Arts/Dolphin/MVP/Graphics/Graphics.ColorDefault.cls",
     "Core/Object Arts/Dolphin/MVP/Graphics/Graphics.ColorNone.cls",
     "Core/Object Arts/Dolphin/MVP/Graphics/Graphics.ARGB.cls",
+    # Geometry + the layout context. `st/world/28_point.mst` deliberately
+    # omitted Rectangle and Point's rect protocol — that call was made for
+    # MACVM, whose GUI is HTML-rendered and had no use for Smalltalk geometry.
+    # This project's goal reverses it: BorderLayout computes in Rectangles and
+    # hands them to a LayoutContext, so both are load-bearing here.
+    "Core/Object Arts/Dolphin/MVP/Base/Graphics.Rectangle.cls",
+    "Core/Object Arts/Dolphin/MVP/Base/UI.LayoutContext.cls",
 ]
 
 # Parsed for hierarchy + pools, never emitted. DIRECTORIES, deliberately: a

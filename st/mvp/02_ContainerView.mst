@@ -61,7 +61,7 @@ View subclass: ContainerView [
         ^true
     ]
     createShellWindow: aShellView withFunction: aCreateWindow [
-        	| extent targetDpi |
+        	| extent targetDpi | 
         	targetDpi := self dpi.
         	extent := aCreateWindow hasDefaultExtent
         				ifTrue: [self defaultExtentOf: aShellView]

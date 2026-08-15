@@ -149,6 +149,12 @@ def rewrite_cascades(body: str, where: str) -> Tuple[str, List[Refusal]]:
         return body, []
     refusals: List[Refusal] = []
     out_lines = []
+    temps_added: List[str] = []
+    # A leading temporaries declaration is not a statement, and leaving it in
+    # front of the first one makes its `^` invisible and its tokens part of the
+    # cascade head. Split it off, process the statements, re-attach at the end.
+    orig = body
+    decl, body = _split_leading_temps(body)
     for stmt in _split_top_level(body, "."):
         sblank = strip_code(stmt)
         if ";" not in sblank:
@@ -158,20 +164,115 @@ def rewrite_cascades(body: str, where: str) -> Tuple[str, List[Refusal]]:
         head = parts[0]
         ret = head.lstrip().startswith("^")
         head_body = head.lstrip()[1:] if ret else head
-        m = re.match(r"\s*([A-Za-z_]\w*)\s+(.*)$", head_body, re.S)
-        if not m or not _SIMPLE_RECV.match(m.group(1)):
+        recv, first_msg = _split_cascade_head(head_body)
+        if recv is None:
             refusals.append(Refusal(where, "cascade",
-                                    "cascade on a non-primary receiver — splitting it "
-                                    "would evaluate the receiver once per part"))
+                                    "cascade on a receiver this rewriter cannot "
+                                    "bound — splitting it could change evaluation"))
             out_lines.append(stmt)
             continue
-        recv = m.group(1)
-        stmts = [f"{recv} {m.group(2).strip()}"]
-        stmts += [f"{recv} {p.strip()}" for p in parts[1:]]
+        stmts = []
+        if _SIMPLE_RECV.match(recv):
+            # A bare primary is free to repeat: re-evaluating `self` or a
+            # temporary has no effect and costs nothing.
+            base = recv
+        else:
+            # ANYTHING ELSE MUST BE BOUND TO A TEMPORARY. `self basicNew
+            # instVarAt: 1 put: x; instVarAt: 2 put: y; yourself` — the shape
+            # the D157 constructor lowering itself emits — has the cascade
+            # receiver `self basicNew`, and repeating it would allocate a fresh
+            # object per part.
+            base = _fresh_temp(orig, len(temps_added))
+            temps_added.append(base)
+            stmts.append(f"{base} := {recv.strip()}")
+        stmts.append(f"{base} {first_msg.strip()}")
+        stmts += [f"{base} {p.strip()}" for p in parts[1:]]
         if ret:
             stmts[-1] = "^" + stmts[-1]
         out_lines.append(" ".join(s + "." for s in stmts[:-1]) + " " + stmts[-1])
-    return ".".join(out_lines), refusals
+    result = ".".join(out_lines)
+    if temps_added:
+        decl = _merge_temps(decl, temps_added)
+    return (decl + result) if decl else result, refusals
+
+
+def _split_leading_temps(body: str):
+    """Split a leading `| a b |` declaration off the front. Answers
+    (declaration-including-trailing-space, rest); the declaration is '' when
+    there is none. Comments are blanked first, so a `|` inside one cannot be
+    mistaken for a declaration."""
+    m = re.match(r"\s*\|[^|]*\|", strip_code(body))
+    return (body[:m.end()].rstrip() + " ", body[m.end():]) if m else ("", body)
+
+
+def _merge_temps(decl: str, names: List[str]) -> str:
+    if not decl:
+        return "| " + " ".join(names) + " | "
+    i = decl.rindex("|")
+    return decl[:i].rstrip() + " " + " ".join(names) + " | "
+
+
+def _split_cascade_head(head: str):
+    """Split a cascade's first segment into (receiver-expression, first message).
+
+    The cascade re-sends to the receiver of the LAST message in that segment,
+    which is NOT the same as its first token. In
+
+        self basicNew instVarAt: 1 put: x; instVarAt: 2 put: y; yourself
+
+    the receiver is `self basicNew`, not `self`. Reading only the first token
+    made every D157-lowered constructor in the corpus write its fields into the
+    CLASS and answer the class — `Rectangle origin:extent:` raised "class
+    'Rectangle' has no class-side method 'instVarAt:put:'", which is the lucky
+    case; a class that happened to understand the selector would have corrupted
+    itself in silence.
+
+    Answers (None, None) when the segment cannot be split confidently.
+    """
+    blank = strip_code(head)
+    toks = list(re.finditer(r"[^\s]+", blank))
+    if len(toks) < 2:
+        return None, None
+    # A keyword message starts at the first top-level token ending in ':'.
+    depth = 0
+    kw_at = None
+    bin_at = None
+    for i, t in enumerate(toks):
+        s = blank[t.start():t.end()]
+        if i > 0 and depth == 0:
+            if s.endswith(":") and re.match(r"^[A-Za-z_]\w*:$", s):
+                kw_at = i
+                break
+            if bin_at is None and re.match(r"^[-+*/~<>=&|@%,?!\\]+$", s):
+                bin_at = i
+        depth += sum(1 for c in s if c in "([{") - sum(1 for c in s if c in ")]}")
+    cut = kw_at if kw_at is not None else bin_at
+    if cut is None:
+        # All unary: the final message is the last token, the receiver is the
+        # rest. `self basicNew yourself` -> receiver `self basicNew`.
+        cut = len(toks) - 1
+    if cut < 1:
+        return None, None
+    recv = head[:toks[cut].start()].strip()
+    msg = head[toks[cut].start():]
+    # The receiver must itself be a primary followed only by unary sends — a
+    # parenthesised or bracketed expression is left to the refusal path, since
+    # binding it correctly needs real parsing.
+    if not re.match(r"^(self|super|thisContext|[A-Za-z_]\w*)"
+                    r"(\s+[A-Za-z_]\w*)*$", strip_code(recv).strip()):
+        return None, None
+    return recv, msg
+
+
+def _fresh_temp(body: str, n: int) -> str:
+    """A temporary name that cannot collide with anything in `body`."""
+    name = f"_casc{n + 1}"
+    while re.search(r"\b" + name + r"\b", body):
+        n += 1
+        name = f"_casc{n + 1}"
+    return name
+
+
 
 
 # --- rewrite: `??` -> ifNil: -------------------------------------------------
