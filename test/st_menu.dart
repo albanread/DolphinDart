@@ -124,6 +124,22 @@ main(List<String> a) {
   expect('  ...and it is a DIFFERENT command',
       'MnShell received command printString', "'#editPaste'");
 
+  // ── ENABLEMENT — carried from the retired `st_command` ──────────────────
+  //
+  // `st_command` proved this over `WinMenu`. The adapter is gone; the
+  // behaviour is not. The answer must DEPEND on state, or a `queryCommand:`
+  // that enabled everything would pass.
+  expect('fileSave is DISABLED while nothing is dirty',
+      '(MnShell isEnabled: #fileSave) printString', "'false'");
+  expect('  ...while another command is enabled',
+      '(MnShell isEnabled: #fileOpen) printString', "'true'");
+  stRun('MnShell dirty: true.');
+  expect('fileSave is ENABLED once it is dirty',
+      '(MnShell isEnabled: #fileSave) printString', "'true'");
+  stRun('MnShell dirty: false.');
+  expect('  ...and DISABLED again when it is not',
+      '(MnShell isEnabled: #fileSave) printString', "'false'");
+
   expect('no handler error was contained',
       'UiSession handlerErrors printString', "'0'");
 

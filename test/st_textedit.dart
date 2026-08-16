@@ -154,6 +154,29 @@ main(List<String> a) {
   expect('and the view reads what the control holds',
       'TeShell editView text', "'as if typed'");
 
+  // ── TWO FIELDS, ONE MODEL — carried from the retired `st_text` ──────────
+  //
+  // `st_text` proved this over `WinTextEdit`/`TextField`. The adapters are
+  // gone; the behaviour is not. A single field cannot show it: an edit in
+  // either view must reach the MODEL and, through it, the OTHER view.
+  stRun('TeShell buildSecondEdit.');
+  stRun('TePres2 := TextPresenter new. TePres2 model: TeModel; view: TeShell otherView.');
+  must(num('TeShell otherView handle') > 0, 'the second field has its window');
+
+  stRun("TeModel value: 'shared'.");
+  expect('the model reaches the FIRST field',
+      '(User32 getWindowText: TeShell editView handle)', "'shared'");
+  expect('  ...and the SECOND', '(User32 getWindowText: TeShell otherView handle)',
+      "'shared'");
+
+  // Now the other direction, which is what a single field could never test:
+  // drive the MODEL from one side and watch the far view follow.
+  stRun("TeShell editView value: 'typed into the first'.");
+  expect('a write through the first field moves the model',
+      'TeModel value', "'typed into the first'");
+  expect('  ...and the SECOND field followed',
+      '(User32 getWindowText: TeShell otherView handle)', "'typed into the first'");
+
   // ── NOTHING WAS SWALLOWED ────────────────────────────────────────────────
   //
   // The door contains a raise inside a message handler: the pump has to keep

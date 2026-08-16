@@ -19,7 +19,7 @@
  the thing worth testing: an assertion that merely counted WM_COMMANDs would
  pass with the wrong id and the wrong command."
 ShellView subclass: MenuShell [
-    | bar received receivedCount |
+    | bar received receivedCount dirty |
 
     received [ ^received ]
     receivedCount [ ^receivedCount ifNil: [ 0 ] ]
@@ -70,6 +70,41 @@ ShellView subclass: MenuShell [
                             and: [ each commandDescription command = aString asSymbol ] ] ])
                             ifTrue: [ ^each ] ] ] ] ].
         ^nil
+    ]
+
+    "── ENABLEMENT — carried from the retired `command_probe` ──────────────
+     `queryCommand:` is the hook Dolphin calls to ask whether a command is
+     available, and `UI.CommandQuery` carries the answer. Making the answer
+     DEPEND on state is what makes the enable/disable observable: a
+     `beEnabled` for everything would satisfy a test that only checked the
+     hook was called.
+
+     `#fileSave` is disabled until the document is 'dirty' — a plain flag
+     here, standing for whatever an application would really consult."
+    dirty [ ^dirty ifNil: [ false ] ]
+    dirty: aBoolean [ dirty := aBoolean ]
+
+    queryCommand: aCommandQuery [
+        aCommandQuery commandSymbol == #fileSave
+            ifTrue: [ self dirty
+                        ifTrue: [ aCommandQuery beEnabled ]
+                        ifFalse: [ aCommandQuery beDisabled ] ]
+            ifFalse: [ aCommandQuery beEnabled ].
+        ^true
+    ]
+
+    "Ask Dolphin's own command machinery what it would report for a command,
+     the way a menu about to be shown does. Answers true when enabled."
+    isEnabled: aCommandSymbol [
+        | query |
+        "`CommandPolicy>>queryCommand:` takes a QUERY and fills it in — it does
+         not answer one. The query is the thing that carries both the command
+         being asked about and the answer, which is why it is built first."
+        query := CommandQuery
+            commandDescription: (CommandDescription command: aCommandSymbol)
+            source: self.
+        self commandPolicy queryCommand: query.
+        ^query isEnabled
     ]
 
     "Dolphin's `View>>onCommand:` — the end of the menu command path. The

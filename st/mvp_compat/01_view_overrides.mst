@@ -110,6 +110,27 @@ Object subclass: DesktopView [
     basicInvalidateLayout [ ^self ]
     onSubViewAdded: aView [ ^aView ]
     onSubViewRemoved: aView [ ^aView ]
+
+    "`View>>name` is `^self parentView nameOf: self`, so a TOP-LEVEL view asks
+     the desktop for its name — and the desktop names nothing. `UI.View`'s own
+     `nameOf:` answers nil for exactly this reason; the desktop stand-in needs
+     the same terminator, or every `name` on a shell is a doesNotUnderstand.
+
+     `Presenter>>connectView:` walks sub-presenters asking each for its name,
+     so this is on the path of any app that builds a presenter tree."
+    "The COLOUR walk's terminator, the twin of the name walk above.
+     `View>>ambientBackcolor` is `^self backcolor ifNil: [self parentView
+     ambientBackcolor]`, so a top-level view with no colour of its own asks
+     the desktop. Dolphin's DesktopView answers `Color default`, which is
+     exactly 'let each view use its own default'. Every WM_ERASEBKGND on a
+     shell reaches this, so without it the app painted through a contained
+     handler error on every repaint."
+    ambientBackcolor [ ^Color default ]
+    backcolor [ ^Color default ]
+
+    nameOf: aView [ ^nil ]
+    name: aView as: aStringOrNil [ ^aStringOrNil ]
+    viewNamed: aString ifNone: aBlock [ ^aBlock value ]
 ]
 
 
@@ -157,8 +178,12 @@ Object subclass: DolphinBoot [
     DolphinBoot class >> initializeViewClasses [
         | failed |
         failed := OrderedCollection new.
+        "COLOR belongs here, not only in the fuller list. Every WM_ERASEBKGND
+         walks `ambientBackcolor` to the desktop, which answers `Color
+         default` — and an uninitialized Color answers nil, so every repaint
+         raised into the contained handler-error path."
         { Rectangle. View. ShellView. SystemMetrics. TextEdit.
-          CommandDescription. Menu. MenuItem } do: [ :each |
+          CommandDescription. Menu. MenuItem. Color } do: [ :each |
             [ each initialize ] on: Error do: [ :e | failed add: each name ] ].
         ^failed asArray
     ]
@@ -316,4 +341,66 @@ Object subclass: SystemFont [
 
 Object subclass: DesktopView [
     getActualFont [ ^SystemFont current ]
+]
+
+"── the SYSTEM colours Color reads but never sets ──────────────────────────
+
+ `Graphics.Color` declares `Window`, `WindowText`, `Face3d` as class variables
+ and only ever READS them (`Color class >> window [ ^Window ]`). They are
+ assigned by Dolphin's system-colour package, which is not in this wave.
+
+ `View>>defaultBackcolor` is `^Color classVarWindow`, and `actualBackcolor`
+ maps `Color default` through it — so with `Window` unset every
+ WM_ERASEBKGND got nil and raised into the contained handler-error path.
+
+ Answered from WINDOWS rather than from a constant: `GetSysColor` is the same
+ source Dolphin's package reads, so a themed or high-contrast desktop gets
+ the colour it actually uses. COLOR_WINDOW=5, COLOR_WINDOWTEXT=8,
+ COLOR_3DFACE=15.
+
+ RETIREMENT: translate Dolphin's system-colour package with DD11's graphics
+ wave, which will assign these properly and make this override dead."
+Object subclass: Color [
+    Color class >> classVarWindow [ ^self fromSysColor: 5 ]
+    Color class >> window [ ^self fromSysColor: 5 ]
+    Color class >> classVarWindowText [ ^self fromSysColor: 8 ]
+    Color class >> windowText [ ^self fromSysColor: 8 ]
+    Color class >> classVarFace3d [ ^self fromSysColor: 15 ]
+    Color class >> face3d [ ^self fromSysColor: 15 ]
+
+    "GetSysColor answers a COLORREF — 0x00BBGGRR — which is exactly what
+     `ColorRef` wraps."
+    Color class >> fromSysColor: anIndex [
+        "`ColorRef class >> fromCOLORREF:` is Dolphin's own constructor for
+         exactly this value, and it also handles the two sentinel codes
+         (0xFFFFFFFF -> None, 0xFF000000 -> Default). `Color new` is
+         `shouldNotImplement` — colours are immutable and made through named
+         constructors — so going through it was the wrong door."
+        ^ColorRef fromCOLORREF: (User32 getSysColor: anIndex)
+    ]
+]
+
+"── background erase: DEFAULT PROCESSING until the Canvas wave ──────────────
+
+ `View>>onEraseRequired:` fills the client rectangle with the view's
+ background colour, through `aColorEvent canvas` — a `Graphics.Canvas`, which
+ is not translated (it lands with DD11's graphics wave). So the event's
+ `canvas` is nil and every WM_ERASEBKGND raised.
+
+ Answering NIL is not a stub: it is the documented way to decline the message
+ in Dolphin's own comment on that method — 'answer nil if no colour is set to
+ accept the default window processing'. Windows then erases with the window
+ class's background brush, which is what an unstyled window gets anyway.
+
+ THE COST, precisely: a view's `backcolor` is not honoured when erasing. Set
+ a view to red and it will still erase to the class brush. Nothing in the
+ DD10 gates asserts a custom background — the DD9 paint probe drives
+ WM_PAINT, not WM_ERASEBKGND — and the day something does, this override is
+ what has to go.
+
+ RETIREMENT: translate `Graphics.Canvas` (DD11), then DELETE this method. The
+ gate that proves it: fill a view with a named colour and read the pixel back,
+ which the DD9 paint probe already knows how to do."
+View subclass: View [
+    onEraseRequired: aColorEvent [ ^nil ]
 ]

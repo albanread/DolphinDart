@@ -547,3 +547,80 @@ Object subclass: Dictionary [
         ^aBlock value
     ]
 ]
+
+"`addClassVariable:value:` with a COMPUTED name — the one case the translator
+ cannot rewrite.
+
+ `self addClassVariable: 'Default' value: x` becomes `Default := x` at
+ translation time, because the name is a literal. But
+ `Graphics.Color class >> initialize` ends
+
+     #(#black #white) do: [:each |
+         self addClassVariable: each capitalized value: (self named: each)]
+
+ where the name is computed. This dialect has no dynamic class-variable
+ store, so that assignment cannot happen.
+
+ THE COST: `Color Black` and `Color White` answer nil. `Color black` and
+ `Color white` — the lowercase accessors that go through `named:` — work
+ normally, and nothing in the port reads the capitalised class variables.
+ Answering self keeps `initialize` running to completion, which matters: it
+ is the same method that installs `Default`, and an exception here would
+ leave THAT unset too.
+
+ RETIREMENT: a dynamic class-variable accessor in the front-end — the same
+ one `Behavior>>bindingFor:` waits on."
+nil subclass: Object [
+    Object class >> addClassVariable: aName value: aValue [ ^aValue ]
+]
+
+"`canUnderstand:` — Dolphin's 'do instances of me understand this selector'.
+
+ One caller in the translated wave: `Color>>printNamed:on:` asks
+ `Color class canUnderstand: aSymbol` before printing a colour by its name,
+ so an unnamed colour prints as its components instead.
+
+ Implemented as `respondsTo:` on the same receiver. That is NOT the general
+ definition — Dolphin's asks about INSTANCES of the receiver, and this asks
+ about the receiver itself — and the difference is recorded in
+ `docs/LOOSE_ENDS.md` beside `conformsToProtocol:`, which wants the general
+ version and cannot have it for the same reason. For the metaclass receiver
+ the one caller uses, the two coincide."
+nil subclass: Object [
+    canUnderstand: aSymbol [ ^self respondsTo: aSymbol ]
+]
+
+"`asSortedArray:` / `asArrayCopy` — Dolphin's one-off sort.
+
+     asSortedArray: aDyadicValuable
+         ^self asArrayCopy sort: aDyadicValuable
+
+ `Color class >> initializeCommonColors` builds its lookup by sorting the
+ colour table. Distinct from `asSortedCollection:`, which keeps the sort block
+ and re-sorts on every add — this is a snapshot, and Dolphin uses it where the
+ order is wanted once."
+Object subclass: Collection [
+    asArrayCopy [ ^Array withAll: self ]
+    asSortedArray: aDyadicValuable [
+        ^(self asSortedCollection: aDyadicValuable) asArray
+    ]
+]
+
+"`lookup:` on a DICTIONARY — rescued from the deleted `06_winview.mst`.
+
+ It lived in that file only because `WinView` was written at the same time as
+ the `LayoutContext` work that needed it. It has nothing to do with the
+ adapter, and deleting the adapter took it with it: `LayoutContext` asks its
+ placement table `(placements lookup: aView)` on every layout pass, so the
+ whole BorderLayout arrangement silently reverted to the 100x100 creation
+ default — every view laid out, none at the size it asked for.
+
+ A REMINDER, and the reason this comment is long: when a scaffolding file is
+ deleted, what it happened to HOST is not the same as what it was FOR. The
+ gates caught this immediately, which is the only reason it is a footnote."
+Object subclass: Dictionary [
+    lookup: aKey [ ^self at: aKey ifAbsent: [ nil ] ]
+]
+Object subclass: IdentityDictionary [
+    lookup: aKey [ ^self at: aKey ifAbsent: [ nil ] ]
+]

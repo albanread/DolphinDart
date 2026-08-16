@@ -45,6 +45,12 @@ TARGETS = [
     "Core/Object Arts/Dolphin/MVP/Graphics/Graphics.ColorDefault.cls",
     "Core/Object Arts/Dolphin/MVP/Graphics/Graphics.ColorNone.cls",
     "Core/Object Arts/Dolphin/MVP/Graphics/Graphics.ARGB.cls",
+    # `Color>>asRGB` is `^RGB fromRgbCode: self rgbCode`, and
+    # `Color class >> initializeCommonColors` builds every named colour
+    # through it — so an untranslated RGB made `Color class >> initialize`
+    # raise, `Color default` stay nil, and every `ambientBackcolor` walk fail
+    # at the desktop.
+    "Core/Object Arts/Dolphin/MVP/Graphics/Graphics.RGB.cls",
     # Geometry + the layout context. `st/world/28_point.mst` deliberately
     # omitted Rectangle and Point's rect protocol — that call was made for
     # MACVM, whose GUI is HTML-rendered and had no use for Smalltalk geometry.
@@ -101,6 +107,11 @@ TARGETS = [
     # `CommandMenuItem` or, for '-', the shared `DividerMenuItem` flyweight.
     "Core/Object Arts/Dolphin/MVP/Base/UI.CommandMenuItem.cls",
     "Core/Object Arts/Dolphin/MVP/Base/UI.DividerMenuItem.cls",
+    # Accelerators. `ShellView` already holds `acceleratorTable` and
+    # `combinedAcceleratorTable` ivars and calls `registerAcceleratorKeyIn:`
+    # on its menu bar, so the shell side is already translated and waiting —
+    # this is the class it was waiting for. Retires `WinAccelerators`.
+    "Core/Object Arts/Dolphin/MVP/Base/UI.AcceleratorTable.cls",
 
     # ── DD10: the EVENT family ─────────────────────────────────────────────
     # Once Dolphin's own `buildMessageMap` is installed as the routed set, its

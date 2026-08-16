@@ -595,12 +595,18 @@ def rewrite_pool_constants(body: str, where: str, imports, table,
     return "".join(out), []
 
 
+# BOTH spellings. Dolphin installs a class CONSTANT with `addClassConstant:`
+# and a class VARIABLE with `addClassVariable:`; this dialect binds both
+# statically, so both dynamic-name calls become the assignment they mean.
+# `Graphics.Color class >> initialize` uses the second for `Default` and
+# `None`, and `Color default` answering nil is what made every
+# `ambientBackcolor` walk fail at the desktop.
 _ADD_CLASS_CONST = re.compile(
-    r"self\s+addClassConstant:\s*'([A-Za-z_]\w*)'\s*value:")
+    r"self\s+addClass(?:Constant|Variable):\s*'([A-Za-z_]\w*)'\s*value:")
 
 
 def rewrite_add_class_constant(src: str) -> str:
-    """`self addClassConstant: 'X' value: EXPR`  ->  `X := EXPR`.
+    """`self addClassConstant:/addClassVariable: 'X' value: E`  ->  `X := E`.
 
     Dolphin installs a class constant by NAME at runtime; this dialect binds
     class variables statically, so the dynamic-name call is turned into the

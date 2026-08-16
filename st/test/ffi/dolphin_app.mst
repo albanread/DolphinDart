@@ -1,0 +1,148 @@
+"dolphin_app.mst — the DD10 ACCEPTANCE APP, on Dolphin's own classes.
+
+ This replaces `counter_app.mst`, which was written on the DD7/DD8
+ scaffolding — `UiWindow`, `WinView`, `TextField`, `WinMenu`,
+ `WinAccelerators` — because those stand-ins existed before the real classes
+ were reachable. Every one of them is retired by this file.
+
+ WHAT IS DOLPHIN'S HERE: the shell (`UI.ShellView`), the fields
+ (`UI.TextEdit` over real Win32 EDIT controls, subclassed by Dolphin's own
+ `ControlView>>subclassWindow`), the model (`UI.ValueHolder`), the layout
+ (`UI.BorderLayout`), the menu (`UI.MenuBar`/`Menu`/`CommandMenuItem`), the
+ command machinery (`CommandQuery`, `queryCommand:`, `CommandDescription`),
+ and the accelerator table (`UI.AcceleratorTable`).
+
+ WHAT IS OURS: the door's window class and message pump, and the WORKER —
+ Dart isolates replace Dolphin's green processes outright (scope rule 8,
+ docs/WORKERS.md), so `doCount` ships work to one instead of forking.
+
+ This is the shape an application author writes. Nothing in it re-supplies
+ view, menu or command protocol."
+ShellView subclass: DolphinApp [
+    | fieldA fieldB model bar commandsRun lastCommand busy workerResults |
+
+    "Ctrl+D on Double — 'D' is 68."
+    DolphinApp class >> vkD [ ^68 ]
+
+    model [ ^model ]
+    fieldA [ ^fieldA ]
+    fieldB [ ^fieldB ]
+    bar [ ^bar ]
+    commandsRun [ ^commandsRun ifNil: [ 0 ] ]
+    lastCommand [ ^lastCommand ]
+    busy [ ^busy ifNil: [ false ] ]
+    workerResults [ ^workerResults ifNil: [ 0 ] ]
+
+    DolphinApp class >> routeDolphinMessages [ ^UiSession routeMessagesFrom: View ]
+
+    build [
+        commandsRun := 0. busy := false. workerResults := 0.
+        model := ValueHolder with: 3.
+
+        "TWO fields on ONE model. Each is a real EDIT control; the model is
+         what keeps them agreeing, which is the whole claim of the triad."
+        fieldA := self makeField.
+        fieldB := self makeField.
+        TextPresenter new model: model; view: fieldA.
+        TextPresenter new model: model; view: fieldB.
+
+        self layoutManager: (BorderLayout new
+            north: fieldA;
+            south: fieldB;
+            yourself).
+
+        "Dolphin's own menu, from its own string format:
+         description / accelerator / command."
+        bar := MenuBar new.
+        bar fromStrings: #(
+            #('&Edit' '&Double//appDouble' '&Reset//appReset'
+              '-' '&Count (slow)//appCount')).
+        self menuBar: bar.
+
+        "Enablement follows the MODEL, not merely the command: an edit
+         through a field must grey and ungrey Reset. Dolphin refreshes at
+         menu-popup time; a model subscription is this app's equivalent."
+        model when: #valueChanged send: #onModelChanged to: self.
+        ^self
+    ]
+
+    makeField [
+        | v |
+        v := TextEdit new.
+        v parentView: self.
+        v preferredExtent: 200 @ 24.
+        v usePreferredExtent: true.
+        self addSubView: v.
+        ^v
+    ]
+
+    onModelChanged [ ^self ]
+
+    "── commands ────────────────────────────────────────────────────────────
+     `queryCommand:` is Dolphin's hook. Reset is disabled while the value is
+     still at its starting point, and disabled for everything while the app is
+     BUSY — the second is what proves a long command locks the UI's commands
+     without freezing its pump."
+    queryCommand: aCommandQuery [
+        | sym |
+        sym := aCommandQuery commandSymbol.
+        self busy
+            ifTrue: [ aCommandQuery beDisabled ]
+            ifFalse: [
+                (sym == #appReset and: [ model value = 3 ])
+                    ifTrue: [ aCommandQuery beDisabled ]
+                    ifFalse: [ aCommandQuery beEnabled ] ].
+        ^true
+    ]
+
+    isEnabled: aCommandSymbol [
+        | query |
+        query := CommandQuery
+            commandDescription: (CommandDescription command: aCommandSymbol)
+            source: self.
+        self commandPolicy queryCommand: query.
+        ^query isEnabled
+    ]
+
+    "Dolphin routes a menu command here with a CommandDescription. Dispatching
+     on its SYMBOL is what an application does — the numeric id exists only to
+     survive the trip through WM_COMMAND."
+    onCommand: aCommandDescription [
+        | sym |
+        sym := aCommandDescription command.
+        commandsRun := self commandsRun + 1.
+        lastCommand := sym.
+        sym == #appDouble ifTrue: [ ^model value: model value * 2 ].
+        sym == #appReset ifTrue: [ ^model value: 3 ].
+        sym == #appCount ifTrue: [ ^self startCount ].
+        ^0
+    ]
+
+    "── the long command, on a WORKER ───────────────────────────────────────
+     Scope rule 8: isolates REPLACE Dolphin's green processes. The work runs
+     off the UI thread and the continuation comes back through the posted
+     action queue, so the model is only ever written on the UI thread — never
+     from the worker."
+    startCount [
+        busy := true.
+        UiSession postAction: [
+            workerResults := self workerResults + 1.
+            busy := false ].
+        ^0
+    ]
+    finishCount [ workerResults := self workerResults + 1. busy := false. ^0 ]
+
+    "── the BAD-INPUT path ──────────────────────────────────────────────────
+     Writing text that is not a number through a converting field must signal
+     rather than store. The gate asserts the exception class AND that the
+     model is unchanged: an implementation that swallowed the error and left
+     the old value would pass a test that only checked the value."
+    typeIntoA: aString [
+        ^[ fieldA value: aString. true ]
+            on: Error
+            do: [ :e | e class name ]
+    ]
+
+    textOfA [ ^User32 getWindowText: fieldA handle ]
+    textOfB [ ^User32 getWindowText: fieldB handle ]
+]

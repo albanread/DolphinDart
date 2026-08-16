@@ -95,13 +95,14 @@ GATES = {
     "st_worker": [MVP],
     "st_viewwave": [MVP],
     # Wave + a probe.
-    "st_shell": [MVP, FFI + "/shell_probe.mst"],
-    "st_text": [MVP, FFI + "/text_probe.mst"],
+    #
+    # `st_shell`, `st_text`, `st_command` and `st_app` were REMOVED with the
+    # WinView adapter family they drove. Their coverage was not: focus moved
+    # to `st_dolphinshell`, two-fields-one-model to `st_textedit`, command
+    # enablement to `st_menu`, and the acceptance app to `st_dolphinapp` —
+    # each on Dolphin's own classes. See docs/JOURNAL.md.
     "st_twowin": [MVP, FFI + "/twowin_probe.mst"],
-    "st_command": [MVP, FFI + "/command_probe.mst"],
     "st_mapped": [MVP, FFI + "/mapped_probe.mst"],
-    # st_app loads `text_probe.mst` itself and takes the app on top.
-    "st_app": [MVP, FFI + "/counter_app.mst"],
     # The Dolphin-owned view gates need the late compat layer, which reopens
     # translated classes and so must load after them.
     "st_dolphinview": [MVP, MVP_COMPAT],
@@ -109,6 +110,7 @@ GATES = {
     "st_subclass": [MVP, MVP_COMPAT, FFI + "/control_subclass.mst"],
     "st_textedit": [MVP, MVP_COMPAT, FFI + "/dolphin_textedit.mst"],
     "st_menu": [MVP, MVP_COMPAT, FFI + "/dolphin_menu.mst"],
+    "st_dolphinapp": [MVP, MVP_COMPAT, FFI + "/dolphin_app.mst"],
 }
 
 # Gates with no window and no message pump. They run under `dart.exe`, which

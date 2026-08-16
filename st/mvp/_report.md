@@ -1,11 +1,11 @@
 # dolphin2mst run report
 
-- inputs: **59** source files (`.cls` + `.pax`)
+- inputs: **61** source files (`.cls` + `.pax`)
 - shared-pool constants available: **6522** from **173** pools
 - loose methods adopted from `.pax`: **1**
-- parsed: **59**  (unbalanced/skipped: 0)
-- emitted: **60** `.mst`
-- methods: **2665**
+- parsed: **61**  (unbalanced/skipped: 0)
+- emitted: **62** `.mst`
+- methods: **2701**
 - refusals: **119**
 
 ## Refusals by rewrite class
@@ -25,6 +25,7 @@
 | `ARGB` | 21 | 0 |
 | `AbstractRGB` | 4 | 0 |
 | `AbstractToTextConverter` | 6 | 0 |
+| `AcceleratorTable` | 25 | 0 |
 | `BorderLayout` | 26 | 0 |
 | `Color` | 268 | 9 |
 | `ColorDefault` | 11 | 1 |
@@ -63,6 +64,7 @@
 | `PointEvent` | 5 | 0 |
 | `PositionEvent` | 23 | 0 |
 | `Presenter` | 152 | 6 |
+| `RGB` | 11 | 0 |
 | `Rectangle` | 98 | 2 |
 | `ScrollEvent` | 16 | 1 |
 | `Shell` | 39 | 2 |

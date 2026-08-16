@@ -11,7 +11,7 @@
  what an application author writes, and from here on it is the only kind of
  Smalltalk that should be hand-written."
 ShellView subclass: TextEditShell [
-    | editView |
+    | editView otherView |
 
     editView [ ^editView ]
 
@@ -36,6 +36,21 @@ ShellView subclass: TextEditShell [
     TextEditShell class >> routeDolphinMessages [
         ^UiSession routeMessagesFrom: View
     ]
+
+    "── A SECOND field on the SAME model — carried from the retired
+     `text_probe`, which proved it over `WinTextEdit`/`TextField`.
+     Two views sharing one ValueModel is the whole point of the triad: an
+     edit in either must reach the model AND the other view, and a single
+     field cannot show that at all."
+    buildSecondEdit [
+        otherView := TextEdit new.
+        otherView parentView: self.
+        otherView preferredExtent: 160 @ 24.
+        otherView usePreferredExtent: true.
+        self addSubView: otherView.
+        ^otherView
+    ]
+    otherView [ ^otherView ]
 
     "Is the sub-view REALLY a Windows EDIT, or just a window we called one?
      Asked of Windows rather than of the class: `GetClassName` answers what

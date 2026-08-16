@@ -981,9 +981,8 @@ Object subclass: Color [
         	default := ColorDefault basicNew
         				setCode: 4278190080;
         				beImmutableObject;
-        				yourself.self addNamed: #default color: default. self addClassVariable: 'Default' value: default.
-        	self addClassVariable: 'None'
-        		value: (ColorNone basicNew
+        				yourself.self addNamed: #default color: default. Default := default.
+        	None := (ColorNone basicNew
         				setCode: 4294967295;
         				beImmutableObject;
         				yourself).
@@ -1009,8 +1008,7 @@ Object subclass: Color [
         						yourself.
         			self addNamed: n color: color.
         			color isTransparent ifFalse: [commonColors add: color]].
-        	self addClassVariable: 'CommonColors'
-        		value: (commonColors asSortedArray: 
+        	CommonColors := (commonColors asSortedArray: 
         					[:c1 :c2 |
         					| a b |
         					a := c1 hsv.

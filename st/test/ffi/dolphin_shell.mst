@@ -106,6 +106,13 @@ ShellView subclass: DolphinShell [
         ^out contents
     ]
 
+    "── FOCUS, carried over from the retired `shell_probe` ────────────────
+     `UI.View` has `setFocus`/`hasFocus` already; nothing here re-supplies
+     view protocol. Kept as probe methods so the gate names an intent rather
+     than sending SetFocus itself."
+    focusNorth [ ^northView setFocus ]
+    focusSouth [ ^southView setFocus ]
+
     "One layout pass, driven the way Dolphin drives it."
     relayout [
         relayouts := self relayouts + 1.

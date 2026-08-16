@@ -177,6 +177,26 @@ main(List<String> a) {
       'south re-docked to the new bottom (${south2[1]}+${south2[3]} of $ch2)');
   must(num('DShell relayouts') == 2, 'two layout passes ran');
 
+  // ── FOCUS — carried from the retired `st_shell` ─────────────────────────
+  //
+  // `st_shell` proved this over the `WinView` adapter. The adapter is gone;
+  // the behaviour is not, so the assertions move here rather than being
+  // dropped with the scaffolding that happened to host them.
+  stRun('DShell focusNorth.');
+  expect('focus moves to the north view', 'DShell northView hasFocus', 'true');
+  expect('  ...and off the other one', 'DShell southView hasFocus', 'false');
+  stRun('DShell focusSouth.');
+  expect('focus moves to the south view', 'DShell southView hasFocus', 'true');
+  // A RELAYOUT MUST NOT STEAL IT. SWP_NOACTIVATE in the deferred-position
+  // batch is what guarantees that, and without the assertion a regression
+  // there is invisible — the arrangement would still be correct.
+  stRun('DShell resizeTo: 560 by: 400. UiSession pump.');
+  expect('a relayout does not steal focus',
+      'DShell southView hasFocus', 'true');
+
+  expect('no handler error was contained',
+      'UiSession handlerErrors printString', "'0'");
+
   // ── teardown ─────────────────────────────────────────────────────────────
   expect('destroy succeeded', 'DShell destroy printString', "'true'");
   stRun('UiSession pump.');
