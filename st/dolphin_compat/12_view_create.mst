@@ -84,6 +84,11 @@ Object subclass: InputState [
         Current isNil ifTrue: [ Current := self basicNew ]. ^Current
     ]
     windowAt: anHandle put: aView [ ^UiSession register: aView for: anHandle ]
+    "`lookupWindow:` is the read half — Dolphin's name for the same lookup.
+     `View>>subViewsDo:` walks the real child HWNDs and asks for each one's
+     view, so a missing handle must answer NIL rather than raise: a child
+     window this image did not create is a legitimate answer of none."
+    lookupWindow: anHandle [ ^UiSession viewFor: anHandle ]
     windowAt: anHandle [ ^UiSession viewFor: anHandle ]
     windowAt: anHandle ifAbsent: aBlock [
         ^(UiSession viewFor: anHandle) ifNil: [ aBlock value ]

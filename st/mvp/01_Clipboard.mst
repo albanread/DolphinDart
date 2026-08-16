@@ -1,0 +1,6 @@
+Object subclass: Clipboard [
+    <classVars: Current>
+    Clipboard class >> classVarCurrent [ ^Current ]
+    | isOpen registeredFormats idToName |
+
+]

@@ -1,0 +1,4 @@
+MenuItem subclass: CommandMenuItem [
+    | commandDescription lastQuery _reserved |
+
+]

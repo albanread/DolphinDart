@@ -1,0 +1,6 @@
+Object subclass: Command [
+    <classVars: Current>
+    Command class >> classVarCurrent [ ^Current ]
+    | commandDescription receiver undoAction redoAction isBenign |
+
+]

@@ -1,0 +1,7 @@
+MenuItem subclass: DividerMenuItem [
+    <classVars: BarBreak Break Separator>
+    DividerMenuItem class >> classVarBarBreak [ ^BarBreak ]
+    DividerMenuItem class >> classVarBreak [ ^Break ]
+    DividerMenuItem class >> classVarSeparator [ ^Separator ]
+
+]

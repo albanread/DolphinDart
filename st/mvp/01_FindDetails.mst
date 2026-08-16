@@ -1,0 +1,4 @@
+Object subclass: FindDetails [
+    | pattern replaceWith searchMode flags action |
+
+]

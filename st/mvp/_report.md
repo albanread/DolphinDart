@@ -1,12 +1,12 @@
 # dolphin2mst run report
 
-- inputs: **39** source files (`.cls` + `.pax`)
+- inputs: **40** source files (`.cls` + `.pax`)
 - shared-pool constants available: **6459** from **171** pools
 - loose methods adopted from `.pax`: **0**
-- parsed: **39**  (unbalanced/skipped: 0)
-- emitted: **39** `.mst`
-- methods: **1970**
-- refusals: **75**
+- parsed: **40**  (unbalanced/skipped: 0)
+- emitted: **40** `.mst`
+- methods: **2147**
+- refusals: **88**
 
 ## Refusals by rewrite class
 
@@ -14,6 +14,7 @@
 |---|--:|
 | `hashhash` | 42 |
 | `cascade` | 21 |
+| `orphan-loose-methods` | 13 |
 | `binding-literal` | 12 |
 
 ## Per class
@@ -52,6 +53,7 @@
 | `ShellView` | 156 | 11 |
 | `TextPresenter` | 20 | 5 |
 | `TypeConverter` | 13 | 1 |
+| `UserLibrary (loose)` | 177 | 0 |
 | `ValueAdaptor` | 6 | 2 |
 | `ValueAspectAdaptor` | 17 | 1 |
 | `ValueBuffer` | 17 | 1 |

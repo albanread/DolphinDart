@@ -98,6 +98,18 @@ Object subclass: DesktopView [
      window. Answering true is the whole point of this object."
     isDesktop [ ^true ]
     view [ ^self ]
+
+    "THE DESKTOP TERMINATES THE PARENT CHAIN. `View>>invalidateLayout` walks
+     up via `parent childLayoutInvalidated`, and that method walks on
+     UNCONDITIONALLY — `self parentView childLayoutInvalidated`, with no nil
+     guard, because in Dolphin the chain always ends at a DesktopView that
+     answers these. The desktop's own layout never changes, so they are
+     genuine no-ops rather than stubs."
+    childLayoutInvalidated [ ^self ]
+    invalidateLayout [ ^self ]
+    basicInvalidateLayout [ ^self ]
+    onSubViewAdded: aView [ ^aView ]
+    onSubViewRemoved: aView [ ^aView ]
 ]
 
 
@@ -149,3 +161,23 @@ Object subclass: DolphinBoot [
         ^failed asArray
     ]
 ]
+
+"── Utf16String ────────────────────────────────────────────────────────
+ Dolphin's string class for UTF-16 text, which its loose `UserLibrary class >>
+ getWindowText: hWnd` allocates with `newFixed:` before handing the buffer to
+ the three-argument API call.
+
+ This port's equivalent is `Utf16Buffer` (st/prims/rt) — same job, same
+ layout, different name — so the name is ALIASED rather than a second class
+ written. A global, because the builder resolves a capitalised name to a class
+ first and there is no class of this name; the same mechanism DD9 used for the
+ `User32`/`Gdi32` library aliases.
+
+ `newFixed:` takes a CHARACTER count and allocates room for that many UTF-16
+ units plus a null — the sizing `GetWindowTextW` expects when it is given
+ `nMaxCount: len + 1`."
+ExternalMemory subclass: Utf16Buffer [
+    Utf16Buffer class >> newFixed: aCharCount [ ^self new: (aCharCount + 1) * 2 ]
+]
+
+Utf16String := Utf16Buffer.

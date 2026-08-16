@@ -1,0 +1,4 @@
+View subclass: DoubleBufferedView [
+    | backSurface requiresRender |
+
+]

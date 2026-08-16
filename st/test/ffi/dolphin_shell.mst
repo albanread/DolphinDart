@@ -1,0 +1,99 @@
+"dolphin_shell.mst — the DD9 shell gate, rebuilt on UI.View (DolphinDart DD10).
+
+ The DD9 shell proved Dolphin's `BorderLayout` could arrange real Win32
+ windows — but through `WinView`, a hand-written adapter standing in for a
+ view. This is the same gate with the stand-in removed: the container is a
+ real `UI.ShellView`, the three arranged things are real `UI.View`s, and every
+ method the layout reaches — `clientRectangle`, `rectangle:`, `layoutExtent:`,
+ `subViewsDo:`, `adjustRectangle:`, `hasVisibleStyle` — is Dolphin's own.
+
+ That is what retires `WinView`: `UI.View` already implements the whole
+ protocol the adapter was written to supply. Nothing here re-supplies it.
+
+ The only Smalltalk in this file is the APP — a shell that builds three
+ sub-views and lays them out north/centre/south. That is the code an
+ application author writes, and it is the only kind of Smalltalk that should
+ be hand-written from here on."
+ShellView subclass: DolphinShell [
+    | northView centreView southView relayouts |
+
+    DolphinShell class >> edgeHeight [ ^28 ]
+
+    relayouts [ ^relayouts ifNil: [ 0 ] ]
+    northView [ ^northView ]
+    centreView [ ^centreView ]
+    southView [ ^southView ]
+
+    "Build the sub-views. Each is a real `UI.View` created by Dolphin's own
+     `create`, parented to this shell — `parentView:` is what makes it a child
+     window, and `addSubView:` is what puts it in the layout's reach."
+    buildViews [
+        relayouts := 0.
+        northView := self makeChild: DolphinShell edgeHeight.
+        southView := self makeChild: DolphinShell edgeHeight.
+        "The centre declares no preferred height: it takes what is left."
+        centreView := self makeChild: nil.
+        self layoutManager: (BorderLayout new
+            north: northView;
+            south: southView;
+            center: centreView;
+            yourself).
+        ^self
+    ]
+
+    makeChild: aHeightOrNil [
+        | v |
+        v := View new.
+        v parentView: self.
+        v create.
+        self addSubView: v.
+        aHeightOrNil isNil ifFalse: [ v preferredExtent: 0 @ aHeightOrNil ].
+        v show.
+        ^v
+    ]
+
+    "One layout pass, driven the way Dolphin drives it."
+    relayout [
+        relayouts := self relayouts + 1.
+        self layout.
+        ^relayouts
+    ]
+
+    "Resize, then relayout — the gate calls this to prove the arrangement
+     tracks the container's client area."
+    resizeTo: w by: h [
+        User32
+            setWindowPos: handle
+            hWndInsertAfter: 0
+            x: 0 y: 0 cx: w cy: h
+            uFlags: 16r16.        "SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE"
+        ^self relayout
+    ]
+
+    "The client extent BorderLayout divides up, read from Dolphin's own
+     `clientRectangle` rather than from a Win32 call in the gate."
+    clientWidth [ ^self clientRectangle width ]
+    clientHeight [ ^self clientRectangle height ]
+
+    "Each sub-view's rectangle, from Dolphin's own `getRect` — the same
+     accessor `LayoutPlacement` compares against when deciding whether a
+     placement is a real change."
+    rectOf: aView [
+        | r |
+        r := aView getRect.
+        ^Array with: r origin x with: r origin y with: r width with: r height
+    ]
+
+    "A step-by-step build, answering WHERE it stopped. A gate that only sees
+     the final nil has to infer the step; this names it."
+    diagStep [
+        | v |
+        flags isNil ifTrue: [ ^'shell flags nil' ].
+        v := View new.
+        v parentView: self.
+        v create.
+        self addSubView: v.
+        ^'ok'
+    ]
+]
+

@@ -126,6 +126,11 @@ def main(argv: List[str]) -> int:
     # produced 39 "unmapped primitive" refusals for code we will never ship.
     ap.add_argument("--reference", action="append", default=[],
                     help="parse for the class hierarchy only; never emit")
+    ap.add_argument("--loose", action="append", default=[],
+                    help="emit this class's LOOSE methods as a reopen, even "
+                         "though the class itself is not translated "
+                         "(OS.UserLibrary: Dolphin's convenience layer over "
+                         "the generated prims)")
     ap.add_argument("inputs", nargs="+")
     args = ap.parse_args(argv)
 
@@ -220,6 +225,19 @@ def main(argv: List[str]) -> int:
     # the package manifest as an input produced 211 duplicate refusals, one per
     # class, purely from that overlap.
     for f, pf in sorted(parsed.items(), key=lambda kv: kv[0].endswith(".pax")):
+        # A `.pax` NEVER emits a class. It is a package MANIFEST: it
+        # re-declares every class the package contains, including ones whose
+        # authoritative definition is a `.cls` elsewhere — or, worse, ones this
+        # project GENERATES. Passing `Dolphin MVP Base.pax` in for its loose
+        # methods emitted its re-declaration of `OS.MENUITEMINFOW` into the
+        # output, where it loaded after and overwrote the struct genstructs
+        # builds from winkb — and `MENUITEMINFOW class >> sizeInBytes`
+        # disappeared, taking the menu gate with it.
+        #
+        # Its loose methods are still adopted (that is the whole reason to
+        # pass one), and its pools and hierarchy still inform the run.
+        if f.endswith(".pax"):
+            continue
         for cd in pf.classdefs or ([pf.classdef] if pf.classdef else []):
             if cd.superclass.endswith("SharedPool"):
                 continue          # folded into constants; never emitted as a class
@@ -265,8 +283,34 @@ def main(argv: List[str]) -> int:
             n_methods = (len(pf.methods) if cd is pf.classdef else 0) + len(extra)
             per_file.append((name, n_methods, len(res.refusals)))
 
-    # Loose methods whose target class was never translated are REPORTED, not
-    # dropped: they are the User32 binding when the target is `OS.UserLibrary`.
+    # Loose methods whose target class was never translated are either EMITTED
+    # AS A REOPEN (when the caller names the class with --loose) or REPORTED.
+    #
+    # `OS.UserLibrary` is the case that matters: 177 loose methods in the
+    # `.pax` are Dolphin's own CONVENIENCE layer over the raw prims —
+    # `getWindowText: hWnd` answering a String on top of the three-argument
+    # API call, and its kin. `genprims` builds UserLibrary from the pragmas
+    # and so knows nothing about them, and `UI.View` calls them constantly.
+    # Emitting them as a reopen puts Dolphin's own convenience code back on
+    # top of the generated floor, which is where it belongs.
+    for target in (args.loose or []):
+        ms = loose.pop(target, None)
+        if not ms:
+            notes.append(f"--loose {target}: no loose methods found")
+            continue
+        cls_name = emit.flatten_name(target, renames)
+        cd = by_name_all.get(target)
+        res = emit.emit_loose(cls_name, cd, ms, renames, pool_table,
+                              classvar_owners, constant_chains)
+        refusals.extend(res.refusals)
+        fname = f"90_{cls_name}_loose.mst"
+        with open(os.path.join(args.out, fname), "w",
+                  encoding="utf-8", newline="\n") as fh:
+            fh.write(res.text)
+        written += 1
+        per_file.append((cls_name + " (loose)", len(ms), len(res.refusals)))
+
+    # The rest are REPORTED, not dropped.
     for target, ms in sorted(loose.items()):
         refusals.append(emit.Refusal(target, "orphan-loose-methods",
                                      f"{len(ms)} loose method(s) filed onto "

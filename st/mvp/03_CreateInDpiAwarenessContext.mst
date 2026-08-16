@@ -1,0 +1,4 @@
+CreateWindowDecorator subclass: CreateInDpiAwarenessContext [
+    | dpiAwareness |
+
+]

@@ -1,0 +1,4 @@
+SelectionChangeEvent subclass: SelectionChangingEvent [
+    | permit |
+
+]

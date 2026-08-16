@@ -1,0 +1,4 @@
+DragDropSession subclass: InternalDragDropSession [
+    | lastImageKey imageList oldCursor dragButton operationDescriptions |
+
+]

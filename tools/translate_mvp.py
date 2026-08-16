@@ -97,6 +97,15 @@ TARGETS = [
     "Core/Object Arts/Dolphin/MVP/Base/UI.CreateWindowFunction.cls",
     "Core/Object Arts/Dolphin/MVP/Base/UI.CreateWindowApiCall.cls",
     "Core/Object Arts/Dolphin/MVP/Base/UI.CreateWindow.cls",
+
+    # The PACKAGE MANIFEST, as a target rather than a reference: `.pax` files
+    # carry LOOSE METHODS, and this one files 177 of them onto
+    # `OS.UserLibrary` — Dolphin's convenience layer over the raw API calls,
+    # which `UI.View` uses constantly. `--loose OS.UserLibrary` emits them as
+    # a reopen of the generated class. The manifest's class re-declarations
+    # are ignored: cli.py emits a class from its own `.cls` and notes the
+    # duplicate.
+    "Core/Object Arts/Dolphin/MVP/Base/Dolphin MVP Base.pax",
 ]
 
 # Parsed for hierarchy + pools, never emitted. DIRECTORIES, deliberately: a
@@ -140,13 +149,37 @@ def main(argv):
         return 2
 
     cmd = [sys.executable, os.path.join(HERE, "dolphin2mst", "cli.py"),
-           "--out", args.out]
+           "--out", args.out,
+           # Dolphin's convenience layer over the generated prims: 177 methods
+           # filed onto OS.UserLibrary by a .pax, which UI.View calls
+           # constantly (`User32 getWindowText: hWnd` and its kin).
+           "--loose", "OS.UserLibrary"]
     for r in refs:
         cmd += ["--reference", r]
     cmd += targets
     print("translate_mvp: %d target(s), %d reference(s) -> %s"
           % (len(targets), len(refs), args.out))
-    return subprocess.call(cmd, cwd=os.path.join(HERE, "dolphin2mst"))
+    rc = subprocess.call(cmd, cwd=os.path.join(HERE, "dolphin2mst"))
+    if rc != 0:
+        return rc
+
+    # The loose-method reopen must load AFTER the class it reopens, and
+    # `UserLibrary` is generated into `st/prims` — so it belongs in the LATE
+    # layer, not beside the translated classes. Moved rather than emitted
+    # there directly, because the translator has one output directory and the
+    # layer split is the caller's concern.
+    loose = os.path.join(args.out, "90_UserLibrary_loose.mst")
+    if os.path.exists(loose):
+        late_dir = os.path.join(REPO, "st", "mvp_compat")
+        os.makedirs(late_dir, exist_ok=True)
+        late = os.path.join(late_dir, "02_userlibrary_loose.mst")
+        with open(loose, encoding="utf-8") as fh:
+            body = fh.read()
+        with open(late, "w", encoding="utf-8", newline="\n") as fh:
+            fh.write(body)
+        os.remove(loose)
+        print("translate_mvp: loose UserLibrary methods -> %s" % late)
+    return 0
 
 
 if __name__ == "__main__":

@@ -1,0 +1,4 @@
+CapturingInteractor subclass: MouseTracker [
+    | dragButton target startPoint startPointLocal origin hysteresis _unused10 trackPosition constrain |
+
+]

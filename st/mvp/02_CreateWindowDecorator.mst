@@ -1,0 +1,4 @@
+CreateWindowFunction subclass: CreateWindowDecorator [
+    | decorated |
+
+]

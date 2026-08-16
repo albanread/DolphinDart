@@ -1,0 +1,4 @@
+Object subclass: FramingContext [
+    | layoutContext view rectangle parentRect |
+
+]

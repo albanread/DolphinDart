@@ -1,0 +1,6 @@
+Object subclass: CommandAnnotationsRegister [
+    <classVars: Current>
+    CommandAnnotationsRegister class >> classVarCurrent [ ^Current ]
+    | register |
+
+]

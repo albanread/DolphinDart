@@ -1,0 +1,4 @@
+Object subclass: ViewState [
+    | view state showCmd dpi dpiAwarenessContext subViewStates |
+
+]

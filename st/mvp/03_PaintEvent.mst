@@ -1,0 +1,4 @@
+WindowsEvent subclass: PaintEvent [
+    | hdc paintStruct |
+
+]

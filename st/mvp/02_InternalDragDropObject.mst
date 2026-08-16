@@ -1,0 +1,4 @@
+DragDropObject subclass: InternalDragDropObject [
+    | availableFormats |
+
+]

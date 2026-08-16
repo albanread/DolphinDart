@@ -1,0 +1,4 @@
+LayoutManager subclass: GridLayout [
+    | rows columns horizontalGap verticalGap |
+
+]

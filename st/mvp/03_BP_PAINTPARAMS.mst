@@ -1,0 +1,4 @@
+SizedStructure subclass: BP_PAINTPARAMS [
+    | blendFunction |
+
+]

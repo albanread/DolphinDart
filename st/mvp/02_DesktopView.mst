@@ -1,0 +1,6 @@
+View subclass: DesktopView [
+    <classVars: Current>
+    DesktopView class >> classVarCurrent [ ^Current ]
+    | _dvReserved0 _dvReserved1 _dvReserved2 _dvReserved3 |
+
+]
