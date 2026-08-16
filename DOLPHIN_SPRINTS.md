@@ -34,7 +34,8 @@ use `on:do:` in translated code (prior-art rule, carried).
 | DD7 | ✅ DONE | Door proven to depth 5 through real `SendMessageW`; visible window with real WM_PAINT/WM_COMMAND; `ValidateRect` backstop; generation guard — all falsifiably tested |
 | DD8 | ✅ DONE | Compat kernel: events, `UiSession`, Model/ValueModel, SearchPolicy, GUID, properties |
 | DD9 | ✅ DONE | **Gate green.** Dolphin's `BorderLayout` arranges real Win32 windows; live WM_SIZE relayout via Dolphin's own `buildMessageMap`; paint through the HDC proved by pixel readback; focus/tab; clean destroy. Class-side `super` implemented in the front-end. Carried forward: `Graphics.Canvas` wave, supervisor respawn demo |
-| DD10–DD13 | ⬜ PENDING | DD10 next: the MVP triad |
+| DD10 | 🚧 IN PROGRESS | Model side DONE (Dolphin's Model/ValueModel/converters translated, DD8 stand-ins retired, `st_triad` green; `InvalidFormat` fires through Dolphin's own converter). Worker doctrine settled, mechanism pending. NEXT: per-window routing, then the view side — see the DD10 brief's status block |
+| DD11–DD13 | ⬜ PENDING | DD11 needs per-class message maps; DD12 (goal gate) hard-depends on DD10's per-window routing |
 
 Two standing corrections the ladder should be read with:
 
@@ -70,7 +71,16 @@ of DD10); ListView virtual mode/custom draw; per-monitor DPI; themes;
 RichEdit; drag-drop; COM story; generic `ST_ffiCall` Win64 trampoline if DD6
 shipped generated natives first.
 
-**Corpus checkpoints** (carried from the prior-art calibration): DD9 ≈ 30–40
+**Corpus checkpoints — deliberately undershot (recorded 2026-08-16).** The
+bands below were calibrated for translating whole packages. The DD9/DD10 runs
+settled a different strategy: translate ON DEMAND, cut each wave to what the
+next gate exercises, and let the refusal report name what was left out. DD9
+closed at 14 classes against a 30–40 band and DD10's model side at 27 total —
+and every one of those classes is exercised by a gate, which the band never
+guaranteed. The bands stay as a rough total-effort forecast for DD12's
+150–200-class endpoint, not as per-sprint targets.
+
+Original calibration: DD9 ≈ 30–40
 translated classes · DD10 ≈ +60 · DD11 ≈ +40 · DD12 ≈ +30 — the 150–200-class
 v1 band. DD3 and DD8 are the long poles before visible progress; DD0–DD2 are
 small but gate everything.

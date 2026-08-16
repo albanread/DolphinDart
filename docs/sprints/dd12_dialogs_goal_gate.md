@@ -9,6 +9,12 @@ years of Dolphin hardening, the reason we port instead of rewrite); the DD7
 door's nesting machinery (modal loops are its second customer, after
 synchronous creates).
 
+> **Dependency (recorded 2026-08-16):** stacked modals hard-require
+> PER-WINDOW routing — the funnel carrying the HWND and `UiSession`
+> dispatching via `viewFor:` rather than `LastWindow`. That lands in DD10's
+> view side (see the DD10 status block); this sprint should find it done, and
+> its first gate item should re-assert it under two live windows.
+
 ## The wave
 
 `DialogView` modality on a nested `run_modal_loop` (native, in the DD7 host:

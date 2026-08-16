@@ -1,5 +1,43 @@
 # DD10 — The MVP triad (= milestone UI-3) `L` — needs DD4
 
+> ## STATUS + DIRECTION (2026-08-16, mid-sprint review)
+>
+> **Done:** the model side. `Core.Model`, `UI.ValueModel`, `ValueHolder`,
+> `ValueAdaptor`, `ValueAspectAdaptor`, `ValueBuffer`, the type-converter
+> chain (`TypeConverter` → `NumberToText`/`IntegerToText`), `Presenter` and
+> `Shell` are translated and load — 27 classes in `st/mvp`. Gate
+> `test/st_triad.dart` is green, including the bad-input path: Dolphin's own
+> `NumberToText` signals `InvalidFormat` through `Number class >> fromString:`.
+> The DD8 `Model`/`ValueModel` stand-ins are DELETED; their contracts moved to
+> the triad gate and passed against the real classes unchanged. The worker
+> DOCTRINE is settled (`docs/WORKERS.md`); the mechanism is not built, and
+> `st/world/47_worker.mst` is recorded as inert (numbered-primitive bodies).
+>
+> **The review found one structural prerequisite the brief did not name:**
+>
+> **PER-WINDOW ROUTING.** The door's funnel carries `(kind, msg, wParam,
+> lParam)` — no HWND — and `UiSession dispatch:`/`dispatchMessage:` route to
+> `LastWindow`. One window, fine; the moment a shell owns an EDIT control,
+> `WM_COMMAND` must find the control's OWNER, and DD12's stacked modals are
+> impossible without it. The `viewFor:` registry already exists and is already
+> maintained — it is simply not consulted by dispatch. The fix is mechanical
+> and should land BEFORE the view side, not be retrofitted under it: widen the
+> funnel to `(kind, hwnd, a, b, c)` (the named kinds zero-fill, the spike
+> two-arg forwarder stays), route by `viewFor:` with `LastWindow` as the
+> fallback for the spike suites.
+>
+> Two smaller direction points:
+> - **Real controls come through the generated floor.** `UserLibrary class >>
+>   createWindowEx:…` exists and marshals (verified). The door's
+>   `mvpCreateButton` was a DD7 spike convenience — the TextEdit/ListBox wave
+>   creates real `EDIT`/`LISTBOX` windows through the prim, parented to the
+>   shell, and only the top-level window class stays door-owned.
+> - **The `Graphics.Canvas` wave carried from DD9 lands here or DD11**, at the
+>   first gate that needs drawn text beyond the DD9 pixel probe.
+>
+> Per-CLASS message maps (the global `MessageMap` on `UiSession`) can wait for
+> DD11, when different view classes first coexist with different maps.
+
 **Objective:** Model–View–Presenter in anger: the framework wave plus the
 first app that exercises exceptions, converters, commands, and the
 long-command doctrine. Prior-art G5 transfers as scope + gate; the worker
