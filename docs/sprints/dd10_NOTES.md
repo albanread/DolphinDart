@@ -181,3 +181,43 @@ One structural note carried into the presenter: model→view refresh is guarded
 by an `updating` flag, because `flush` writes the model, which notifies, which
 lands back on the field. Without the guard a keystroke overwrites the text the
 user is still typing.
+
+## Commands and menus
+
+Gate: `test/st_command.dart` + `st/test/ffi/command_probe.mst`. 36 classes
+translated now — the whole Command framework and menu tree came across:
+`UI.CommandDescription`, `UI.CommandQuery`, `UI.CommandPolicy`,
+`Graphics.GraphicsTool`, `UI.MenuItem`, `UI.Menu`, `UI.MenuBar`.
+
+**The menus themselves translate; the CONTROLS do not.** `Menu` hangs off
+`Graphics.GraphicsTool`, which is Object-rooted and small, so the whole tree
+is ordinary Smalltalk. A control is a Win32 *window class*, not a Smalltalk
+one, so it needs an adapter. That is the line: translate what is Smalltalk,
+adapt what is Windows. `st/dolphin_compat/10_winmenu.mst` only creates the
+HMENU and pushes item state at it.
+
+Win32's menu API here is `InsertMenuItem`/`SetMenuItemInfo` with a
+MENUITEMINFOW, not the older `AppendMenu`/`EnableMenuItem` — which is also all
+Dolphin's pragma set carries, so it is what the generated floor offers.
+
+### Enablement is read back FROM WINDOWS
+
+`queryCommand:` is Dolphin's hook: a view answers a `CommandQuery` saying
+whether a command applies right now. The gate makes `#reset` conditional — it
+is only meaningful once the value has moved off its start — so enablement is
+*observable* rather than constant, and then asserts the item's state through
+`GetMenuItemInfo`. Asking the probe what it thinks it set would agree with
+itself whatever happened.
+
+Two assertions worth keeping: the same item's state changes across a command
+(greyed → enabled → greyed), and **a disabled command refuses even when its id
+is delivered anyway**. Windows greys the item so a user cannot click it, but an
+accelerator or a posted message still delivers the id — Dolphin checks, so the
+probe checks.
+
+### `intptrAt:put:` was missing from the runtime
+
+`ExternalMemory` had `intptrAt:` and no writer, so **every struct with a
+pointer field was read-only** — and `genstructs` emits no setter for one
+because the runtime had none to emit. MENUITEMINFOW's `dwTypeData` (the item
+text) is the first caller. Added beside its reader.

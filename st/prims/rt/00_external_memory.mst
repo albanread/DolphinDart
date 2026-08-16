@@ -109,6 +109,18 @@ Object subclass: ExternalMemory [
         7 to: 0 by: -1 do: [ :k | b := self byteAt: i + k. v := (v bitShift: 8) bitOr: b ].
         ^v
     ]
+    "The writer its reader has always needed. Every struct with a POINTER field
+     is read-only without it — `MENUITEMINFOW>>dwTypeData:` is the first caller
+     (DD10), and genstructs emits no setter for a pointer field because the
+     runtime had none to emit."
+    intptrAt: i put: v [
+        | x |
+        x := v.
+        0 to: 7 do: [ :k |
+            self byteAt: i + k put: (x bitAnd: 255).
+            x := x bitShift: -8 ].
+        ^v
+    ]
 
     "A NON-OWNING window onto part of this block — a nested struct field
      (PAINTSTRUCT's rcPaint is a RECT at offset 12) is a view, not a copy, so

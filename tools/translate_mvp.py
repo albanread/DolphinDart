@@ -77,6 +77,18 @@ TARGETS = [
     "Core/Object Arts/Dolphin/MVP/Base/UI.Shell.cls",
     "Core/Object Arts/Dolphin/MVP/Base/UI.ValuePresenter.cls",
     "Core/Object Arts/Dolphin/MVP/Presenters/Text/UI.TextPresenter.cls",
+
+    # The Command framework + menus. `Menu` and `AcceleratorTable` hang off
+    # `Graphics.GraphicsTool`, which is Object-rooted and small — so the whole
+    # tree translates rather than needing an adapter, unlike the CONTROLS
+    # (which are Win32 window classes, not Smalltalk ones).
+    "Core/Object Arts/Dolphin/MVP/Base/UI.CommandDescription.cls",
+    "Core/Object Arts/Dolphin/MVP/Base/UI.CommandQuery.cls",
+    "Core/Object Arts/Dolphin/MVP/Base/UI.CommandPolicy.cls",
+    "Core/Object Arts/Dolphin/MVP/Graphics/Graphics.GraphicsTool.cls",
+    "Core/Object Arts/Dolphin/MVP/Base/UI.MenuItem.cls",
+    "Core/Object Arts/Dolphin/MVP/Base/UI.Menu.cls",
+    "Core/Object Arts/Dolphin/MVP/Base/UI.MenuBar.cls",
 ]
 
 # Parsed for hierarchy + pools, never emitted. DIRECTORIES, deliberately: a

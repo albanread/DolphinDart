@@ -1,0 +1,131 @@
+"10_winmenu.mst — real Win32 menus (DolphinDart DD10).
+
+ The same split as the controls (09_wincontrol.mst): Dolphin's `UI.Menu`,
+ `MenuItem`, `CommandDescription`, `CommandQuery` and `CommandPolicy` are
+ TRANSLATED and hold the semantics; this file only creates the HMENU and
+ pushes item state at it.
+
+ Win32's menu API is `InsertMenuItem`/`SetMenuItemInfo` with a MENUITEMINFOW,
+ not the older `AppendMenu`/`EnableMenuItem` — which is also all Dolphin's
+ pragma set carries, so it is what the generated floor offers.
+
+ Field offsets come from the generated struct; the three whose accessors
+ winkb could not size (`fMask`, `fType`, `fState` are enums) are written
+ through `uint32At:` at their documented offsets. The struct file records
+ those offsets as 0-based in its comments and 1-based in its accessors, so
+ fMask is byte 4 = `uint32At: 5`."
+Object subclass: WinMenu [
+    | handle items isBar |
+
+    "MIIM_STATE | MIIM_ID | MIIM_SUBMENU | MIIM_STRING = 16r47"
+    WinMenu class >> miimAll [ ^16r47 ]
+    "MIIM_STATE alone, for a state-only update."
+    WinMenu class >> miimState [ ^16r1 ]
+    WinMenu class >> mfsEnabled [ ^0 ]
+    "MFS_DISABLED | MFS_GRAYED"
+    WinMenu class >> mfsGrayed [ ^16r3 ]
+
+    WinMenu class >> bar [ ^self basicNew setHandle: User32 createMenu bar: true ]
+    WinMenu class >> popup [
+        ^self basicNew setHandle: User32 createPopupMenu bar: false
+    ]
+
+    setHandle: h bar: aBoolean [
+        handle := h. isBar := aBoolean. items := OrderedCollection new
+    ]
+    handle [ ^handle ]
+    items [ ^items ]
+
+    "Append a command item. `anId` is what arrives in WM_COMMAND's low word,
+     which is how the owning window turns a click back into a command."
+    add: aString id: anId [
+        | mii buf |
+        mii := MENUITEMINFOW new.
+        buf := Utf16Buffer fromString: aString.
+        [ mii cbSize: MENUITEMINFOW sizeInBytes.
+          mii uint32At: 5 put: WinMenu miimAll.       "fMask"
+          mii uint32At: 9 put: 0.                     "fType = MFT_STRING"
+          mii uint32At: 13 put: WinMenu mfsEnabled.   "fState"
+          mii wID: anId.
+          mii intptrAt: 25 put: 0.                    "hSubMenu = none"
+          mii intptrAt: 57 put: buf address.          "dwTypeData"
+          mii cch: aString size.
+          User32
+            insertMenuItem: handle
+            uItem: items size
+            fByPosition: 1
+            lpmii: mii address ] ensure: [ buf free. mii free ].
+        items add: anId.
+        ^anId
+    ]
+
+    "Append a submenu. The popup's handle goes in hSubMenu and the item has no
+     id of its own — Windows never sends WM_COMMAND for a popup header."
+    addSubmenu: aWinMenu text: aString [
+        | mii buf |
+        mii := MENUITEMINFOW new.
+        buf := Utf16Buffer fromString: aString.
+        [ mii cbSize: MENUITEMINFOW sizeInBytes.
+          mii uint32At: 5 put: WinMenu miimAll.
+          mii uint32At: 9 put: 0.
+          mii uint32At: 13 put: WinMenu mfsEnabled.
+          mii wID: 0.
+          mii intptrAt: 25 put: aWinMenu handle.
+          mii intptrAt: 57 put: buf address.
+          mii cch: aString size.
+          User32
+            insertMenuItem: handle
+            uItem: items size
+            fByPosition: 1
+            lpmii: mii address ] ensure: [ buf free. mii free ].
+        items add: 0.
+        ^aWinMenu
+    ]
+
+    "── enablement: what `queryCommand:` decides, made visible ──────────
+     A STATE-ONLY update (MIIM_STATE alone). Setting the full mask would
+     require re-supplying the text, and a caller that forgot would silently
+     blank the item."
+    enable: anId set: aBoolean [
+        | mii |
+        mii := MENUITEMINFOW new.
+        [ mii cbSize: MENUITEMINFOW sizeInBytes.
+          mii uint32At: 5 put: WinMenu miimState.
+          mii uint32At: 13 put:
+            (aBoolean ifTrue: [ WinMenu mfsEnabled ] ifFalse: [ WinMenu mfsGrayed ]).
+          User32
+            setMenuItemInfo: handle
+            uItem: anId
+            fByPosition: 0
+            lpmii: mii address ] ensure: [ mii free ].
+        ^aBoolean
+    ]
+
+    "Read the state back FROM WINDOWS, which is the only way to assert that
+     enablement actually took — an object remembering what it asked for would
+     agree with itself whatever happened."
+    isEnabled: anId [
+        | mii state |
+        mii := MENUITEMINFOW new.
+        [ mii cbSize: MENUITEMINFOW sizeInBytes.
+          mii uint32At: 5 put: WinMenu miimState.
+          User32
+            getMenuItemInfo: handle
+            uItem: anId
+            fByPosition: 0
+            lpmii: mii address.
+          state := mii uint32At: 13 ] ensure: [ mii free ].
+        "MFS_DISABLED is 16r2; MFS_GRAYED (16r1) accompanies it."
+        ^(state bitAnd: 16r3) = 0
+    ]
+
+    "Attach to a window. DrawMenuBar is required after a bar changes, or the
+     window keeps painting the old one."
+    attachTo: anHwnd [
+        User32 setMenu: anHwnd hMenu: handle.
+        isBar ifTrue: [ User32 drawMenuBar: anHwnd ].
+        ^self
+    ]
+
+    destroy [ handle isNil ifFalse: [ User32 destroyMenu: handle. handle := nil ] ]
+]

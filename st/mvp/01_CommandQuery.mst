@@ -1,0 +1,190 @@
+"A CommandQuery is used to determine whether, and how, a particular command can be performed. A command is queried in two situations. The first is to determine whether a command source should be enabled and/or checked. When a menu is pulled down it needs to determine the enable, default, and check state of each of its items. Similarly, a PushButton or ToolbarButton will need to determine its state; usually at idle time during #validateUserInterface processing. The second situation arises when a command is to be dispatched and executed. Again a CommandQuery is used to determine the target object that will actually perform it (i.e. the eventual receiver).
+
+To determine the default/enable/checked state of a command, a CommandQuery is created and routed (using the current CommandPolicy) through each of the #queryCommand: methods of the potential target objects. The #queryCommand: method is responsible for using the #isDefault, #enabled: and #checked: methods to set the state of the command at that target location. If, at any point in the routing, a target object sets the CommandQuery as being enabled then the framework will determine that the target should be the eventual receiver of the command. As of Dolphin 3.0 a #queryCommand: implementation can also explicitly set the receiver to override the frameworks default behaviour. A further enhancement for 3.0 is the ability to specify a default command with #isDefault:, with this becoming the default menu item.
+
+Note that a target may also explicitly set the #text: of a CommandQuery as part of the #queryCommand: interrogation. If this is done then the original menu or button text will be dynamically replaced by the newly specified text. Complete dynamic menus must be constructed by overriding <presenter>.onAboutToDisplayMenu:
+
+Instance Variables:
+	commandDescription		<CommandDescription> specifying the command being queried.
+	receiver			<Object> indicating the target that will accept the command.
+	source			<view> where the command originated.
+	flags			<integer> containing various flags indicating the status of the command."
+
+Object subclass: CommandQuery [
+    | commandDescription receiver source text flags image validationResult |
+
+    applicationShell [
+        "Answers the <topPresenter> that will be responsible for performing this command."
+        ^self source topShell
+    ]
+    beChecked [
+        "Set the receiver into the checked state"
+        flags := flags bitOr: 8
+    ]
+    beDisabled [
+        "Set the receiver into the disabled state"
+        flags := flags bitOr: 3
+    ]
+    beEnabled [
+        "Set the receiver into the enabled state"
+        flags := flags bitAnd: (3 bitInvert)
+    ]
+    beUnchecked [
+        "Set the receiver into the not checked state"
+        flags := flags bitAnd: (8 bitInvert)
+    ]
+    canPerform [
+        "Answers true if the command described by the receiver can be performed.
+        	This requires a command receiver and that the command is enabled"
+        ^self receiver notNil and: [self isEnabled]
+    ]
+    canPerformAgainst: destination [
+        "Answer whether the command being queried by the receiver can
+        	be performed against the hypothetical <commandTarget>, destination."
+        ^self commandDescription canPerformAgainst: destination
+    ]
+    command [
+        "Answer the command selector being queried"
+        ^self commandDescription command
+    ]
+    commandDescription [
+        "Answer the <commandDescription> being queried"
+        ^commandDescription
+    ]
+    commandDescription: aCommandDescription [
+        	commandDescription := aCommandDescription
+    ]
+    commandDescription: action source: aView [
+        "Private - Initialize the receiver's instance variables."
+        commandDescription := action.
+        	source := aView.
+    ]
+    commandSymbol [
+        "Answer the command selector being queried"
+        ^self commandDescription commandSymbol
+    ]
+    description [
+        "Answer the current description of the receiver"
+        ^self commandDescription description
+    ]
+    expandMenuTextWith: anObject [
+        "Set the dynamic menu text associated with this to the result of expanding the macros of the <commandDescription>s menu text with the argument."
+        self text: (commandDescription expandedMenuText: { anObject })
+    ]
+    image [
+        	^image
+    ]
+    image: anObject [
+        	image := anObject
+    ]
+    initialize [
+        "Private - Initialize the receiver. Command queries start off pessimistically in disabled
+        	unchecked state."
+        super initialize.
+        	flags := 3 
+    ]
+    isChecked [
+        "Answer true if the receiver is in the checked state"
+        ^flags allMask: 8
+    ]
+    isChecked: aBoolean [
+        "Set the whether or not the command associated with the receiver is 'checked'
+        	(toggled on). This will cause associated menu items to be displayed with a 
+        	tick mark (or a blob if using radio button style)."
+        flags := flags mask: 8 set: aBoolean
+    ]
+    isDefault [
+        "Answer whether the receiver is expecting to be the default item on its parent menu.
+        	Note: Obviously their can be only one default item per menu, so if more than one item
+        	claims default status only one will triumph. Under the current implementation this will
+        	be the last occurring default item, but this behaviour should not be relied upon."
+        ^flags anyMask: 4096
+    ]
+    isDefault: aBoolean [
+        "Set whether the receiver is expected to be the default command for the host menu."
+        flags := flags mask: 4096 set: aBoolean
+    ]
+    isEnabled [
+        "Answer true if the receiver is in the enabled state"
+        ^(flags bitAnd: 3) == 0
+    ]
+    isEnabled: aBoolean [
+        "Set the enable state of the receiver to aBoolean"
+        flags := flags mask: 3 set: aBoolean not
+    ]
+    menuStateFlags [
+        	^flags bitAnd: 4107
+    ]
+    menuText [
+        "Answer the full menu text (including accelerator key string, if any) associated with the receiver's <CommandDescription>."
+        ^commandDescription menuText
+    ]
+    newMenuImage [
+        "Private - Answer the full menu text to be used for the command associated with this query ."
+        ^self image ifNil: [commandDescription image]
+    ]
+    newMenuText [
+        "Private - Answer the full menu text to be used for the command associated with this query ."
+        ^self text ifNil: [commandDescription defaultMenuText]
+    ]
+    perform [
+        "Perform the command on the receiver and answer the result."
+        | command answer shell |
+        	command := Command receiver: self receiver commandDescription: self commandDescription.
+        	shell := self applicationShell.
+        	answer := shell performCommand: command.
+        	"The command might close the window, in which case should we bother?"
+        	shell addCommandHistory: command.
+        	^answer
+    ]
+    printOn: aStream [
+        "Append, to aStream, a String whose characters are a description of the receiver as a developer
+        	would want to see it."
+        self basicPrintOn: aStream.aStream nextPut: $(. aStream print: self command.
+        	self isEnabled ifTrue: [aStream nextPutAll: ' enabled'].
+        	self isChecked ifTrue: [aStream nextPutAll: ' checked'].aStream nextPutAll: ' receiver: '. aStream print: self receiver. aStream nextPut: $)
+    ]
+    receiver [
+        "Answers the receiver of the command"
+        ^receiver
+    ]
+    receiver: anObject [
+        "Set the receiver of this command to anObject. Usually sent by queryCommand:
+        	during command routing"
+        receiver := anObject
+    ]
+    source [
+        "Answers the source of the command"
+        ^source
+    ]
+    source: aView [
+        "Private - Set the message source the receiver to aView"
+        source := aView.
+    ]
+    text [
+        "Answer the text state of the receiver"
+        ^text
+    ]
+    text: aString [
+        "Set the text state of the receiver to aString"
+        text := aString
+    ]
+    validationResult [
+        "Answer the <ValidationResult> set by a command query, if any."
+        ^validationResult ifNil: [ValidationResult value: self isEnabled]
+    ]
+    validationResult: aValidationResult [
+        	validationResult := aValidationResult.
+        	self isEnabled: validationResult value
+    ]
+    CommandQuery class >> commandDescription: item source: aView [
+        "Answers an instance of the receiver for the <commandDescription>, command,
+        	generated by aView"
+        ^(super new initialize) 
+        		commandDescription: item source: aView
+    ]
+    CommandQuery class >> new [
+        "Answers an instance of the receiver on a nil message"
+        ^self commandDescription: CommandDescription new source: nil
+    ]
+]
