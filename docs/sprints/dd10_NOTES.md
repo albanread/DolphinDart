@@ -795,3 +795,100 @@ for the place this door is not Dolphin's VM:
 
 Everything else — `subclassWindow`, `defaultWindowProcessing:wParam:lParam:`,
 the `oldWndProc` ivar — is Dolphin's own, unchanged.
+
+## `UI.TextEdit` drives a real EDIT control — 23/23
+
+Gate `st_textedit`: a real `UI.ShellView` owning a real `UI.TextEdit`, created
+by Dolphin's own `View>>create`, subclassed by Dolphin's own
+`ControlView>>subclassWindow`, and driven through Dolphin's own value protocol
+with `UI.TextPresenter` over a `ValueHolder`. Windows is asked for the window
+class and answers `Edit`; the text is read back OUT of the control, not from a
+cached copy.
+
+Eleven gaps had to close. Not one was in the substrate the previous unit
+proved — the trampoline worked first time under Dolphin's own `ControlView` —
+and not one was a design problem. They were all the same thing: protocol
+Dolphin's code assumes, absent here, each found by running.
+
+**Protocol Dolphin files onto BASE classes from a `.pax`,** which translating
+its classes does not bring:
+
+  - `Core.Object>>asValue` — `ValueConvertingControlView class >>
+    defaultModel` is `^nil asValue`, so EVERY TextEdit failed to initialize,
+    as a doesNotUnderstand on nil three frames inside Dolphin's own code.
+  - `Core.String>>setTextInto:` — half of Dolphin's double dispatch for
+    setting a view's text (`UI.RichText` is the other half; the point of the
+    dispatch is that the view need not know which it got).
+
+Both now come from `--loose`, which also exposed that `emit_loose` forced
+EVERY method class-side. Right for a library facade — this port's `default`
+answers the class — and wrong for `Core.Object`, where it made `nil asValue` a
+doesNotUnderstand. The side is now the `.pax`'s own except for `*Library`.
+
+**A PARSER bug that had been silently dropping class constants.**
+`classConstants:` was matched non-greedily, which stops at the first closing
+brace — and `UI.TextEdit` declares seven constants with two NESTED brace
+arrays among them, so SIX were invisible. `ModifiedMask` and `ReadOnlyMask`
+are read by `isTextModified` and `isReadOnly`: bare names, runtime nils,
+inside a `bitAnd:`. Now brace-balanced.
+
+Alongside it: the emitter declared only `classVariableNames:` as class vars,
+so a constant whose value is an EXPRESSION (installed at runtime by the
+class's own `initialize`) had nowhere to live. Now every `classConstants:`
+name is declared, and `self addClassConstant: 'X' value: EXPR` is rewritten to
+`X := EXPR` — which is what the name means, and needs no dynamic
+class-variable API.
+
+**World protocol:** `Dictionary>>add:` (an Association — `IdentityDictionary
+withAll:` reaches it), `SequenceableCollection>>pairsDo:`,
+`Object>>asExternalHandle` (identity: Dart integers hold a 64-bit handle
+without boxing), `Stream>>basicPrint:` / `Object>>basicPrintOn:` — every
+translated `printOn:` in the wave opens with `basicPrint:`.
+
+**`Behavior>>bindingFor:` is SCAFFOLDING and says so.** Dolphin answers a live
+class-variable binding; this dialect binds them statically, so it answers a
+detached Association. The cost is stated in the source: `SystemMetrics`'s four
+system-setting caches never invalidate, so a mid-session settings change is
+not picked up. Retirement needs a `classVarAt:put:` in the front-end.
+
+It also found a front-end asymmetry worth knowing: `self foo` inside a
+CLASS-side method resolves through class-side lookup and does NOT fall back to
+`Behavior`'s instance protocol, though a direct `Object foo` from outside
+does. Hence the definition on both sides.
+
+**Two universal-helper traps, one of them a stack overflow.**
+
+  - `Utf16Buffer` needed the TEXT protocol. In Dolphin `Utf16String` IS a
+    String, so `getWindowText:` ends `^text` and callers treat it as text;
+    here it is an ExternalMemory, so every read out of a control answered
+    `an ExternalMemory(12 bytes @ ...)` where the code wanted 'hello' — a
+    wrong answer that flowed into comparisons and presenters without raising.
+    It now prints quoted, displays bare, and compares by content. Deliberately
+    NOT `size`: that is a universal helper, and `ExternalMemory>>size` (bytes)
+    is what marshalling needs, where Dolphin's is characters. Recorded rather
+    than papered over.
+  - `displayString` is rewritten at the call site to `stDisplayOf`, which
+    never consulted a Smalltalk `displayOn:` — and `UI.View` has one.
+    `View>>printOn:` ends `print: self displayString`, so displayString called
+    printOn: called displayString: a stack overflow. `stDisplayOf` now probes
+    `displayOn:` first, exactly as `stPrintOf` probes `printOn:`.
+
+**Substrate:** `SystemMetrics` translated (`View>>metrics` is
+`^SystemMetrics forDpi: self dpi`, and TextEdit asks it `hasTextBoxMargins`);
+`NtDll` aliased to the generated `NTLibrary` with a REAL `isWine` — it looks
+for ntdll's `wine_get_version` export rather than answering a constant false,
+because a constant would be right on this machine and wrong under Wine, which
+is a plausible place to run a Windows Smalltalk.
+
+**A font stand-in, with a named retirement.** `Graphics.Font` is not
+translated (it lands with DD11's graphics wave), and `View>>getActualFont`
+walks the parent chain to the desktop. Rather than stub Dolphin's
+`applyFont`/`setFont:` — both on the create path — the walk ends at an object
+answering the protocol they use: `atDpi:` answers itself and `asParameter`
+answers 0. That is not a fudge: WM_SETFONT with a NULL font handle is
+Windows' own way of saying "use the system font".
+
+**Still open, seen but not chased:** a `UiSession: handler error — 'wait'
+called on null` appears twice during shell creation. It is contained by the
+handler-error path and nothing depends on it yet, but it is a real missing
+send, written down here rather than left in scrollback.

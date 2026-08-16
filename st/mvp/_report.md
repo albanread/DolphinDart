@@ -1,22 +1,22 @@
 # dolphin2mst run report
 
-- inputs: **43** source files (`.cls` + `.pax`)
-- shared-pool constants available: **6459** from **171** pools
-- loose methods adopted from `.pax`: **0**
-- parsed: **43**  (unbalanced/skipped: 0)
-- emitted: **43** `.mst`
-- methods: **2406**
+- inputs: **45** source files (`.cls` + `.pax`)
+- shared-pool constants available: **6522** from **173** pools
+- loose methods adopted from `.pax`: **1**
+- parsed: **45**  (unbalanced/skipped: 0)
+- emitted: **46** `.mst`
+- methods: **2492**
 - refusals: **114**
 
 ## Refusals by rewrite class
 
 | Rewrite | Count |
 |---|--:|
-| `hashhash` | 51 |
+| `hashhash` | 54 |
 | `cascade` | 22 |
 | `binding-literal` | 14 |
 | `pragma` | 14 |
-| `orphan-loose-methods` | 13 |
+| `orphan-loose-methods` | 10 |
 
 ## Per class
 
@@ -49,10 +49,13 @@
 | `Model` | 9 | 1 |
 | `NullConverter` | 2 | 0 |
 | `NumberToText` | 2 | 0 |
+| `Object (loose)` | 7 | 1 |
 | `Presenter` | 152 | 6 |
 | `Rectangle` | 98 | 2 |
 | `Shell` | 39 | 2 |
 | `ShellView` | 156 | 11 |
+| `String (loose)` | 2 | 0 |
+| `SystemMetrics` | 77 | 2 |
 | `TextEdit` | 179 | 21 |
 | `TextPresenter` | 20 | 5 |
 | `TypeConverter` | 13 | 1 |

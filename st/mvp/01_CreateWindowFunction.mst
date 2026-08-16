@@ -1,4 +1,6 @@
 Object subclass: CreateWindowFunction [
+    <classVars: UseDefaultGeometry>
+    CreateWindowFunction class >> classVarUseDefaultGeometry [ ^UseDefaultGeometry ]
     create: aView [
         "Create a native window for the <View> argument."
         ^self subclassResponsibility
@@ -44,6 +46,6 @@ Object subclass: CreateWindowFunction [
         aView scaleChildCreation: self
     ]
     CreateWindowFunction class >> initialize [
-        	self addClassConstant: 'UseDefaultGeometry' value: -2147483648 @ -2147483648
+        	UseDefaultGeometry := -2147483648 @ -2147483648
     ]
 ]

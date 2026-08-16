@@ -221,3 +221,84 @@ Error subclass: OperationAborted [ ]
 
  The general rule: when Dolphin and the house dialect differ only in SPELLING,
  rewrite at ingestion. Compat classes are for missing BEHAVIOUR."
+
+"── collection protocol Dolphin's own code reaches for (DD10) ──────────────
+
+ Three methods, each found by a translated class failing on it, each Dolphin's
+ own definition rather than an invention."
+HashedCollection subclass: Dictionary [
+    "`add:` an ASSOCIATION. Dolphin's `Collection class >> withAll:` is
+     `^self new addAll: aCollection; yourself` and `addAll:` is `do: [:e |
+     self add: e]`, so `IdentityDictionary withAll: { #left -> 0. ... }` — the
+     shape `TextEdit class >> initialize` uses to build its AlignmentMap —
+     reaches `Dictionary>>add:` with an Association. Answering the association
+     (not the value) is Dolphin's contract for `add:`."
+    add: anAssociation [
+        self at: anAssociation key put: anAssociation value.
+        ^anAssociation
+    ]
+]
+
+Object subclass: SequenceableCollection [
+    "Dolphin's `pairsDo:`, verbatim:
+
+         1 to: self size by: 2 do: [ :i |
+             aDyadicValuable value: (self at: i) value: (self at: i + 1) ]
+
+     `SystemMetrics class >> initialize` builds its SysParamVariables table
+     from a flat brace array read two at a time."
+    pairsDo: aDyadicValuable [
+        1 to: self size by: 2 do: [ :i |
+            aDyadicValuable value: (self at: i) value: (self at: i + 1) ]
+    ]
+]
+
+"`Behavior>>bindingFor:` — SCAFFOLDING, with its cost stated.
+
+ Dolphin answers the live BINDING (an Association) of a class variable, so a
+ holder can write through it later. This dialect binds class variables
+ statically and has no dynamic binding object, so this answers a detached
+ Association instead.
+
+ WHAT THAT COSTS, exactly. The one caller is
+ `SystemMetrics class >> initialize`, which builds
+
+     sysParamVars at: setting put: (self bindingFor: varName)
+
+ so that `reset` and `onSettingChanged:` can null those four caches
+ (`HasFlatMenus`, `MessageDuration`, `MouseHoverTime`, `WheelScrollLines`)
+ when Windows reports a system-setting change. Writing through a detached
+ association does not clear the real class variable, so those four values
+ stay as first read. A user changing e.g. mouse hover time mid-session would
+ not see it until restart. Nothing in the DD10 gates depends on it, and it is
+ recorded here rather than silently accepted.
+
+ RETIREMENT: a real binding needs a dynamic class-variable accessor in the
+ front-end (`classVarAt:put:`). Worth doing when something needs live setting
+ changes — DD12's dialogs do not.
+
+ WHERE IT IS DEFINED, and why on both sides. `SystemMetrics class >>
+ initialize` sends `self bindingFor: varName` with `self` being the CLASS, and
+ a `self` send inside a class-side method resolves through CLASS-side lookup —
+ which does not fall back to `Behavior`'s instance protocol. So the class-side
+ definition on `Object` is the one that call actually reaches; the `Behavior`
+ instance method is there for a direct send to a class from outside
+ (`Object bindingFor: 'x'`), which takes the other path."
+nil subclass: Object [
+    Object class >> bindingFor: aString [ ^aString -> nil ]
+    bindingFor: aString [ ^aString -> nil ]
+
+    "`asExternalHandle` — identity here.
+
+     Dolphin boxes a raw handle in an `ExternalHandle` so that a 64-bit handle
+     survives in an image whose SmallIntegers are 30-bit. This port's integers
+     are Dart integers, which hold a full 64-bit handle without boxing, so the
+     wrapper has nothing to add and `View>>attachHandle:` — `self handle:
+     anIntegerOrHandle asExternalHandle` — wants the value straight through.
+
+     On OBJECT rather than Integer, because the same method also has to accept
+     something that is already a handle: Dolphin's own `ExternalHandle` answers
+     itself here, and the selector is sent to whatever the creation path
+     produced."
+    asExternalHandle [ ^self ]
+]

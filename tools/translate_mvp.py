@@ -98,6 +98,11 @@ TARGETS = [
     # proven by `st_subclass` (the door's trampoline + `VM getWndProc`), so
     # these translate onto something that already works rather than being the
     # thing that discovers whether it does.
+    # `View>>metrics` is `^SystemMetrics forDpi: self dpi`, and `TextEdit`
+    # asks it `hasTextBoxMargins` on the create path. Dolphin's own class,
+    # translated rather than stubbed: it wraps GetSystemMetrics and
+    # SystemParametersInfo, both of which the generated floor already has.
+    "Core/Object Arts/Dolphin/MVP/Graphics/OS.SystemMetrics.cls",
     "Core/Object Arts/Dolphin/MVP/Base/UI.ControlView.cls",
     "Core/Object Arts/Dolphin/MVP/Base/UI.ValueConvertingControlView.cls",
     "Core/Object Arts/Dolphin/MVP/Presenters/Text/UI.TextEdit.cls",
@@ -118,6 +123,17 @@ TARGETS = [
     # are ignored: cli.py emits a class from its own `.cls` and notes the
     # duplicate.
     "Core/Object Arts/Dolphin/MVP/Base/Dolphin MVP Base.pax",
+
+    # The VALUE-MODEL package manifest, for its LOOSE METHODS ON `Core.Object`
+    # — `asValue`, `aspectValue:`, `aspectValue:triggers:`. Dolphin files them
+    # onto Object from this `.pax` rather than declaring them in a `.cls`,
+    # which is why translating the value-model classes did not bring them.
+    #
+    # `asValue` is not optional decoration:
+    # `ValueConvertingControlView class >> defaultModel` is `^nil asValue`, so
+    # EVERY TextEdit fails to initialize without it — and it fails as
+    # `doesNotUnderstand` on nil, three frames inside Dolphin's own code.
+    "Core/Object Arts/Dolphin/MVP/Models/Value/Dolphin Value Models.pax",
 ]
 
 # Parsed for hierarchy + pools, never emitted. DIRECTORIES, deliberately: a
@@ -174,7 +190,15 @@ def main(argv):
            # Dolphin's convenience layer over the generated prims: 177 methods
            # filed onto OS.UserLibrary by a .pax, which UI.View calls
            # constantly (`User32 getWindowText: hWnd` and its kin).
-           "--loose", "OS.UserLibrary"]
+           "--loose", "OS.UserLibrary",
+           # `Core.Object` — see the value-models `.pax` in TARGETS.
+           "--loose", "Core.Object",
+           # `Core.String` carries `setTextInto:`, one half of Dolphin's
+           # DOUBLE DISPATCH for setting a view's text: `View>>text:` sends
+           # `aString setTextInto: self`, and the String sends `plainText:`
+           # back. `UI.RichText` is the other half, which is the whole point
+           # of the dispatch — the view does not have to know which it got.
+           "--loose", "Core.String"]
     for r in refs:
         cmd += ["--reference", r]
     cmd += targets

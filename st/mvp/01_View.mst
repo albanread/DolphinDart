@@ -35,11 +35,25 @@ Class Variables:
 	WndClassAtom		<integer>"
 
 Object subclass: View [
-    <classVars: MessageMap NextId ViewClosedError WndClassAtom>
+    <classVars: MessageMap NextId ViewClosedError WndClassAtom CreateCenteredMask CreationParentInstVarIndex DragSourceMask DropTargetMask LayoutValidMask ManagedMask MinimizedMask MixedDpiAwarenessMask NoInheritMenuMask ProxyRestoringMask RestoringMask StateRestoringMask UIValidMask UsePreferredExtentMask>
     View class >> classVarMessageMap [ ^MessageMap ]
     View class >> classVarNextId [ ^NextId ]
     View class >> classVarViewClosedError [ ^ViewClosedError ]
     View class >> classVarWndClassAtom [ ^WndClassAtom ]
+    View class >> classVarCreateCenteredMask [ ^CreateCenteredMask ]
+    View class >> classVarCreationParentInstVarIndex [ ^CreationParentInstVarIndex ]
+    View class >> classVarDragSourceMask [ ^DragSourceMask ]
+    View class >> classVarDropTargetMask [ ^DropTargetMask ]
+    View class >> classVarLayoutValidMask [ ^LayoutValidMask ]
+    View class >> classVarManagedMask [ ^ManagedMask ]
+    View class >> classVarMinimizedMask [ ^MinimizedMask ]
+    View class >> classVarMixedDpiAwarenessMask [ ^MixedDpiAwarenessMask ]
+    View class >> classVarNoInheritMenuMask [ ^NoInheritMenuMask ]
+    View class >> classVarProxyRestoringMask [ ^ProxyRestoringMask ]
+    View class >> classVarRestoringMask [ ^RestoringMask ]
+    View class >> classVarStateRestoringMask [ ^StateRestoringMask ]
+    View class >> classVarUIValidMask [ ^UIValidMask ]
+    View class >> classVarUsePreferredExtentMask [ ^UsePreferredExtentMask ]
     | handle creationParent creationStyles presenter model backcolor preferredExtent flags contextMenu font events interactor |
 
     actualBackcolor [

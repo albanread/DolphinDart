@@ -42,3 +42,49 @@ Shell32  := ShellLibrary.
 ComDlg32 := ComDlgLibrary.
 Shlwapi  := ShlwapiLibrary.
 Version  := VersionLibrary.
+
+"── NtDll, and the Wine check (DD10) ────────────────────────────────────────
+
+ `SystemMetrics class >> cacheDpiIndependentSettings` is `IsNotWine := NtDll
+ isWine not`, and `hasTextBoxMargins` answers `IsNotWine` — which `TextEdit`
+ asks on the create path, because Wine did not implement EM_SETMARGINS.
+
+ `NtDll` is the corpus's global for the NT library; `NTLibrary` is what
+ genprims generated it as, so this is the same alias the table above makes for
+ User32 and its kin."
+NtDll := NTLibrary.
+
+"Dolphin's own test, and a REAL one rather than a hardcoded false: Wine
+ exports `wine_get_version` from ntdll, and nothing else does. Answering a
+ constant would be right on this machine and wrong the moment the port is run
+ under Wine — which is a plausible thing to do with a Windows Smalltalk, and
+ exactly the kind of assumption that is invisible until it is wrong."
+Object subclass: NTLibrary [
+    NTLibrary class >> isWine [
+        | mod h name found |
+        "GetModuleHandleW takes a WIDE string; the wrapper's `FFICoerce
+         pointer:` refuses a Smalltalk String outright (the floor doing its
+         job), so marshal it here."
+        mod := Utf16Buffer fromString: 'ntdll.dll'.
+        h := [ Kernel32 getModuleHandle: mod ] ensure: [ mod free ].
+        (h isNil or: [ h = 0 ]) ifTrue: [ ^false ].
+        "GetProcAddress has no W variant: the symbol name is ALWAYS ANSI, so
+         this one needs a byte buffer rather than a Utf16Buffer. A wide string
+         here would look like 'w' followed by a NUL and find nothing."
+        name := self ansiBuffer: 'wine_get_version'.
+        found := [ Kernel32 getProcAddress: h lpProcName: name ]
+            ensure: [ name free ].
+        ^found notNil and: [ found ~= 0 ]
+    ]
+
+    "A NUL-terminated ANSI (single-byte) copy of a String, for the handful of
+     APIs that have no wide variant."
+    NTLibrary class >> ansiBuffer: aString [
+        | n buf |
+        n := aString size.
+        buf := ExternalMemory new: n + 1.
+        1 to: n do: [ :i | buf byteAt: i put: (aString at: i) value ].
+        buf byteAt: n + 1 put: 0.
+        ^buf
+    ]
+]

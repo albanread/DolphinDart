@@ -21,9 +21,15 @@ Instance Variables:
 	unused		Reserved for future use."
 
 Object subclass: CommandDescription [
-    <classVars: CommandDescriptionRegistry CurrentId>
+    <classVars: CommandDescriptionRegistry CurrentId DefaultMask MaximumId ModalMask NotAbortableMask StartingId TextSubstitutionsMask>
     CommandDescription class >> classVarCommandDescriptionRegistry [ ^CommandDescriptionRegistry ]
     CommandDescription class >> classVarCurrentId [ ^CurrentId ]
+    CommandDescription class >> classVarDefaultMask [ ^DefaultMask ]
+    CommandDescription class >> classVarMaximumId [ ^MaximumId ]
+    CommandDescription class >> classVarModalMask [ ^ModalMask ]
+    CommandDescription class >> classVarNotAbortableMask [ ^NotAbortableMask ]
+    CommandDescription class >> classVarStartingId [ ^StartingId ]
+    CommandDescription class >> classVarTextSubstitutionsMask [ ^TextSubstitutionsMask ]
     | command description acceleratorKey flags image |
 
     acceleratorKey [

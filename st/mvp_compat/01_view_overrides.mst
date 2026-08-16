@@ -126,7 +126,8 @@ Object subclass: DesktopView [
 Object subclass: DolphinBoot [
     "A brace array: `Array with:` stops at four arguments in this dialect."
     DolphinBoot class >> classesToInitialize [
-        ^{ Rectangle. Color. CommandDescription. View. ShellView. Menu }
+        ^{ Rectangle. Color. CommandDescription. View. ShellView. Menu.
+           SystemMetrics. TextEdit }
     ]
 
     "Answers the classes that FAILED, so a caller can assert on the list rather
@@ -156,7 +157,7 @@ Object subclass: DolphinBoot [
     DolphinBoot class >> initializeViewClasses [
         | failed |
         failed := OrderedCollection new.
-        { Rectangle. View. ShellView } do: [ :each |
+        { Rectangle. View. ShellView. SystemMetrics. TextEdit } do: [ :each |
             [ each initialize ] on: Error do: [ :e | failed add: each name ] ].
         ^failed asArray
     ]
@@ -227,4 +228,91 @@ View subclass: ControlView [
         oldWndProc isNil ifTrue: [ ^self ].
         Win32 mvpBindOldProc: handle proc: oldWndProc
     ]
+]
+
+"`trimNulls` — Dolphin's spelling for reading a filled buffer back as a String.
+
+ `Utf16Buffer>>stringValue` already does exactly this (st/prims/rt); the name
+ differs because `asString`, Dolphin's other spelling, is a UNIVERSAL HELPER
+ the IL builder rewrites at the call site, so a method of that name would
+ never be reached. Dolphin's own `UserLibrary>>getWindowText:` and
+ `getClassName:` both end in `^buf trimNulls`, so without this alias every
+ text read out of a control answered `an ExternalMemory(2 bytes @ ...)`
+ instead of the text — a wrong ANSWER, not an error."
+ExternalMemory subclass: Utf16Buffer [
+    trimNulls [ ^self stringValue ]
+
+    "── and the TEXT protocol, because in Dolphin this IS a String ─────────
+     `Utf16String` is a String subclass in Dolphin, so its own
+     `UserLibrary class >> getWindowText:` ends `^text` and the caller treats
+     the answer as text. Its comment says why it must stay UTF-16 rather than
+     being decoded: other control APIs count in UTF-16 code units (the Edit
+     control's EM_LINELENGTH).
+
+     This port's `Utf16String` is an alias for `Utf16Buffer`, an
+     ExternalMemory — right for marshalling, and NOT a String. So every read
+     out of a control answered `an ExternalMemory(12 bytes @ ...)` where the
+     code expected 'hello': a wrong ANSWER that flowed on into comparisons and
+     presenters without ever raising.
+
+     Giving it the text protocol closes that without decoding the buffer
+     early. `printOn:` quotes, as a Smalltalk String does; `displayOn:` does
+     not; `=` compares against a String or another buffer by content.
+
+     NOT `size`: that is a universal helper the IL builder rewrites at the
+     call site, and `ExternalMemory>>size` (the BYTE count) is what marshalling
+     needs. Dolphin's `Utf16String>>size` is the CHARACTER count, so the two
+     disagree — recorded here rather than papered over, because a caller
+     wanting characters must ask `stringValue size`."
+    printOn: aStream [
+        aStream nextPut: $'.
+        aStream nextPutAll: self stringValue.
+        aStream nextPut: $'
+    ]
+    displayOn: aStream [ aStream nextPutAll: self stringValue ]
+    = anObject [
+        anObject isNil ifTrue: [ ^false ].
+        (anObject isKindOf: Utf16Buffer)
+            ifTrue: [ ^self stringValue = anObject stringValue ].
+        ^self stringValue = anObject
+    ]
+    hash [ ^self stringValue hash ]
+]
+
+"THE FONT WALK'S TERMINATOR — scaffolding, with a named retirement.
+
+ `View>>getActualFont` is `^font ifNil: [self parentView getActualFont]`: a
+ view with no font of its own asks its parent, on up to the desktop. Dolphin's
+ `UI.DesktopView` ends the walk with `^self font ifNil: [self iconTitleFont]`,
+ a real `Graphics.Font` — and `Graphics.Font` is not translated yet (it lands
+ with DD11's graphics wave).
+
+ Rather than override Dolphin's font path — `ControlView>>applyFont` and
+ `setFont:` are both on the create path and both would have to be stubbed —
+ the walk ends at an object that satisfies the protocol they use:
+
+     setFont: aFont
+         scaledFont := aFont atDpi: self dpi.
+         self sendMessage: WM_SETFONT wParam: scaledFont asParameter lParam: 0
+
+ `atDpi:` answers itself (nothing to rescale) and `asParameter` answers 0.
+ That is not a fudge: WM_SETFONT with a NULL font handle is Windows' own
+ documented way of saying 'use the system font', which is exactly what an
+ unstyled EDIT control uses anyway. So Dolphin's font code runs unchanged and
+ does the right thing, and no method of Dolphin's is replaced.
+
+ RETIREMENT: delete this class and the `getActualFont` below when
+ `Graphics.Font` is translated (DD11). The gate that proves it is any test
+ asserting a control's font is the one it was ASKED for rather than the
+ system default — which is not assertable while this stand-in is here, and is
+ the honest reason it is scaffolding rather than a design."
+Object subclass: SystemFont [
+    SystemFont class >> current [ ^self new ]
+    atDpi: aDpi [ ^self ]
+    asParameter [ ^0 ]
+    isNil [ ^false ]
+]
+
+Object subclass: DesktopView [
+    getActualFont [ ^SystemFont current ]
 ]

@@ -68,6 +68,8 @@ C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Graphics\Graphics.Color.cls:1166
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Graphics\Graphics.ColorDefault.cls:74: [hashhash] `##(self)` folded to a runtime block
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Graphics\Graphics.GraphicsTool.cls:237: [cascade] cascade on a receiver this rewriter cannot bound — splitting it could change evaluation
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Graphics\Graphics.GraphicsTool.cls:245: [hashhash] `##(self)` folded to a runtime block
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Graphics\OS.SystemMetrics.cls:316: [hashhash] `##(#('Policy' 'intl' 'Environment' 'ImmersiveColorSet') asSet)` folded to a runtime block
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Graphics\OS.SystemMetrics.cls:392: [hashhash] `##(48 @ 48)` folded to a runtime block
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Models\Value\UI.ValueAdaptor.cls:59: [hashhash] `##(self)` folded to a runtime block
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Models\Value\UI.ValueAdaptor.cls:64: [cascade] cascade on a receiver this rewriter cannot bound — splitting it could change evaluation
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Models\Value\UI.ValueAspectAdaptor.cls:138: [cascade] cascade on a receiver this rewriter cannot bound — splitting it could change evaluation
@@ -104,16 +106,14 @@ C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Presenters\Text\UI.TextPresenter
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Presenters\Text\UI.TextPresenter.cls:159: [binding-literal] `#{...}` variable-binding literal has no house equivalent
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Presenters\Text\UI.TextPresenter.cls:169: [binding-literal] `#{...}` variable-binding literal has no house equivalent
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Type Converters\UI.TypeConverter.cls:121: [hashhash] `##(self)` folded to a runtime block
+loose:2633: [hashhash] `##(self defaultIcon)` folded to a runtime block
 Core.Error: [orphan-loose-methods] 1 loose method(s) filed onto 'Core.Error', which was not translated
 Core.MessageSend: [orphan-loose-methods] 1 loose method(s) filed onto 'Core.MessageSend', which was not translated
 Core.Notification: [orphan-loose-methods] 1 loose method(s) filed onto 'Core.Notification', which was not translated
-Core.Object: [orphan-loose-methods] 3 loose method(s) filed onto 'Core.Object', which was not translated
-Core.String: [orphan-loose-methods] 2 loose method(s) filed onto 'Core.String', which was not translated
 Core.Symbol: [orphan-loose-methods] 1 loose method(s) filed onto 'Core.Symbol', which was not translated
 Core.UndefinedObject: [orphan-loose-methods] 1 loose method(s) filed onto 'Core.UndefinedObject', which was not translated
 Core.Warning: [orphan-loose-methods] 1 loose method(s) filed onto 'Core.Warning', which was not translated
 Graphics.Bitmap: [orphan-loose-methods] 1 loose method(s) filed onto 'Graphics.Bitmap', which was not translated
 OS.CommCtrlLibrary: [orphan-loose-methods] 1 loose method(s) filed onto 'OS.CommCtrlLibrary', which was not translated
 OS.KernelLibrary: [orphan-loose-methods] 1 loose method(s) filed onto 'OS.KernelLibrary', which was not translated
-OS.SystemMetrics: [orphan-loose-methods] 1 loose method(s) filed onto 'OS.SystemMetrics', which was not translated
 UI.ResourceIdentifier: [orphan-loose-methods] 6 loose method(s) filed onto 'UI.ResourceIdentifier', which was not translated

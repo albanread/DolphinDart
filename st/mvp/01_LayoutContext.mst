@@ -3,6 +3,8 @@
 Note that DeferWindowPos is only able to batch up window repositioning requests for children of the same parent window. Consequently if a LayoutContext is used to buffer layout requests for multiple layout managers (which is typically the case), then it will generate multiple deferred window repositioning batches. These batches are applied bottom up so that the innermost children are repositioned first, and so on up the parent chain."
 
 Object subclass: LayoutContext [
+    <classVars: DeferRectangles>
+    LayoutContext class >> classVarDeferRectangles [ ^DeferRectangles ]
     | container placements |
 
     apply [

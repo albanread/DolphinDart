@@ -1,0 +1,429 @@
+"SystemMetrics is a singleton class that provides a central service for accessing Windows configuration details such as the configurable aspects of the GUI's appearance (height of title bars, fonts, etc). It has quite a large number of instance variables that cache information in order to avoid the expense of repeatedly querying it from the operating system.
+
+Instance Variables:
+	menuCheckExtent	<Point>. Size of the checkmark icon drawn on menus.
+	smallIconExtent		<Point>. Size of a small icon, usually 16x16.
+	largeIconExtent		<Point>. Size of a large icon, usually 32x32.
+	dragHysteresis		<Point>. Extent of the mouse movement necessary to initiate a drag operation.
+	scrollThumbExtent	<Point>. Size of a scrollbar thumb (dependent on scrollbar width/height).
+	sizingFrameExtent	<Point>. Width/height of the overlapped window resizing edge.
+	dialogFrameExtent	<Point>. Width/height of the dialog window edge.
+	borderExtent		<Point>. Width/height of the a window border (normally 1x1).
+	nonClientMetrics	<NONCLIENTMETRICS>. Various non-client measurements.
+	menuFont			<Font>. The font used to paint menus.
+	edgeExtent		<Point>. Width/height of a 3d window edge (normally 2x2).
+	hasFlatMenus		<Boolean>. Whether or not the system menus are flat (XP-look) or have 3d appearance (classic Windows)
+	iconTitleFont		<Font>. The font used to paint icon titles on the desktop - the nearest thing to a default desktop font.
+
+Class Variables:
+	Current			<SystemMetrics>. Singleton instance."
+
+Object subclass: SystemMetrics [
+    <classVars: Current Default HasFlatMenus Instances IsNotWine MessageDuration MouseHoverTime SysParamVariables WheelScrollLines>
+    SystemMetrics class >> classVarCurrent [ ^Current ]
+    SystemMetrics class >> classVarDefault [ ^Default ]
+    SystemMetrics class >> classVarHasFlatMenus [ ^HasFlatMenus ]
+    SystemMetrics class >> classVarInstances [ ^Instances ]
+    SystemMetrics class >> classVarIsNotWine [ ^IsNotWine ]
+    SystemMetrics class >> classVarMessageDuration [ ^MessageDuration ]
+    SystemMetrics class >> classVarMouseHoverTime [ ^MouseHoverTime ]
+    SystemMetrics class >> classVarSysParamVariables [ ^SysParamVariables ]
+    SystemMetrics class >> classVarWheelScrollLines [ ^WheelScrollLines ]
+    | dpi menuCheckExtent smallIconExtent largeIconExtent dragHysteresis scrollThumbExtent sizingFrameExtent dialogFrameExtent borderExtent nonClientMetrics menuFont edgeExtent iconTitleFont defaultColorDepth tileIconExtent menuImageExtent |
+
+    borderExtent [
+        	^borderExtent ifNil: [borderExtent := self getMetric: 5 pair: 6]
+    ]
+    captionFont [
+        "Answer the currently configured window caption font."
+        ^Font fromLogFont: self nonClientMetrics lfCaptionFont dpi: self dpi
+    ]
+    captionHeight [
+        	^self nonClientMetrics iCaptionHeight
+    ]
+    cursorExtent [
+        "Answer a <Point> that gives the dimensions of the system cursor. Note that this is only a nominal/default size. It is essentially useless for practical purposes in more recent versions of Windows: See [What is the deal with the SM_CXCURSOR system metric?](https://devblogs.microsoft.com/oldnewthing/20210819-00/?p=105572). The follow up [](https://devblogs.microsoft.com/oldnewthing/20210820-00/?p=105593) suggests loading the arrow cursor and querying its extent. Experimentation suggests that, on Windows 11 at least, this doesn't work. The cursor loaded is always the 32x32 image, regardless of DPI and magnification. It seems there is no reliable way to find the actual size of cursor that should be considered the default load size."
+        ^self getMetric: 13 pair: 14
+    ]
+    defaultColorDepth [
+        "Answer the default color depth based on that of the current screen driver."
+        ^defaultColorDepth ifNil: [defaultColorDepth := self getDefaultColorDepth]
+    ]
+    dialogFrameExtent [
+        	^dialogFrameExtent ifNil: [dialogFrameExtent := self getMetric: 7 pair: 7]
+    ]
+    dpi [
+        	^dpi
+    ]
+    dragHysteresis [
+        "Answer the default distance in pixels that the mouse must move before a tracking operation is actually started."
+        #highDpiToDo.	"I'd expect this value to be scaled for DPI, i.e. if it is 4@4 at 96 dpi, it should be 8@8 at: 200%/192 dpi. However it seems that GetSystemMetricsForDpi always returns the same value, regardless of the DPI argument. The docs do say that the value will be scaled in appropriate, and in this case it would be appropriate to do so so this looks like a bug."
+        	^dragHysteresis ifNil: [dragHysteresis := self getMetric: 68 pair: 69]
+    ]
+    edgeExtent [
+        "Answer the dimensions of 3d window borders."
+        ^edgeExtent ifNil: [edgeExtent := self getMetric: 45 pair: 46]
+    ]
+    extraLargeIconExtent [
+        "Answer a <Point> that gives the dimensions of an extra large icon."
+        "Currently, this if fixed."
+        	^256@256
+    ]
+    frameWidths: anInteger [
+        	^(anInteger allMask: 4194304)
+        		ifTrue: [self dialogFrameExtent]
+        		ifFalse: 
+        			[(anInteger allMask: 262144)
+        				ifTrue: [self sizingFrameExtent]
+        				ifFalse: [(anInteger allMask: 8388608) ifTrue: [self borderExtent] ifFalse: [0 @ 0]]]
+    ]
+    getDefaultColorDepth [
+        "Private - Answer the default color depth based on that of the current screen driver."
+        | hDC |
+        	hDC := Gdi32
+        				createDC: 'DISPLAY'
+        				lpszDevice: nil
+        				lpszOutput: nil
+        				lpInitData: nil.
+        	^[(Gdi32 getDeviceCaps: hDC nIndex: 12) * (Gdi32 getDeviceCaps: hDC nIndex: 14) max: 4]
+        		ensure: [Gdi32 deleteDC: hDC]
+    ]
+    getIconTitleFont [
+        "Private - Answer a <Font> which is that used for icon titles on the desktop.
+
+        		(SystemMetrics forDpi: 192) getIconTitleFont"
+        ^(self
+        		getSysParamForDpi: 31
+        		type: LOGFONTW
+        		ifError: [])
+        			ifNil: [Font system atDpi: self dpi]
+        			ifNotNil: 
+        				[:lf |
+        				lf beImmutableObject.
+        				Font fromLogFont: lf dpi: dpi]
+    ]
+    getMetric: anInteger [
+        	^User32 getSystemMetricsForDpi: anInteger dpi: dpi
+    ]
+    getMetric: anInteger1 pair: anInteger2 [
+        	^(self getMetric: anInteger1) @ (self getMetric: anInteger2)
+    ]
+    getNonClientMetrics [
+        	^self
+        		getSysParamForDpi: 41
+        		type: NONCLIENTMETRICSW
+        		ifError: [User32 systemError]
+    ]
+    getSysParamBool: anInteger [
+        	^(self getSysParamUInt32: anInteger ifError: [0]) asBoolean
+    ]
+    getSysParamForDpi: anInteger type: anExternalStructureClass ifError: aNiladicValuable [
+        "Private - Rather stupidly the Windows API SystemParametersInfoForDpi  doesn't work for any system parameter as one might expect, but only for a limited set that are documented as varying at different DPIs. It would be simpler, and less likely to break with future modifications/additions, if it just did what the GetSystemMetrics call does and work for everything, ignoring the DPI when it isn't relevant. As it stands we need to call both functions. The DPI aware function is called for these three settings only:
+        		SPI_GETICONTITLELOGFONT
+        		SPI_GETICONMETRICS
+        		SPI_GETNONCLIENTMETRICS
+        	For everything else, the non-DPI aware function must be called as the DPI-aware one just returns false and doesn't populate the structure."
+        | struct |
+        	struct := anExternalStructureClass new.
+        	(User32
+        		systemParametersInfoForDpi: anInteger
+        		uiParam: struct byteSize
+        		pvParam: struct
+        		fWinIni: 0
+        		dpi: dpi) ifFalse: [^aNiladicValuable value].
+        	^struct value
+    ]
+    getSysParamUInt32: anInteger ifError: aNiladicValuable [
+        	| struct |
+        	struct := UInt32Bytes new.
+        	(User32
+        		systemParametersInfo: anInteger
+        		uiParam: 0
+        		pvParam: struct
+        		fWinIni: 0) ifFalse: [^aNiladicValuable value].
+        	^struct value
+    ]
+    hasFlatMenus [
+        "Answer whether the host menu style is 'flat'"
+        ^HasFlatMenus ifNil: [HasFlatMenus := self getSysParamBool: 4130]
+    ]
+    hasGdiPalettes [
+        "Answer whether the host supports GDI palettes."
+        "Wine does not implement GDILibrary>>getPaletteEntries:, and probably never will since palettes are essentially obsolete."
+
+        	#wineFix.
+        	^IsNotWine
+    ]
+    hasIconScaleDown [
+        "Answer whether the host supports scaling down of larger icons when the requested size is not available (as opposed to scaling up)."
+        "Wine does not support the ComMCtrlLibrary>>loadIconWithScaleDown:.. method which is normally availble under Vista and later. Hence we don't allow this to be called even if the Windows version indicates Vista is available."
+
+        	^IsNotWine
+    ]
+    hasImageListDragCursors [
+        "Answer whether the host supports using image lists for drag cursors."
+        "Wine doesn't appear to support setting drag cursors from image lists."
+
+        	#wineFix.
+        	^IsNotWine
+    ]
+    hasSmoothScrollingLists [
+        "Answer whether the host supports smooth (as opposed to jump) scrolling of lists."
+        ^self getSysParamBool: 4102
+    ]
+    hasTextBoxMargins [
+        "Answer whether the host supports configurable margins for EDIT controls."
+        "Wine doesn't yet implement EM_SETMARGINS "
+
+        	#wineFix.
+        	^IsNotWine
+    ]
+    hasThemes [
+        "Answer whether the host support desktop themes (XP and later)."
+        "Wine currently errors on theme APIs, so bypass"
+
+        	#wineFix.
+        	^IsNotWine
+    ]
+    hasWebView [
+        "Answer whether the host provides a WebView2 Edge Browser control."
+        #wineFix.
+        	^IsNotWine
+    ]
+    iconTitleFont [
+        "Answer a <Font> which is that used for icon titles on the desktop."
+        ^iconTitleFont ifNil: [iconTitleFont := self getIconTitleFont]
+    ]
+    iconTitleFont: aFont [
+        	iconTitleFont := aFont
+    ]
+    isSlowMachine [
+        "Answer true if this machine is judged to be slow."
+        ^(self getMetric: 73) ~~ 0
+    ]
+    largeIconExtent [
+        "Answer a <Point> that gives the dimensions of a large size icon."
+        ^largeIconExtent ifNil: [largeIconExtent := self getMetric: 11 pair: 12]
+    ]
+    menuBarHeight [
+        "Answer the height of a menu item as currently configured."
+        ^self getMetric: 15
+    ]
+    menuCheckExtent [
+        "Answer a <Point> that specifies the dimensions of the menu check mark bitmap."
+        ^menuCheckExtent ifNil: [menuCheckExtent := self getMetric: 71 pair: 72]
+    ]
+    menuDividerHeight [
+        "It doesn't seem to be possible to determine this from system metrics."
+        "^self menuHeight-2."
+
+        	^9
+    ]
+    menuFont [
+        "Answer the currently configured menu font."
+        ^menuFont ifNil: [menuFont := Font fromLogFont: self nonClientMetrics lfMenuFont dpi: self dpi]
+    ]
+    menuHeight [
+        "Answer the height of a menu item as currently configured."
+        ^self getMetric: 55
+    ]
+    menuImageExtent [
+        "Answer a <Point>, being the width and height of the images displayed on menus."
+        "The menu bitmap image must be the correct (usually odd) size for the menu font and scale. If we do not generate the correct size bitmap, then windows will stretch/shrink it, which often results in a poor quality image. Unfortunately there is no reliable metric from the system that tells us the correct size. The menu check button extent system metric is usually assumed to be the correct size, but empirical testing demonstrates that for some scales this results in undesirable bitmap scaling, e.g. the menu check extent at 200% may be 31@31 but the correct menu bitmap extent is 32@32. It seems there is no alternative but to calculate the correct bitmap size ourselves from the menu font height. Note that we will still draw icons into the menu bitmaps using the nearest standard size that fits within the bitmap extent. For example at 350% the bitmap image extent is 57@57, into which we draw a centered 48@48 icon. This provides a best effort to avoid image scaling, although if the icon does not provide a complete set of standard image sizes then scaling for some sizes may be unavoidable."
+
+        	^menuImageExtent
+        		ifNil: 
+        			[| size |
+        			size := self menuFont textMetrics tmHeight.
+        			size <= 20 ifTrue: [size := 16].
+        			menuImageExtent := size @ size]
+    ]
+    menuImageTextGap [
+        "The gap between the text in a menu item and the image. It doesn't seem to be possible to determine this from system metrics, and it doesn't appear to scale with DPI either."
+        #highDpiToDo. "Verify that this does not scale at higher DPIs"
+        	^16
+    ]
+    menuTextAcceleratorGap [
+        "The gap between the text in a menu item and the accelerator. It doesn't seem to be possible to determine this from system metrics."
+        #highDpiToDo. "Verify that this does not scale at higher DPIs"
+        	^32
+    ]
+    menuWidth [
+        	^self nonClientMetrics iMenuWidth
+    ]
+    messageDuration [
+        	^MessageDuration
+        		ifNil: [MessageDuration := (self getSysParamUInt32: 8214 ifError: [5]) seconds]
+    ]
+    messageFont [
+        "Answer the currently configured message box font."
+        ^Font fromLogFont: self nonClientMetrics lfMessageFont dpi: self dpi
+    ]
+    minimumTreeViewIndent [
+        	^16
+    ]
+    monitorCount [
+        "Answer the number of monitors currently attached."
+        ^self getMetric: 80
+    ]
+    mouseHoverTime [
+        	^MouseHoverTime
+        		ifNil: [MouseHoverTime := self getSysParamUInt32: 102 ifError: [400]]
+    ]
+    nonClientMetrics [
+        "SystemMetrics current nonClientMetrics"
+        ^nonClientMetrics ifNil: [nonClientMetrics := self getNonClientMetrics]
+    ]
+    onSettingChanged: anArray [
+        	| code |
+        	([#('Policy' 'intl' 'Environment' 'ImmersiveColorSet') asSet] value includes: anArray first)
+        		ifTrue: [^self].
+        	menuCheckExtent := smallIconExtent := largeIconExtent := dragHysteresis := scrollThumbExtent := sizingFrameExtent := dialogFrameExtent := borderExtent := edgeExtent := nil.
+        	code := anArray second.
+        	code == 34
+        		ifTrue: 
+        			[iconTitleFont := nil.
+        			^self].
+        	code == 42
+        		ifTrue: 
+        			[menuFont := nonClientMetrics := nil.
+        			^self]
+    ]
+    paddedBorderThickness [
+        	^self nonClientMetrics iPaddedBorderWidth
+    ]
+    printOn: aStream [
+        aStream basicPrint: self. aStream nextPut: $(. aStream print: dpi. aStream nextPutAll: ' dpi)'
+    ]
+    resolution [
+        	^dpi @ dpi
+    ]
+    scaleFactor [
+        "Answer the DPI scale factor of these metrics, e.g. for a scale of 125% this might be 5/4 (i.e. 1.25)"
+        ^dpi / 96
+    ]
+    scrollbarHeight [
+        "Answer the height, in pixels, of a horizontal scroll bar."
+        ^self nonClientMetrics iScrollHeight
+    ]
+    scrollbarWidth [
+        "Answer the width, in pixels, of a vertical scroll bar."
+        ^self nonClientMetrics iScrollWidth
+    ]
+    scrollThumbExtent [
+        	^scrollThumbExtent ifNil: [scrollThumbExtent := self getMetric: 10 pair: 9]
+    ]
+    setDpi: anInteger [
+        	dpi := anInteger.
+        	^self
+    ]
+    setSysParamBool: anInteger value: aBoolean [
+        	^User32
+        		systemParametersInfo: anInteger
+        		uiParam: 0
+        		pvParam: aBoolean asInteger
+        		fWinIni: 0
+    ]
+    sizingFrameExtent [
+        	^sizingFrameExtent
+        		ifNil: [sizingFrameExtent := self getMetric: 32 pair: 33]
+    ]
+    smallCaptionFont [
+        "Answer the currently configured small window caption font."
+        ^Font fromLogFont: self nonClientMetrics lfSmCaptionFont dpi: self dpi
+    ]
+    smallIconExtent [
+        "Answer a <Point> that gives the dimensions of a small size icon."
+        ^smallIconExtent ifNil: [smallIconExtent := self getMetric: 49 pair: 50]
+    ]
+    statusFont [
+        "Answer the currently configured status bar font."
+        ^Font fromLogFont: self nonClientMetrics lfStatusFont dpi: self dpi
+    ]
+    tileIconExtent [
+        "Answer a <Point> that gives the dimensions of an icon tile."
+        ^tileIconExtent ifNil: [tileIconExtent := [48 @ 48] value * dpi // 96]
+    ]
+    virtualScreenExtent [
+        "Answer the extent of the virtual screen, i.e. including desktops on all monitors"
+        ^(self getMetric: 78) @ (self getMetric: 79)
+    ]
+    virtualScreenOrigin [
+        "Answer the origin of the virtual screen, i.e. including desktops on all monitors"
+        ^(self getMetric: 76) @ (self getMetric: 77)
+    ]
+    virtualScreenRectangle [
+        "Answer the rectangle of the virtual screen, i.e. including desktops on all monitors"
+        ^self virtualScreenOrigin extent: self virtualScreenExtent
+    ]
+    wheelScrollLines [
+        	^WheelScrollLines
+        		ifNil: [WheelScrollLines := self getSysParamUInt32: 104 ifError: [3]]
+    ]
+    SystemMetrics class >> cacheDpiIndependentSettings [
+        	IsNotWine := NtDll isWine not
+    ]
+    SystemMetrics class >> current [
+        "Answer the current instance of the receiver. This provides metrics at the systemm (primary monitor) DPI setting."
+        ^Current ifNil: [Current := self forDpi: User32 getDpiForSystem]
+    ]
+    SystemMetrics class >> default [
+        "Answer an instance of the receiver that returns device-independent metrics (i.e. at 96-dpi)."
+        ^Default ifNil: [Default := self forDpi: 96]
+    ]
+    SystemMetrics class >> forDpi: anInteger [
+        "Answer an instance of the receiver to query metrics at the specified DPI."
+        ^(Instances lookup: anInteger)
+        		ifNil: 
+        			[IsNotWine ifNil: [self cacheDpiIndependentSettings].
+        			Instances at: anInteger put: (self newForDpi: anInteger)]
+    ]
+    SystemMetrics class >> initialize [
+        	| sysParamVars |
+        	sysParamVars := IdentityDictionary new.
+        	{
+        		4131.
+        		'HasFlatMenus'.
+        		8214.
+        		'MessageDuration'.
+        		103.
+        		'MouseHoverTime'.
+        		105.
+        		'WheelScrollLines'
+        	} pairsDo: [:setting :varName | sysParamVars at: setting put: (self bindingFor: varName)].
+        	SysParamVariables := sysParamVars.
+        	self reset.
+        	SessionManager current
+        		when: #settingChanged:
+        		send: #onSettingChanged:
+        		to: self
+    ]
+    SystemMetrics class >> new [
+        	^self shouldNotImplement
+    ]
+    SystemMetrics class >> newForDpi: anInteger [
+        "Answer a new, uncached, instance of the receiver for the specified DPI. For most purposes #forDpi: shouild be used in preference."
+        ^self basicNew setDpi: anInteger
+    ]
+    SystemMetrics class >> onPreStripImage [
+        	self reset
+    ]
+    SystemMetrics class >> onSettingChanged: anArray [
+        "Note that in system high DPI awareness mode, that the screen resolution is not changed for running apps, so we don't need to accommodate that yet"
+        Instances do: [:each | each onSettingChanged: anArray].
+        	SysParamVariables at: anArray second ifPresent: [:var | var value: nil]
+    ]
+    SystemMetrics class >> reset [
+        "Reinitialize the receiver. This is done on startup (see UserLibrary class>>clear) or when system settings are changed."
+        Default := Current := IsNotWine := nil.
+        	SysParamVariables do: [:each | each value: nil].
+        	Instances := IdentityDictionary new
+    ]
+    SystemMetrics class >> uninitialize [
+        "Private - Uninitialize the receiver as it is about to be removed from the system."
+        self reset
+    ]
+    menuBarColor [
+        	^UxTheme isAppThemed ifTrue: [Color menuBar] ifFalse: [Color menu]
+    ]
+]

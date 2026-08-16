@@ -9,8 +9,10 @@ Class Variables:
 	StringSeparator	<Character> separator to use when parsing menu definitions using #fromString:"
 
 Object subclass: MenuItem [
-    <classVars: Dividers>
+    <classVars: Dividers StringSeparator StylesMask>
     MenuItem class >> classVarDividers [ ^Dividers ]
+    MenuItem class >> classVarStringSeparator [ ^StringSeparator ]
+    MenuItem class >> classVarStylesMask [ ^StylesMask ]
     | flags |
 
     acceleratorKey [

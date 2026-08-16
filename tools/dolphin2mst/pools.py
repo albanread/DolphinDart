@@ -88,6 +88,21 @@ def parse_class_constants(class_constants: str) -> Dict[str, str]:
     return table
 
 
+def class_constant_names(class_constants: str) -> list:
+    """EVERY name in a `classConstants:` declaration, foldable or not.
+
+    `parse_class_constants` keeps only entries whose value is a literal,
+    because those are what can be folded at translation time. The rest are
+    real class constants too — `UI.TextEdit` declares
+
+        'AlignmentMap' -> (IdentityDictionary withAll: { ... })
+
+    and its code reads the bare name at runtime. Dropping them left
+    `AlignmentMap` as an unbound global, which is a runtime nil.
+    """
+    return [name for name, _ in _ENTRY.findall(class_constants or "")]
+
+
 class PoolTable:
     """All known pools, keyed by fully-qualified and by base name."""
 

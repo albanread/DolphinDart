@@ -21,8 +21,10 @@ Class Variables:
 	DefaultExtentBlock		`<BlockClosure>`"
 
 ContainerView subclass: ShellView [
-    <classVars: DialogMessageMap>
+    <classVars: DialogMessageMap DefaultButtonIndex TransientMask>
     ShellView class >> classVarDialogMessageMap [ ^DialogMessageMap ]
+    ShellView class >> classVarDefaultButtonIndex [ ^DefaultButtonIndex ]
+    ShellView class >> classVarTransientMask [ ^TransientMask ]
     | menuBar acceleratorTable combinedAcceleratorTable lastFocus defaultButton largeIcon smallIcon maxExtent minExtent actualIcons svFlags dpi |
 
     acceleratorTable [

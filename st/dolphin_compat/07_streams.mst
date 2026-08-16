@@ -69,3 +69,41 @@ Object subclass: WriteStream [
         ^e
     ]
 ]
+
+"── `basicPrint:` / `basicPrintOn:` — Dolphin's developer description ───────
+
+ Dolphin's own pair, verbatim:
+
+     Stream>>basicPrint: anObject     anObject basicPrintOn: self
+     Object>>basicPrintOn: aStream    name := self basicClass shortName.
+                                      aStream nextPutAll: (name first isVowel
+                                          ifTrue: ['an '] ifFalse: ['a ']);
+                                          nextPutAll: name
+
+ Every translated `printOn:` in the wave opens with `aStream basicPrint: self`
+ — `View`, `SystemMetrics`, `CommandDescription`, `CreateWindowApiCall` — so
+ the pair is reached the first time anything in the view layer is printed,
+ including from inside an error message, which is how it was found.
+
+ `basicClass` is Dolphin's un-overridable `class`; this dialect has no proxy
+ objects that lie about their class, so `self class` is the same answer, and
+ `shortName` is the unqualified name — which is what flattening already left
+ behind."
+Object subclass: WriteStream [
+    basicPrint: anObject [ ^anObject basicPrintOn: self ]
+]
+
+nil subclass: Object [
+    basicPrintOn: aStream [
+        | name |
+        name := self class name.
+        aStream nextPutAll: (name first isVowel ifTrue: [ 'an ' ] ifFalse: [ 'a ' ]).
+        aStream nextPutAll: name
+    ]
+    basicPrintString [
+        | s |
+        s := WriteStream on: String new.
+        self basicPrintOn: s.
+        ^s contents
+    ]
+]

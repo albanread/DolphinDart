@@ -1482,9 +1482,37 @@ class STWriteBuffer {
   tab() { _b.write('\t'); return this; }
   cr() { _b.write('\n'); return this; }
   show_(x) { _b.write(stDisplayOf(x)); return this; }
+  /// Dolphin's `Stream>>display:` — the DISPLAY form (unquoted), as opposed
+  /// to `print:`. `View>>printOn:` uses both in one line:
+  ///   aStream basicPrint: self; nextPut: $(; display: handle; print: ...
+  display_(x) { _b.write(stDisplayOf(x)); return x; }
   print_(x) { _b.write(stPrintOf(x)); return x; }
   operator <<(x) { _b.write(stDisplayOf(x)); return this; }
   contents() => _b.toString();
+
+  /// Dolphin's `Stream>>basicPrint:` — `anObject basicPrintOn: self`, the
+  /// developer's short description ("a TextEdit").
+  ///
+  /// It lives HERE, on the native buffer, rather than only as a Smalltalk
+  /// method on WriteStream: this is the stream `printString` hands to an
+  /// object's `printOn:`, and every translated `printOn:` in the MVP wave
+  /// opens with `aStream basicPrint: self` — View, SystemMetrics,
+  /// CommandDescription, CreateWindowApiCall. A compat method on the
+  /// Smalltalk WriteStream never reaches this receiver.
+  basicPrint_(x) {
+    // `stClassNameOf` answers non-null only for a CLASS (it doubles as the
+    // is-a-Type test), so an instance has to be asked for its class first.
+    var n = stClassNameOf(x);
+    if (n == null) {
+      var c = _stSendTry(x, 'class', const []);
+      if (c != null) n = stClassNameOf(c);
+    }
+    if (n == null) n = x == null ? 'UndefinedObject' : x.runtimeType.toString();
+    var vowel = n.isNotEmpty && 'AEIOU'.contains(n[0].toUpperCase());
+    _b.write(vowel ? 'an ' : 'a ');
+    _b.write(n);
+    return x;
+  }
 }
 
 /// The print protocol. printString of a string is QUOTED (ST convention);
@@ -1529,7 +1557,25 @@ stPrintOf(x) {
   return ws.contents();
 }
 
-stDisplayOf(x) => x is String ? x : (x is StMutableString ? x.toString() : (x is StSymbol ? x.name : (x is StChar ? x.toString() : stPrintOf(x))));
+stDisplayOf(x) {
+  if (x is String) return x;
+  if (x is StMutableString) return x.toString();
+  if (x is StSymbol) return x.name;
+  if (x is StChar) return x.toString();
+  // A Smalltalk `displayOn:` WINS, probed the same way stPrintOf probes
+  // `printOn:`. `displayString` is a universal helper rewritten at the call
+  // site, so without this probe an override is simply never reached — and
+  // `UI.View` has one. Its `printOn:` is
+  //
+  //     aStream basicPrint: self; ...; print: self displayString
+  //
+  // so falling through to stPrintOf made displayString call printOn: which
+  // called displayString: a stack overflow, not a wrong answer, but from the
+  // same cause as every other universal-helper surprise in this project.
+  var d = new STWriteBuffer();
+  if (_stSendTry(x, 'displayOn:', [d]) != null) return d.contents();
+  return stPrintOf(x);
+}
 
 /// `x printOn: aStream` with a bridged x: write its text into the stream.
 stPrintOn(r, s) {

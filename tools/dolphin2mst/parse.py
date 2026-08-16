@@ -96,6 +96,41 @@ def _kw_string(chunk: str, keyword: str) -> Optional[str]:
     return m.group(1).replace("''", "'") if m else None
 
 
+def _brace_group(body: str, keyword: str):
+    """The `{...}` following `keyword:`, brace-BALANCED.
+
+    A non-greedy `\{.*?\}` stops at the first closing brace, which is wrong
+    the moment a value is itself a brace array — and `UI.TextEdit` declares
+
+        classConstants: {
+            'AlignmentMap' -> (IdentityDictionary withAll: { #center -> 1. ... }).
+            'FormatMap' -> ...  'ModifiedMask' -> 16r8.  ...
+        }
+
+    so the regex captured ONLY `AlignmentMap` and silently dropped six
+    constants. They then reached the emitted code as unbound bare names —
+    `ModifiedMask` and `ReadOnlyMask` are read by `TextEdit>>isTextModified`
+    and `isReadOnly` — which is a runtime nil inside a `bitAnd:`, not an error.
+    """
+    m = re.search(keyword + r":\s*\{", body)
+    if m is None:
+        return None
+    start = m.end() - 1
+    depth = 0
+    for i in range(start, len(body)):
+        c = body[i]
+        if c == "{":
+            depth += 1
+        elif c == "}":
+            depth -= 1
+            if depth == 0:
+                class _M:
+                    def group(self, _n):
+                        return body[start:i + 1]
+                return _M()
+    return None
+
+
 def _kw_array(chunk: str, keyword: str) -> Optional[List[str]]:
     m = re.search(keyword + r":\s*#\((.*?)\)", chunk, re.S)
     if not m:
@@ -116,7 +151,7 @@ def parse_classdef(chunk: Chunk) -> Optional[ClassDef]:
     imports = _kw_array(body, "imports")
     if imports is None:
         imports = _kw_array(body, "poolDictionaries") or []
-    cc = re.search(r"classConstants:\s*(\{.*?\})", body, re.S)
+    cc = _brace_group(body, "classConstants")
     return ClassDef(
         name=m.group("name"),
         superclass=m.group("super"),

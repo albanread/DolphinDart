@@ -308,9 +308,16 @@ def main(argv: List[str]) -> int:
         # the declared imports left that name bare, and a bare name is nil at
         # runtime, and nil reached the FFI floor as `non-integer argument` from
         # inside Dolphin's layout code — three layers from the cause.
+        # A LIBRARY facade takes every loose method class-side, because this
+        # port's `default` answers the class itself (see emit_loose). Any
+        # other target keeps the side the `.pax` filed it on — `Core.Object`
+        # gets `asValue` as an instance method, which is the only way `nil
+        # asValue` can work.
+        is_library = cls_name.endswith("Library")
         res = emit.emit_loose(cls_name, cd, ms, renames, pool_table,
                               classvar_owners, constant_chains,
-                              inherited_pool_chain(by_name_all, target))
+                              inherited_pool_chain(by_name_all, target),
+                              force_class_side=is_library)
         refusals.extend(res.refusals)
         fname = f"90_{cls_name}_loose.mst"
         with open(os.path.join(args.out, fname), "w",

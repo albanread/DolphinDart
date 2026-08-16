@@ -28,6 +28,7 @@ from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Tuple
 
 from parse import ClassDef, Method, ParsedFile
+import pools
 from stlex import strip_code
 
 
@@ -594,6 +595,26 @@ def rewrite_pool_constants(body: str, where: str, imports, table,
     return "".join(out), []
 
 
+_ADD_CLASS_CONST = re.compile(
+    r"self\s+addClassConstant:\s*'([A-Za-z_]\w*)'\s*value:")
+
+
+def rewrite_add_class_constant(src: str) -> str:
+    """`self addClassConstant: 'X' value: EXPR`  ->  `X := EXPR`.
+
+    Dolphin installs a class constant by NAME at runtime; this dialect binds
+    class variables statically, so the dynamic-name call is turned into the
+    assignment it means. `emit_class` declares every `classConstants:` name as
+    a class variable, so the target exists.
+
+    Faithful, not a shortcut: `TextEdit class >> initialize` is where Dolphin
+    builds `AlignmentMap` and `FormatMap`, and `DolphinBoot` calls that
+    `initialize`. The alternative — a runtime installer keyed by string — would
+    need a dynamic class-variable API this dialect deliberately does not have.
+    """
+    return _ADD_CLASS_CONST.sub(lambda m: m.group(1) + " :=", src)
+
+
 def rewrite_hashhash(src: str, where: str) -> Tuple[str, List[Refusal]]:
     refusals: List[Refusal] = []
     out = src
@@ -722,7 +743,7 @@ def _house_pattern(m: Method, cls_name: str) -> str:
 
 def emit_loose(cls_name: str, cd, methods, renames, pool_table,
                classvar_owners=None, constant_chains=None,
-               inherited_imports=None) -> EmitResult:
+               inherited_imports=None, force_class_side=True) -> EmitResult:
     """Emit LOOSE methods as a reopen of an already-existing class.
 
     The class itself is not translated — `OS.UserLibrary` is GENERATED from
@@ -771,22 +792,36 @@ def emit_loose(cls_name: str, cd, methods, renames, pool_table,
         refusals.extend(r)
         body = rewrite_selectors(body)
         body, r = rewrite_cascades(body, where); refusals.extend(r)
+        body = rewrite_add_class_constant(body)
         body, r = rewrite_hashhash(body, where); refusals.extend(r)
         body, r = rewrite_qq(body, where); refusals.extend(r)
         body = flatten_refs(body, renames)
         if m.comment:
             body = '"' + m.comment.replace('"', '""') + '"\n' + body
-        # ALL of them go CLASS-side, whichever side the `.pax` filed them on.
-        # The corpus sends them to the library itself — `User32 getWindowText:
-        # h`, where `User32` is an alias for the class (DD9's census: the bare
-        # global is the idiom, 434 sites for User32 alone) — and `genprims`
-        # already put every generated prim class-side for the same reason.
+        # WHICH SIDE. For a LIBRARY facade every method goes class-side
+        # whichever side the `.pax` filed it on: the corpus sends them to the
+        # library itself — `User32 getWindowText: h`, where `User32` is an
+        # alias for the class (DD9's census: the bare global is the idiom, 434
+        # sites for User32 alone) — and `genprims` already put every generated
+        # prim class-side for the same reason.
+        #
+        # For anything else the `.pax`'s own side is the answer, and forcing
+        # was a silent bug: `Dolphin Value Models.pax` files `asValue` onto
+        # `Core.Object` as an INSTANCE method, and
+        # `ValueConvertingControlView class >> defaultModel` is `^nil asValue`.
+        # Emitted class-side, `nil asValue` was a doesNotUnderstand and every
+        # TextEdit failed to initialize.
+        #
         # `_house_pattern` adds the prefix itself for a method the `.pax`
-        # declared class-side, so it is asked for the bare pattern here.
+        # declared class-side, so it is always asked for the bare pattern.
         bare = Method(selector=m.selector, arg_names=m.arg_names,
                       pattern=m.pattern, comment=m.comment, body=m.body,
                       class_side=False, line=m.line)
-        lines.append(f"    {cls_name} class >> {_house_pattern(bare, cls_name)} [")
+        pattern = _house_pattern(bare, cls_name)
+        if force_class_side or m.class_side:
+            lines.append(f"    {cls_name} class >> {pattern} [")
+        else:
+            lines.append(f"    {pattern} [")
         lines.append(_indent(body.strip("\n")))
         lines.append("    ]")
     lines.append("]")
@@ -815,14 +850,25 @@ def emit_class(pf: ParsedFile, renames: Dict[str, str],
         lines.append('"' + cd.comment.replace('"', '""').strip() + '"')
         lines.append("")
     lines.append(f"{sup} subclass: {name} [")
-    if cd.cvars:
-        lines.append(f"    <classVars: {' '.join(cd.cvars)}>")
+    # Class VARIABLES plus every `classConstants:` NAME. A class constant whose
+    # value is a literal is folded at translation time and the declaration is
+    # then unused; one whose value is an EXPRESSION is installed at runtime by
+    # the class's own `initialize` (`self addClassConstant: 'AlignmentMap'
+    # value: (IdentityDictionary withAll: ...)`, rewritten to an assignment),
+    # and its code reads the bare name. Without the declaration that read was
+    # an unbound global — a runtime nil, in `UI.TextEdit>>alignment`.
+    cvars = list(cd.cvars)
+    for _cc in pools.class_constant_names(cd.class_constants):
+        if _cc not in cvars:
+            cvars.append(_cc)
+    if cvars:
+        lines.append(f"    <classVars: {' '.join(cvars)}>")
         # READERS for every class variable. `Point.Zero` in another class is
         # rewritten to `Point classVarZero`, and this is what it lands on —
         # emitted for all of them rather than only the referenced ones, so the
         # rewrite is always resolvable for a translated owner without tracking
         # cross-file usage. One line each.
-        for _cv in cd.cvars:
+        for _cv in cvars:
             lines.append(f"    {name} class >> {classvar_accessor(_cv)} "
                          f"[ ^{_cv} ]")
     if cd.ivars:
@@ -912,6 +958,7 @@ def emit_class(pf: ParsedFile, renames: Dict[str, str],
             refusals.extend(r)
             body = rewrite_selectors(body)
             body, r = rewrite_cascades(body, where); refusals.extend(r)
+            body = rewrite_add_class_constant(body)
             body, r = rewrite_hashhash(body, where); refusals.extend(r)
             body, r = rewrite_qq(body, where); refusals.extend(r)
             body = flatten_refs(body, renames)

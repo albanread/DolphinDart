@@ -14,8 +14,15 @@ Class Variables:
 	UpdatePerCharMask	<integer> mask for the update-per-char mode flag."
 
 ValueConvertingControlView subclass: TextEdit [
-    <classVars: FindDialogMessage>
+    <classVars: FindDialogMessage AlignmentMap FindDisabledMask FormatMap ModifiedMask ReadOnlyMask StaticMask WantTabMask>
     TextEdit class >> classVarFindDialogMessage [ ^FindDialogMessage ]
+    TextEdit class >> classVarAlignmentMap [ ^AlignmentMap ]
+    TextEdit class >> classVarFindDisabledMask [ ^FindDisabledMask ]
+    TextEdit class >> classVarFormatMap [ ^FormatMap ]
+    TextEdit class >> classVarModifiedMask [ ^ModifiedMask ]
+    TextEdit class >> classVarReadOnlyMask [ ^ReadOnlyMask ]
+    TextEdit class >> classVarStaticMask [ ^StaticMask ]
+    TextEdit class >> classVarWantTabMask [ ^WantTabMask ]
     | teFlags updateMode _reserved18 _reserved19 _reserved20 |
 
     alignment [
@@ -429,16 +436,16 @@ ValueConvertingControlView subclass: TextEdit [
     ]
     isFindEnabled [
         "Answer whether the find and find/replace commands are enabled."
-        ^teFlags noMask: FindDisabledMask
+        ^teFlags noMask: 32
     ]
     isFindEnabled: aBoolean [
         "Set whether the find and find/replace commands are enabled in the receiver."
-        teFlags := teFlags mask: FindDisabledMask set: aBoolean not
+        teFlags := teFlags mask: 32 set: aBoolean not
     ]
     isModified [
         "Answer true if the receiver's text has been modified.
         	Note that this must be explicitly reset."
-        ^(teFlags allMask: ModifiedMask) or: [self isTextModified]
+        ^(teFlags allMask: 8) or: [self isTextModified]
     ]
     isModified: aBoolean [
         "Set the receiver's text modification flag.
@@ -446,7 +453,7 @@ ValueConvertingControlView subclass: TextEdit [
         	the model is in sync. with the view, as otherwise any pending changes
         	may be lost."
         aBoolean ifFalse: [self updateModel].
-        	teFlags := teFlags mask: ModifiedMask set: aBoolean
+        	teFlags := teFlags mask: 8 set: aBoolean
     ]
     isPassword [
         "Answer whether the receiver is a password entry field (i.e. it has the
@@ -462,13 +469,13 @@ ValueConvertingControlView subclass: TextEdit [
     ]
     isReadOnly [
         "Answer whether the receiver is in read only mode."
-        ^teFlags anyMask: ReadOnlyMask
+        ^teFlags anyMask: 1
     ]
     isReadOnly: aBoolean [
         "Sets the receiver into read only mode if aBoolean is true. Otherwise
         	it is set into edit mode."
         | newFlags |
-        	newFlags := teFlags mask: ReadOnlyMask set: aBoolean.
+        	newFlags := teFlags mask: 1 set: aBoolean.
         	teFlags = newFlags ifTrue: [^self].
         	teFlags := newFlags.
         	self setReadOnly: aBoolean
@@ -488,12 +495,12 @@ ValueConvertingControlView subclass: TextEdit [
     ]
     isStatic [
         "Answer whether the receiver is in static (non-selectable) mode."
-        ^teFlags anyMask: StaticMask
+        ^teFlags anyMask: 16
     ]
     isStatic: aBoolean [
         "Sets the receiver into static mode if aBoolean is true. Otherwise
         	it is set into selectable mode."
-        teFlags := teFlags mask: StaticMask set: aBoolean.
+        teFlags := teFlags mask: 16 set: aBoolean.
     ]
     isTextModified [
         "Private - Answer whether the receiver's text has been modified since last sync'd with
@@ -1019,11 +1026,11 @@ ValueConvertingControlView subclass: TextEdit [
     ]
     wantTab [
         "Answer whether the receiver wishes to receive tab characters as WM_CHAR messages."
-        ^teFlags anyMask: WantTabMask
+        ^teFlags anyMask: 4
     ]
     wantTab: aBoolean [
         "Set whether the receiver wishes to receive tab characters as WM_CHAR messages."
-        teFlags := teFlags mask: WantTabMask set: aBoolean
+        teFlags := teFlags mask: 4 set: aBoolean
     ]
     windowTitle [
         "Answer the window title that is set/restored through WindowCreationParameters. Generally this is the window text."
@@ -1076,10 +1083,8 @@ ValueConvertingControlView subclass: TextEdit [
         "Private - Initialise the receiver's class variables:
 
         			TextEdit initialize"
-        self addClassConstant: 'AlignmentMap'
-        		value: (IdentityDictionary withAll: { #left -> 0. #right -> 2. #center -> 1 }).
-        	self addClassConstant: 'FormatMap'
-        		value: (IdentityDictionary withAll: {
+        AlignmentMap := (IdentityDictionary withAll: { #left -> 0. #right -> 2. #center -> 1 }).
+        	FormatMap := (IdentityDictionary withAll: {
         						#mixed -> 0.
         						#uppercase -> 8.
         						#lowercase -> 16.

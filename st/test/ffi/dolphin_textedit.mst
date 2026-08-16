@@ -1,0 +1,40 @@
+"dolphin_textedit.mst — Dolphin's OWN `UI.TextEdit` over a real EDIT control
+ (DolphinDart DD10).
+
+ `st_subclass` proved the substrate with a hand-written probe standing in for
+ a control view. This is the same mechanism with the stand-in removed: a real
+ `UI.TextEdit`, created by Dolphin's own `View>>create`, subclassed by
+ Dolphin's own `ControlView>>subclassWindow`, and driven through Dolphin's own
+ value protocol.
+
+ The only Smalltalk here is the APP — a shell that owns a text field. That is
+ what an application author writes, and from here on it is the only kind of
+ Smalltalk that should be hand-written."
+ShellView subclass: TextEditShell [
+    | editView |
+
+    editView [ ^editView ]
+
+    "Build the text field as a real sub-view. `addSubView:` is what realizes
+     it (`View>>basicAddSubView:` is `aView parentView: self. aView show.`),
+     so the window, the subclassing and the registration all happen inside
+     that one send — which is exactly how a Dolphin application builds one."
+    buildEdit [
+        editView := TextEdit new.
+        editView parentView: self.
+        editView preferredExtent: 160 @ 24.
+        editView usePreferredExtent: true.
+        self addSubView: editView.
+        ^editView
+    ]
+
+    "Is the sub-view REALLY a Windows EDIT, or just a window we called one?
+     Asked of Windows rather than of the class: `GetClassName` answers what
+     the window was actually registered as, so a view that quietly fell back
+     to the door's own class cannot pass."
+    editClassName [
+        "Dolphin's own one-argument convenience, filed onto `OS.UserLibrary`
+         by the `.pax` — not a hand-rolled buffer dance here."
+        ^User32 getClassName: editView handle
+    ]
+]
