@@ -221,3 +221,52 @@ probe checks.
 pointer field was read-only** — and `genstructs` emits no setter for one
 because the runtime had none to emit. MENUITEMINFOW's `dwTypeData` (the item
 text) is the first caller. Added beside its reader.
+
+## The worker mechanism — built (`test/st_worker.dart`)
+
+The doctrine from `docs/WORKERS.md`, now with a transport
+(`test/worker_host.dart`) and an image side
+(`st/dolphin_compat/11_worker.mst`).
+
+`Worker do: #task with: arg then: aBlock` answers immediately. The block stays
+in the image under an id — isolates copy, and a Smalltalk block cannot cross —
+so only the id, the task NAME and the argument travel. The Dart host drains
+the queue, spawns an isolate per task, and on reply sends
+`Worker complete: id with: result`, which **posts** the continuation.
+
+**The run loop is Dart's, and that is forced.** `UiSession pump` drains Win32
+through a native call and returns; it never runs Dart's event loop, so an
+isolate reply can only be delivered when control is back in Dart. Pump a
+slice, `await`, repeat — and the `await` is the load-bearing line. Without it
+no reply is ever delivered however long the Win32 pump spins. That belongs in
+the record because it is the one thing about this design that is not
+negotiable.
+
+The transport lives in ordinary Dart, NOT in the bootstrap `dart:cocoa`
+library: isolates are the run loop's business, not the Smalltalk runtime's.
+
+### What the gate proves, and why in three parts
+
+1. Submission returns immediately — ~16ms, including the first
+   `Isolate.spawn`.
+2. The pump stays LIVE while the isolate burns: **26 real WM_PAINTs** counted
+   during the run. The task burns CPU rather than sleeping, deliberately — a
+   sleeping isolate proves the reply arrives, not that the UI thread kept
+   running while another thread was actually busy.
+3. **The continuation is POSTED, not called.** Asserted by observing the GAP:
+   at the moment `Worker completed` says the reply arrived, the continuation
+   has not run and exactly one action sits in the queue; the next pump runs
+   it. This is the assertion that carries the doctrine — calling it inline
+   from the reply handler satisfies 1 and 2 and is still wrong.
+
+A failure path too: a task that raises replies with a message rather than an
+exception (one cannot cross an isolate), the image rebuilds it as an `Error`,
+and it is posted the same way.
+
+### Known limitation, recorded
+
+The task table is a top-level literal. A spawned isolate re-runs the library
+from scratch with its own statics, so a task registered by calling a function
+from `main` is absent on the other side — tasks must be visible at
+library-init time in BOTH isolates. Letting an application supply its own
+means a place in that literal, or a generated one.

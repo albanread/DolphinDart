@@ -1,6 +1,8 @@
 # Workers — the DolphinDart doctrine
 
-**Status: doctrine settled, mechanism NOT yet built.** 2026-08-15, during DD10.
+**Status: BUILT and gated.** 2026-08-16, DD10. Gate `test/st_worker.dart`;
+transport `test/worker_host.dart`; image side
+`st/dolphin_compat/11_worker.mst`.
 
 Dolphin runs long work on green processes (`fork`, `forkAt:`), scheduled inside
 one OS thread by its own scheduler. This VM has no green processes and will not
@@ -87,17 +89,46 @@ wholesale. Only the transport changes.
 
 Nothing should be loaded from it until that is done, and nothing currently is.
 
-## The build order when it lands
+## How it is built
 
-1. A Dart-side task registry: named top-level functions an isolate can be
-   spawned onto (`Isolate.spawn` needs a top-level entry point).
-2. `stWorkerSubmit(task, arg, id)` — spawn, run, reply on a `ReceivePort`.
-3. On reply, the main isolate calls `UiSession completeWork: id with: result`,
-   which looks the continuation block up by id and **posts** it. The lookup
-   lives in Smalltalk so the block never leaves the image.
-4. `Worker do:with:then:` as the Smalltalk face of it.
-5. The gate: a ~3-second task with a timer-driven paint counter that must keep
-   advancing throughout — the pump provably live, not merely assumed to be.
+`Worker do: #task with: arg then: aBlock` answers immediately. The block stays
+in the image under an id; only the id, the task NAME and the argument travel.
+The Dart host drains the submission queue (`Worker takePending`), spawns an
+isolate per task, and on reply sends `Worker complete: id with: result` —
+which **posts** the continuation rather than calling it.
 
-Step 3 is the one that carries the doctrine. Calling the block directly from
-the reply handler would work, look correct, and violate every reason above.
+**The run loop is Dart's, and that is forced rather than chosen.** `UiSession
+pump` drains Win32 messages through a native call and returns; it never runs
+Dart's event loop, so an isolate reply can only be delivered when control is
+back in Dart. The loop is: pump a slice of Win32, `await`, repeat. The `await`
+is load-bearing — without it no reply is ever delivered, however long the
+Win32 pump spins.
+
+**Failures cross as data.** An exception cannot leave an isolate, so a task
+that raises replies with a message and the image rebuilds it as an `Error` —
+posted through the same queue, so the continuation's own handler deals with it.
+
+### What the gate proves
+
+Three things, because the first two can be true while the third is not:
+
+1. Submission returns immediately (measured at ~16ms, including the first
+   `Isolate.spawn`).
+2. The pump stays LIVE while the isolate burns CPU — 26 real WM_PAINTs
+   counted during the run. The task burns rather than sleeps, deliberately: a
+   sleeping isolate proves the reply arrives, not that the UI thread kept
+   running while another thread was actually busy.
+3. **The continuation is POSTED, not called.** Asserted by observing the gap:
+   at the moment the reply is known to have arrived, the continuation has NOT
+   run and exactly one action sits in the queue; the next pump runs it.
+   Calling it inline from the reply handler would satisfy 1 and 2 and still
+   be wrong.
+
+### Known limitation
+
+The task table is a top-level literal in `worker_host.dart`. A spawned isolate
+re-runs the library from scratch with its own copy of every static, so a task
+registered by calling a function from `main` is absent on the other side;
+tasks must be visible at library-init time in BOTH isolates. Letting an
+application supply its own means a place in that literal, or a generated one.
+Recorded, not yet designed around.

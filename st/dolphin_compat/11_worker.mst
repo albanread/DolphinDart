@@ -1,0 +1,90 @@
+"11_worker.mst — the Smalltalk face of the worker doctrine (DolphinDart DD10).
+
+ `docs/WORKERS.md` settles the doctrine; this is its image side.
+
+     Worker do: #slowSum with: 1000000 then: [ :r | model value: r ]
+
+ answers immediately. The work runs in a Dart ISOLATE — no shared state, no
+ UI, data in and data out — and the continuation runs LATER, on the UI thread,
+ out of `UiSession`'s posted-action queue.
+
+ WHY THE BLOCK NEVER LEAVES THE IMAGE. Isolates copy; a Smalltalk block cannot
+ cross and should not try. So the block stays here under an id, and only the
+ id, the task name and the argument travel. The reply carries the id back and
+ this class finds the block again.
+
+ WHY THE RUN LOOP IS DART'S. `UiSession pump` drains Win32 messages and
+ returns; it does not run Dart's event loop, so an isolate reply can only be
+ delivered when control is back in Dart. The outer loop therefore belongs to
+ Dart — pump a slice, yield, repeat — and `takePending` is how it collects the
+ submissions this class has queued. See `test/worker_host.dart`.
+
+ WHY `complete:with:` POSTS RATHER THAN CALLS. Calling the continuation
+ directly would work, look correct, and violate the whole point: a
+ continuation must not run inside a door entry (DD7 — a handler must not
+ rebuild the window it is being called from, and a raise inside an entry
+ cannot be caught outside it). Posting defers it to the next pump, where
+ `UiSession`'s own containment covers it."
+Object subclass: Worker [
+    <classVars: Blocks Pending NextId Completed Failed>
+
+    Worker class >> reset [
+        Blocks := Dictionary new. Pending := OrderedCollection new.
+        NextId := 0. Completed := 0. Failed := 0
+    ]
+    Worker class >> blocks [ Blocks isNil ifTrue: [ self reset ]. ^Blocks ]
+    Worker class >> pending [ Pending isNil ifTrue: [ self reset ]. ^Pending ]
+
+    "Submit work. Answers the id immediately — nothing here blocks."
+    Worker class >> do: aTaskName with: anArgument then: aBlock [
+        | id |
+        self blocks.
+        NextId := NextId + 1.
+        id := NextId.
+        Blocks at: id put: aBlock.
+        Pending add: (Array with: id with: aTaskName displayString with: anArgument).
+        ^id
+    ]
+
+    "How many submissions are waiting to be picked up, and how many are out
+     with an isolate and not yet answered. The gate asserts on both: a task
+     that was never collected and a task that never came back look identical
+     from the outside otherwise."
+    Worker class >> pendingCount [ ^self pending size ]
+    Worker class >> inFlight [ ^self blocks size ]
+    Worker class >> completed [ ^Completed ifNil: [ 0 ] ]
+    Worker class >> failed [ ^Failed ifNil: [ 0 ] ]
+
+    "The Dart host drains this. Answers an Array of {id. taskName. arg} and
+     empties the queue — a submission is handed out exactly once."
+    Worker class >> takePending [
+        | out |
+        out := self pending asArray.
+        Pending := OrderedCollection new.
+        ^out
+    ]
+
+    "A reply. POSTS the continuation; see the class comment."
+    Worker class >> complete: anId with: aResult [
+        | block |
+        block := self blocks at: anId ifAbsent: [ nil ].
+        block isNil ifTrue: [ ^nil ].
+        Blocks removeKey: anId ifAbsent: [ nil ].
+        Completed := self completed + 1.
+        ^UiSession postAction: [ block value: aResult ]
+    ]
+
+    "A task that raised inside the isolate. The failure is data by the time it
+     reaches here — an exception cannot cross an isolate boundary either — so
+     it arrives as a message and is posted the same way, letting the
+     continuation's own handler deal with it."
+    Worker class >> fail: anId with: aMessage [
+        | block |
+        block := self blocks at: anId ifAbsent: [ nil ].
+        block isNil ifTrue: [ ^nil ].
+        Blocks removeKey: anId ifAbsent: [ nil ].
+        Failed := self failed + 1.
+        ^UiSession postAction: [
+            block value: (Error new messageText: aMessage) ]
+    ]
+]
