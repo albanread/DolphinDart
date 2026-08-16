@@ -29,6 +29,10 @@ hypothesis was wrong. It was.
    machine, same `X126100` silicon in a mini-desktop: the pinned benchmarks
    reproduce **to the hundredth of a millisecond**, and the one row that
    moved indicts the software, not the box.
+7. [The blog serves itself](07-the-blog-serves-itself.md) — these articles
+   are now pages on a Smalltalk web server running on that £350 box.
+   Fifteen seconds a page became 141 ms once we found which bytes were
+   allowed to touch the VM: **165 µs each**, it turns out.
 
 Every number in articles 1–5 was measured on the machine described:
 a Snapdragon X laptop (Oryon, 8 cores), Windows 11 arm64, Adreno X1-45.
