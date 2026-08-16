@@ -3,6 +3,8 @@
 
 ExternalMemory subclass: SPTEXTSELECTIONINFO [
     SPTEXTSELECTIONINFO class >> sizeInBytes [ ^16 ]
+    SPTEXTSELECTIONINFO class >> byteSize [ ^16 ]
+    byteSize [ ^16 ]
     SPTEXTSELECTIONINFO class >> new [ ^self new: 16 ]
 
     ulStartActiveOffset [ ^self uint32At: 1 ]

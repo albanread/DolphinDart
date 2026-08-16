@@ -3,6 +3,8 @@
 
 ExternalMemory subclass: PANOSE [
     PANOSE class >> sizeInBytes [ ^17 ]
+    PANOSE class >> byteSize [ ^17 ]
+    byteSize [ ^17 ]
     PANOSE class >> new [ ^self new: 17 ]
 
     "bFamilyType: Windows.Win32.Graphics.Gdi.PAN_FAMILY_TYPE at 0 — no accessor (width unknown); use byteAt: directly"

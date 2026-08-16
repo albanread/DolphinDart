@@ -5,6 +5,7 @@ Note that DeferWindowPos is only able to batch up window repositioning requests 
 Object subclass: LayoutContext [
     <classVars: DeferRectangles>
     LayoutContext class >> classVarDeferRectangles [ ^DeferRectangles ]
+    LayoutContext class >> classVarDeferRectangles: v [ ^DeferRectangles := v ]
     | container placements |
 
     apply [

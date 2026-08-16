@@ -3,6 +3,8 @@
 
 ExternalMemory subclass: CPINFOEXW [
     CPINFOEXW class >> sizeInBytes [ ^32 ]
+    CPINFOEXW class >> byteSize [ ^32 ]
+    byteSize [ ^32 ]
     CPINFOEXW class >> new [ ^self new: 32 ]
 
     maxCharSize [ ^self uint32At: 1 ]

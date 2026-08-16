@@ -3,6 +3,8 @@
 
 ExternalMemory subclass: CUSTDATA [
     CUSTDATA class >> sizeInBytes [ ^16 ]
+    CUSTDATA class >> byteSize [ ^16 ]
+    byteSize [ ^16 ]
     CUSTDATA class >> new [ ^self new: 16 ]
 
     cCustData [ ^self uint32At: 1 ]

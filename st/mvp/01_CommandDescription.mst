@@ -23,13 +23,21 @@ Instance Variables:
 Object subclass: CommandDescription [
     <classVars: CommandDescriptionRegistry CurrentId DefaultMask MaximumId ModalMask NotAbortableMask StartingId TextSubstitutionsMask>
     CommandDescription class >> classVarCommandDescriptionRegistry [ ^CommandDescriptionRegistry ]
+    CommandDescription class >> classVarCommandDescriptionRegistry: v [ ^CommandDescriptionRegistry := v ]
     CommandDescription class >> classVarCurrentId [ ^CurrentId ]
+    CommandDescription class >> classVarCurrentId: v [ ^CurrentId := v ]
     CommandDescription class >> classVarDefaultMask [ ^DefaultMask ]
+    CommandDescription class >> classVarDefaultMask: v [ ^DefaultMask := v ]
     CommandDescription class >> classVarMaximumId [ ^MaximumId ]
+    CommandDescription class >> classVarMaximumId: v [ ^MaximumId := v ]
     CommandDescription class >> classVarModalMask [ ^ModalMask ]
+    CommandDescription class >> classVarModalMask: v [ ^ModalMask := v ]
     CommandDescription class >> classVarNotAbortableMask [ ^NotAbortableMask ]
+    CommandDescription class >> classVarNotAbortableMask: v [ ^NotAbortableMask := v ]
     CommandDescription class >> classVarStartingId [ ^StartingId ]
+    CommandDescription class >> classVarStartingId: v [ ^StartingId := v ]
     CommandDescription class >> classVarTextSubstitutionsMask [ ^TextSubstitutionsMask ]
+    CommandDescription class >> classVarTextSubstitutionsMask: v [ ^TextSubstitutionsMask := v ]
     | command description acceleratorKey flags image |
 
     acceleratorKey [

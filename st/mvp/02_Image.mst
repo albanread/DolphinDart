@@ -1,0 +1,317 @@
+"Image is the class of <GraphicsTools>s that represent pictures which can be drawn onto the display (or other device).
+
+Instance Variables:
+	fileLocator		<fileLocator> used to complete the relative path held as the 'identifier' when loading the image.
+	identifier		<String> identifying the file from which the image was or should be loaded, or the resource identifier.
+	instanceHandle	<ExternalLibrary> (usually <ExternalResourceLibrary) represent the module from which the image was loaded."
+
+GraphicsTool subclass: Image [
+    | initializer |
+
+    = anObject [
+        "Answer whether the receiver and anObject are equivalent.
+        	Two Images loaded by identifier are equal if they are of the same species, and either have equal initializers, or equal handles."
+        ^self == anObject or: [self species == anObject species and: [initializer = anObject initializer]]
+    ]
+    addToImageList: aWinImageList mask: aColorOrNil [
+        "Add a pictorial representation of the receiver to aWinImageList"
+        ^self subclassResponsibility
+    ]
+    asSharedCopy [
+        "For compatibility with bitmaps."
+        ^self
+    ]
+    basicFree [
+        "Private - Free up external resources held by the receiver. Ignore any errors which might arise."
+        self class freeHandle: handle
+    ]
+    copy [
+        	^(super copy)
+        		ownedHandle: self copyHandle;
+        		yourself
+    ]
+    copyHandle [
+        "Private - Answer an external handle to the image which is a copy of that represented by the receiver."
+        ^User32
+        		copyImage: self handle
+        		uType: self imageType
+        		cxDesired: 0
+        		cyDesired: 0
+        		fuFlags: 0
+    ]
+    createHandle [
+        "Private - Answer an external handle to the image represented by the receiver."
+        ^initializer createImage: self
+    ]
+    drawDisabledOn: aCanvas at: aPoint extent: sizePoint [
+        "Draw a disabled/grayed representation of the receiver on aCanvas at aPoint with extent sizePoint."
+        ^self subclassResponsibility
+    ]
+    drawOn: aCanvas [
+        "Draw the receiver to aCanvas at position aPoint (no stretching).
+        	Answer whether the operation succeeded."
+        ^self drawOn: aCanvas at: Point classVarZero
+    ]
+    drawOn: aCanvas at: aPoint [
+        "Draw the receiver to aCanvas at position aPoint (no stretching).
+        	Answer whether the operation succeeded."
+        ^self drawOn: aCanvas at: aPoint extent: self extent
+    ]
+    drawOn: aCanvas at: aPoint extent: sizePoint [
+        "Draw the receiver on aCanvas at aPoint with size sizePoint."
+        ^self subclassResponsibility
+    ]
+    extent [
+        "Answers the dimensions of the receiver in pixels"
+        ^self subclassResponsibility
+    ]
+    fileLocator [
+        	^initializer fileLocator
+    ]
+    freeDC [
+        "Free the receiver's cached memory DC, if any."
+    ]
+    hash [
+        "Answer the hash of the identifier. Although #= is implemented to compare
+        	both identifer and instanceHandles we don't need to take account of the latter
+        	here since it is only necessary that equal objects have the same hash value not
+        	vice versa."
+        ^initializer hash
+    ]
+    hotspot [
+        "Answer a Point specifying the receiver's hot spot (only really relevant for cursors)."
+        ^0@0
+    ]
+    identifier [
+        	^initializer identifier
+    ]
+    imageManager [
+        "Answer an image manager to use for storing images"
+        ^self class imageManager
+    ]
+    imageType [
+        "Private - Answer the Win32 image type for the receiver."
+        ^self class imageType
+    ]
+    initializer [
+        	^initializer
+    ]
+    initializer: anImageInitializer [
+        	initializer := anImageInitializer
+    ]
+    isPersistent [
+        "Private - Answer true if the receiver holds sufficient information such that it can recreate itself when the image is saved and restored. This is generally true for images if they have an identifier."
+        ^initializer isPersistent
+    ]
+    isSelfEvaluating [
+        "Answer whether or not the receiver has a printString representation that evaluates back to an equivalent object."
+        ^initializer isSelfEvaluatingImage: self
+    ]
+    isShared [
+        "Private - Answer true if the receiver is in the shared cache.
+        	Shared images must be copied if they will be modified in any way."
+        ^false
+    ]
+    isTransparent [
+        "Answer whether the receiver will be, or was, loaded as a 'transparent' bitmap (that is with the LR_LOADTRANSPARENT flag)."
+        ^initializer isLoadTransparent
+    ]
+    isTransparent: aBoolean [
+        "Set whether the receiver will be loaded as a 'transparent' bitmap (that is with the LR_LOADTRANSPARENT flag). If the bitmap is already realized then this has no effect."
+        initializer isLoadTransparent: aBoolean
+    ]
+    loadFromFile: aString extent: aPoint flags: anInteger [
+        	^User32
+        		loadImage: 0
+        		lpszName: aString
+        		uType: self imageType
+        		cxDesired: aPoint x
+        		cyDesired: aPoint y
+        		fuLoad: ((aPoint = Point classVarZero
+        				ifTrue: [80]
+        				ifFalse: [16]) bitOr: anInteger)
+    ]
+    loadResource: identifierObject fromModule: moduleObject extent: aPoint flags: anInteger [
+        	^User32
+        		loadImage: moduleObject asParameter
+        		lpszName: identifierObject asResourceId
+        		uType: self imageType
+        		cxDesired: aPoint x
+        		cyDesired: aPoint y
+        		fuLoad: (aPoint = Point classVarZero ifTrue: [anInteger bitOr: 64] ifFalse: [anInteger])
+    ]
+    printOn: aStream [
+        	initializer printImage: self on: aStream
+    ]
+    resolution [
+        "Answer an <Point> specifying the horizontal and vertical DPI of the receiver."
+        ^[96 @ 96] value
+    ]
+    setInitializer: anImageInitializer [
+        	self initialize.
+        	initializer := anImageInitializer.
+        	^self
+    ]
+    Image class >> defaultCreationExtent [
+        "Private - Answer the size to request as the default extent to request when creating an image of this type."
+        ^Point classVarZero
+    ]
+    Image class >> defaultExtent [
+        	^Point classVarZero
+    ]
+    Image class >> defaultHandle [
+        	^0
+    ]
+    Image class >> defaultLoadFlags [
+        	^2
+    ]
+    Image class >> filesType [
+        	^nil
+    ]
+    Image class >> freeHandle: anExternalHandle [
+        	Gdi32 deleteObject: anExternalHandle
+    ]
+    Image class >> fromFile: aFilename [
+        "Answer an instance loaded from the file aFilename.
+        	Note that aFilename will be converted to an installation relative path. If you want 
+        	to access an image at an absolute path, you should set it up using #fromFile:usingLocator:
+        	in conjuction with an AbsoluteFileLocator. e.g:
+
+        		ImagePresenter show: 'Basic image' on: 
+        			(Bitmap
+        				fromFile: 'Resources\Beach ball.bmp'
+        				usingLocator: FileLocator installRelative)"
+        ^self fromFile: aFilename usingLocator: FileLocator default
+    ]
+    Image class >> fromFile: aString usingLocator: aFileLocator [
+        "Answer an instance loaded from the file aString by using aFileLocator."
+        | relativeFilename |
+        	relativeFilename := (aFileLocator isNil or: [File isRelativePath: aString])
+        				ifTrue: [aString]
+        				ifFalse: [aFileLocator relativePathTo: aString].
+        	^self initializer: (self newFileInitializer: relativeFilename locator: aFileLocator)
+    ]
+    Image class >> fromHandle: aHandle [
+        	^(self initializer: (ImageFromHandleInitializer handle: aHandle))
+        		ownsHandle: false;
+        		handle: aHandle;
+        		yourself
+    ]
+    Image class >> fromId: anIntegerOrStringId [
+        "Answer a new instance with a resource Id of anIntegerOrStringId."
+        ^self fromId: anIntegerOrStringId in: SessionManager classVarCurrent defaultResourceLibrary
+    ]
+    Image class >> fromId: anIntegerOrStringId in: anInstanceHandle [
+        "Answer a new instance with a resourceID of anIntegerOrStringId from the application instance anInstanceHandle"
+        ^self initializer: (self newResourceInitializer: anIntegerOrStringId module: anInstanceHandle)
+    ]
+    Image class >> fromId: anIntegerOrStringId in: anInstanceHandle extent: aPoint [
+        "Answer a new instance with a resourceID of anIntegerOrStringId from the application instance anInstanceHandle, to be loaded at the extent, aPoint."
+        | instance |
+        	instance := self
+        				fromId: anIntegerOrStringId
+        				in: anInstanceHandle.
+        	instance initializer extent: aPoint.
+        	^instance
+    ]
+    Image class >> fromOwnedHandle: aHandle [
+        	^self initializer: (ImageFromHandleInitializer handle: aHandle)
+    ]
+    Image class >> fromSystemId: anIntegerId [
+        "Answer a new instance of the Windows pre-defined icon specified by anIntegerID."
+        ^self fromId: anIntegerId in: 0.
+    ]
+    Image class >> icon [
+        "Answers an Icon that can be used to represent this class"
+        ^[self] value defaultIcon
+    ]
+    Image class >> imageManager [
+        "Answer an image manager to use for storing images"
+        ^ImageManager new
+    ]
+    Image class >> imageType [
+        	^self subclassResponsibility
+    ]
+    Image class >> initializer: anImageInitializer [
+        	^self basicNew setInitializer: anImageInitializer
+    ]
+    Image class >> newFileInitializer: aString locator: aFileLocator [
+        	^ImageFromFileInitializer
+        		filename: aString
+        		fileLocator: aFileLocator
+        		flags: self defaultLoadFlags
+    ]
+    Image class >> newInitializerFromStbVersion3: anArray [
+        	^(anArray at: 5)
+        		ifNil: [self newFileInitializer: (anArray at: 4) locator: (anArray at: 3)]
+        		ifNotNil: 
+        			[:instanceHandle |
+        			instanceHandle == 0
+        				ifTrue: [self newSystemInitializer: (anArray at: 4)]
+        				ifFalse: [self newResourceInitializer: (anArray at: 4) module: instanceHandle]]
+    ]
+    Image class >> newResourceInitializer: anIntegerOrStringId module: anInstanceHandle [
+        	^(anIntegerOrStringId isString
+        		ifTrue: [ImageFromStringResourceInitializer]
+        		ifFalse: [ImageFromResourceInitializer])
+        			identifier: anIntegerOrStringId
+        			module: anInstanceHandle
+        			flags: (self defaultLoadFlags bitOr: 32768)
+    ]
+    Image class >> newSystemInitializer: anInteger [
+        	^self newResourceInitializer: anInteger module: 0
+    ]
+    Image class >> stbConvertFrom: anSTBClassFormat [
+        	| version |
+        	version := anSTBClassFormat version.
+        	version == 3 ifTrue: [^[:data | (self stbConvertFromVersion3: data) becomeA: self]].
+        	version == 2 ifTrue: [^[:data | (self stbConvertFromVersion2: data) becomeA: self]].
+        	version == 1 ifTrue: [^[:data | (self stbConvertFromVersion1: data) becomeA: self]].
+        	version == 0 ifTrue: [^[:data | (self stbConvertFromVersion0: data) becomeA: self]].
+        	^super stbConvertFrom: anSTBClassFormat
+    ]
+    Image class >> stbConvertFromVersion0: anArray [
+        "Private - Only relevant for Bitmaps"
+        ^self stbConvertFromVersion1: anArray
+    ]
+    Image class >> stbConvertFromVersion1: anArray [
+        "Private - Only relevant for Bitmaps"
+        ^self stbConvertFromVersion2: anArray
+    ]
+    Image class >> stbConvertFromVersion2: anArray [
+        "Private - Version 3 added locator (FileLocator) instance variable."
+        | count | 
+        	count := anArray size + 1.
+        	^self stbConvertFromVersion3: ((Array new: count)
+        				replaceFrom: 1
+        					to: 2
+        					with: anArray
+        					startingAt: 1;
+        				at: 3 put: FileLocator default;
+        				replaceFrom: 4
+        					to: count
+        					with: anArray
+        					startingAt: 3;
+        				yourself)
+    ]
+    Image class >> stbConvertFromVersion3: anArray [
+        "Private - Version 4 replaces the identifier, fileLocator and instanceHandle instance variables with initializer."
+        | count | 
+        	count := anArray size - 2.
+        	^(Array new: count)
+        		replaceFrom: 1
+        			to: 2
+        			with: anArray
+        			startingAt: 1;
+        		at: 3 put: (self newInitializerFromStbVersion3: anArray);
+        		replaceFrom: 4
+        			to: count
+        			with: anArray
+        			startingAt: 6;
+        		yourself
+    ]
+    Image class >> stbVersion [
+        "Answer the current binary filer version number for instances of the receiver."
+        ^4
+    ]
+]

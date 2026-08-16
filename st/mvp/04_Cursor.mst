@@ -1,0 +1,277 @@
+Icon subclass: Cursor [
+    <classVars: AppStarting Arrow Cross Current DDCopy DDCopyScroll DDLink DDLinkScroll DDMove DDMoveScroll DDNone DefaultExtent Hand Help IBeam No SizeAll SizeNESW SizeNS SizeNWSE SizeWE UpArrow Wait>
+    Cursor class >> classVarAppStarting [ ^AppStarting ]
+    Cursor class >> classVarAppStarting: v [ ^AppStarting := v ]
+    Cursor class >> classVarArrow [ ^Arrow ]
+    Cursor class >> classVarArrow: v [ ^Arrow := v ]
+    Cursor class >> classVarCross [ ^Cross ]
+    Cursor class >> classVarCross: v [ ^Cross := v ]
+    Cursor class >> classVarCurrent [ ^Current ]
+    Cursor class >> classVarCurrent: v [ ^Current := v ]
+    Cursor class >> classVarDDCopy [ ^DDCopy ]
+    Cursor class >> classVarDDCopy: v [ ^DDCopy := v ]
+    Cursor class >> classVarDDCopyScroll [ ^DDCopyScroll ]
+    Cursor class >> classVarDDCopyScroll: v [ ^DDCopyScroll := v ]
+    Cursor class >> classVarDDLink [ ^DDLink ]
+    Cursor class >> classVarDDLink: v [ ^DDLink := v ]
+    Cursor class >> classVarDDLinkScroll [ ^DDLinkScroll ]
+    Cursor class >> classVarDDLinkScroll: v [ ^DDLinkScroll := v ]
+    Cursor class >> classVarDDMove [ ^DDMove ]
+    Cursor class >> classVarDDMove: v [ ^DDMove := v ]
+    Cursor class >> classVarDDMoveScroll [ ^DDMoveScroll ]
+    Cursor class >> classVarDDMoveScroll: v [ ^DDMoveScroll := v ]
+    Cursor class >> classVarDDNone [ ^DDNone ]
+    Cursor class >> classVarDDNone: v [ ^DDNone := v ]
+    Cursor class >> classVarDefaultExtent [ ^DefaultExtent ]
+    Cursor class >> classVarDefaultExtent: v [ ^DefaultExtent := v ]
+    Cursor class >> classVarHand [ ^Hand ]
+    Cursor class >> classVarHand: v [ ^Hand := v ]
+    Cursor class >> classVarHelp [ ^Help ]
+    Cursor class >> classVarHelp: v [ ^Help := v ]
+    Cursor class >> classVarIBeam [ ^IBeam ]
+    Cursor class >> classVarIBeam: v [ ^IBeam := v ]
+    Cursor class >> classVarNo [ ^No ]
+    Cursor class >> classVarNo: v [ ^No := v ]
+    Cursor class >> classVarSizeAll [ ^SizeAll ]
+    Cursor class >> classVarSizeAll: v [ ^SizeAll := v ]
+    Cursor class >> classVarSizeNESW [ ^SizeNESW ]
+    Cursor class >> classVarSizeNESW: v [ ^SizeNESW := v ]
+    Cursor class >> classVarSizeNS [ ^SizeNS ]
+    Cursor class >> classVarSizeNS: v [ ^SizeNS := v ]
+    Cursor class >> classVarSizeNWSE [ ^SizeNWSE ]
+    Cursor class >> classVarSizeNWSE: v [ ^SizeNWSE := v ]
+    Cursor class >> classVarSizeWE [ ^SizeWE ]
+    Cursor class >> classVarSizeWE: v [ ^SizeWE := v ]
+    Cursor class >> classVarUpArrow [ ^UpArrow ]
+    Cursor class >> classVarUpArrow: v [ ^UpArrow := v ]
+    Cursor class >> classVarWait [ ^Wait ]
+    Cursor class >> classVarWait: v [ ^Wait := v ]
+
+    loadFromSystem: anInteger extent: aPoint [
+        	^User32
+        		loadImage: 0
+        		lpszName: anInteger
+        		uType: 2
+        		cxDesired: aPoint x
+        		cyDesired: aPoint y
+        		fuLoad: (aPoint = Point classVarZero
+        				ifTrue: [32832]
+        				ifFalse: [32768])
+    ]
+    loadResource: identifierObject fromModule: moduleObject extent: aPoint flags: anInteger [
+        "Private - Override back to Image implementation as we don't want to use Icon specific loading functions for cursors."
+        ^User32
+        		loadImage: moduleObject asParameter
+        		lpszName: identifierObject asResourceId
+        		uType: 2
+        		cxDesired: aPoint x
+        		cyDesired: aPoint y
+        		fuLoad: (aPoint = Point classVarZero ifTrue: [anInteger bitOr: 64] ifFalse: [anInteger])
+    ]
+    Cursor class >> appStarting [
+        "Answer the instance that is the AppStarting cursor."
+        ^AppStarting ifNil: [AppStarting := self fromSystemId: 32650]
+    ]
+    Cursor class >> arrow [
+        "Answer the instance that is the Arrow cursor."
+        ^Arrow ifNil: [Arrow := self fromSystemId: 32512]
+    ]
+    Cursor class >> cacheSystemMetrics [
+        	DefaultExtent := SystemMetrics current cursorExtent
+    ]
+    Cursor class >> cross [
+        "Answer the instance that is the Cross cursor."
+        ^Cross ifNil: [Cross := self fromSystemId: 32515]
+    ]
+    Cursor class >> current [
+        "Answers the current global cursor. This may be nil."
+        ^Current
+    ]
+    Cursor class >> current: aCursorOrNil [
+        "Private - Set the current cursor to aCursorOrNil.
+        	Answers the previous current cursor (or nil)."
+        | original |
+        	original := Current.
+        	Current := aCursorOrNil.
+        	User32 setCursor: Current asParameter.
+        	^original
+    ]
+    Cursor class >> ddCopy [
+        "Answer the instance that is the OLE DROPEFFECT_COPY cursor."
+        ^DDCopy ifNil: [DDCopy := self fromId: 3 in: (ResourceLibrary open: 'ole32')]
+    ]
+    Cursor class >> ddCopyScroll [
+        "Answer the instance that is the OLE DROPEFFECT_COPY | DROPEFFECT_SCROLL cursor."
+        ^DDCopyScroll ifNil: [DDCopyScroll := self fromId: 6 in: (ResourceLibrary open: 'ole32')]
+    ]
+    Cursor class >> ddLink [
+        "Answer the instance that is the OLE DROPEFFECT_LINK cursor."
+        ^DDLink ifNil: [DDLink := self fromId: 4 in: (ResourceLibrary open: 'ole32')]
+    ]
+    Cursor class >> ddLinkScroll [
+        "Answer the instance that is the OLE DROPEFFECT_LINK | DROPEFFECT_SCROLL cursor."
+        ^DDLinkScroll ifNil: [DDLinkScroll := self fromId: 7 in: (ResourceLibrary open: 'ole32')]
+    ]
+    Cursor class >> ddMove [
+        "Answer the instance that is the OLE DROPEFFECT_MOVE cursor."
+        ^DDMove ifNil: [DDMove := self fromId: 2 in: (ResourceLibrary open: 'ole32')]
+    ]
+    Cursor class >> ddMoveScroll [
+        "Answer the instance that is the OLE DROPEFFECT_MOVE | DROPEFFECT_SCROLL cursor."
+        ^DDMoveScroll ifNil: [DDMoveScroll := self fromId: 5 in: (ResourceLibrary open: 'ole32')]
+    ]
+    Cursor class >> ddNone [
+        "Answer the instance that is the OLE DROPEFFECT_NONE cursor."
+        ^DDNone ifNil: [DDNone := self fromId: 1 in: (ResourceLibrary open: 'ole32')]
+    ]
+    Cursor class >> default [
+        	^self arrow
+    ]
+    Cursor class >> defaultExtent [
+        "Answer a Point that gives the dimensions of a standard size cursor at the current system DPI."
+        "Note that these days this is a logical size, and seems to always be the same on Windows 11. See the comment in SystemMetrics>>#cursorExtent for further details."
+
+        	^DefaultExtent
+    ]
+    Cursor class >> defaultLoadFlags [
+        	^0
+    ]
+    Cursor class >> filesType [
+        "Private - Answer a two element array suitable for adding to the FileDialog
+        	with the fileTypes: message."
+        ^#('Cursor Files (*.cur)' '*.cur')
+    ]
+    Cursor class >> freeHandle: anExternalHandle [
+        	User32 destroyCursor: anExternalHandle
+    ]
+    Cursor class >> hand [
+        "Answer the instance that is the Help cursor."
+        ^Hand ifNil: [Hand := self fromSystemId: 32649]
+    ]
+    Cursor class >> help [
+        "Answer the instance that is the Help cursor."
+        ^Help ifNil: [Help := self fromSystemId: 32651]
+    ]
+    Cursor class >> hide [
+        "Hide the current cursor"
+        self show: false
+    ]
+    Cursor class >> iBeam [
+        "Answer the instance that is the IBeam cursor."
+        ^IBeam ifNil: [IBeam := self fromSystemId: 32513]
+    ]
+    Cursor class >> icon [
+        "Answers an Icon that can be used to represent this class"
+        ^self hand
+    ]
+    Cursor class >> imageType [
+        "Private - Answer the Win32 image type for the receiver."
+        ^2
+    ]
+    Cursor class >> initialize [
+        "Private -"
+        SessionManager current
+        		when: #settingChanged:
+        		send: #onSettingChanged:
+        		to: self
+    ]
+    Cursor class >> no [
+        "Answer the instance that is the No cursor."
+        ^No ifNil: [No := self fromSystemId: 32648]
+    ]
+    Cursor class >> onPreStripImage [
+        "Private - The image is about to be stripped. Nil the lazily initialized cursors to allow
+        	them to be removed (and also perhaps the ref to the resource library)."
+        self uninitialize
+    ]
+    Cursor class >> onStartup2 [
+        "Private - Perform system startup processing for all subclasses."
+        self clearCached
+    ]
+    Cursor class >> person [
+        "Answer an instance of the Window person cursor."
+        ^self fromSystemId: 32672
+    ]
+    Cursor class >> pin [
+        "Answer an instance of the Window pin cursor."
+        ^self fromSystemId: 32671
+    ]
+    Cursor class >> position [
+        "Answer a Point containing the current cursor position in screen co-ordinates."
+        | pos |
+        	pos := POINTL newBuffer.
+        	User32 getCursorPos: pos.
+        	^pos asPoint
+    ]
+    Cursor class >> position: aPoint [
+        "Move the mouse cursor (if permitted) to the Point specified in screen co-ordinates."
+        ^(User32 setCursorPosX: aPoint x y: aPoint y) ~~ 0
+    ]
+    Cursor class >> reset [
+        "Clear the global cursor setting. Answers the previous global cursor (or nil if none)."
+        ^self current: nil
+    ]
+    Cursor class >> resetSystemInstances [
+        	AppStarting := Arrow := Cross := Help := IBeam := No := Wait := SizeAll := SizeNESW := SizeNS := SizeNWSE := SizeWE := UpArrow := nil
+    ]
+    Cursor class >> show [
+        "Shows the current cursor"
+        self show: true
+    ]
+    Cursor class >> show: aBoolean [
+        "Show or hide the current cursor according to aBoolean"
+        User32 showCursor: aBoolean asParameter
+    ]
+    Cursor class >> sizeAll [
+        "Answer the instance that is the SizeAll cursor."
+        ^SizeAll ifNil: [SizeAll := self fromSystemId: 32646]
+    ]
+    Cursor class >> sizeNESW [
+        "Answer the instance that is the SizeNESW cursor."
+        ^SizeNESW ifNil: [SizeNESW := self fromSystemId: 32643]
+    ]
+    Cursor class >> sizeNS [
+        "Answer the instance that is the SizeNS cursor."
+        ^SizeNS ifNil: [SizeNS := self fromSystemId: 32645]
+    ]
+    Cursor class >> sizeNWSE [
+        "Answer the instance that is the SizeNWSE cursor."
+        ^SizeNWSE ifNil: [SizeNWSE := self fromSystemId: 32642]
+    ]
+    Cursor class >> sizeWE [
+        "Answer the instance that is the SizeWE cursor."
+        ^SizeWE ifNil: [SizeWE := self fromSystemId: 32644]
+    ]
+    Cursor class >> systemNames [
+        	^[LookupTable withAll: {
+        				32650 -> 'appStarting'.
+        				32512 -> 'arrow'.
+        				32515 -> 'cross'.
+        				32649 -> 'hand'.
+        				32651 -> 'help'.
+        				32513 -> 'iBeam'.
+        				32648 -> 'no'.
+        				32646 -> 'sizeAll'.
+        				32643 -> 'sizeNESW'.
+        				32645 -> 'sizeNS'.
+        				32642 -> 'sizeNWSE'.
+        				32644 -> 'sizeWE'.
+        				32516 -> 'upArrow'.
+        				32514 -> 'wait'
+        			}] value
+    ]
+    Cursor class >> uninitialize [
+        "Private - Uninitialize the receiver as it is about to be removed from the system."
+        DDCopy := DDCopyScroll := DDLink := DDLinkScroll := DDMove := DDMoveScroll := DDNone := nil.
+        	self resetSystemInstances.
+        	Current := nil
+    ]
+    Cursor class >> upArrow [
+        "Answer the instance that is the UpArrow cursor."
+        ^UpArrow ifNil: [UpArrow := self fromSystemId: 32516]
+    ]
+    Cursor class >> wait [
+        "Answer the instance that is the Wait cursor."
+        ^Wait ifNil: [Wait := self fromSystemId: 32514]
+    ]
+]

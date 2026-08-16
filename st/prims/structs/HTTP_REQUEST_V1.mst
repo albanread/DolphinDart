@@ -3,6 +3,8 @@
 
 ExternalMemory subclass: HTTP_REQUEST_V1 [
     HTTP_REQUEST_V1 class >> sizeInBytes [ ^848 ]
+    HTTP_REQUEST_V1 class >> byteSize [ ^848 ]
+    byteSize [ ^848 ]
     HTTP_REQUEST_V1 class >> new [ ^self new: 848 ]
 
     flags [ ^self uint32At: 1 ]

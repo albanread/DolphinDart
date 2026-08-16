@@ -183,7 +183,13 @@ Object subclass: DolphinBoot [
          default` — and an uninitialized Color answers nil, so every repaint
          raised into the contained handler-error path."
         { Rectangle. View. ShellView. SystemMetrics. TextEdit.
-          CommandDescription. Menu. MenuItem. Color } do: [ :each |
+          CommandDescription. Menu. MenuItem. Color.
+          "The FONT classes (DD11 graphics wave). `AbstractFont class >>
+           system` answers a class variable its `initialize` sets, and
+           `SystemMetrics>>getIconTitleFont` falls back to `Font system` when
+           SystemParametersInfoForDpi declines — so an uninitialized Font made
+           the fallback a nil."
+          AbstractFont. Font } do: [ :each |
             [ each initialize ] on: Error do: [ :e | failed add: each name ] ].
         ^failed asArray
     ]
@@ -305,42 +311,28 @@ ExternalMemory subclass: Utf16Buffer [
     hash [ ^self stringValue hash ]
 ]
 
-"THE FONT WALK'S TERMINATOR — scaffolding, with a named retirement.
+"THE FONT WALK'S TERMINATOR — the stand-in is RETIRED (DD11).
 
- `View>>getActualFont` is `^font ifNil: [self parentView getActualFont]`: a
- view with no font of its own asks its parent, on up to the desktop. Dolphin's
- `UI.DesktopView` ends the walk with `^self font ifNil: [self iconTitleFont]`,
- a real `Graphics.Font` — and `Graphics.Font` is not translated yet (it lands
- with DD11's graphics wave).
+ There used to be a hand-written `SystemFont` here answering `atDpi:` -> self
+ and `asParameter` -> 0, so WM_SETFONT got a null handle meaning 'whatever
+ the system uses'. `Graphics.Font`, `AbstractFont`, `SystemFont` and
+ `StockFont` are translated now, so the walk ends where Dolphin ends it:
 
- Rather than override Dolphin's font path — `ControlView>>applyFont` and
- `setFont:` are both on the create path and both would have to be stubbed —
- the walk ends at an object that satisfies the protocol they use:
+     DesktopView>>getActualFont   ^self font ifNil: [self iconTitleFont]
 
-     setFont: aFont
-         scaledFont := aFont atDpi: self dpi.
-         self sendMessage: WM_SETFONT wParam: scaledFont asParameter lParam: 0
-
- `atDpi:` answers itself (nothing to rescale) and `asParameter` answers 0.
- That is not a fudge: WM_SETFONT with a NULL font handle is Windows' own
- documented way of saying 'use the system font', which is exactly what an
- unstyled EDIT control uses anyway. So Dolphin's font code runs unchanged and
- does the right thing, and no method of Dolphin's is replaced.
-
- RETIREMENT: delete this class and the `getActualFont` below when
- `Graphics.Font` is translated (DD11). The gate that proves it is any test
- asserting a control's font is the one it was ASKED for rather than the
- system default — which is not assertable while this stand-in is here, and is
- the honest reason it is scaffolding rather than a design."
-Object subclass: SystemFont [
-    SystemFont class >> current [ ^self new ]
-    atDpi: aDpi [ ^self ]
-    asParameter [ ^0 ]
-    isNil [ ^false ]
-]
-
+ DELETING THE STAND-IN WAS NOT OPTIONAL, it was forced: Dolphin's own class
+ is called `Graphics.SystemFont`, which flattens to `SystemFont` — the same
+ name. `st/mvp_compat` loads AFTER `st/mvp`, so the stand-in would have
+ silently overwritten the real class and every font in the port would have
+ been a null handle wearing Dolphin's name."
 Object subclass: DesktopView [
-    getActualFont [ ^SystemFont current ]
+    "RETIRED THE `SystemFont` STAND-IN. `Graphics.Font` is translated now, so
+     the font walk can end where Dolphin ends it — `^self font ifNil: [self
+     iconTitleFont]`. `SystemMetrics>>iconTitleFont` reads the real
+     NONCLIENTMETRICS, so a control gets the font the system actually uses
+     rather than a null handle meaning 'whatever'."
+    getActualFont [ ^self font ifNil: [ SystemMetrics current iconTitleFont ] ]
+    font [ ^nil ]
 ]
 
 "── the SYSTEM colours Color reads but never sets ──────────────────────────

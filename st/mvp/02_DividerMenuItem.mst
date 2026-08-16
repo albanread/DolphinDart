@@ -9,9 +9,13 @@ Class Variables:
 MenuItem subclass: DividerMenuItem [
     <classVars: BarBreak Break Separator DividerLookup>
     DividerMenuItem class >> classVarBarBreak [ ^BarBreak ]
+    DividerMenuItem class >> classVarBarBreak: v [ ^BarBreak := v ]
     DividerMenuItem class >> classVarBreak [ ^Break ]
+    DividerMenuItem class >> classVarBreak: v [ ^Break := v ]
     DividerMenuItem class >> classVarSeparator [ ^Separator ]
+    DividerMenuItem class >> classVarSeparator: v [ ^Separator := v ]
     DividerMenuItem class >> classVarDividerLookup [ ^DividerLookup ]
+    DividerMenuItem class >> classVarDividerLookup: v [ ^DividerLookup := v ]
 
     acceleratorKey [
         "Private - Answer the accelerator key code for the receiver.

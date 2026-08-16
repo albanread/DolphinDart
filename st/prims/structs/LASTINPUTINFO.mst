@@ -3,6 +3,8 @@
 
 ExternalMemory subclass: LASTINPUTINFO [
     LASTINPUTINFO class >> sizeInBytes [ ^8 ]
+    LASTINPUTINFO class >> byteSize [ ^8 ]
+    byteSize [ ^8 ]
     LASTINPUTINFO class >> new [ ^self new: 8 ]
 
     cbSize [ ^self uint32At: 1 ]

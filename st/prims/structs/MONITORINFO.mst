@@ -3,6 +3,8 @@
 
 ExternalMemory subclass: MONITORINFO [
     MONITORINFO class >> sizeInBytes [ ^40 ]
+    MONITORINFO class >> byteSize [ ^40 ]
+    byteSize [ ^40 ]
     MONITORINFO class >> new [ ^self new: 40 ]
 
     cbSize [ ^self uint32At: 1 ]

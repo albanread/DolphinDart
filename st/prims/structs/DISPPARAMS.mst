@@ -3,6 +3,8 @@
 
 ExternalMemory subclass: DISPPARAMS [
     DISPPARAMS class >> sizeInBytes [ ^24 ]
+    DISPPARAMS class >> byteSize [ ^24 ]
+    byteSize [ ^24 ]
     DISPPARAMS class >> new [ ^self new: 24 ]
 
     "rgvarg: Windows.Win32.System.Variant.VARIANT* at 0 — no accessor (width unknown); use byteAt: directly"

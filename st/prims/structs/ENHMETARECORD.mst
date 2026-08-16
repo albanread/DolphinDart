@@ -3,6 +3,8 @@
 
 ExternalMemory subclass: ENHMETARECORD [
     ENHMETARECORD class >> sizeInBytes [ ^16 ]
+    ENHMETARECORD class >> byteSize [ ^16 ]
+    byteSize [ ^16 ]
     ENHMETARECORD class >> new [ ^self new: 16 ]
 
     "iType: Windows.Win32.Graphics.Gdi.ENHANCED_METAFILE_RECORD_TYPE at 0 — no accessor (width unknown); use byteAt: directly"

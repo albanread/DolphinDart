@@ -9,15 +9,25 @@ There are also the virtual colours, `ThemeColor` and `PluggableColor`, to repres
 Object subclass: Color [
     <classVars: Black ColorNames CommonColors Default Face3d NamedColors None White Window WindowText>
     Color class >> classVarBlack [ ^Black ]
+    Color class >> classVarBlack: v [ ^Black := v ]
     Color class >> classVarColorNames [ ^ColorNames ]
+    Color class >> classVarColorNames: v [ ^ColorNames := v ]
     Color class >> classVarCommonColors [ ^CommonColors ]
+    Color class >> classVarCommonColors: v [ ^CommonColors := v ]
     Color class >> classVarDefault [ ^Default ]
+    Color class >> classVarDefault: v [ ^Default := v ]
     Color class >> classVarFace3d [ ^Face3d ]
+    Color class >> classVarFace3d: v [ ^Face3d := v ]
     Color class >> classVarNamedColors [ ^NamedColors ]
+    Color class >> classVarNamedColors: v [ ^NamedColors := v ]
     Color class >> classVarNone [ ^None ]
+    Color class >> classVarNone: v [ ^None := v ]
     Color class >> classVarWhite [ ^White ]
+    Color class >> classVarWhite: v [ ^White := v ]
     Color class >> classVarWindow [ ^Window ]
+    Color class >> classVarWindow: v [ ^Window := v ]
     Color class >> classVarWindowText [ ^WindowText ]
+    Color class >> classVarWindowText: v [ ^WindowText := v ]
 
     = aColor [
         "Answer whether the receiver and argument are equivalent (i.e. represent the same colour)."

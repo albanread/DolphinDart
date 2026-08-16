@@ -3,6 +3,8 @@
 
 ExternalMemory subclass: SPRECOGNIZERSTATUS [
     SPRECOGNIZERSTATUS class >> sizeInBytes [ ^120 ]
+    SPRECOGNIZERSTATUS class >> byteSize [ ^120 ]
+    byteSize [ ^120 ]
     SPRECOGNIZERSTATUS class >> new [ ^self new: 120 ]
 
     audioStatus [ ^SPAUDIOSTATUS viewOn: self at: 0 size: 40 ]

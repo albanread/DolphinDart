@@ -3,6 +3,8 @@
 
 ExternalMemory subclass: SPRECORESULTTIMES [
     SPRECORESULTTIMES class >> sizeInBytes [ ^32 ]
+    SPRECORESULTTIMES class >> byteSize [ ^32 ]
+    byteSize [ ^32 ]
     SPRECORESULTTIMES class >> new [ ^self new: 32 ]
 
     ftStreamTime [ ^FILETIME viewOn: self at: 0 size: 8 ]

@@ -3,6 +3,8 @@
 
 ExternalMemory subclass: CALPOLESTR [
     CALPOLESTR class >> sizeInBytes [ ^16 ]
+    CALPOLESTR class >> byteSize [ ^16 ]
+    byteSize [ ^16 ]
     CALPOLESTR class >> new [ ^self new: 16 ]
 
     cElems [ ^self uint32At: 1 ]

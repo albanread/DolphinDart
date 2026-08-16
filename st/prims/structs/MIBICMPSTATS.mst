@@ -3,6 +3,8 @@
 
 ExternalMemory subclass: MIBICMPSTATS [
     MIBICMPSTATS class >> sizeInBytes [ ^52 ]
+    MIBICMPSTATS class >> byteSize [ ^52 ]
+    byteSize [ ^52 ]
     MIBICMPSTATS class >> new [ ^self new: 52 ]
 
     dwMsgs [ ^self uint32At: 1 ]

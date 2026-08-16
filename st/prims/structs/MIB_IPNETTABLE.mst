@@ -3,6 +3,8 @@
 
 ExternalMemory subclass: MIB_IPNETTABLE [
     MIB_IPNETTABLE class >> sizeInBytes [ ^16 ]
+    MIB_IPNETTABLE class >> byteSize [ ^16 ]
+    byteSize [ ^16 ]
     MIB_IPNETTABLE class >> new [ ^self new: 16 ]
 
     dwNumEntries [ ^self uint32At: 1 ]

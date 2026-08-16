@@ -3,6 +3,8 @@
 
 ExternalMemory subclass: FD_SET [
     FD_SET class >> sizeInBytes [ ^16 ]
+    FD_SET class >> byteSize [ ^16 ]
+    byteSize [ ^16 ]
     FD_SET class >> new [ ^self new: 16 ]
 
     fd_count [ ^self uint32At: 1 ]

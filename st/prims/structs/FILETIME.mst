@@ -3,6 +3,8 @@
 
 ExternalMemory subclass: FILETIME [
     FILETIME class >> sizeInBytes [ ^8 ]
+    FILETIME class >> byteSize [ ^8 ]
+    byteSize [ ^8 ]
     FILETIME class >> new [ ^self new: 8 ]
 
     dwLowDateTime [ ^self uint32At: 1 ]

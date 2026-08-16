@@ -3,6 +3,8 @@
 
 ExternalMemory subclass: LOGBRUSH [
     LOGBRUSH class >> sizeInBytes [ ^16 ]
+    LOGBRUSH class >> byteSize [ ^16 ]
+    byteSize [ ^16 ]
     LOGBRUSH class >> new [ ^self new: 16 ]
 
     "lbStyle: Windows.Win32.Graphics.Gdi.BRUSH_STYLE at 0 — no accessor (width unknown); use byteAt: directly"

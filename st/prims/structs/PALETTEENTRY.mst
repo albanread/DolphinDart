@@ -3,6 +3,8 @@
 
 ExternalMemory subclass: PALETTEENTRY [
     PALETTEENTRY class >> sizeInBytes [ ^4 ]
+    PALETTEENTRY class >> byteSize [ ^4 ]
+    byteSize [ ^4 ]
     PALETTEENTRY class >> new [ ^self new: 4 ]
 
     peRed [ ^self byteAt: 1 ]

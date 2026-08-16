@@ -3,6 +3,8 @@
 
 ExternalMemory subclass: LOGFONTW [
     LOGFONTW class >> sizeInBytes [ ^36 ]
+    LOGFONTW class >> byteSize [ ^36 ]
+    byteSize [ ^36 ]
     LOGFONTW class >> new [ ^self new: 36 ]
 
     lfHeight [ ^self int32At: 1 ]

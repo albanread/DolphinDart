@@ -1,19 +1,19 @@
 # dolphin2mst run report
 
-- inputs: **61** source files (`.cls` + `.pax`)
+- inputs: **74** source files (`.cls` + `.pax`)
 - shared-pool constants available: **6522** from **173** pools
 - loose methods adopted from `.pax`: **1**
-- parsed: **61**  (unbalanced/skipped: 0)
-- emitted: **62** `.mst`
-- methods: **2701**
-- refusals: **119**
+- parsed: **74**  (unbalanced/skipped: 0)
+- emitted: **75** `.mst`
+- methods: **3179**
+- refusals: **133**
 
 ## Refusals by rewrite class
 
 | Rewrite | Count |
 |---|--:|
-| `hashhash` | 57 |
-| `cascade` | 24 |
+| `hashhash` | 66 |
+| `cascade` | 29 |
 | `binding-literal` | 14 |
 | `pragma` | 14 |
 | `orphan-loose-methods` | 10 |
@@ -23,10 +23,14 @@
 | Class | Methods | Refusals |
 |---|--:|--:|
 | `ARGB` | 21 | 0 |
+| `AbstractFont` | 48 | 0 |
+| `AbstractPen` | 14 | 0 |
 | `AbstractRGB` | 4 | 0 |
 | `AbstractToTextConverter` | 6 | 0 |
 | `AcceleratorTable` | 25 | 0 |
 | `BorderLayout` | 26 | 0 |
+| `Brush` | 29 | 1 |
+| `Canvas` | 126 | 5 |
 | `Color` | 268 | 9 |
 | `ColorDefault` | 11 | 1 |
 | `ColorEvent` | 2 | 0 |
@@ -41,11 +45,15 @@
 | `CreateWindow` | 11 | 0 |
 | `CreateWindowApiCall` | 10 | 0 |
 | `CreateWindowFunction` | 12 | 0 |
+| `Cursor` | 47 | 1 |
 | `DelegatingCommandPolicy` | 1 | 0 |
 | `DividerMenuItem` | 26 | 1 |
 | `DpiChangedEvent` | 5 | 0 |
 | `Event` | 5 | 2 |
+| `Font` | 26 | 0 |
 | `GraphicsTool` | 32 | 2 |
+| `Icon` | 62 | 2 |
+| `Image` | 59 | 5 |
 | `IntegerToText` | 1 | 0 |
 | `KeyEvent` | 9 | 0 |
 | `LayoutContext` | 16 | 0 |
@@ -61,6 +69,7 @@
 | `NumberToText` | 2 | 0 |
 | `Object (loose)` | 7 | 1 |
 | `PaintEvent` | 6 | 0 |
+| `Pen` | 33 | 0 |
 | `PointEvent` | 5 | 0 |
 | `PositionEvent` | 23 | 0 |
 | `Presenter` | 152 | 6 |
@@ -69,7 +78,11 @@
 | `ScrollEvent` | 16 | 1 |
 | `Shell` | 39 | 2 |
 | `ShellView` | 156 | 11 |
+| `StockBrush` | 7 | 0 |
+| `StockFont` | 14 | 0 |
+| `StockPen` | 8 | 0 |
 | `String (loose)` | 2 | 0 |
+| `SystemFont` | 5 | 0 |
 | `SystemMetrics` | 77 | 2 |
 | `TextEdit` | 179 | 21 |
 | `TextPresenter` | 20 | 5 |

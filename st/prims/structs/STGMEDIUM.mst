@@ -3,6 +3,8 @@
 
 ExternalMemory subclass: STGMEDIUM [
     STGMEDIUM class >> sizeInBytes [ ^32 ]
+    STGMEDIUM class >> byteSize [ ^32 ]
+    byteSize [ ^32 ]
     STGMEDIUM class >> new [ ^self new: 32 ]
 
     tymed [ ^self uint32At: 1 ]

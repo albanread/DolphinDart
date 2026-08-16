@@ -3,6 +3,8 @@
 
 ExternalMemory subclass: BIND_OPTS2 [
     BIND_OPTS2 class >> sizeInBytes [ ^40 ]
+    BIND_OPTS2 class >> byteSize [ ^40 ]
+    byteSize [ ^40 ]
     BIND_OPTS2 class >> new [ ^self new: 40 ]
 
     base [ ^BIND_OPTS viewOn: self at: 0 size: 16 ]

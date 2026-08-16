@@ -3,6 +3,8 @@
 
 ExternalMemory subclass: COSERVERINFO [
     COSERVERINFO class >> sizeInBytes [ ^32 ]
+    COSERVERINFO class >> byteSize [ ^32 ]
+    byteSize [ ^32 ]
     COSERVERINFO class >> new [ ^self new: 32 ]
 
     dwReserved1 [ ^self uint32At: 1 ]

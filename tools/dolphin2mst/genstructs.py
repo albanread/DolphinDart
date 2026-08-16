@@ -203,6 +203,25 @@ def main(argv: List[str]) -> int:
                  "",
                  f"ExternalMemory subclass: {name} [",
                  f"    {name} class >> sizeInBytes [ ^{sizes[name]} ]",
+                 # `byteSize` is DOLPHIN'S spelling for the same number, and
+                 # its own code uses it: `SystemMetrics>>nonClientMetrics`
+                 # sizes a NONCLIENTMETRICSW with `byteSize` before calling
+                 # SystemParametersInfo.
+                 #
+                 # Emitted PER STRUCT rather than aliased on `ExternalMemory`,
+                 # because a `self` send inside an inherited CLASS-side method
+                 # binds to the DEFINING class — `ExternalMemory class >>
+                 # byteSize [ ^self sizeInBytes ]` would look for
+                 # ExternalMemory's own, not the subclass's. That trap already
+                 # cost a Win32 ERROR_INVALID_PARAMETER once (LOOSE_ENDS 3.12).
+                 f"    {name} class >> byteSize [ ^{sizes[name]} ]",
+                 # AND INSTANCE-SIDE. Dolphin sends it to both:
+                 # `SystemMetrics>>getSysParamForDpi:type:ifError:` does
+                 # `struct := aClass new. ... uiParam: struct byteSize`.
+                 # A literal rather than `^self size` — `size` is a universal
+                 # helper the IL builder rewrites at the call site, so a
+                 # method body relying on it is not reliably reached.
+                 f"    byteSize [ ^{sizes[name]} ]",
                  f"    {name} class >> new [ ^self new: {sizes[name]} ]",
                  ""]
         for ordinal, fname, ftype, off in rows:

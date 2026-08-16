@@ -3,6 +3,8 @@
 
 ExternalMemory subclass: MIBICMPINFO [
     MIBICMPINFO class >> sizeInBytes [ ^104 ]
+    MIBICMPINFO class >> byteSize [ ^104 ]
+    byteSize [ ^104 ]
     MIBICMPINFO class >> new [ ^self new: 104 ]
 
     icmpInStats [ ^MIBICMPSTATS viewOn: self at: 0 size: 52 ]

@@ -3,6 +3,8 @@
 
 ExternalMemory subclass: WSADATA [
     WSADATA class >> sizeInBytes [ ^408 ]
+    WSADATA class >> byteSize [ ^408 ]
+    byteSize [ ^408 ]
     WSADATA class >> new [ ^self new: 408 ]
 
     wVersion [ ^self uint16At: 1 ]

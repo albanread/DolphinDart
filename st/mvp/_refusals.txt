@@ -64,6 +64,14 @@ C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.View.cls:5705: [binding-
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.View.cls:5721: [cascade] cascade on a receiver this rewriter cannot bound — splitting it could change evaluation
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.View.cls:5902: [hashhash] `##(self)` folded to a runtime block
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.View.cls:5968: [hashhash] `##('DolphinWindow' asUtf16String)` folded to a runtime block
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Graphics\Graphics.Brush.cls:148: [hashhash] `##(self)` folded to a runtime block
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Graphics\Graphics.Canvas.cls:283: [cascade] cascade on a receiver this rewriter cannot bound — splitting it could change evaluation
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Graphics\Graphics.Canvas.cls:283: [cascade] cascade on a receiver this rewriter cannot bound — splitting it could change evaluation
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Graphics\Graphics.Canvas.cls:328: [hashhash] `##(FunctionDescriptor returnType: 'int32'
+								argumentTypes)` folded to a runtime block
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Graphics\Graphics.Canvas.cls:328: [hashhash] `##(FunctionDescriptor returnType: 'int32'
+								argumentTypes)` folded to a runtime block
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Graphics\Graphics.Canvas.cls:1181: [hashhash] `##(self)` folded to a runtime block
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Graphics\Graphics.Color.cls:75: [cascade] cascade on a receiver this rewriter cannot bound — splitting it could change evaluation
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Graphics\Graphics.Color.cls:211: [hashhash] `##(255.0 * 2)` folded to a runtime block
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Graphics\Graphics.Color.cls:211: [hashhash] `##(255.0 * 2)` folded to a runtime block
@@ -74,8 +82,19 @@ C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Graphics\Graphics.Color.cls:503:
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Graphics\Graphics.Color.cls:1147: [hashhash] `##(self)` folded to a runtime block
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Graphics\Graphics.Color.cls:1166: [cascade] cascade on a receiver this rewriter cannot bound — splitting it could change evaluation
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Graphics\Graphics.ColorDefault.cls:74: [hashhash] `##(self)` folded to a runtime block
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Graphics\Graphics.Cursor.cls:260: [hashhash] `##(LookupTable withAll: {
+				32650 -> 'appStarting'.
+				32512)` folded to a runtime block
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Graphics\Graphics.GraphicsTool.cls:237: [cascade] cascade on a receiver this rewriter cannot bound — splitting it could change evaluation
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Graphics\Graphics.GraphicsTool.cls:245: [hashhash] `##(self)` folded to a runtime block
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Graphics\Graphics.Icon.cls:677: [hashhash] `##(self)` folded to a runtime block
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Graphics\Graphics.Icon.cls:756: [hashhash] `##(LookupTable withAll: {32512 -> #defaultApplication.
+				3251)` folded to a runtime block
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Graphics\Graphics.Image.cls:49: [cascade] cascade on a receiver this rewriter cannot bound — splitting it could change evaluation
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Graphics\Graphics.Image.cls:190: [hashhash] `##(96 @ 96)` folded to a runtime block
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Graphics\Graphics.Image.cls:283: [cascade] cascade on a receiver this rewriter cannot bound — splitting it could change evaluation
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Graphics\Graphics.Image.cls:318: [hashhash] `##(self)` folded to a runtime block
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Graphics\Graphics.Image.cls:397: [cascade] cascade on a receiver this rewriter cannot bound — splitting it could change evaluation
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Graphics\OS.SystemMetrics.cls:316: [hashhash] `##(#('Policy' 'intl' 'Environment' 'ImmersiveColorSet') asSet)` folded to a runtime block
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Graphics\OS.SystemMetrics.cls:392: [hashhash] `##(48 @ 48)` folded to a runtime block
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Models\Value\UI.ValueAdaptor.cls:59: [hashhash] `##(self)` folded to a runtime block

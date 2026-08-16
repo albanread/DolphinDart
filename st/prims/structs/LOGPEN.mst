@@ -3,6 +3,8 @@
 
 ExternalMemory subclass: LOGPEN [
     LOGPEN class >> sizeInBytes [ ^16 ]
+    LOGPEN class >> byteSize [ ^16 ]
+    byteSize [ ^16 ]
     LOGPEN class >> new [ ^self new: 16 ]
 
     lopnStyle [ ^self uint32At: 1 ]

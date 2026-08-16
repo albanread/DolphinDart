@@ -113,6 +113,36 @@ TARGETS = [
     # this is the class it was waiting for. Retires `WinAccelerators`.
     "Core/Object Arts/Dolphin/MVP/Base/UI.AcceleratorTable.cls",
 
+    # ── DD11: the GRAPHICS wave ────────────────────────────────────────────
+    # Three DD10 stand-ins wait on exactly these classes, and each is recorded
+    # in docs/LOOSE_ENDS.md with this as its retirement:
+    #
+    #   * `View>>onEraseRequired:` answers nil because `ColorEvent>>canvas`
+    #     needs a Canvas — so a view's backcolor is not honoured when erasing.
+    #   * `SystemFont` terminates the font walk because `Graphics.Font` is
+    #     absent — so a control cannot be given the font it asks for.
+    #   * `Cursor` is a hand-written stand-in; `showWhile:` is `Icon`'s.
+    #
+    # Ordered by dependency: GraphicsTool is already in the wave (Menu needs
+    # it), then the tools that hang off it, then Canvas which uses them all.
+    "Core/Object Arts/Dolphin/MVP/Graphics/Graphics.AbstractPen.cls",
+    "Core/Object Arts/Dolphin/MVP/Graphics/Graphics.Pen.cls",
+    "Core/Object Arts/Dolphin/MVP/Graphics/Graphics.Brush.cls",
+    "Core/Object Arts/Dolphin/MVP/Graphics/Graphics.AbstractFont.cls",
+    "Core/Object Arts/Dolphin/MVP/Graphics/Graphics.Font.cls",
+    # The STOCK tools. `AbstractFont class >> reset` is
+    # `System := self fromId: 13`, and `fromId:` answers `StockFont newId:` —
+    # so without StockFont the font class initializes to nil and every
+    # `Font system` is nil. Its superclass `SystemFont` comes with it.
+    "Core/Object Arts/Dolphin/MVP/Graphics/Graphics.SystemFont.cls",
+    "Core/Object Arts/Dolphin/MVP/Graphics/Graphics.StockFont.cls",
+    "Core/Object Arts/Dolphin/MVP/Graphics/Graphics.StockPen.cls",
+    "Core/Object Arts/Dolphin/MVP/Graphics/Graphics.StockBrush.cls",
+    "Core/Object Arts/Dolphin/MVP/Graphics/Graphics.Image.cls",
+    "Core/Object Arts/Dolphin/MVP/Graphics/Graphics.Icon.cls",
+    "Core/Object Arts/Dolphin/MVP/Graphics/Graphics.Cursor.cls",
+    "Core/Object Arts/Dolphin/MVP/Graphics/Graphics.Canvas.cls",
+
     # ── DD10: the EVENT family ─────────────────────────────────────────────
     # Once Dolphin's own `buildMessageMap` is installed as the routed set, its
     # mouse and key handlers run — and every one of them builds an event

@@ -3,6 +3,8 @@
 
 ExternalMemory subclass: TIME_ZONE_INFORMATION [
     TIME_ZONE_INFORMATION class >> sizeInBytes [ ^172 ]
+    TIME_ZONE_INFORMATION class >> byteSize [ ^172 ]
+    byteSize [ ^172 ]
     TIME_ZONE_INFORMATION class >> new [ ^self new: 172 ]
 
     bias [ ^self int32At: 1 ]

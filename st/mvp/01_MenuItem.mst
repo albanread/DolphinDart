@@ -11,8 +11,11 @@ Class Variables:
 Object subclass: MenuItem [
     <classVars: Dividers StringSeparator StylesMask>
     MenuItem class >> classVarDividers [ ^Dividers ]
+    MenuItem class >> classVarDividers: v [ ^Dividers := v ]
     MenuItem class >> classVarStringSeparator [ ^StringSeparator ]
+    MenuItem class >> classVarStringSeparator: v [ ^StringSeparator := v ]
     MenuItem class >> classVarStylesMask [ ^StylesMask ]
+    MenuItem class >> classVarStylesMask: v [ ^StylesMask := v ]
     | flags |
 
     acceleratorKey [

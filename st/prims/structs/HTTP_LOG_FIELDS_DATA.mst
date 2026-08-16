@@ -3,6 +3,8 @@
 
 ExternalMemory subclass: HTTP_LOG_FIELDS_DATA [
     HTTP_LOG_FIELDS_DATA class >> sizeInBytes [ ^144 ]
+    HTTP_LOG_FIELDS_DATA class >> byteSize [ ^144 ]
+    byteSize [ ^144 ]
     HTTP_LOG_FIELDS_DATA class >> new [ ^self new: 144 ]
 
     base [ ^HTTP_LOG_DATA viewOn: self at: 0 size: 8 ]

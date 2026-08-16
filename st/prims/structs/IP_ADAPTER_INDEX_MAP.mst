@@ -3,6 +3,8 @@
 
 ExternalMemory subclass: IP_ADAPTER_INDEX_MAP [
     IP_ADAPTER_INDEX_MAP class >> sizeInBytes [ ^12 ]
+    IP_ADAPTER_INDEX_MAP class >> byteSize [ ^12 ]
+    byteSize [ ^12 ]
     IP_ADAPTER_INDEX_MAP class >> new [ ^self new: 12 ]
 
     index [ ^self uint32At: 1 ]

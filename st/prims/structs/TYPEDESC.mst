@@ -3,6 +3,8 @@
 
 ExternalMemory subclass: TYPEDESC [
     TYPEDESC class >> sizeInBytes [ ^16 ]
+    TYPEDESC class >> byteSize [ ^16 ]
+    byteSize [ ^16 ]
     TYPEDESC class >> new [ ^self new: 16 ]
 
     "anonymous: _Anonymous_e__Union at 0 — no accessor (width unknown); use byteAt: directly"

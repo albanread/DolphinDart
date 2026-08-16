@@ -3,6 +3,8 @@
 
 ExternalMemory subclass: HGLOBAL [
     HGLOBAL class >> sizeInBytes [ ^8 ]
+    HGLOBAL class >> byteSize [ ^8 ]
+    byteSize [ ^8 ]
     HGLOBAL class >> new [ ^self new: 8 ]
 
     "value: void* at 0 — no accessor (width unknown); use byteAt: directly"

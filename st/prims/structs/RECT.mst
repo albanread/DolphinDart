@@ -3,6 +3,8 @@
 
 ExternalMemory subclass: RECT [
     RECT class >> sizeInBytes [ ^16 ]
+    RECT class >> byteSize [ ^16 ]
+    byteSize [ ^16 ]
     RECT class >> new [ ^self new: 16 ]
 
     left [ ^self int32At: 1 ]

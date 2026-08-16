@@ -3,6 +3,8 @@
 
 ExternalMemory subclass: SAFEARRAY [
     SAFEARRAY class >> sizeInBytes [ ^32 ]
+    SAFEARRAY class >> byteSize [ ^32 ]
+    byteSize [ ^32 ]
     SAFEARRAY class >> new [ ^self new: 32 ]
 
     cDims [ ^self uint16At: 1 ]

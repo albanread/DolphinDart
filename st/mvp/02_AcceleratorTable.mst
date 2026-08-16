@@ -6,6 +6,7 @@
 GraphicsTool subclass: AcceleratorTable [
     <classVars: KeySeparator>
     AcceleratorTable class >> classVarKeySeparator [ ^KeySeparator ]
+    AcceleratorTable class >> classVarKeySeparator: v [ ^KeySeparator := v ]
     | commands |
 
     addCommand: aCommandDescription [

@@ -3,6 +3,8 @@
 
 ExternalMemory subclass: HTTP_REQUEST_V2 [
     HTTP_REQUEST_V2 class >> sizeInBytes [ ^864 ]
+    HTTP_REQUEST_V2 class >> byteSize [ ^864 ]
+    byteSize [ ^864 ]
     HTTP_REQUEST_V2 class >> new [ ^self new: 864 ]
 
     base [ ^HTTP_REQUEST_V1 viewOn: self at: 0 size: 848 ]

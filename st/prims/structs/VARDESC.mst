@@ -3,6 +3,8 @@
 
 ExternalMemory subclass: VARDESC [
     VARDESC class >> sizeInBytes [ ^60 ]
+    VARDESC class >> byteSize [ ^60 ]
+    byteSize [ ^60 ]
     VARDESC class >> new [ ^self new: 60 ]
 
     memid [ ^self int32At: 1 ]

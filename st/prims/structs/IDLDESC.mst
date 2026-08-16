@@ -3,6 +3,8 @@
 
 ExternalMemory subclass: IDLDESC [
     IDLDESC class >> sizeInBytes [ ^16 ]
+    IDLDESC class >> byteSize [ ^16 ]
+    byteSize [ ^16 ]
     IDLDESC class >> new [ ^self new: 16 ]
 
     dwReserved [ ^self intptrAt: 1 ]

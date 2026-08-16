@@ -3,6 +3,8 @@
 
 ExternalMemory subclass: FINDREPLACEW [
     FINDREPLACEW class >> sizeInBytes [ ^80 ]
+    FINDREPLACEW class >> byteSize [ ^80 ]
+    byteSize [ ^80 ]
     FINDREPLACEW class >> new [ ^self new: 80 ]
 
     lStructSize [ ^self uint32At: 1 ]

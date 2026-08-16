@@ -3,6 +3,8 @@
 
 ExternalMemory subclass: TLIBATTR [
     TLIBATTR class >> sizeInBytes [ ^24 ]
+    TLIBATTR class >> byteSize [ ^24 ]
+    byteSize [ ^24 ]
     TLIBATTR class >> new [ ^self new: 24 ]
 
     "guid: System.Guid at 0 — no accessor (width unknown); use byteAt: directly"

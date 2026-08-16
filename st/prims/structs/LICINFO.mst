@@ -3,6 +3,8 @@
 
 ExternalMemory subclass: LICINFO [
     LICINFO class >> sizeInBytes [ ^12 ]
+    LICINFO class >> byteSize [ ^12 ]
+    byteSize [ ^12 ]
     LICINFO class >> new [ ^self new: 12 ]
 
     cbLicInfo [ ^self int32At: 1 ]

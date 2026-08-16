@@ -3,6 +3,8 @@
 
 ExternalMemory subclass: DTBGOPTS [
     DTBGOPTS class >> sizeInBytes [ ^24 ]
+    DTBGOPTS class >> byteSize [ ^24 ]
+    byteSize [ ^24 ]
     DTBGOPTS class >> new [ ^self new: 24 ]
 
     dwSize [ ^self uint32At: 1 ]

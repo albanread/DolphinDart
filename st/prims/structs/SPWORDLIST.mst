@@ -3,6 +3,8 @@
 
 ExternalMemory subclass: SPWORDLIST [
     SPWORDLIST class >> sizeInBytes [ ^24 ]
+    SPWORDLIST class >> byteSize [ ^24 ]
+    byteSize [ ^24 ]
     SPWORDLIST class >> new [ ^self new: 24 ]
 
     ulSize [ ^self uint32At: 1 ]

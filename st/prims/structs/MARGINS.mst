@@ -3,6 +3,8 @@
 
 ExternalMemory subclass: MARGINS [
     MARGINS class >> sizeInBytes [ ^16 ]
+    MARGINS class >> byteSize [ ^16 ]
+    byteSize [ ^16 ]
     MARGINS class >> new [ ^self new: 16 ]
 
     cxLeftWidth [ ^self int32At: 1 ]

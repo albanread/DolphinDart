@@ -1,6 +1,7 @@
 Object subclass: CreateWindowFunction [
     <classVars: UseDefaultGeometry>
     CreateWindowFunction class >> classVarUseDefaultGeometry [ ^UseDefaultGeometry ]
+    CreateWindowFunction class >> classVarUseDefaultGeometry: v [ ^UseDefaultGeometry := v ]
     create: aView [
         "Create a native window for the <View> argument."
         ^self subclassResponsibility

@@ -3,6 +3,8 @@
 
 ExternalMemory subclass: TIMEVAL [
     TIMEVAL class >> sizeInBytes [ ^8 ]
+    TIMEVAL class >> byteSize [ ^8 ]
+    byteSize [ ^8 ]
     TIMEVAL class >> new [ ^self new: 8 ]
 
     tv_sec [ ^self int32At: 1 ]

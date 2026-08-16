@@ -3,6 +3,8 @@
 
 ExternalMemory subclass: DOCINFOW [
     DOCINFOW class >> sizeInBytes [ ^40 ]
+    DOCINFOW class >> byteSize [ ^40 ]
+    byteSize [ ^40 ]
     DOCINFOW class >> new [ ^self new: 40 ]
 
     cbSize [ ^self int32At: 1 ]

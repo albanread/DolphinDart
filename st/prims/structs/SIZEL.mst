@@ -3,6 +3,8 @@
 
 ExternalMemory subclass: SIZEL [
     SIZEL class >> sizeInBytes [ ^8 ]
+    SIZEL class >> byteSize [ ^8 ]
+    byteSize [ ^8 ]
     SIZEL class >> new [ ^self new: 8 ]
 
     cx [ ^self int32At: 1 ]

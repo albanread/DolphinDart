@@ -3,6 +3,8 @@
 
 ExternalMemory subclass: HTTP_BYTE_RANGE [
     HTTP_BYTE_RANGE class >> sizeInBytes [ ^16 ]
+    HTTP_BYTE_RANGE class >> byteSize [ ^16 ]
+    byteSize [ ^16 ]
     HTTP_BYTE_RANGE class >> new [ ^self new: 16 ]
 
     startingOffset [ ^self intptrAt: 1 ]

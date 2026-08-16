@@ -3,6 +3,8 @@
 
 ExternalMemory subclass: WSAPROTOCOL_INFOW [
     WSAPROTOCOL_INFOW class >> sizeInBytes [ ^120 ]
+    WSAPROTOCOL_INFOW class >> byteSize [ ^120 ]
+    byteSize [ ^120 ]
     WSAPROTOCOL_INFOW class >> new [ ^self new: 120 ]
 
     dwServiceFlags1 [ ^self uint32At: 1 ]

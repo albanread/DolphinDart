@@ -3,6 +3,8 @@
 
 ExternalMemory subclass: CRYPTPROTECT_PROMPTSTRUCT [
     CRYPTPROTECT_PROMPTSTRUCT class >> sizeInBytes [ ^24 ]
+    CRYPTPROTECT_PROMPTSTRUCT class >> byteSize [ ^24 ]
+    byteSize [ ^24 ]
     CRYPTPROTECT_PROMPTSTRUCT class >> new [ ^self new: 24 ]
 
     cbSize [ ^self uint32At: 1 ]

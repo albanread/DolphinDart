@@ -54,10 +54,25 @@ def main(argv):
               "root (see this script's header)" % args.corpus)
         return 2
 
-    cmd = [sys.executable, os.path.join(HERE, "dolphin2mst", "genprims.py"),
-           "--out", args.out, "--corpus", args.corpus, "--winkb", args.winkb]
     print("gen_prims: %s -> %s" % (args.corpus, args.out))
-    return subprocess.call(cmd)
+    rc = subprocess.call(
+        [sys.executable, os.path.join(HERE, "dolphin2mst", "genprims.py"),
+         "--out", args.out, "--corpus", args.corpus, "--winkb", args.winkb])
+    if rc != 0:
+        return rc
+
+    # THE STRUCTS TOO. They share this corpus root and this winkb, they land
+    # inside the same generated tree (`st/prims/structs`), and the prims call
+    # into them — regenerating one without the other is how a field offset and
+    # the call that reads it drift apart.
+    #
+    # Recorded here for the same reason the prims invocation is: `genstructs`
+    # also takes a required `--corpus` with no default.
+    structs_out = os.path.join(args.out, "structs")
+    print("gen_prims: structs -> %s" % structs_out)
+    return subprocess.call(
+        [sys.executable, os.path.join(HERE, "dolphin2mst", "genstructs.py"),
+         "--out", structs_out, "--corpus", args.corpus, "--winkb", args.winkb])
 
 
 if __name__ == "__main__":

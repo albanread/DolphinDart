@@ -3,6 +3,8 @@
 
 ExternalMemory subclass: MIB_UDPTABLE [
     MIB_UDPTABLE class >> sizeInBytes [ ^12 ]
+    MIB_UDPTABLE class >> byteSize [ ^12 ]
+    byteSize [ ^12 ]
     MIB_UDPTABLE class >> new [ ^self new: 12 ]
 
     dwNumEntries [ ^self uint32At: 1 ]

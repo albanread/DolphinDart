@@ -3,6 +3,8 @@
 
 ExternalMemory subclass: MENUINFO [
     MENUINFO class >> sizeInBytes [ ^40 ]
+    MENUINFO class >> byteSize [ ^40 ]
+    byteSize [ ^40 ]
     MENUINFO class >> new [ ^self new: 40 ]
 
     cbSize [ ^self uint32At: 1 ]

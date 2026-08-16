@@ -1,0 +1,58 @@
+GraphicsTool subclass: AbstractPen [
+    <classVars: LineJoinNames>
+    AbstractPen class >> classVarLineJoinNames [ ^LineJoinNames ]
+    AbstractPen class >> classVarLineJoinNames: v [ ^LineJoinNames := v ]
+    | logPen |
+
+    = anObject [
+        "Answer whether the receiver and anObject are equivalent."
+        ^self == anObject or: [self species == anObject species and: [self logPen = anObject logPen]]
+    ]
+    color [
+        	^logPen lopnColor
+    ]
+    handle: anExternalHandle [
+        "Private - Set the handle for the receiver and query its logical info."
+        super handle: anExternalHandle.
+        	logPen := LOGPEN newBuffer.
+        	self getData: logPen
+    ]
+    hash [
+        "Answer the hash of the identifier."
+        ^logPen hash
+    ]
+    logPen [
+        	^logPen
+    ]
+    species [
+        	^Pen
+    ]
+    style [
+        	^logPen lopnStyle
+    ]
+    styleName [
+        	^self class styleNames at: self style + 1
+    ]
+    width [
+        "Answer the width (in pels) of the line drawn by the receiver."
+        ^logPen width
+    ]
+    AbstractPen class >> black [
+        "Answer the stock black pen."
+        ^StockPen fromId: 7
+    ]
+    AbstractPen class >> icon [
+        "Answers an Icon that can be used to represent this class"
+        ^Pen defaultIcon
+    ]
+    AbstractPen class >> null [
+        	^StockPen fromId: 8
+    ]
+    AbstractPen class >> styleNames [
+        	^#('solid' 'dashed' 'dotted' 'dashDot' 'dashDotDot' 'null' 'insideFrame')
+    ]
+    AbstractPen class >> white [
+        "Answer the stock white pen."
+        ^StockPen fromId: 6
+    ]
+]

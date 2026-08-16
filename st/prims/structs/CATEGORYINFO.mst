@@ -3,6 +3,8 @@
 
 ExternalMemory subclass: CATEGORYINFO [
     CATEGORYINFO class >> sizeInBytes [ ^20 ]
+    CATEGORYINFO class >> byteSize [ ^20 ]
+    byteSize [ ^20 ]
     CATEGORYINFO class >> new [ ^self new: 20 ]
 
     "catid: System.Guid at 0 — no accessor (width unknown); use byteAt: directly"

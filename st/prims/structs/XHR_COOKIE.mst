@@ -3,6 +3,8 @@
 
 ExternalMemory subclass: XHR_COOKIE [
     XHR_COOKIE class >> sizeInBytes [ ^48 ]
+    XHR_COOKIE class >> byteSize [ ^48 ]
+    byteSize [ ^48 ]
     XHR_COOKIE class >> new [ ^self new: 48 ]
 
     pwszUrl [ ^self intptrAt: 1 ]

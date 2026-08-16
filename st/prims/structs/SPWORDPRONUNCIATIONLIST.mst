@@ -3,6 +3,8 @@
 
 ExternalMemory subclass: SPWORDPRONUNCIATIONLIST [
     SPWORDPRONUNCIATIONLIST class >> sizeInBytes [ ^24 ]
+    SPWORDPRONUNCIATIONLIST class >> byteSize [ ^24 ]
+    byteSize [ ^24 ]
     SPWORDPRONUNCIATIONLIST class >> new [ ^self new: 24 ]
 
     ulSize [ ^self uint32At: 1 ]

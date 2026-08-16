@@ -3,6 +3,8 @@
 
 ExternalMemory subclass: IP_ADAPTER_INFO [
     IP_ADAPTER_INFO class >> sizeInBytes [ ^704 ]
+    IP_ADAPTER_INFO class >> byteSize [ ^704 ]
+    byteSize [ ^704 ]
     IP_ADAPTER_INFO class >> new [ ^self new: 704 ]
 
     "next: Windows.Win32.NetworkManagement.IpHelper.IP_ADAPTER_INFO* at 0 — no accessor (width unknown); use byteAt: directly"

@@ -3,6 +3,8 @@
 
 ExternalMemory subclass: SYSTEMTIME [
     SYSTEMTIME class >> sizeInBytes [ ^16 ]
+    SYSTEMTIME class >> byteSize [ ^16 ]
+    byteSize [ ^16 ]
     SYSTEMTIME class >> new [ ^self new: 16 ]
 
     wYear [ ^self uint16At: 1 ]

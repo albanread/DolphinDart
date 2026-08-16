@@ -3,6 +3,8 @@
 
 ExternalMemory subclass: SPEVENTSOURCEINFO [
     SPEVENTSOURCEINFO class >> sizeInBytes [ ^24 ]
+    SPEVENTSOURCEINFO class >> byteSize [ ^24 ]
+    byteSize [ ^24 ]
     SPEVENTSOURCEINFO class >> new [ ^self new: 24 ]
 
     ullEventInterest [ ^self intptrAt: 1 ]

@@ -3,6 +3,8 @@
 
 ExternalMemory subclass: SPPROPERTYINFO [
     SPPROPERTYINFO class >> sizeInBytes [ ^32 ]
+    SPPROPERTYINFO class >> byteSize [ ^32 ]
+    byteSize [ ^32 ]
     SPPROPERTYINFO class >> new [ ^self new: 32 ]
 
     pszName [ ^self intptrAt: 1 ]

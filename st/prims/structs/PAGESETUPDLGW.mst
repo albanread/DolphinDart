@@ -3,6 +3,8 @@
 
 ExternalMemory subclass: PAGESETUPDLGW [
     PAGESETUPDLGW class >> sizeInBytes [ ^128 ]
+    PAGESETUPDLGW class >> byteSize [ ^128 ]
+    byteSize [ ^128 ]
     PAGESETUPDLGW class >> new [ ^self new: 128 ]
 
     lStructSize [ ^self uint32At: 1 ]

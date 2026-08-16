@@ -3,6 +3,8 @@
 
 ExternalMemory subclass: RGBQUAD [
     RGBQUAD class >> sizeInBytes [ ^4 ]
+    RGBQUAD class >> byteSize [ ^4 ]
+    byteSize [ ^4 ]
     RGBQUAD class >> new [ ^self new: 4 ]
 
     rgbBlue [ ^self byteAt: 1 ]

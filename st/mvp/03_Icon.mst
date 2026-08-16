@@ -1,0 +1,430 @@
+"Icon is the class of <Image>s that represent Windows' icons (essentially a pair of bitmaps, one of which is a mask used to draw the other bitmap transparently).
+
+Class Variables:
+	Question			<Icon>. Standard system questionmark icon.
+	WinLogo			<Icon>. Standard windows logo icon.
+	Blank				<Icon>. A blank icon.
+	DefaultApplication	<Icon>. Standard windows ""application"" icon.
+	Information			<Icon>. Standard system information icon, as used in informational message boxes.
+	Error				<Icon>. Standard system error icon, as used in error message boxes.
+	Warning			<Icon>. Standard system warning icon, as used in warning message boxes."
+
+Image subclass: Icon [
+    <classVars: Blank DefaultApplication Error HasScaleDown Information Question Warning WinLogo LargestStandardSize StandardSizeMap StandardSizes>
+    Icon class >> classVarBlank [ ^Blank ]
+    Icon class >> classVarBlank: v [ ^Blank := v ]
+    Icon class >> classVarDefaultApplication [ ^DefaultApplication ]
+    Icon class >> classVarDefaultApplication: v [ ^DefaultApplication := v ]
+    Icon class >> classVarError [ ^Error ]
+    Icon class >> classVarError: v [ ^Error := v ]
+    Icon class >> classVarHasScaleDown [ ^HasScaleDown ]
+    Icon class >> classVarHasScaleDown: v [ ^HasScaleDown := v ]
+    Icon class >> classVarInformation [ ^Information ]
+    Icon class >> classVarInformation: v [ ^Information := v ]
+    Icon class >> classVarQuestion [ ^Question ]
+    Icon class >> classVarQuestion: v [ ^Question := v ]
+    Icon class >> classVarWarning [ ^Warning ]
+    Icon class >> classVarWarning: v [ ^Warning := v ]
+    Icon class >> classVarWinLogo [ ^WinLogo ]
+    Icon class >> classVarWinLogo: v [ ^WinLogo := v ]
+    Icon class >> classVarLargestStandardSize [ ^LargestStandardSize ]
+    Icon class >> classVarLargestStandardSize: v [ ^LargestStandardSize := v ]
+    Icon class >> classVarStandardSizeMap [ ^StandardSizeMap ]
+    Icon class >> classVarStandardSizeMap: v [ ^StandardSizeMap := v ]
+    Icon class >> classVarStandardSizes [ ^StandardSizes ]
+    Icon class >> classVarStandardSizes: v [ ^StandardSizes := v ]
+
+    addToImageList: aWinImageList mask: aColorOrNil [
+        "Private - Add a pictorial representation of the receiver to the <WinImageList>
+        	argument, using the <Color> argument as the mask colour (although in this
+        	case the specified mask colour is ignored as the Icon has its own mask)."
+        ^self
+        		valueWithHandle: [:hIcon | aWinImageList addIcon: hIcon]
+        		extent: aWinImageList extent
+    ]
+    asAlphaBitmap: aPoint [
+        "Answer a 32-bpp RGBA DIBSection (i.e. with Alpha channel) of the specified size that contains the receiver's image rendered at the nearest standard icon size that fits."
+        ^DIBSection initializer: (BitmapFromIconInitializer extent: aPoint icon: self)
+    ]
+    asCursor [
+        "Icon's can be used as Cursors. The only real difference is that cursors have a specific hotspot other than the top left corner."
+        ^self
+    ]
+    asIcon [
+        	^self
+    ]
+    asSharedBitmap: aPoint [
+        "Answer a 32-bpp bitmap (i.e. with alpha channel) containing the receiver's image at the specified extenT. The result will be a shared bitmap which is always the same
+        	instance for the same icon."
+        ^self imageManager bitmapForIcon: self extent: aPoint
+    ]
+    createHandle [
+        "Private - Answer an external handle to the image represented by the receiver.
+        	If the icon is not found, then use the handle of a default icon. 
+        	We could allow a walkback to occur but this could interfere with the system 
+        	browsers so we silently display a dummy icon in place of the dud."
+        ^super createHandle
+        		ifNil: 
+        			["Use Question icon if not realizable"
+        			self class defaultHandle]
+    ]
+    drawDisabledOn: aCanvas at: aPoint extent: sizePoint [
+        "Draw a disabled/grayed representation of the receiver on aCanvas at aPoint with extent sizePoint."
+        ^User32
+        		drawState: aCanvas asParameter
+        		hbr: nil
+        		lpOutputFunc: nil
+        		lData: self asParameter asInteger
+        		wData: 0
+        		x: aPoint x
+        		y: aPoint y
+        		cx: sizePoint x
+        		cy: sizePoint y
+        		fuFlags: 35
+    ]
+    drawOn: aCanvas at: aPoint [
+        "Copies the receiver to aCanvas at position aPoint."
+        ^self 
+        		drawOn: aCanvas
+        		at: aPoint
+        		frame: 1
+        		background: nil
+    ]
+    drawOn: aCanvas at: aPoint extent: sizePoint [
+        "Copies the receiver to aCanvas at position aPoint with size sizePoint."
+        ^self
+        		drawOn: aCanvas 
+        		at: aPoint 
+        		extent: sizePoint 
+        		frame: 1 
+        		background: nil
+    ]
+    drawOn: aCanvas at: aPoint extent: sizePoint frame: anInteger background: aBrush [
+        "Copies the receiver to aCanvas at position aPoint with size sizePoint
+        	with frame anInteger and background aBrush."
+        ^self 
+        		drawOn: aCanvas 
+        		at: aPoint 
+        		extent: sizePoint 
+        		frame: anInteger 
+        		background: aBrush 
+        		flags: 3
+    ]
+    drawOn: aCanvas at: aPoint extent: sizePoint frame: anInteger background: aBrush flags: flagsInteger [
+        "Copies the receiver to aCanvas at position aPoint with size sizePoint with frame anInteger and background aBrush. Answer whether the frame could be drawn. 
+        	Note that the frame number is ignored if the receiver is not an animated icon/cursor."
+        ^sizePoint strictlyPositive and: 
+        			[self valueWithHandle: 
+        					[:hIcon |
+        					User32
+        						drawIconEx: aCanvas asParameter
+        						xLeft: aPoint x
+        						yTop: aPoint y
+        						hIcon: hIcon
+        						cxWidth: sizePoint x
+        						cyHeight: sizePoint y
+        						istepIfAniCur: anInteger
+        						hbrFlickerFreeDraw: aBrush asParameter
+        						diFlags: flagsInteger]
+        				extent: sizePoint]
+    ]
+    drawOn: aCanvas at: aPoint frame: anInteger background: aBrush [
+        "Copies the receiver to aCanvas at position aPoint with frame anInteger and 
+        	background aBrush."
+        ^self
+        		drawOn: aCanvas
+        		at: aPoint
+        		extent: Point classVarZero
+        		frame: anInteger
+        		background: aBrush
+        		flags: 11
+    ]
+    extent [
+        "Answers the dimensions of the receiver in pixels. If the receiver has an explicit extent specified, then this is that extent.
+        	If the receiver does not have a specified extent:
+        		- If the receiver is realized, the extent of the foreground bitmap accessed via GetIconInfo; otherwise
+        		- the standard system large icon extent (32x32)"
+        ^initializer extent
+        		ifNil: 
+        			[handle notNull
+        				ifTrue: 
+        					[| extent info |
+        					info := self getIconInfo.
+        					extent := info extent.
+        					"free the ICONINFO in order to release the bmp's."
+        					info free.
+        					extent]
+        				ifFalse: [self class defaultExtent]]
+    ]
+    fileLocator [
+        	^self shouldNotImplement
+    ]
+    getIconInfo [
+        "Private - Answer an ICONINFO structure populated with info. about the receiver.
+        	N.B. This is quite an expensive operation, as it involves the creation of foreground
+        	and mask bitmaps for the icon."
+        | info |
+        	info := ICONINFO new.
+        	(User32 getIconInfo: self asParameter piconinfo: info) ifFalse: [User32 systemError].
+        	^info
+    ]
+    hotspot [
+        "Answer a Point specifying the receiver's hot spot (only really relevant for cursors)."
+        | info answer |
+        	info := self getIconInfo.
+        	answer := info hotspot.
+        	info free.
+        	^answer
+    ]
+    icon [
+        	^self
+    ]
+    identifier: id [
+        "Set the identifier of the receiver. This can be a string or an integer."
+        self shouldNotImplement
+    ]
+    imageIndex [
+        "Answer the image index of the receiver in our ImageManager of all icons."
+        ^self imageManager indexOfImage: self.
+    ]
+    includesFrame: frameNumber [
+        "Answer whether the receiver contains a frame of frameNumber.
+        	Sadly we need to attempt to draw the specified frame to determine whether it
+        	exists (unless we can find another way - suggestions please!)
+        	Note that the answer will always be true, regardless of the frame number, if
+        	the receiver is not an animated cursor."
+        | hDC includes screenDC |
+        	screenDC := User32 getDC: nil.
+        	hDC := Gdi32 createCompatibleDC: screenDC.
+        	includes := self
+        				drawOn: hDC
+        				at: Point classVarZero
+        				frame: frameNumber
+        				background: nil.
+        	Gdi32 deleteDC: hDC.
+        	User32 releaseDC: nil hDC: screenDC.
+        	^includes
+    ]
+    loadFromSystem: anInteger extent: aPoint [
+        	^(HasScaleDown and: [aPoint ~= Point classVarZero])
+        		ifTrue: 
+        			[| hIcon |
+        			hIcon := Handle new.
+        			(ComCtl32
+        				loadIconWithScaleDown: 0
+        				pszName: anInteger
+        				cx: aPoint x
+        				cy: aPoint y
+        				phico: hIcon) >= 0
+        				ifTrue: [hIcon]]
+        		ifFalse: 
+        			["Oddly, LoadImageW does not load system icons when passed a null HINSTANCE and an integer resource id, as might be expected, rather it treats that as a request to load one of the OEM images, so we must use LoadIcon."
+        			User32 loadIcon: 0 lpIconName: anInteger]
+    ]
+    loadResource: identifierObject fromModule: moduleObject extent: aPoint flags: anInteger [
+        	^(HasScaleDown and: [aPoint ~= Point classVarZero])
+        		ifTrue: 
+        			[| hIcon |
+        			hIcon := Handle new.
+        			(ComCtl32
+        				loadIconWithScaleDown: moduleObject asParameter
+        				pszName: identifierObject asResourceId
+        				cx: aPoint x
+        				cy: aPoint y
+        				phico: hIcon) >= 0
+        				ifTrue: [hIcon]]
+        		ifFalse: 
+        			[super
+        				loadResource: identifierObject
+        				fromModule: moduleObject
+        				extent: aPoint
+        				flags: anInteger]
+    ]
+    makeCurrent [
+        "Make the receiver become the current global cursor."
+        Cursor current: self
+    ]
+    setCursor [
+        "Private - Set the receiver as the current Windows cursor. Answers the handle of the old
+        	cursor."
+        ^User32 setCursor: self asParameter
+    ]
+    showWhile: aBlock [
+        "Maintain the receiver as the current cursor while aBlock is executed, answering the result of the block.
+        	The actual cursor which was current is restored (rather than the one we think is Current)."
+        | previous actual |
+        	previous := Cursor classVarCurrent.
+        	Cursor classVarCurrent: self.
+        	actual := self setCursor.
+        	^aBlock ensure: 
+        			[Cursor classVarCurrent: previous.
+        			User32 setCursor: actual]
+    ]
+    valueWithHandle: operation extent: aPoint [
+        "Private - Evaluate the <monadicValuable>, operation, with a handle for the receiver's icon at the best possible rendering for the specified extent.The icon will be scaled down from the next largest icon if the requested size is not available, which generally yields a better result than scaling up."
+        ^initializer
+        		image: self
+        		valueWithHandle: operation
+        		extent: aPoint
+    ]
+    withExtent: aPoint [
+        "Answer an <Icon> that has the specified preferred extent. This is the extent that will be requested when the icon is loaded, which can be useful when passing an icon to a Windows API as an HICON. In this case the API will generally expect the icon to be the correct size, and hence when drawn if the icon is too large or too small it will get scaled down or up (respectively) and not look as good as it might if the correct size were supplied."
+        ^initializer extent = aPoint
+        		ifTrue: [self]
+        		ifFalse: [self class initializer: (initializer copy extent: aPoint)]
+    ]
+    Icon class >> asterisk [
+        "Answer a new instance of the Asterisk icon (used in informative messages)"
+        ^self information
+    ]
+    Icon class >> blank [
+        	Blank isNil ifTrue: [Blank := self fromId: 'Blank.ico'].
+        	^Blank
+    ]
+    Icon class >> cacheSystemMetrics [
+        	HasScaleDown := (ComCtl32 getProcAddress: 'LoadIconWithScaleDown' ifAbsent: nil) notNil
+    ]
+    Icon class >> clear [
+        "Clean up the image manager for all icons. We start with no image representation
+        	for our icons, they are added lazily as they are accessed usng #imageIndex."
+        self imageManager purge
+    ]
+    Icon class >> clearCached [
+        self resetSystemInstances. self cacheSystemMetrics
+    ]
+    Icon class >> default [
+        	^self question
+    ]
+    Icon class >> defaultApplication [
+        "Answer a new instance of the default application icon"
+        DefaultApplication isNil ifTrue: [DefaultApplication := self fromSystemId: 32512].
+        	^DefaultApplication
+    ]
+    Icon class >> defaultExtent [
+        "Answer a Point that gives the dimensions of a standard size icon at the current system DPI."
+        ^SystemMetrics current largeIconExtent
+    ]
+    Icon class >> defaultHandle [
+        	^self question handle
+    ]
+    Icon class >> error [
+        "Answer a new instance of the default system 'error' icon (used in serious warning messages)"
+        ^Error ifNil: [Error := self fromSystemId: 32513]
+    ]
+    Icon class >> exclamation [
+        "Answer a new instance of the Exclamation mark icon (used in warning messages)"
+        ^self warning
+    ]
+    Icon class >> filesType [
+        "Private - Answer a two element array suitable for adding to the FileDialog
+        	with the fileTypes: message."
+        ^#('Icon Files (*.ico)' '*.ico')
+    ]
+    Icon class >> freeHandle: anExternalHandle [
+        	User32 destroyIcon: anExternalHandle
+    ]
+    Icon class >> fromBitmap: aBitmap [
+        	^self initializer: (IconFromBitmapInitializer bitmap: aBitmap)
+    ]
+    Icon class >> fromSystemId: anIntegerId [
+        "Answer a new instance of the Windows pre-defined icon specified by anIntegerID."
+        ^self initializer: (self newSystemInitializer: anIntegerId)
+    ]
+    Icon class >> fromSystemId: anIntegerId extent: aPoint [
+        "Answer a new instance of the Windows pre-defined icon specified by anIntegerID."
+        ^self initializer: (IconFromSystemInitializer extent: aPoint identifier: anIntegerId)
+    ]
+    Icon class >> hand [
+        "Answer a new instance of the Hand-shaped icon (used in serious warning messages)"
+        ^self error
+    ]
+    Icon class >> icon [
+        "Answers an Icon that can be used to represent this class"
+        ^[self] value defaultIcon
+    ]
+    Icon class >> imageManager [
+        "Answer the image manager to use for storing icons"
+        ^IconImageManager current
+    ]
+    Icon class >> imageType [
+        "Private - Answer the Win32 image type for the receiver."
+        ^1
+    ]
+    Icon class >> information [
+        "Answer a new instance of the default system 'information' icon (used in informative messages)"
+        ^Information ifNil: [Information := self fromSystemId: 32516]
+    ]
+    Icon class >> initialize [
+        "self initialize"
+        | mapStream sizeStream next current |
+        	mapStream := Array writeStream.
+        	sizeStream := StandardSizes readStream.
+        	current := sizeStream next.
+        	mapStream next: 15 put: StandardSizes first.
+        	[sizeStream atEnd] whileFalse: 
+        			[next := sizeStream next.
+        			mapStream next: next y - current y put: current.
+        			current := next].
+        	StandardSizeMap := mapStream contents
+    ]
+    Icon class >> newSystemInitializer: anInteger [
+        	^IconFromSystemInitializer identifier: anInteger
+    ]
+    Icon class >> null [
+        	^NullIcon current
+    ]
+    Icon class >> onPreStripImage [
+        "Private - The image is about to be stripped. Nil out the cached converter to (potentially)
+        	allow RichTextEdit to be stripped."
+        self uninitialize
+    ]
+    Icon class >> onSettingChanged: anArray [
+        	anArray first = 'WindowsThemeElement' ifFalse: [^self].
+        	self clearCached
+    ]
+    Icon class >> onStartup2 [
+        "Private - Perform system startup processing for all subclasses."
+        self clear.
+        	self clearCached
+    ]
+    Icon class >> question [
+        "Answer a new instance of the Question mark icon (used in prompting messages)"
+        "N.B. It is imperative that this always loads, as it is used to provide the handle for any icon that fails to load!"
+
+        	^Question ifNil: [Question := self fromSystemId: 32514]
+    ]
+    Icon class >> resetSystemInstances [
+        	DefaultApplication := Error := Information := Question := Warning := WinLogo := nil
+    ]
+    Icon class >> shield [
+        "Answer a new instance of the default system 'shield' icon (used in security warning messages)"
+        ^self fromSystemId: 32518
+    ]
+    Icon class >> standardSizeFor: aPoint [
+        "Answer the best standard icon size for the size specified by the <Point> argument. This will be the nearest size that is <= the requested size, except if the requested size is out of range in which case it will be clamped."
+        ^(StandardSizeMap lookup: aPoint y)
+        		ifNil: [aPoint >= (256 @ 256) ifTrue: [(256 @ 256)] ifFalse: [Point classVarZero]]
+    ]
+    Icon class >> systemNames [
+        	^[LookupTable withAll: {32512 -> #defaultApplication.
+        				32513 -> #error.
+        				32516 -> #information.
+        				32514 -> #question.
+        				32515 -> #warning.
+        				32517 -> #window}] value
+    ]
+    Icon class >> uninitialize [
+        "Uninitialize the class variables of the receiver."
+        Blank := nil.
+        	self resetSystemInstances
+    ]
+    Icon class >> warning [
+        "Answer a new instance of the default system 'warning' icon (used in warning messages)"
+        ^Warning ifNil: [Warning := self fromSystemId: 32515]
+    ]
+    Icon class >> window [
+        "Answer a new instance of the default Windows icon"
+        WinLogo isNil ifTrue: [WinLogo := self fromSystemId: 32517].
+        	^WinLogo
+    ]
+]

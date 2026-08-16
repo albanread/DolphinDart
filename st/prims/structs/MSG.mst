@@ -3,6 +3,8 @@
 
 ExternalMemory subclass: MSG [
     MSG class >> sizeInBytes [ ^48 ]
+    MSG class >> byteSize [ ^48 ]
+    byteSize [ ^48 ]
     MSG class >> new [ ^self new: 48 ]
 
     hwnd [ ^self intptrAt: 1 ]

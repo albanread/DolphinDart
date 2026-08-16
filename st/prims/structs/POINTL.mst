@@ -3,6 +3,8 @@
 
 ExternalMemory subclass: POINTL [
     POINTL class >> sizeInBytes [ ^8 ]
+    POINTL class >> byteSize [ ^8 ]
+    byteSize [ ^8 ]
     POINTL class >> new [ ^self new: 8 ]
 
     x [ ^self int32At: 1 ]

@@ -3,6 +3,8 @@
 
 ExternalMemory subclass: DEVMODEW [
     DEVMODEW class >> sizeInBytes [ ^268 ]
+    DEVMODEW class >> byteSize [ ^268 ]
+    byteSize [ ^268 ]
     DEVMODEW class >> new [ ^self new: 268 ]
 
     "dmDeviceName: char[] at 0 — no accessor (width unknown); use byteAt: directly"

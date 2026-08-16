@@ -3,6 +3,8 @@
 
 ExternalMemory subclass: BITMAPINFO [
     BITMAPINFO class >> sizeInBytes [ ^48 ]
+    BITMAPINFO class >> byteSize [ ^48 ]
+    byteSize [ ^48 ]
     BITMAPINFO class >> new [ ^self new: 48 ]
 
     bmiHeader [ ^BITMAPINFOHEADER viewOn: self at: 0 size: 40 ]

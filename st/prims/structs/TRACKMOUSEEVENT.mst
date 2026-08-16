@@ -3,6 +3,8 @@
 
 ExternalMemory subclass: TRACKMOUSEEVENT [
     TRACKMOUSEEVENT class >> sizeInBytes [ ^24 ]
+    TRACKMOUSEEVENT class >> byteSize [ ^24 ]
+    byteSize [ ^24 ]
     TRACKMOUSEEVENT class >> new [ ^self new: 24 ]
 
     cbSize [ ^self uint32At: 1 ]

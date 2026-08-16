@@ -3,6 +3,8 @@
 
 ExternalMemory subclass: OUTLINETEXTMETRICW [
     OUTLINETEXTMETRICW class >> sizeInBytes [ ^232 ]
+    OUTLINETEXTMETRICW class >> byteSize [ ^232 ]
+    byteSize [ ^232 ]
     OUTLINETEXTMETRICW class >> new [ ^self new: 232 ]
 
     otmSize [ ^self uint32At: 1 ]

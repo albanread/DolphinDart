@@ -3,6 +3,8 @@
 
 ExternalMemory subclass: TYPEATTR [
     TYPEATTR class >> sizeInBytes [ ^80 ]
+    TYPEATTR class >> byteSize [ ^80 ]
+    byteSize [ ^80 ]
     TYPEATTR class >> new [ ^self new: 80 ]
 
     "guid: System.Guid at 0 — no accessor (width unknown); use byteAt: directly"

@@ -21,14 +21,23 @@ Class Variables:
 Object subclass: SystemMetrics [
     <classVars: Current Default HasFlatMenus Instances IsNotWine MessageDuration MouseHoverTime SysParamVariables WheelScrollLines>
     SystemMetrics class >> classVarCurrent [ ^Current ]
+    SystemMetrics class >> classVarCurrent: v [ ^Current := v ]
     SystemMetrics class >> classVarDefault [ ^Default ]
+    SystemMetrics class >> classVarDefault: v [ ^Default := v ]
     SystemMetrics class >> classVarHasFlatMenus [ ^HasFlatMenus ]
+    SystemMetrics class >> classVarHasFlatMenus: v [ ^HasFlatMenus := v ]
     SystemMetrics class >> classVarInstances [ ^Instances ]
+    SystemMetrics class >> classVarInstances: v [ ^Instances := v ]
     SystemMetrics class >> classVarIsNotWine [ ^IsNotWine ]
+    SystemMetrics class >> classVarIsNotWine: v [ ^IsNotWine := v ]
     SystemMetrics class >> classVarMessageDuration [ ^MessageDuration ]
+    SystemMetrics class >> classVarMessageDuration: v [ ^MessageDuration := v ]
     SystemMetrics class >> classVarMouseHoverTime [ ^MouseHoverTime ]
+    SystemMetrics class >> classVarMouseHoverTime: v [ ^MouseHoverTime := v ]
     SystemMetrics class >> classVarSysParamVariables [ ^SysParamVariables ]
+    SystemMetrics class >> classVarSysParamVariables: v [ ^SysParamVariables := v ]
     SystemMetrics class >> classVarWheelScrollLines [ ^WheelScrollLines ]
+    SystemMetrics class >> classVarWheelScrollLines: v [ ^WheelScrollLines := v ]
     | dpi menuCheckExtent smallIconExtent largeIconExtent dragHysteresis scrollThumbExtent sizingFrameExtent dialogFrameExtent borderExtent nonClientMetrics menuFont edgeExtent iconTitleFont defaultColorDepth tileIconExtent menuImageExtent |
 
     borderExtent [

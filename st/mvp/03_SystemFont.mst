@@ -1,0 +1,32 @@
+AbstractFont subclass: SystemFont [
+    | id |
+
+    actualFont [
+        "Answer the actual Font that is the current setting of this system font."
+        ^self copy
+    ]
+    clearCached [
+        "Private - Clear down the receiver's cached information and handles.
+        	Should be overridden by subclasses which wish to clear down other
+        	handles and cached information."
+        super clearCached.
+        	logfont := nil
+    ]
+    copy [
+        	| lf |
+        	lf := self logFont copy.
+        	"If the font's height is specified as cell height, ensure translated to character height in the copy to allow for easier scaling."
+        	lf lfHeight: self pixelSize negated.
+        	^Font fromLogFont: lf dpi: dpi
+    ]
+    id [
+        "Private - Answer the stock font id of the receiver"
+        ^id
+    ]
+    initialize [
+        "Initialise the receiver."
+        super initialize.
+        	"The stock fonts are sized for the system (primary monitor) DPI."
+        	dpi := User32 getDpiForSystem
+    ]
+]

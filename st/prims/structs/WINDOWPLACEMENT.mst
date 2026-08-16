@@ -3,6 +3,8 @@
 
 ExternalMemory subclass: WINDOWPLACEMENT [
     WINDOWPLACEMENT class >> sizeInBytes [ ^44 ]
+    WINDOWPLACEMENT class >> byteSize [ ^44 ]
+    byteSize [ ^44 ]
     WINDOWPLACEMENT class >> new [ ^self new: 44 ]
 
     length [ ^self uint32At: 1 ]

@@ -3,6 +3,8 @@
 
 ExternalMemory subclass: PICTDESC [
     PICTDESC class >> sizeInBytes [ ^16 ]
+    PICTDESC class >> byteSize [ ^16 ]
+    byteSize [ ^16 ]
     PICTDESC class >> new [ ^self new: 16 ]
 
     cbSizeofstruct [ ^self uint32At: 1 ]

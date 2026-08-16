@@ -3,6 +3,8 @@
 
 ExternalMemory subclass: SPAUDIOBUFFERINFO [
     SPAUDIOBUFFERINFO class >> sizeInBytes [ ^12 ]
+    SPAUDIOBUFFERINFO class >> byteSize [ ^12 ]
+    byteSize [ ^12 ]
     SPAUDIOBUFFERINFO class >> new [ ^self new: 12 ]
 
     ulMsMinNotification [ ^self uint32At: 1 ]

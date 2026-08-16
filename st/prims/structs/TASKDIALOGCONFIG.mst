@@ -3,6 +3,8 @@
 
 ExternalMemory subclass: TASKDIALOGCONFIG [
     TASKDIALOGCONFIG class >> sizeInBytes [ ^224 ]
+    TASKDIALOGCONFIG class >> byteSize [ ^224 ]
+    byteSize [ ^224 ]
     TASKDIALOGCONFIG class >> new [ ^self new: 224 ]
 
     cbSize [ ^self uint32At: 1 ]

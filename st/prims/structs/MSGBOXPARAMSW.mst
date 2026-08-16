@@ -3,6 +3,8 @@
 
 ExternalMemory subclass: MSGBOXPARAMSW [
     MSGBOXPARAMSW class >> sizeInBytes [ ^80 ]
+    MSGBOXPARAMSW class >> byteSize [ ^80 ]
+    byteSize [ ^80 ]
     MSGBOXPARAMSW class >> new [ ^self new: 80 ]
 
     cbSize [ ^self uint32At: 1 ]

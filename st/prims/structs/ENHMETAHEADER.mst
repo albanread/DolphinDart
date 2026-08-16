@@ -3,6 +3,8 @@
 
 ExternalMemory subclass: ENHMETAHEADER [
     ENHMETAHEADER class >> sizeInBytes [ ^108 ]
+    ENHMETAHEADER class >> byteSize [ ^108 ]
+    byteSize [ ^108 ]
     ENHMETAHEADER class >> new [ ^self new: 108 ]
 
     iType [ ^self uint32At: 1 ]

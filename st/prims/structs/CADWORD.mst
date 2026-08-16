@@ -3,6 +3,8 @@
 
 ExternalMemory subclass: CADWORD [
     CADWORD class >> sizeInBytes [ ^16 ]
+    CADWORD class >> byteSize [ ^16 ]
+    byteSize [ ^16 ]
     CADWORD class >> new [ ^self new: 16 ]
 
     cElems [ ^self uint32At: 1 ]

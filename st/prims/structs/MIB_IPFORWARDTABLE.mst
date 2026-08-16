@@ -3,6 +3,8 @@
 
 ExternalMemory subclass: MIB_IPFORWARDTABLE [
     MIB_IPFORWARDTABLE class >> sizeInBytes [ ^16 ]
+    MIB_IPFORWARDTABLE class >> byteSize [ ^16 ]
+    byteSize [ ^16 ]
     MIB_IPFORWARDTABLE class >> new [ ^self new: 16 ]
 
     dwNumEntries [ ^self uint32At: 1 ]

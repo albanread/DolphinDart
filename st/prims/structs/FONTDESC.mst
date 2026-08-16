@@ -3,6 +3,8 @@
 
 ExternalMemory subclass: FONTDESC [
     FONTDESC class >> sizeInBytes [ ^64 ]
+    FONTDESC class >> byteSize [ ^64 ]
+    byteSize [ ^64 ]
     FONTDESC class >> new [ ^self new: 64 ]
 
     cbSizeofstruct [ ^self uint32At: 1 ]

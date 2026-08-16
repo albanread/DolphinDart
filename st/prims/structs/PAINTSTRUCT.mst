@@ -3,6 +3,8 @@
 
 ExternalMemory subclass: PAINTSTRUCT [
     PAINTSTRUCT class >> sizeInBytes [ ^44 ]
+    PAINTSTRUCT class >> byteSize [ ^44 ]
+    byteSize [ ^44 ]
     PAINTSTRUCT class >> new [ ^self new: 44 ]
 
     hdc [ ^self intptrAt: 1 ]

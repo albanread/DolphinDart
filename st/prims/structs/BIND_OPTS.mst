@@ -3,6 +3,8 @@
 
 ExternalMemory subclass: BIND_OPTS [
     BIND_OPTS class >> sizeInBytes [ ^16 ]
+    BIND_OPTS class >> byteSize [ ^16 ]
+    byteSize [ ^16 ]
     BIND_OPTS class >> new [ ^self new: 16 ]
 
     cbStruct [ ^self uint32At: 1 ]

@@ -3,6 +3,8 @@
 
 ExternalMemory subclass: DISPLAY_DEVICEW [
     DISPLAY_DEVICEW class >> sizeInBytes [ ^592 ]
+    DISPLAY_DEVICEW class >> byteSize [ ^592 ]
+    byteSize [ ^592 ]
     DISPLAY_DEVICEW class >> new [ ^self new: 592 ]
 
     cb [ ^self uint32At: 1 ]

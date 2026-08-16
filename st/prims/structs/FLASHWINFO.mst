@@ -3,6 +3,8 @@
 
 ExternalMemory subclass: FLASHWINFO [
     FLASHWINFO class >> sizeInBytes [ ^32 ]
+    FLASHWINFO class >> byteSize [ ^32 ]
+    byteSize [ ^32 ]
     FLASHWINFO class >> new [ ^self new: 32 ]
 
     cbSize [ ^self uint32At: 1 ]

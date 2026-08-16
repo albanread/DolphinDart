@@ -3,6 +3,8 @@
 
 ExternalMemory subclass: HRESULT [
     HRESULT class >> sizeInBytes [ ^4 ]
+    HRESULT class >> byteSize [ ^4 ]
+    byteSize [ ^4 ]
     HRESULT class >> new [ ^self new: 4 ]
 
     value [ ^self int32At: 1 ]

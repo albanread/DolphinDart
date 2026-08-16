@@ -3,6 +3,8 @@
 
 ExternalMemory subclass: IP_ADDR_STRING [
     IP_ADDR_STRING class >> sizeInBytes [ ^44 ]
+    IP_ADDR_STRING class >> byteSize [ ^44 ]
+    byteSize [ ^44 ]
     IP_ADDR_STRING class >> new [ ^self new: 44 ]
 
     "next: Windows.Win32.NetworkManagement.IpHelper.IP_ADDR_STRING* at 0 — no accessor (width unknown); use byteAt: directly"

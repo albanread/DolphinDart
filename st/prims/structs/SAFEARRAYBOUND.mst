@@ -3,6 +3,8 @@
 
 ExternalMemory subclass: SAFEARRAYBOUND [
     SAFEARRAYBOUND class >> sizeInBytes [ ^8 ]
+    SAFEARRAYBOUND class >> byteSize [ ^8 ]
+    byteSize [ ^8 ]
     SAFEARRAYBOUND class >> new [ ^self new: 8 ]
 
     cElements [ ^self uint32At: 1 ]

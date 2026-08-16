@@ -3,6 +3,8 @@
 
 ExternalMemory subclass: IP_ADDRESS_STRING [
     IP_ADDRESS_STRING class >> sizeInBytes [ ^8 ]
+    IP_ADDRESS_STRING class >> byteSize [ ^8 ]
+    byteSize [ ^8 ]
     IP_ADDRESS_STRING class >> new [ ^self new: 8 ]
 
     "string: Windows.Win32.Foundation.CHAR[] at 0 — no accessor (width unknown); use byteAt: directly"

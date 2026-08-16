@@ -3,6 +3,8 @@
 
 ExternalMemory subclass: MULTI_QI [
     MULTI_QI class >> sizeInBytes [ ^20 ]
+    MULTI_QI class >> byteSize [ ^20 ]
+    byteSize [ ^20 ]
     MULTI_QI class >> new [ ^self new: 20 ]
 
     "pIID: System.Guid* at 0 — no accessor (width unknown); use byteAt: directly"

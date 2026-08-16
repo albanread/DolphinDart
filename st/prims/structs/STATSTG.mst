@@ -3,6 +3,8 @@
 
 ExternalMemory subclass: STATSTG [
     STATSTG class >> sizeInBytes [ ^72 ]
+    STATSTG class >> byteSize [ ^72 ]
+    byteSize [ ^72 ]
     STATSTG class >> new [ ^self new: 72 ]
 
     pwcsName [ ^self intptrAt: 1 ]

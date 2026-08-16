@@ -3,6 +3,8 @@
 
 ExternalMemory subclass: WSAPROTOCOLCHAIN [
     WSAPROTOCOLCHAIN class >> sizeInBytes [ ^12 ]
+    WSAPROTOCOLCHAIN class >> byteSize [ ^12 ]
+    byteSize [ ^12 ]
     WSAPROTOCOLCHAIN class >> new [ ^self new: 12 ]
 
     chainLen [ ^self int32At: 1 ]

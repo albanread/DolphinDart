@@ -3,6 +3,8 @@
 
 ExternalMemory subclass: ELEMDESC [
     ELEMDESC class >> sizeInBytes [ ^24 ]
+    ELEMDESC class >> byteSize [ ^24 ]
+    byteSize [ ^24 ]
     ELEMDESC class >> new [ ^self new: 24 ]
 
     tdesc [ ^TYPEDESC viewOn: self at: 0 size: 16 ]

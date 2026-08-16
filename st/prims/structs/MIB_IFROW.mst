@@ -3,6 +3,8 @@
 
 ExternalMemory subclass: MIB_IFROW [
     MIB_IFROW class >> sizeInBytes [ ^612 ]
+    MIB_IFROW class >> byteSize [ ^612 ]
+    byteSize [ ^612 ]
     MIB_IFROW class >> new [ ^self new: 612 ]
 
     "wszName: char[] at 0 — no accessor (width unknown); use byteAt: directly"

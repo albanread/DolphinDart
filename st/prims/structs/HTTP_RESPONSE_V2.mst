@@ -3,6 +3,8 @@
 
 ExternalMemory subclass: HTTP_RESPONSE_V2 [
     HTTP_RESPONSE_V2 class >> sizeInBytes [ ^568 ]
+    HTTP_RESPONSE_V2 class >> byteSize [ ^568 ]
+    byteSize [ ^568 ]
     HTTP_RESPONSE_V2 class >> new [ ^self new: 568 ]
 
     base [ ^HTTP_RESPONSE_V1 viewOn: self at: 0 size: 552 ]

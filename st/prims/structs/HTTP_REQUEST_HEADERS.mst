@@ -3,6 +3,8 @@
 
 ExternalMemory subclass: HTTP_REQUEST_HEADERS [
     HTTP_REQUEST_HEADERS class >> sizeInBytes [ ^40 ]
+    HTTP_REQUEST_HEADERS class >> byteSize [ ^40 ]
+    byteSize [ ^40 ]
     HTTP_REQUEST_HEADERS class >> new [ ^self new: 40 ]
 
     unknownHeaderCount [ ^self uint16At: 1 ]

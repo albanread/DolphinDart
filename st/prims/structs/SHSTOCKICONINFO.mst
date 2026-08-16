@@ -3,6 +3,8 @@
 
 ExternalMemory subclass: SHSTOCKICONINFO [
     SHSTOCKICONINFO class >> sizeInBytes [ ^32 ]
+    SHSTOCKICONINFO class >> byteSize [ ^32 ]
+    byteSize [ ^32 ]
     SHSTOCKICONINFO class >> new [ ^self new: 32 ]
 
     cbSize [ ^self uint32At: 1 ]

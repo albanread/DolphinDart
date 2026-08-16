@@ -3,6 +3,8 @@
 
 ExternalMemory subclass: SPAUDIOSTATUS [
     SPAUDIOSTATUS class >> sizeInBytes [ ^40 ]
+    SPAUDIOSTATUS class >> byteSize [ ^40 ]
+    byteSize [ ^40 ]
     SPAUDIOSTATUS class >> new [ ^self new: 40 ]
 
     cbFreeBuffSpace [ ^self int32At: 1 ]

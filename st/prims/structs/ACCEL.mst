@@ -3,6 +3,8 @@
 
 ExternalMemory subclass: ACCEL [
     ACCEL class >> sizeInBytes [ ^6 ]
+    ACCEL class >> byteSize [ ^6 ]
+    byteSize [ ^6 ]
     ACCEL class >> new [ ^self new: 6 ]
 
     "fVirt: Windows.Win32.UI.WindowsAndMessaging.ACCEL_VIRT_FLAGS at 0 — no accessor (width unknown); use byteAt: directly"

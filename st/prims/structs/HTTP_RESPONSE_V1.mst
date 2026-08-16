@@ -3,6 +3,8 @@
 
 ExternalMemory subclass: HTTP_RESPONSE_V1 [
     HTTP_RESPONSE_V1 class >> sizeInBytes [ ^552 ]
+    HTTP_RESPONSE_V1 class >> byteSize [ ^552 ]
+    byteSize [ ^552 ]
     HTTP_RESPONSE_V1 class >> new [ ^self new: 552 ]
 
     flags [ ^self uint32At: 1 ]

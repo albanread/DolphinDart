@@ -15,6 +15,7 @@ Class Variables:
 View subclass: ControlView [
     <classVars: CommonControlCallError>
     ControlView class >> classVarCommonControlCallError [ ^CommonControlCallError ]
+    ControlView class >> classVarCommonControlCallError: v [ ^CommonControlCallError := v ]
     | forecolor oldWndProc |
 
     applyFont [

@@ -3,6 +3,8 @@
 
 ExternalMemory subclass: TRIVERTEX [
     TRIVERTEX class >> sizeInBytes [ ^16 ]
+    TRIVERTEX class >> byteSize [ ^16 ]
+    byteSize [ ^16 ]
     TRIVERTEX class >> new [ ^self new: 16 ]
 
     x [ ^self int32At: 1 ]

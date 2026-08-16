@@ -1,0 +1,45 @@
+"`StockBrush` is type of `Brush` that wraps one of the standard (aka 'stock') Windows GDI Brush objects, for example black and white brushes.
+
+StockBrushes are normally instantiated using one of the relevant instance creation methods of the superclass, `Brush`. For example:
+
+	`Brush black`
+
+## Instance Variables:
+  `id`		`<integer>` code identifying the brush pattern and colour"
+
+Brush subclass: StockBrush [
+    | id |
+
+    createHandle [
+        "Private - Get the handle for the stock brush with receiver's id."
+        ^self getStockObject: id
+    ]
+    id: anInteger [
+        "Private - Set receiver's stock brush id to anInteger."
+        id := anInteger.
+        	ownsHandle := false
+    ]
+    name [
+        "Answer the symbolic name of this stock brush."
+        ^#('white' 'silver' 'gray' 'darkGray' 'black' 'transparent') at: id + 1
+    ]
+    ownedHandle: aHandle [
+        "Private - Set the handle of the external graphics's tool object represented and owned by
+        	the receiver to be the argument."
+        "Implementation Note: Stock objects should never be free'd"
+
+        	self handle: aHandle
+    ]
+    printOn: aPuttableStream [
+        "Append, to the <puttableStream> argument a string whose characters are a the same as those which would result from sending a #printString message to the receiver."
+        aPuttableStream print: Brush. aPuttableStream space. aPuttableStream display: self name
+    ]
+    StockBrush class >> fromId: anInteger [
+        "Answer a new instance of the receiver representing the stock brush id anInteger."
+        | _casc1 | _casc1 := self basicNew. _casc1 id: anInteger. ^_casc1 yourself
+    ]
+    StockBrush class >> new [
+        "StockBrushes should only be instantiated with #fromID:"
+        ^self shouldNotImplement
+    ]
+]

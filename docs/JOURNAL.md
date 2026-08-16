@@ -154,3 +154,48 @@ The demo file stays — it is a harness worth having — but **the item is still
 open**, and what it actually needs is: a shell that owns its own message loop,
 keyboard input reaching a control, a menu opened and clicked by a person, and
 the accelerator firing. None of that is shown yet.
+
+## DD11 — the graphics wave lands; the font stand-in is retired
+
+`Graphics.Canvas`, `Font`, `AbstractFont`, `SystemFont`, `StockFont`, `Pen`,
+`StockPen`, `Brush`, `StockBrush`, `Image`, `Icon`, `Cursor` translated and
+loading. 21/21.
+
+**`SystemFont` (LOOSE_ENDS 1.2) is RETIRED** — and deleting it was not
+optional, it was forced. Dolphin's own class is `Graphics.SystemFont`, which
+flattens to `SystemFont`: the same name as the stand-in. `st/mvp_compat` loads
+AFTER `st/mvp`, so the stand-in would have silently overwritten Dolphin's
+class and every font in the port would have been a null handle wearing
+Dolphin's name. The font walk now ends where Dolphin ends it:
+`^self font ifNil: [self iconTitleFont]`.
+
+Four things had to be fixed to get there:
+
+1. **A qualified class-variable WRITE was translated as an assignment to a
+   message send.** `Cursor.Current := self` in `Icon>>showWhile:` became
+   `Cursor classVarCurrent := self`, which is not Smalltalk — it took
+   `Graphics.Icon` down at load. Writes now become `Cursor classVarCurrent:
+   self`, and `emit_class` emits the setter beside every reader.
+
+2. **`byteSize`** — Dolphin's spelling for a struct's size, sent to BOTH the
+   class and an instance (`struct := aClass new. ... uiParam: struct
+   byteSize`). Emitted per struct on both sides by `genstructs`, as a literal
+   rather than `^self size`: `size` is a universal helper rewritten at the
+   call site, and it cannot be aliased on `ExternalMemory` because a `self`
+   send inside an inherited class-side method binds to the defining class
+   (LOOSE_ENDS 3.12).
+
+3. **`StockFont` was missing**, so `AbstractFont class >> reset` —
+   `System := self fromId: 13` → `StockFont newId:` — left `System` nil and
+   every `Font system` answered nil.
+
+4. **`gen_prims.py` now runs `genstructs` too.** They share a corpus root and
+   a winkb and write into the same tree; regenerating one without the other
+   is how a field offset and the call that reads it drift apart. It was
+   another required `--corpus` with no default.
+
+**Still standing:** `View>>onEraseRequired:` still answers nil. `Canvas` is
+translated but the erase path wants a Canvas built from a DC, which is the
+next piece — so a view's `backcolor` is still not honoured when erasing.
+`Cursor` likewise: Dolphin's own is translated but the compat one still
+shadows it, and that swap needs the same care the font swap did.

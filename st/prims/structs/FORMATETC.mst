@@ -3,6 +3,8 @@
 
 ExternalMemory subclass: FORMATETC [
     FORMATETC class >> sizeInBytes [ ^28 ]
+    FORMATETC class >> byteSize [ ^28 ]
+    byteSize [ ^28 ]
     FORMATETC class >> new [ ^self new: 28 ]
 
     cfFormat [ ^self uint16At: 1 ]

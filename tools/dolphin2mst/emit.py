@@ -488,7 +488,17 @@ def classvar_accessor(name: str) -> str:
 
 
 def rewrite_qualified_classvars(body: str, owners) -> str:
-    """`Owner.CVar` -> `Owner classVarCVar`, for known class variables only."""
+    """`Owner.CVar` -> `Owner classVarCVar`, for known class variables only.
+
+    ASSIGNMENT IS A DIFFERENT REWRITE. `Cursor.Current := self` is a WRITE,
+    and turning it into `Cursor classVarCurrent := self` is an assignment to a
+    message send — not valid Smalltalk, and it took `Graphics.Icon` down at
+    load with a parse error pointing at the `:=`.
+
+    A write becomes a keyword send instead: `Cursor classVarCurrent: self`.
+    `emit_class` emits the matching setter beside every reader, so the target
+    always exists.
+    """
     if not owners:
         return body
     blanked = strip_code(body)
@@ -497,9 +507,20 @@ def rewrite_qualified_classvars(body: str, owners) -> str:
         owner, name = body[m.start(1):m.end(1)], body[m.start(2):m.end(2)]
         if name not in owners.get(owner, ()):
             continue
+        # Is an assignment operator next? Look past whitespace in the BLANKED
+        # text so a `:=` inside a comment or string cannot fool it.
+        tail = blanked[m.end():]
+        stripped = tail.lstrip()
+        is_write = stripped.startswith(":=")
         out.append(body[last:m.start()])
-        out.append(owner + " " + classvar_accessor(name))
-        last = m.end()
+        if is_write:
+            # `Owner.CVar := expr`  ->  `Owner classVarCVar: expr`
+            skipped = len(tail) - len(stripped)
+            out.append(owner + " " + classvar_accessor(name) + ":")
+            last = m.end() + skipped + 2      # consume the `:=` too
+        else:
+            out.append(owner + " " + classvar_accessor(name))
+            last = m.end()
     out.append(body[last:])
     return "".join(out)
 
@@ -877,6 +898,13 @@ def emit_class(pf: ParsedFile, renames: Dict[str, str],
         for _cv in cvars:
             lines.append(f"    {name} class >> {classvar_accessor(_cv)} "
                          f"[ ^{_cv} ]")
+            # AND THE SETTER. A qualified class-variable WRITE from another
+            # class (`Cursor.Current := self` in `Graphics.Icon>>showWhile:`)
+            # rewrites to `Cursor classVarCurrent: self`, so the pair must be
+            # emitted together — a reader without a writer just moves the
+            # failure from the parser to the first send.
+            lines.append(f"    {name} class >> {classvar_accessor(_cv)}: v "
+                         f"[ ^{_cv} := v ]")
     if cd.ivars:
         lines.append(f"    | {' '.join(cd.ivars)} |")
     if cd.cvars or cd.ivars:

@@ -3,6 +3,8 @@
 
 ExternalMemory subclass: LOGPALETTE [
     LOGPALETTE class >> sizeInBytes [ ^12 ]
+    LOGPALETTE class >> byteSize [ ^12 ]
+    byteSize [ ^12 ]
     LOGPALETTE class >> new [ ^self new: 12 ]
 
     palVersion [ ^self uint16At: 1 ]

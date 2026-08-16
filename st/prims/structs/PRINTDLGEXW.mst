@@ -3,6 +3,8 @@
 
 ExternalMemory subclass: PRINTDLGEXW [
     PRINTDLGEXW class >> sizeInBytes [ ^136 ]
+    PRINTDLGEXW class >> byteSize [ ^136 ]
+    byteSize [ ^136 ]
     PRINTDLGEXW class >> new [ ^self new: 136 ]
 
     lStructSize [ ^self uint32At: 1 ]

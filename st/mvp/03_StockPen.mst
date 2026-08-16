@@ -1,0 +1,38 @@
+AbstractPen subclass: StockPen [
+    | id |
+
+    createHandle [
+        "Private - Answer the handle for the stock pen with receiver's id."
+        ^self getStockObject: id
+    ]
+    id [
+        	^id
+    ]
+    id: anInteger [
+        "Private - Set stockID to anInteger and obtain the handle."
+        id := anInteger.
+        	self basicRealize
+    ]
+    name [
+        "Answer the symbolic name of this stock pen."
+        ^#('white' 'black' 'null') at: id - 5
+    ]
+    ownedHandle: aHandle [
+        "Private - Set the handle of the external graphics's tool object represented and owned by
+        	the receiver to be the argument."
+        "Implementation Note: Stock objects should never be free'd"
+
+        	self handle: aHandle
+    ]
+    printOn: aPuttableStream [
+        "Append, to the <puttableStream> argument a string whose characters are a the same as those which would result from sending a #printString message to the receiver."
+        aPuttableStream print: Pen. aPuttableStream space. aPuttableStream display: self name
+    ]
+    styleName [
+        	^#solid
+    ]
+    StockPen class >> fromId: anInteger [
+        "Answer a new instance of the receiver representing the stock pen id anInteger."
+        | _casc1 | _casc1 := self new. _casc1 ownsHandle: false. _casc1 id: anInteger. ^_casc1 yourself
+    ]
+]

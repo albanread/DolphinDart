@@ -3,6 +3,8 @@
 
 ExternalMemory subclass: OSVERSIONINFOEXW [
     OSVERSIONINFOEXW class >> sizeInBytes [ ^284 ]
+    OSVERSIONINFOEXW class >> byteSize [ ^284 ]
+    byteSize [ ^284 ]
     OSVERSIONINFOEXW class >> new [ ^self new: 284 ]
 
     dwOSVersionInfoSize [ ^self uint32At: 1 ]

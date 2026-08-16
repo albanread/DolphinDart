@@ -3,6 +3,8 @@
 
 ExternalMemory subclass: SECURITY_ATTRIBUTES [
     SECURITY_ATTRIBUTES class >> sizeInBytes [ ^20 ]
+    SECURITY_ATTRIBUTES class >> byteSize [ ^20 ]
+    byteSize [ ^20 ]
     SECURITY_ATTRIBUTES class >> new [ ^self new: 20 ]
 
     nLength [ ^self uint32At: 1 ]

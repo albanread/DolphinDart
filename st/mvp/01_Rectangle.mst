@@ -11,6 +11,7 @@ Rectangles inhabit the same Smalltalk standard ""left-handed"" coordinate system
 Object subclass: Rectangle [
     <classVars: Empty>
     Rectangle class >> classVarEmpty [ ^Empty ]
+    Rectangle class >> classVarEmpty: v [ ^Empty := v ]
     | origin corner |
 
     _expandRectangle: aRectangle [

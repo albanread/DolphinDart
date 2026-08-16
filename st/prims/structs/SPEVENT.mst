@@ -3,6 +3,8 @@
 
 ExternalMemory subclass: SPEVENT [
     SPEVENT class >> sizeInBytes [ ^32 ]
+    SPEVENT class >> byteSize [ ^32 ]
+    byteSize [ ^32 ]
     SPEVENT class >> new [ ^self new: 32 ]
 
     _bitfield [ ^self int32At: 1 ]

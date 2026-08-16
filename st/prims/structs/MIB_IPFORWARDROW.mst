@@ -3,6 +3,8 @@
 
 ExternalMemory subclass: MIB_IPFORWARDROW [
     MIB_IPFORWARDROW class >> sizeInBytes [ ^116 ]
+    MIB_IPFORWARDROW class >> byteSize [ ^116 ]
+    byteSize [ ^116 ]
     MIB_IPFORWARDROW class >> new [ ^self new: 116 ]
 
     dwForwardDest [ ^self uint32At: 1 ]

@@ -3,6 +3,8 @@
 
 ExternalMemory subclass: RECTL [
     RECTL class >> sizeInBytes [ ^16 ]
+    RECTL class >> byteSize [ ^16 ]
+    byteSize [ ^16 ]
     RECTL class >> new [ ^self new: 16 ]
 
     left [ ^self int32At: 1 ]

@@ -3,6 +3,8 @@
 
 ExternalMemory subclass: ADDRINFOW [
     ADDRINFOW class >> sizeInBytes [ ^48 ]
+    ADDRINFOW class >> byteSize [ ^48 ]
+    byteSize [ ^48 ]
     ADDRINFOW class >> new [ ^self new: 48 ]
 
     ai_flags [ ^self int32At: 1 ]

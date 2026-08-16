@@ -3,6 +3,8 @@
 
 ExternalMemory subclass: OVERLAPPED [
     OVERLAPPED class >> sizeInBytes [ ^32 ]
+    OVERLAPPED class >> byteSize [ ^32 ]
+    byteSize [ ^32 ]
     OVERLAPPED class >> new [ ^self new: 32 ]
 
     internal [ ^self intptrAt: 1 ]

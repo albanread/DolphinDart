@@ -3,6 +3,8 @@
 
 ExternalMemory subclass: EXCEPINFO [
     EXCEPINFO class >> sizeInBytes [ ^60 ]
+    EXCEPINFO class >> byteSize [ ^60 ]
+    byteSize [ ^60 ]
     EXCEPINFO class >> new [ ^self new: 60 ]
 
     wCode [ ^self uint16At: 1 ]

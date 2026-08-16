@@ -3,6 +3,8 @@
 
 ExternalMemory subclass: CY [
     CY class >> sizeInBytes [ ^8 ]
+    CY class >> byteSize [ ^8 ]
+    byteSize [ ^8 ]
     CY class >> new [ ^self new: 8 ]
 
     "anonymous: _Anonymous_e__Struct at 0 — no accessor (width unknown); use byteAt: directly"

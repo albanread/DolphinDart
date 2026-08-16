@@ -3,6 +3,8 @@
 
 ExternalMemory subclass: PROPSPEC [
     PROPSPEC class >> sizeInBytes [ ^16 ]
+    PROPSPEC class >> byteSize [ ^16 ]
+    byteSize [ ^16 ]
     PROPSPEC class >> new [ ^self new: 16 ]
 
     "ulKind: Windows.Win32.System.Com.StructuredStorage.PROPSPEC_KIND at 0 — no accessor (width unknown); use byteAt: directly"

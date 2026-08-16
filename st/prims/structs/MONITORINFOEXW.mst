@@ -3,6 +3,8 @@
 
 ExternalMemory subclass: MONITORINFOEXW [
     MONITORINFOEXW class >> sizeInBytes [ ^48 ]
+    MONITORINFOEXW class >> byteSize [ ^48 ]
+    byteSize [ ^48 ]
     MONITORINFOEXW class >> new [ ^self new: 48 ]
 
     monitorInfo [ ^MONITORINFO viewOn: self at: 0 size: 40 ]

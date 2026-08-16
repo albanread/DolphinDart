@@ -3,6 +3,8 @@
 
 ExternalMemory subclass: MIB_TCPTABLE [
     MIB_TCPTABLE class >> sizeInBytes [ ^16 ]
+    MIB_TCPTABLE class >> byteSize [ ^16 ]
+    byteSize [ ^16 ]
     MIB_TCPTABLE class >> new [ ^self new: 16 ]
 
     dwNumEntries [ ^self uint32At: 1 ]

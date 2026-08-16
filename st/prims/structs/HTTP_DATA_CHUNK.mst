@@ -3,6 +3,8 @@
 
 ExternalMemory subclass: HTTP_DATA_CHUNK [
     HTTP_DATA_CHUNK class >> sizeInBytes [ ^16 ]
+    HTTP_DATA_CHUNK class >> byteSize [ ^16 ]
+    byteSize [ ^16 ]
     HTTP_DATA_CHUNK class >> new [ ^self new: 16 ]
 
     "dataChunkType: Windows.Win32.Networking.HttpServer.HTTP_DATA_CHUNK_TYPE at 0 — no accessor (width unknown); use byteAt: directly"

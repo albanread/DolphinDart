@@ -3,6 +3,8 @@
 
 ExternalMemory subclass: ICONINFO [
     ICONINFO class >> sizeInBytes [ ^32 ]
+    ICONINFO class >> byteSize [ ^32 ]
+    byteSize [ ^32 ]
     ICONINFO class >> new [ ^self new: 32 ]
 
     fIcon [ ^self int32At: 1 ]

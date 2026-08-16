@@ -14,6 +14,7 @@ Instance Variables:
 GraphicsTool subclass: Menu [
     <classVars: DrawStateCallbackDescriptor>
     Menu class >> classVarDrawStateCallbackDescriptor [ ^DrawStateCallbackDescriptor ]
+    Menu class >> classVarDrawStateCallbackDescriptor: v [ ^DrawStateCallbackDescriptor := v ]
     | items text name flags image metrics id lastQuery _reserved2 |
 
     acceleratorKey [

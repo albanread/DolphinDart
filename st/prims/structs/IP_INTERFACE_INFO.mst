@@ -3,6 +3,8 @@
 
 ExternalMemory subclass: IP_INTERFACE_INFO [
     IP_INTERFACE_INFO class >> sizeInBytes [ ^12 ]
+    IP_INTERFACE_INFO class >> byteSize [ ^12 ]
+    byteSize [ ^12 ]
     IP_INTERFACE_INFO class >> new [ ^self new: 12 ]
 
     numAdapters [ ^self int32At: 1 ]

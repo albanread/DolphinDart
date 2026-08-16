@@ -3,6 +3,8 @@
 
 ExternalMemory subclass: FUNCDESC [
     FUNCDESC class >> sizeInBytes [ ^80 ]
+    FUNCDESC class >> byteSize [ ^80 ]
+    byteSize [ ^80 ]
     FUNCDESC class >> new [ ^self new: 80 ]
 
     memid [ ^self int32At: 1 ]

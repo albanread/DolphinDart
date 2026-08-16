@@ -3,6 +3,8 @@
 
 ExternalMemory subclass: SOCKADDR [
     SOCKADDR class >> sizeInBytes [ ^10 ]
+    SOCKADDR class >> byteSize [ ^10 ]
+    byteSize [ ^10 ]
     SOCKADDR class >> new [ ^self new: 10 ]
 
     "sa_family: Windows.Win32.Networking.WinSock.ADDRESS_FAMILY at 0 — no accessor (width unknown); use byteAt: directly"

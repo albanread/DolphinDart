@@ -3,6 +3,8 @@
 
 ExternalMemory subclass: HTTP_SSL_CLIENT_CERT_INFO [
     HTTP_SSL_CLIENT_CERT_INFO class >> sizeInBytes [ ^32 ]
+    HTTP_SSL_CLIENT_CERT_INFO class >> byteSize [ ^32 ]
+    byteSize [ ^32 ]
     HTTP_SSL_CLIENT_CERT_INFO class >> new [ ^self new: 32 ]
 
     certFlags [ ^self uint32At: 1 ]

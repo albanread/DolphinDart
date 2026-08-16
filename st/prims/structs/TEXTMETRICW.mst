@@ -3,6 +3,8 @@
 
 ExternalMemory subclass: TEXTMETRICW [
     TEXTMETRICW class >> sizeInBytes [ ^60 ]
+    TEXTMETRICW class >> byteSize [ ^60 ]
+    byteSize [ ^60 ]
     TEXTMETRICW class >> new [ ^self new: 60 ]
 
     tmHeight [ ^self int32At: 1 ]

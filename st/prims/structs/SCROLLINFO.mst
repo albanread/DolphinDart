@@ -3,6 +3,8 @@
 
 ExternalMemory subclass: SCROLLINFO [
     SCROLLINFO class >> sizeInBytes [ ^28 ]
+    SCROLLINFO class >> byteSize [ ^28 ]
+    byteSize [ ^28 ]
     SCROLLINFO class >> new [ ^self new: 28 ]
 
     cbSize [ ^self uint32At: 1 ]

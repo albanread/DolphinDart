@@ -23,8 +23,11 @@ Class Variables:
 ContainerView subclass: ShellView [
     <classVars: DialogMessageMap DefaultButtonIndex TransientMask>
     ShellView class >> classVarDialogMessageMap [ ^DialogMessageMap ]
+    ShellView class >> classVarDialogMessageMap: v [ ^DialogMessageMap := v ]
     ShellView class >> classVarDefaultButtonIndex [ ^DefaultButtonIndex ]
+    ShellView class >> classVarDefaultButtonIndex: v [ ^DefaultButtonIndex := v ]
     ShellView class >> classVarTransientMask [ ^TransientMask ]
+    ShellView class >> classVarTransientMask: v [ ^TransientMask := v ]
     | menuBar acceleratorTable combinedAcceleratorTable lastFocus defaultButton largeIcon smallIcon maxExtent minExtent actualIcons svFlags dpi |
 
     acceleratorTable [

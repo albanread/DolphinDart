@@ -3,6 +3,8 @@
 
 ExternalMemory subclass: STATPROPSETSTG [
     STATPROPSETSTG class >> sizeInBytes [ ^48 ]
+    STATPROPSETSTG class >> byteSize [ ^48 ]
+    byteSize [ ^48 ]
     STATPROPSETSTG class >> new [ ^self new: 48 ]
 
     "fmtid: System.Guid at 0 — no accessor (width unknown); use byteAt: directly"

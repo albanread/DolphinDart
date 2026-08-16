@@ -3,6 +3,8 @@
 
 ExternalMemory subclass: WIN32_FIND_DATAW [
     WIN32_FIND_DATAW class >> sizeInBytes [ ^572 ]
+    WIN32_FIND_DATAW class >> byteSize [ ^572 ]
+    byteSize [ ^572 ]
     WIN32_FIND_DATAW class >> new [ ^self new: 572 ]
 
     dwFileAttributes [ ^self uint32At: 1 ]

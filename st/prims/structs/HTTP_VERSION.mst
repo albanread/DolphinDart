@@ -3,6 +3,8 @@
 
 ExternalMemory subclass: HTTP_VERSION [
     HTTP_VERSION class >> sizeInBytes [ ^4 ]
+    HTTP_VERSION class >> byteSize [ ^4 ]
+    byteSize [ ^4 ]
     HTTP_VERSION class >> new [ ^self new: 4 ]
 
     majorVersion [ ^self uint16At: 1 ]

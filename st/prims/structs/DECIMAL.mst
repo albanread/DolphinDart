@@ -3,6 +3,8 @@
 
 ExternalMemory subclass: DECIMAL [
     DECIMAL class >> sizeInBytes [ ^56 ]
+    DECIMAL class >> byteSize [ ^56 ]
+    byteSize [ ^56 ]
     DECIMAL class >> new [ ^self new: 56 ]
 
     wReserved [ ^self uint16At: 1 ]

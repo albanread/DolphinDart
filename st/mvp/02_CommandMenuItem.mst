@@ -11,6 +11,7 @@ Class Variables:
 MenuItem subclass: CommandMenuItem [
     <classVars: IsDefaultMask>
     CommandMenuItem class >> classVarIsDefaultMask [ ^IsDefaultMask ]
+    CommandMenuItem class >> classVarIsDefaultMask: v [ ^IsDefaultMask := v ]
     | commandDescription lastQuery _reserved |
 
     acceleratorKey [

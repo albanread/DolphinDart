@@ -3,6 +3,8 @@
 
 ExternalMemory subclass: SPRECOCONTEXTSTATUS [
     SPRECOCONTEXTSTATUS class >> sizeInBytes [ ^524 ]
+    SPRECOCONTEXTSTATUS class >> byteSize [ ^524 ]
+    byteSize [ ^524 ]
     SPRECOCONTEXTSTATUS class >> new [ ^self new: 524 ]
 
     "eInterference: Windows.Win32.Media.Speech.SPINTERFERENCE at 0 — no accessor (width unknown); use byteAt: directly"

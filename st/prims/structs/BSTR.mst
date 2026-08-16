@@ -3,6 +3,8 @@
 
 ExternalMemory subclass: BSTR [
     BSTR class >> sizeInBytes [ ^8 ]
+    BSTR class >> byteSize [ ^8 ]
+    byteSize [ ^8 ]
     BSTR class >> new [ ^self new: 8 ]
 
     "value: char* at 0 — no accessor (width unknown); use byteAt: directly"

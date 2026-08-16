@@ -16,13 +16,21 @@ Class Variables:
 ValueConvertingControlView subclass: TextEdit [
     <classVars: FindDialogMessage AlignmentMap FindDisabledMask FormatMap ModifiedMask ReadOnlyMask StaticMask WantTabMask>
     TextEdit class >> classVarFindDialogMessage [ ^FindDialogMessage ]
+    TextEdit class >> classVarFindDialogMessage: v [ ^FindDialogMessage := v ]
     TextEdit class >> classVarAlignmentMap [ ^AlignmentMap ]
+    TextEdit class >> classVarAlignmentMap: v [ ^AlignmentMap := v ]
     TextEdit class >> classVarFindDisabledMask [ ^FindDisabledMask ]
+    TextEdit class >> classVarFindDisabledMask: v [ ^FindDisabledMask := v ]
     TextEdit class >> classVarFormatMap [ ^FormatMap ]
+    TextEdit class >> classVarFormatMap: v [ ^FormatMap := v ]
     TextEdit class >> classVarModifiedMask [ ^ModifiedMask ]
+    TextEdit class >> classVarModifiedMask: v [ ^ModifiedMask := v ]
     TextEdit class >> classVarReadOnlyMask [ ^ReadOnlyMask ]
+    TextEdit class >> classVarReadOnlyMask: v [ ^ReadOnlyMask := v ]
     TextEdit class >> classVarStaticMask [ ^StaticMask ]
+    TextEdit class >> classVarStaticMask: v [ ^StaticMask := v ]
     TextEdit class >> classVarWantTabMask [ ^WantTabMask ]
+    TextEdit class >> classVarWantTabMask: v [ ^WantTabMask := v ]
     | teFlags updateMode _reserved18 _reserved19 _reserved20 |
 
     alignment [

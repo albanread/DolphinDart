@@ -3,6 +3,8 @@
 
 ExternalMemory subclass: HTTP_COOKED_URL [
     HTTP_COOKED_URL class >> sizeInBytes [ ^40 ]
+    HTTP_COOKED_URL class >> byteSize [ ^40 ]
+    byteSize [ ^40 ]
     HTTP_COOKED_URL class >> new [ ^self new: 40 ]
 
     fullUrlLength [ ^self uint16At: 1 ]
