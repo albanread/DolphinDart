@@ -43,6 +43,18 @@ ShellView subclass: DolphinApp [
          what keeps them agreeing, which is the whole claim of the triad."
         fieldA := self makeField.
         fieldB := self makeField.
+        "THE CONVERTER GOES ON BEFORE THE PRESENTER CONNECTS. Connecting a
+         presenter pushes the model's value through the view's converter
+         immediately; installing the converter afterwards re-runs that path
+         against whatever text the control happened to hold, which wrote nil
+         back into the model and made the app start empty."
+        "A TYPE CONVERTER on field A. The model holds an INTEGER; the control
+         holds text. `IntegerToText` is the two-way mapping, and its
+         right-to-left direction is `Integer fromString:` — which SIGNALS on
+         text that is not a number. That signal is the acceptance app's
+         bad-input path, and the reason DD4's exception work gates this
+         sprint."
+        fieldA typeconverter: IntegerToText new.
         TextPresenter new model: model; view: fieldA.
         TextPresenter new model: model; view: fieldB.
 
@@ -137,10 +149,39 @@ ShellView subclass: DolphinApp [
      rather than store. The gate asserts the exception class AND that the
      model is unchanged: an implementation that swallowed the error and left
      the old value would pass a test that only checked the value."
+    "Type text into field A the way a user would — through the CONTROL — and
+     then ask the view for its value, which is where the conversion happens.
+     Answers the exception's class name when it signals, so the gate can
+     assert WHICH exception rather than merely that something went wrong."
     typeIntoA: aString [
-        ^[ fieldA value: aString. true ]
-            on: Error
-            do: [ :e | e class name ]
+        "Put the text in the CONTROL, then run Dolphin's own view-to-model
+         update. `ValueConvertingControlView>>updateModel` is the method a
+         real edit finishes through, and it already carries the whole
+         bad-input policy:
+
+             [self model value: (self typeconverter convertFromRightToLeft:
+                 self displayValue)]
+                 on: InvalidFormat
+                 do: [:e | e beep.
+                           self value: self typeconverter leftNullValue;
+                                refreshContents]
+
+         so this probe does NOT catch anything. Wrapping it would replace
+         Dolphin's policy with the test's, and the policy is the thing under
+         test."
+        User32 setWindowText: fieldA handle lpString: aString displayString.
+        "SET THE MODIFY FLAG, because `setWindowText:` clears it and
+         `TextEdit>>updateModel` opens with
+
+             self isTextModified ifFalse: [^self]
+
+         — the EM_GETMODIFY flag Windows maintains, which real typing sets and
+         a programmatic WM_SETTEXT deliberately does not. Without this the
+         update returned immediately and the model never moved, silently: the
+         probe looked like it had typed and nothing had."
+        fieldA isTextModified: true.
+        fieldA updateModel.
+        ^model value
     ]
 
     textOfA [ ^User32 getWindowText: fieldA handle ]

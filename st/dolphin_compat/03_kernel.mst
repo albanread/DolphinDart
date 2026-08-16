@@ -624,3 +624,31 @@ Object subclass: Dictionary [
 Object subclass: IdentityDictionary [
     lookup: aKey [ ^self at: aKey ifAbsent: [ nil ] ]
 ]
+
+"`Boolean>>asParameter` — Dolphin's own, and the mirror of the `#b` return.
+
+ `TextEdit>>isTextModified:` is `self sendMessage: EM_SETMODIFY wParam:
+ aBoolean asParameter`, and `Object>>asParameter` answers self — so a Boolean
+ reached the FFI floor as a Boolean and was refused.
+
+ The floor now also accepts true/false directly as 1/0, for the same reason it
+ accepts nil as NULL: `#b` means a BOOL-returning call ANSWERS a Boolean, so
+ Booleans are values the floor itself produces and must take back. This
+ method is the narrower, Dolphin-faithful half of that — it puts the
+ conversion where Dolphin puts it, at the source."
+Object subclass: Boolean [
+    asParameter [ ^self ifTrue: [ 1 ] ifFalse: [ 0 ] ]
+]
+
+"`Exception>>beep` — the audible half of Dolphin's bad-input policy.
+
+ `ValueConvertingControlView>>updateModel` catches `InvalidFormat` and does
+ `exception beep` before reverting the field. This is the DD10 brief's
+ 'beep-and-revert', and the beep is not decoration: it is the only feedback a
+ user gets that the value they typed was rejected.
+
+ `Sound errorBeep` is MessageBeep(MB_ICONERROR), which respects the user's
+ sound scheme — including silence, if that is what they chose."
+Error subclass: Exception [
+    beep [ ^Sound errorBeep ]
+]

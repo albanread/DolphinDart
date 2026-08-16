@@ -14,35 +14,26 @@ relocation.
 **The rule this file exists to enforce:** a stand-in is allowed, a stand-in
 without a named retirement is not. Every entry below says what kills it.
 
-Status as of DD10 (23/23 gates green).
+Status as of DD10 (21/21 gates green, adapter family retired).
 
 ---
 
 ## 1. Scaffolding — has a retirement, is not dead yet
 
-### 1.1 The `WinView` adapter family
-`st/dolphin_compat/06_winview.mst`, `09_wincontrol.mst`, `10_winmenu.mst`
+### 1.1 ~~The `WinView` adapter family~~ — RETIRED
+Deleted: `06_winview.mst`, `09_wincontrol.mst`, `10_winmenu.mst`, their four
+probes and their four gates. Everything now runs on Dolphin's own classes.
 
-`WinView` answers Dolphin's layout protocol over a raw HWND. It was DD8/DD9's
-stand-in for a view, and `UI.View` has since been measured to implement the
-entire protocol it was written to supply — so it is retired IN PRINCIPLE.
+**This entry's original claim was WRONG and that is worth keeping.** It said
+`st_shell` was "fully superseded by `st_dolphinshell`". Checking the assertion
+lists rather than trusting the note showed each retiring gate carried coverage
+its successor did not — focus, two-fields-one-model, command enablement, the
+acceptance app — so the probes were migrated and the assertions came with
+them. Deleting on the strength of this note would have dropped four
+behaviours silently.
 
-**It cannot be deleted alone.** `WinControl` is a `WinView` SUBCLASS, and
-`WinTextEdit`/`WinButton`/`WinLabel` hang off that; `st/test/ffi/text_probe.mst`
-and `counter_app.mst` build on those. The DD10 brief originally paired
-`WinView`'s retirement with the `#h` handle convention, which was wrong — the
-two are unrelated, and the pairing is corrected in `dd10_mvp_triad.md`.
-
-**Retires when:** `UI.Menu` realizes itself (kills `WinMenu`) and the probes
-move to `UI.TextEdit` (kills `WinTextEdit` → `WinControl` → `WinView`). All
-three go as ONE commit; deleting them piecemeal leaves a subclass without a
-superclass.
-
-**Already retirable now, separately:** `test/st_shell.dart` +
-`st/test/ffi/shell_probe.mst`. The DD9 arrangement coverage is fully
-superseded by `st_dolphinshell`, which asserts the same BorderLayout
-arrangement on real `UI.View`s plus a second resize. Kept only so the deletion
-happens with the rest of the family rather than as a lone commit.
+**A note in this file is a claim, not a fact.** Check it before acting on it.
+See `docs/JOURNAL.md` for the migration.
 
 ### 1.2 The font-walk terminator
 `st/mvp_compat/01_view_overrides.mst` — `SystemFont`, `DesktopView>>getActualFont`
@@ -105,6 +96,49 @@ doesNotUnderstand.
 `self shouldNotImplement`. The second is better if the design text is worth
 keeping — it converts a silent no-op into a loud one, which is this project's
 whole standing rule.
+
+### 1.6a `View>>onEraseRequired:` answers nil
+`st/mvp_compat/01_view_overrides.mst`
+
+Declines WM_ERASEBKGND so Windows erases with the window class brush. That is
+Dolphin's own documented way to accept default processing, not a stub — but it
+is used here because `aColorEvent canvas` needs `Graphics.Canvas`, which is
+not translated.
+
+**The cost:** a view's `backcolor` is NOT honoured when erasing. Set a view to
+red and it still erases to the class brush.
+
+**Retires when:** `Graphics.Canvas` is translated (DD11).
+**The gate that proves it:** fill a view with a named colour and read the
+pixel back — the DD9 paint probe already does exactly that for WM_PAINT.
+
+### 1.6b `Color` system colours supplied from `GetSysColor`
+`st/mvp_compat/01_view_overrides.mst`
+
+`Graphics.Color` declares `Window`, `WindowText`, `Face3d` as class variables
+and only ever READS them; the system-colour package that assigns them is not
+in the wave. `View>>defaultBackcolor` is `^Color classVarWindow`, so without
+this every `actualBackcolor` was nil.
+
+Answered from Windows rather than a constant, so a themed or high-contrast
+desktop gets its real colour.
+
+**Retires when:** Dolphin's system-colour package is translated (DD11).
+
+### 1.6c `addClassVariable:` with a COMPUTED name is a no-op
+`st/dolphin_compat/03_kernel.mst`
+
+The translator rewrites `self addClassVariable: 'X' value: E` to `X := E`, but
+`Color class >> initialize` ends with a loop whose name is computed
+(`each capitalized`). No dynamic class-variable store exists, so that
+assignment cannot happen.
+
+**The cost:** `Color Black` and `Color White` answer nil. The lowercase
+`Color black`/`Color white`, which go through `named:`, work normally and are
+what the port uses.
+
+**Retires when:** the front-end grows `classVarAt:put:` — the same one
+`bindingFor:` (1.3) waits on.
 
 ### 1.6 `Cursor`
 `st/dolphin_compat/12_view_create.mst`

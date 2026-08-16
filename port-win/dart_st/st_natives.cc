@@ -1619,7 +1619,19 @@ void ST_ffiCall(Dart_NativeArguments args) {
     }
     Dart_Handle e = Dart_ListGetAt(list_h, i);
     int64_t v = 0;
-    if (Dart_IsNull(e)) {
+    if (Dart_IsBoolean(e)) {
+      // TRUE/FALSE ARE 1/0 — the mirror of the `#b` return convention, and
+      // the same argument as nil below. `#b` means a BOOL-returning call
+      // answers a real Boolean, so a Boolean is a value the floor itself
+      // produces and must therefore accept back.
+      //
+      // `TextEdit>>isTextModified:` is where this bit: `self sendMessage:
+      // EM_SETMODIFY wParam: aBoolean asParameter`, with `Object>>asParameter`
+      // answering self.
+      bool b = false;
+      Dart_BooleanValue(e, &b);
+      v = b ? 1 : 0;
+    } else if (Dart_IsNull(e)) {
       // NIL IS A NULL HANDLE — the mirror of the `#h` return convention.
       //
       // This used to refuse, on the grounds that a non-integer argument is a

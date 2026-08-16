@@ -138,6 +138,32 @@ main(List<String> a) {
   expect('  ...and the commands came back',
       '(App isEnabled: #appDouble) printString', "'true'");
 
+  // ── THE BAD-INPUT PATH — DD4's exceptions in anger ──────────────────────
+  //
+  // Field A converts through `IntegerToText`, whose right-to-left direction
+  // is `Integer fromString:`. Dolphin's own `updateModel` carries the policy:
+  // on `InvalidFormat` it BEEPS and reverts the field to the converter's null
+  // value. The probe runs that method and catches nothing — wrapping it would
+  // replace Dolphin's policy with the test's, and the policy is what is under
+  // test.
+  stRun('App model value: 42.');
+  expect('a good value converts and stores',
+      "(App typeIntoA: '77') printString", "'77'");
+  expect('  ...and the CONTROL shows it', 'App textOfA', "'77'");
+
+  // Bad input: Dolphin beeps and reverts to the null value rather than
+  // storing rubbish or leaving the field disagreeing with the model.
+  expect('bad input reverts to the null value',
+      "(App typeIntoA: 'not a number') printString", "'nil'");
+  expect('  ...and the FIELD reverted with it', 'App textOfA', "''");
+
+  // Recovery: the field still converts afterwards. An exception that left the
+  // converter or the control in a bad state would show up here and nowhere
+  // else.
+  expect('the field still converts after a failure',
+      "(App typeIntoA: '5') printString", "'5'");
+  expect('  ...and both fields followed', 'App textOfB', "'5'");
+
   expect('no handler error was contained',
       'UiSession handlerErrors printString', "'0'");
 

@@ -96,3 +96,51 @@ Each of these was found by the app failing, not by inspection:
 - A multi-statement `stRun` abandons the rest of the string on a raise, so
   `App create. App show. App build.` left `model` nil and every later
   assertion blamed the model. Setup sends are separate now.
+
+## The bad-input path — DD4's exceptions in anger
+
+`st_dolphinapp` now drives Dolphin's own `updateModel`, which carries the
+whole policy:
+
+```smalltalk
+[self model value: (self typeconverter convertFromRightToLeft: self displayValue)]
+    on: InvalidFormat
+    do: [:e | e beep.
+              self value: self typeconverter leftNullValue; refreshContents]
+```
+
+The probe catches NOTHING. Wrapping it would replace Dolphin's policy with
+the test's, and the policy is what is under test.
+
+Three things had to be right for it to run at all, and each was silent:
+
+1. **The converter must be installed BEFORE the presenter connects.**
+   Connecting pushes the model's value through the view's converter
+   immediately; installing it afterwards re-ran that path against whatever
+   text the control held and wrote nil back into the model. The app started
+   empty and every later assertion blamed the model.
+
+2. **`setWindowText:` does not set the modify flag.** `TextEdit>>updateModel`
+   opens with `self isTextModified ifFalse: [^self]` — Windows' EM_GETMODIFY,
+   which real typing sets and a programmatic WM_SETTEXT deliberately does not.
+   Without `isTextModified: true` the update returned immediately: the probe
+   looked like it had typed and nothing had happened.
+
+3. **`Boolean>>asParameter`.** `isTextModified:` sends
+   `aBoolean asParameter` and `Object>>asParameter` answers self, so a Boolean
+   reached the FFI floor and was refused. Added Dolphin's own method AND made
+   the floor accept true/false as 1/0 — the mirror of `#b`, exactly as nil is
+   the mirror of `#h`: a BOOL-returning call ANSWERS a Boolean, so Booleans
+   are values the floor produces and must take back.
+
+Plus `Exception>>beep` — the audible half, and not decoration: it is the only
+feedback a user gets that what they typed was rejected.
+
+**21/21.** DD10's acceptance items are now all covered on Dolphin's own
+classes: two fields one model, converters and the bad-input revert, commands
+with `queryCommand:` enablement, menus, a worker-backed long command, and
+accelerators via `UI.AcceleratorTable`.
+
+**Still owed for DD10:** a VISIBLE shell. Everything is headless-verified —
+windows are created, shown and destroyed within a gate, and nothing has been
+left on screen for a human to look at.
