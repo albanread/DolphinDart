@@ -1,0 +1,256 @@
+# Loose ends
+
+Everything this port is knowingly carrying: scaffolding that must die,
+divergences it has accepted, defects seen but not chased, and constructs the
+translator still refuses.
+
+**Why a single file.** Each of these is already commented at its site, which is
+the right place for *how*. It is the wrong place for *what is still owed* —
+that answer was spread across a dozen files and three sprint notes, and the
+only way to assemble it was to grep for the word "scaffolding". Anything
+recorded here should stay recorded at its site too; this is an index, not a
+relocation.
+
+**The rule this file exists to enforce:** a stand-in is allowed, a stand-in
+without a named retirement is not. Every entry below says what kills it.
+
+Status as of DD10 (23/23 gates green).
+
+---
+
+## 1. Scaffolding — has a retirement, is not dead yet
+
+### 1.1 The `WinView` adapter family
+`st/dolphin_compat/06_winview.mst`, `09_wincontrol.mst`, `10_winmenu.mst`
+
+`WinView` answers Dolphin's layout protocol over a raw HWND. It was DD8/DD9's
+stand-in for a view, and `UI.View` has since been measured to implement the
+entire protocol it was written to supply — so it is retired IN PRINCIPLE.
+
+**It cannot be deleted alone.** `WinControl` is a `WinView` SUBCLASS, and
+`WinTextEdit`/`WinButton`/`WinLabel` hang off that; `st/test/ffi/text_probe.mst`
+and `counter_app.mst` build on those. The DD10 brief originally paired
+`WinView`'s retirement with the `#h` handle convention, which was wrong — the
+two are unrelated, and the pairing is corrected in `dd10_mvp_triad.md`.
+
+**Retires when:** `UI.Menu` realizes itself (kills `WinMenu`) and the probes
+move to `UI.TextEdit` (kills `WinTextEdit` → `WinControl` → `WinView`). All
+three go as ONE commit; deleting them piecemeal leaves a subclass without a
+superclass.
+
+**Already retirable now, separately:** `test/st_shell.dart` +
+`st/test/ffi/shell_probe.mst`. The DD9 arrangement coverage is fully
+superseded by `st_dolphinshell`, which asserts the same BorderLayout
+arrangement on real `UI.View`s plus a second resize. Kept only so the deletion
+happens with the rest of the family rather than as a lone commit.
+
+### 1.2 The font-walk terminator
+`st/mvp_compat/01_view_overrides.mst` — `SystemFont`, `DesktopView>>getActualFont`
+
+`View>>getActualFont` walks the parent chain to the desktop, where Dolphin
+answers a real `Graphics.Font`. `Graphics.Font` is not translated. The walk
+ends at an object satisfying exactly the protocol `ControlView>>setFont:` uses
+(`atDpi:` answers self, `asParameter` answers 0) so that no Dolphin method is
+overridden — and WM_SETFONT with a NULL font handle is Windows' own documented
+"use the system font", so the behaviour is right rather than merely harmless.
+
+**Retires when:** `Graphics.Font` is translated (DD11 graphics wave).
+**The gate that proves it:** any test asserting a control uses the font it was
+ASKED for rather than the system default. That assertion is impossible while
+this stand-in is here, which is the honest reason it counts as scaffolding.
+
+### 1.3 `Behavior>>bindingFor:`
+`st/dolphin_compat/03_kernel.mst`
+
+Dolphin answers a live class-variable binding so a holder can write through it
+later. This dialect binds class variables statically, so it answers a detached
+Association.
+
+**The cost, precisely:** the one caller is `SystemMetrics class >> initialize`,
+which stores those bindings so `reset`/`onSettingChanged:` can null four
+caches — `HasFlatMenus`, `MessageDuration`, `MouseHoverTime`,
+`WheelScrollLines`. Writing through a detached association does not clear the
+real class variable, so those four values stay as first read. **A user changing
+mouse hover time or flat-menu style mid-session will not see it until
+restart.**
+
+**Retires when:** the front-end grows a dynamic class-variable accessor
+(`classVarAt:put:`). Not needed for DD12's dialogs; worth doing when something
+needs live system-setting changes.
+
+### 1.4 `GUID newUnique`
+`st/dolphin_compat/03_kernel.mst`
+
+Composed from the millisecond clock and a counter, not `CoCreateGuid`. Enough
+for the registry keys Dolphin uses it for and needs no COM. Recorded at its
+site as a v1 shortcut.
+
+**Retires when:** something needs a GUID that is unique across processes or
+machines. Nothing does today.
+
+### 1.5 `st/world/47_worker.mst` — LOADED, and inert
+Recorded in DD10's first status block: its bodies are numbered-primitive
+pragmas (prims 227/228, MOP pickle), which this port compiles to `^self`. It
+describes a primary/worker VM design inherited from the world layer, not this
+port's mechanism — DD10's actual workers are Dart isolates
+(`st/dolphin_compat/11_worker.mst`, gate `st_worker`).
+
+**It is not dead code sitting unreferenced.** `st/world` is in BOOT, so the
+class `Worker` is defined in every gate, answering `self` from every method.
+That is the dangerous shape: a name that resolves, and a call that silently
+does nothing. Anyone reaching for `Worker spawn:` gets a no-op rather than a
+doesNotUnderstand.
+
+**Retires when:** either it is deleted, or its methods are made to raise
+`self shouldNotImplement`. The second is better if the design text is worth
+keeping — it converts a silent no-op into a loud one, which is this project's
+whole standing rule.
+
+---
+
+## 2. Accepted divergences — documented, not scheduled
+
+These are not scaffolding. They are decisions, and they should be revisited
+only if something actually depends on the difference.
+
+### 2.1 Immutability is a no-op
+`Object>>beImmutableObject` answers self; `isImmutable` answers false;
+`whileMutableDo:` is `aBlock value`. Dolphin marks objects immutable so its VM
+traps writes; this VM has no equivalent. `View class >> initialize` marks its
+MessageMap immutable, and `registerMessageMappings:` unfreezes it to edit —
+both work, neither protects anything. Pretending otherwise (by copying, say)
+would change identity for something the caller expects to be the same object.
+
+### 2.2 `Utf16Buffer` is not a String, and `size` disagrees
+In Dolphin, `Utf16String` IS a String subclass — `UserLibrary>>getWindowText:`
+ends `^text` and callers treat the answer as text. Here it is an
+`ExternalMemory` given the text protocol (`printOn:` quoted, `displayOn:` bare,
+`=` by content).
+
+**`size` is deliberately NOT aliased.** It is a universal helper the IL builder
+rewrites at the call site, and `ExternalMemory>>size` (the BYTE count) is what
+marshalling needs — where Dolphin's `Utf16String>>size` is the CHARACTER count.
+**A caller wanting characters must ask `stringValue size`.** This is the one
+place the two dialects give different answers to the same send, and it is
+written here so it is findable when it bites.
+
+### 2.3 Numbered `<primitive: N>` pragmas compile to `^self`
+Long-standing: they are INTENT, not dispatch. Only `primitive: FFI` and the
+D157 constructor lowering are handled. Recorded in `DOLPHIN_PORT.md`.
+
+### 2.4 Green processes are replaced, not emulated
+Scope rule 8: workers on Dart isolates REPLACE Dolphin's processes outright.
+`Processor activeProcess newWindow:` is a plain variable, not a process slot.
+This is a project-level decision (`docs/WORKERS.md`), not a gap.
+
+---
+
+## 3. Open — seen, reproducible, not chased
+
+### 3.1 `Cursor` is undefined → `'wait' called on null`
+**Symptom:** during shell creation, twice:
+`UiSession: handler error — NoSuchMethodError: The method 'wait' was called on null`
+
+**Cause:** `UI.View` has two sites —
+`st/mvp/01_View.mst:2076` and `:2111` — both `Cursor wait showWhile: [...]`,
+wrapping `#actionPerformed` and the long-action path. `Cursor` is not defined
+anywhere in this port, so `Cursor wait` sends to nil.
+
+**Why it is contained:** it raises inside `UiSession dispatchMessage:`, whose
+handler-error path catches, counts and answers nil. Nothing depends on the
+result yet.
+
+**Why it still matters:** it means the ACTION PATH is currently broken for any
+view that reaches it — a button press routed through `performAction` would
+raise rather than run the action. DD10's command gate does not go through this
+path, which is why it is green; DD12's dialogs will.
+
+**Fix:** a `Cursor` compat class with `wait`/`normal` and `showWhile:`
+(SetCursor + restore), or translate `Graphics.Cursor` with the DD11 graphics
+wave. The second is better and lands anyway.
+
+### 3.2 `<commandQuery:>` pragmas are dropped — 14 sites
+All 14 remaining `[pragma]` refusals are `<commandQuery: #canCut>` and kin, all
+in `UI.TextEdit`. Dolphin uses them declaratively to answer `queryCommand:`,
+which is what enables and disables menu items.
+
+**Consequence:** cut/copy/paste/undo menu items over a `TextEdit` will not
+enable or disable themselves. `st_command` is green because its enablement is
+written explicitly rather than declared by pragma.
+
+**This is on DD10's own remaining list** (item 4: the acceptance app with
+`queryCommand:` enablement observable), so it is not deferred — it is the next
+thing after the menu wave.
+
+### 3.3 `#{...}` variable-binding literals — 14 sites
+Refused with no house equivalent. Sites include `UI.View`, `UI.Menu`,
+`UI.Presenter` (×2), `UI.Shell`, `UI.ContainerView`, `UI.ControlView`,
+`Graphics.Rectangle`. A `#{Foo.Bar}` is a late-bound reference to a global.
+
+**Not yet a problem** because each refusal is in a method nothing has called.
+The refusal is loud and per-site, so this will surface as a missing method
+rather than a wrong answer — which is the intended failure mode.
+
+### 3.4 `##(...)` now evaluates at RUNTIME — 54 sites
+No longer a refusal: an unfoldable compile-time constant is lowered to
+`[ ... ] value`. Semantically equivalent for the constant-answering methods it
+appears in; the cost is that the value is rebuilt per call rather than once.
+
+**Worth revisiting** if one turns up on a hot path. `ControlView>>commonNotificationMap`
+builds an IdentityDictionary and is the most likely candidate.
+
+### 3.5 Cascade refusals — 22 sites
+`cascade on a receiver this rewriter cannot bound`. Deliberate: splitting a
+cascade whose receiver is not a simple primary would re-evaluate a
+side-effecting receiver. Each is a method that will fail loudly if called.
+
+### 3.6 Orphan loose methods — 10 sites
+`.pax` methods filed onto classes not in the translation set. Harmless while
+those classes are absent; each becomes a real gap the moment one is translated.
+
+---
+
+## 4. Tooling and harness
+
+### 4.1 Recorded invocations — done, keep them that way
+`tools/gen_prims.py`, `tools/translate_mvp.py`, `tools/gates.py`. Three
+failures in one afternoon came from invocations that lived only in shell
+one-liners — one of them silently rewrote `UserLibrary` from 232 external
+methods to 1, over the good floor.
+
+**Standing rule:** a generator or gate invoked from a one-liner is a defect.
+Put it in a script.
+
+### 4.2 A shared `test/gate_util.dart` — recommended, still not built
+`ev`/`must`/`expect` and the paint-liveness helper are copy-pasted across 20+
+gates. The gate-harness defect pattern keeps recurring in the copies:
+
+  - boolean compared to `0` (`true != 0` always passes, `false == 0` never does)
+  - `must(x != 0)` passing on the `-1` that `num` answers for a RAISED
+    expression — reported a healthy window for a send that never worked
+  - `must(seen >= before)` on a monotonic counter — unconditionally true
+  - flaky paint thresholds under WM_PAINT coalescing
+
+Each was found and fixed in one gate at a time. A shared helper with `mustBe`
+(equality, not inequality) and a `numOrFail` that cannot silently answer -1
+would have prevented all four shapes.
+
+### 4.3 `st/prims/_refusals.txt` is 6785 lines and unreviewed
+The FLOOR's refusal report (distinct from `st/mvp/_refusals.txt`). Mostly
+struct-by-value and float arguments, both genuinely unrepresentable. Nobody has
+read it end to end to check nothing important is hiding there.
+
+---
+
+## 5. Not loose ends
+
+Recorded so they are not re-investigated:
+
+- **`_report.md` refusal counts look alarming and are not.** `TextEdit` shows
+  21 refusals against 179 methods; all 21 are the pragma/binding-literal/
+  cascade classes above, and the class works.
+- **`Object class >> icon` appears twice** in `st/mvp/90_Object_loose.mst` and
+  the loader prints `[lastwins]`. Two `.pax` files each file an `icon` onto
+  Object; both bodies are equivalent. Noise, not a defect.
+- **Windows answers `'Edit'`, not `'EDIT'`.** Window class names are
+  case-insensitive; `st_textedit` compares case-folded.

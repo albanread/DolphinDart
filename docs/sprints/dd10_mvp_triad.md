@@ -38,6 +38,12 @@
 > Per-CLASS message maps (the global `MessageMap` on `UiSession`) can wait for
 > DD11, when different view classes first coexist with different maps.
 
+> **Everything this port knowingly carries — scaffolding with named
+> retirements, accepted divergences, and defects seen but not chased — is
+> indexed in `docs/LOOSE_ENDS.md`. Add to it rather than only commenting at
+> the site: the site is the right place for HOW, and the wrong place for what
+> is still owed.**
+
 > ## STATUS 2 + REVIEW (2026-08-16, evening)
 >
 > **Done since the morning block:** per-window routing (`st_twowin`), real
