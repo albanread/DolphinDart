@@ -1,0 +1,20 @@
+WindowsEvent subclass: DpiChangedEvent [
+    | currentDpi |
+
+    currentDpi [
+        	^currentDpi
+    ]
+    currentDpi: anInteger [
+        	currentDpi := anInteger
+    ]
+    newDpi [
+        	^self wParam lowWord
+    ]
+    printOn: aStream [
+        "Append a textual representation of the receiver to aStream."
+        aStream basicPrint: self. aStream nextPut: $(. aStream print: self window. aStream nextPutAll: ' currentDpi: '. aStream print: self currentDpi. aStream nextPutAll: ' newDpi: '. aStream print: self newDpi. aStream nextPutAll: ' proposedRect: '. aStream print: self proposedRect. aStream nextPut: $)
+    ]
+    proposedRect [
+        	^RECTL fromAddress: self lParam
+    ]
+]

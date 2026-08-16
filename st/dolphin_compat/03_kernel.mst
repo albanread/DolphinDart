@@ -301,6 +301,21 @@ nil subclass: Object [
      itself here, and the selector is sent to whatever the creation path
      produced."
     asExternalHandle [ ^self ]
+
+    "`asExternalAddress` — identity, for the same reason as
+     `asExternalHandle` above. Dolphin boxes a raw address so a 64-bit pointer
+     survives its 30-bit SmallIntegers; a Dart integer holds it directly.
+
+     `View>>wmWindowPosChanged:wParam:lParam:` is the caller — it wraps
+     lParam, which is a pointer to a WINDOWPOS, before reading fields through
+     it. Those two messages arrive on every move and resize, so without this
+     every one of them raised into the contained handler-error path.
+
+     It answers an ExternalMemory VIEW, not the integer itself: the receiver
+     of `asExternalAddress` is then sent struct protocol (`uint32AtOffset:`),
+     which an integer does not have. Answering self looked simpler and moved
+     the failure one message along rather than fixing it."
+    asExternalAddress [ ^ExternalMemory fromAddress: self ]
 ]
 
 "`identityIncludes:` — ANSI, and absent from the world.
@@ -346,4 +361,189 @@ Object subclass: Collection [
 nil subclass: Object [
     Object class >> conformsToProtocol: aSymbol [ ^false ]
     conformsToProtocol: aSymbol [ ^false ]
+]
+
+"`lookup:` on a SEQUENCEABLE collection — Dolphin's own, and a second meaning.
+
+     ^self at: keyInteger ifAbsent: nil
+
+ `Dictionary>>lookup:` already exists (st/dolphin_compat/06_winview.mst); this
+ is the INDEXED twin, and Dolphin defines both for the same reason — it is the
+ very common pattern of passing an empty absent-block. `Menu>>fromString:`
+ does `label := anArray lookup: 1` on the result of splitting a menu string,
+ where a one-part string legitimately has no second element.
+
+ `at: k ifAbsent: nil` — a nil where a block is expected — is Dolphin's own
+ spelling and works because `ifAbsent:` sends `value` to whatever it is
+ given; written out here as an explicit block, which is the same answer
+ without depending on `nil value`."
+Object subclass: SequenceableCollection [
+    lookup: anIndex [
+        ^(anIndex isNil or: [ anIndex < 1 or: [ anIndex > self size ] ])
+            ifTrue: [ nil ]
+            ifFalse: [ self at: anIndex ]
+    ]
+]
+
+"Two more from Dolphin's base, both reached the first time `MenuBar>>
+ fromStrings:` runs.
+
+ `from:do:` — iterate from an index to the end. Dolphin defines it as
+ `self from: anInteger keysAndValuesDo: [:i :each | operation value: each]`;
+ written directly here, which is the same traversal without needing the
+ keys-and-values twin as well. `Menu class >> fromStrings:` uses it to walk a
+ nested menu array past its first element, the first element being the menu's
+ own title.
+
+ `beFinalizable` — Dolphin marks an object as needing finalization by setting
+ a bit its VM reads at collection time. This VM has no finalization hook, so
+ this is an honest no-op of exactly the same kind as `beImmutableObject`
+ above, and is recorded in `docs/LOOSE_ENDS.md` beside it: a `Menu` that is
+ garbage collected will NOT have `DestroyMenu` called for it. That leaks a
+ menu handle per discarded menu — bounded, since menus are built once per
+ window here, and real if something ever builds them in a loop."
+Object subclass: SequenceableCollection [
+    from: anInteger do: aBlock [
+        anInteger to: self size do: [ :i | aBlock value: (self at: i) ]
+    ]
+    from: startInteger to: stopInteger do: aBlock [
+        startInteger to: stopInteger do: [ :i | aBlock value: (self at: i) ]
+    ]
+]
+
+nil subclass: Object [
+    beFinalizable [ ^self ]
+    beUnfinalizable [ ^self ]
+]
+
+"`LookupTable` — Dolphin's plain equality-keyed dictionary.
+
+ Dolphin distinguishes `LookupTable` (equality keys, no associations stored)
+ from `Dictionary` (stores Associations). Nothing in this port depends on that
+ difference — `MenuItem class >> dividers` builds one and only ever reads it
+ with `lookup:` — so it is a Dictionary subclass here, which gives it the
+ whole protocol for free.
+
+ Recorded rather than aliased outright: if something ever iterates a
+ LookupTable expecting VALUES where a Dictionary yields Associations, this is
+ the line that made it possible."
+Dictionary subclass: LookupTable [
+]
+
+"`Sound` — Dolphin's parping, the part the MVP layer reaches.
+
+ `Menu>>applyFlags` ends `ifFalse: [Sound errorBeep]`, and DD10's acceptance
+ path wants the bad-input beep. MB_ICONERROR is 16r10, and MessageBeep is
+ already in the generated floor.
+
+ Dolphin's `Core.Sound` also plays waveforms from resources; nothing here
+ needs that, so it is not written. This is the whole of what the view layer
+ asks for, not a stub of something larger."
+Object subclass: Sound [
+    Sound class >> beep: anInteger [ ^User32 messageBeep: anInteger ]
+    Sound class >> errorBeep [ ^self beep: 16r10 ]
+    Sound class >> beep [ ^self beep: 0 ]
+]
+
+"── the weak-keyed command registry — a STRONG stand-in, cost stated ────────
+
+ `CommandDescription class >> initialize` is
+
+     CommandDescriptionRegistry := WeakIdentityDictionary newWithWeakKeys: 150.
+     CurrentId := 4000
+
+ and every `CommandDescription` interns itself there to get a numeric id that
+ Windows can carry in a WM_COMMAND. Dolphin makes the KEYS WEAK so a command
+ belonging to a discarded menu can be collected and its id reused.
+
+ This VM has no weak references (DIALECT_GAPS A7: weak refs and mourning are
+ backlog), so this is an IdentityDictionary with strong keys.
+
+ THE COST, exactly: a CommandDescription is never collected, so its id is
+ never reused. Ids start at 4000 and increment. An application that builds
+ menus once per window leaks a handful; one that rebuilds a menu in a loop
+ grows the registry without bound. Nothing in DD10-DD12 does that, and the
+ day something does, the symptom will be memory growth rather than a wrong
+ answer — which is why this is acceptable and recorded rather than blocking.
+
+ RETIREMENT: real weak references in the VM. Recorded in docs/LOOSE_ENDS.md.
+
+ `at:ifAbsentPutClean:` is Dolphin's name for at:ifAbsentPut: on a weak table
+ — the `Clean` means the block must not capture the receiver, which matters
+ only when the table is weak. Here it is exactly at:ifAbsentPut:."
+Dictionary subclass: WeakIdentityDictionary [
+    WeakIdentityDictionary class >> newWithWeakKeys: anInteger [ ^self new ]
+    haveStrongValues [ ^self ]
+    haveWeakKeys [ ^self ]
+]
+
+Object subclass: Dictionary [
+    at: aKey ifAbsentPutClean: aBlock [ ^self at: aKey ifAbsentPut: aBlock ]
+]
+
+"`FunctionDescriptor` — a stand-in for Dolphin's CALLBACK descriptors.
+
+ `Menu class >> initialize` ends
+
+     DrawStateCallbackDescriptor := FunctionDescriptor
+         returnType: 'bool' argumentTypes: 'handle intptr uintptr int32 int32'
+
+ which describes a C callback Windows will invoke for an OWNER-DRAWN menu
+ item. Dolphin's FFI can build a machine-code thunk from that description;
+ this port's floor calls OUT to C and has no inbound-callback mechanism at
+ all — the door's window procedure is the one callback, and it is written in
+ C++ rather than generated.
+
+ THE BOUNDARY: owner-drawn and bitmap menu items do not draw. Ordinary text
+ menus — the whole of what DD10's app and DD12's dialogs use — are unaffected,
+ because the descriptor is only consulted when an item asks to be drawn by the
+ application. The same boundary already applies to
+ `MENUITEMINFOW>>commandMenuItem:metrics:`, whose image branch is likewise
+ absent, and both wait on the same thing.
+
+ Without this, `Menu class >> initialize` raises and its MESSAGE MAPPINGS are
+ never registered — WM_CONTEXTMENU, WM_INITMENU, WM_INITMENUPOPUP — so a menu
+ would never be told it is about to be shown. That is a much bigger loss than
+ owner-drawing, and it is why this exists rather than letting the initialize
+ fail.
+
+ RETIREMENT: an inbound-callback mechanism in the FFI floor. Recorded in
+ docs/LOOSE_ENDS.md."
+Object subclass: FunctionDescriptor [
+    | returnType argumentTypes |
+    FunctionDescriptor class >> returnType: aReturnType argumentTypes: aTypeString [
+        ^self new setReturnType: aReturnType argumentTypes: aTypeString
+    ]
+    setReturnType: r argumentTypes: a [ returnType := r. argumentTypes := a ]
+    returnType [ ^returnType ]
+    argumentTypes [ ^argumentTypes ]
+    "A descriptor that can never be called back through answers no thunk.
+     Answering 0 rather than nil so a caller passing it to Win32 as a word
+     marshals cleanly — Windows treats a null callback as 'no owner draw'."
+    asParameter [ ^0 ]
+]
+
+"`keyAtValue:` / `keyAtValue:ifAbsent:` — the REVERSE lookup, and the command
+ registry depends on it.
+
+ `CommandDescription class >> withId: anInteger ifAbsent:` answers the command
+ whose registered id is `anInteger`, which is how Dolphin's
+ `wmCommand:wParam:lParam:` turns the id Windows sends back into a real
+ command object. Without it every menu command raised inside the contained
+ handler-error path.
+
+ `TextEdit>>alignment` uses the same pair against its AlignmentMap.
+
+ Linear, because a Dictionary is indexed by KEY: Dolphin's is linear too."
+Object subclass: Dictionary [
+    keyAtValue: aValue ifAbsent: aBlock [
+        self keysAndValuesDo: [ :k :v | v = aValue ifTrue: [ ^k ] ].
+        ^aBlock value
+    ]
+    keyAtValue: aValue [ ^self keyAtValue: aValue ifAbsent: [ nil ] ]
+    "Identity twin, for the registries keyed by object identity."
+    keyAtIdentityValue: aValue ifAbsent: aBlock [
+        self keysAndValuesDo: [ :k :v | v == aValue ifTrue: [ ^k ] ].
+        ^aBlock value
+    ]
 ]

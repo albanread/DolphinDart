@@ -1,0 +1,36 @@
+WindowsEvent subclass: PaintEvent [
+    | hdc paintStruct |
+
+    canvas [
+        "Answer a Canvas using the hdc associated with the paint event."
+        ^Canvas withNonOwnedDC: hdc
+    ]
+    hdc [
+        	^hdc
+    ]
+    paintStruct [
+        "Answer the <PAINTSTRUCT> associated with the receiver."
+        ^paintStruct
+    ]
+    printOn: aStream [
+        "Append a textual representation of the receiver to aStream."
+        aStream basicPrint: self. aStream nextPut: $(. aStream print: self paintStruct. aStream nextPut: $)
+    ]
+    window: aView wParam: anInteger hdc: dcExternalHandle paintStruct: aPAINTSTRUCT [
+        "Private - Initialize the receiver's instance variables. Answer the receiver."
+        message := 15.
+        	window := aView.
+        	wParam := anInteger.
+        	lParam := 0.
+        	hdc := dcExternalHandle.
+        	paintStruct := aPAINTSTRUCT
+    ]
+    PaintEvent class >> window: aView wParam: wParam hdc: hdc paintStruct: ps [
+        "Answer an instance of the receiver with the given properties."
+        ^self new
+        		window: aView
+        		wParam: wParam
+        		hdc: hdc
+        		paintStruct: ps
+    ]
+]

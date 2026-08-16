@@ -108,6 +108,7 @@ GATES = {
     "st_dolphinshell": [MVP, MVP_COMPAT, FFI + "/dolphin_shell.mst"],
     "st_subclass": [MVP, MVP_COMPAT, FFI + "/control_subclass.mst"],
     "st_textedit": [MVP, MVP_COMPAT, FFI + "/dolphin_textedit.mst"],
+    "st_menu": [MVP, MVP_COMPAT, FFI + "/dolphin_menu.mst"],
 }
 
 # Gates with no window and no message pump. They run under `dart.exe`, which

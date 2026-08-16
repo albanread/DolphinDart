@@ -1,0 +1,117 @@
+"03_struct_accessors.mst — fields the struct generator could not size.
+
+ `tools/dolphin2mst/genstructs.py` reads field offsets from winkb
+ (Win32Metadata) and emits a typed accessor per field. Where it cannot
+ determine a field's WIDTH it emits a comment instead:
+
+     fMask: Windows.Win32.UI.WindowsAndMessaging.MENUINFO_MASK at 4 — no
+     accessor (width unknown); use byteAt: directly
+
+ That is the right refusal — guessing a width silently writes the wrong number
+ of bytes and corrupts the neighbouring field — but it leaves a hole, and
+ `UI.Menu>>applyFlags` falls in it: `struct style: flags` on a MENUINFO whose
+ `dwStyle` has no accessor.
+
+ THE MISSING WIDTHS ARE ENUM TYPES. `MENUINFO_MASK` and `MENUINFO_STYLE` are
+ Win32 enums, and a Win32 enum in a struct is a DWORD — 32 bits — unless it
+ declares otherwise. winkb records the enum's name but the generator does not
+ follow it to its underlying type.
+
+ GENERATOR FIX, recorded in docs/LOOSE_ENDS.md: resolve an enum-typed field to
+ its underlying integer type and emit the accessor. Until then the accessors
+ live here, HAND-CHECKED against the offsets the generator did emit — the
+ fields on either side pin them exactly:
+
+     cbSize   uint32 at 1   (offset 0)
+     fMask    ?      at 5   (offset 4)   <- supplied here
+     dwStyle  ?      at 9   (offset 8)   <- supplied here
+     cyMax    uint32 at 13  (offset 12)
+
+ A wrong width here would show up immediately as a corrupted `cyMax`, which is
+ why the neighbours are quoted: they are the check."
+ExternalMemory subclass: MENUINFO [
+    fMask [ ^self uint32At: 5 ]
+    fMask: v [ ^self uint32At: 5 put: v ]
+    dwStyle [ ^self uint32At: 9 ]
+    dwStyle: v [ ^self uint32At: 9 put: v ]
+
+    "Dolphin's own spellings. `Menu>>applyFlags` writes `struct style: flags`,
+     and `Menu>>queryStyle` reads it back."
+    style [ ^self dwStyle ]
+    style: v [
+        "MIM_STYLE = 16r10. Setting the style without ALSO setting the mask
+         bit that says 'the style field is meaningful' makes SetMenuInfo
+         ignore it — the call succeeds and nothing changes, which is the
+         quietest possible failure. Dolphin own MENUINFO style: sets
+         both; this does the same rather than leaving it to the caller."
+        self fMask: (self fMask bitOr: 16r10).
+        ^self dwStyle: v
+    ]
+]
+
+"MENUITEMINFOW — the same enum-width gap, three fields, and the Smalltalk
+ protocol Dolphin puts on top of the layout.
+
+ Offsets pinned by the neighbours the generator DID emit:
+
+     cbSize   uint32 at 1   (offset 0)
+     fMask    ?      at 5   (offset 4)    <- supplied
+     fType    ?      at 9   (offset 8)    <- supplied
+     fState   ?      at 13  (offset 12)   <- supplied
+     wID      uint32 at 17  (offset 16)
+
+ `commandMenuItem:metrics:` and `basicText:` are Dolphin's own, from
+ `OS.MENUITEMINFOW.cls`, transcribed rather than translated: that `.cls` also
+ carries a `defineFields` template, and emitting it as a class would REPLACE
+ the generated layout with one that has no offsets at all — the same shape as
+ the `.pax` incident that overwrote this very struct in DD10.
+
+ IMAGES ARE NOT SUPPORTED and that is why the image branch is absent rather
+ than stubbed: `setImage:metrics:` needs the Graphics wave (DD11). A menu item
+ with an image will get its text and id and no bitmap, which is a visible
+ difference, not a silent one."
+ExternalMemory subclass: MENUITEMINFOW [
+    fMask [ ^self uint32At: 5 ]
+    fMask: v [ ^self uint32At: 5 put: v ]
+    fType [ ^self uint32At: 9 ]
+    fType: v [ ^self uint32At: 9 put: v ]
+    fState [ ^self uint32At: 13 ]
+    fState: v [ ^self uint32At: 13 put: v ]
+    hSubMenu: v [ ^self intptrAt: 25 put: v ]
+    dwTypeData: v [ ^self intptrAt: 57 put: v ]
+
+    "Dolphin's `basicText:`. The buffer must OUTLIVE the SetMenuItemInfo call
+     that reads through the pointer, which it does because the caller holds
+     this struct until the send returns — the same lifetime rule the create
+     path relies on for lpClassName."
+    basicText: aString [
+        | buf |
+        buf := Utf16Buffer fromString: aString displayString.
+        self dwTypeData: buf address.
+        ^buf
+    ]
+
+    "MIIM_STRING = 16r40, MIIM_ID = 16r2, MIIM_FTYPE = 16r100, MIIM_SUBMENU
+     = 16r4."
+    "Dolphin's `type:` — set fType and mark ONLY that field meaningful.
+     `DividerMenuItem>>populateItemInfo:metrics:` uses it: a separator has no
+     text and no id, so the mask must not claim it has.
+     MIIM_FTYPE = 16r100, assigned rather than OR-ed, exactly as Dolphin does."
+    type: anInteger [
+        self fType: anInteger.
+        ^self fMask: 16r100
+    ]
+
+    commandMenuItem: aCommandMenuItem metrics: aSystemMetrics [
+        | mask fType |
+        mask := 16r40 bitOr: 16r2.
+        fType := aCommandMenuItem styleFlags.
+        fType = 0 ifFalse: [
+            self fType: fType.
+            mask := mask bitOr: 16r100 ].
+        self basicText: aCommandMenuItem text.
+        self wID: aCommandMenuItem id.
+        self fMask: mask.
+        ^self
+    ]
+]

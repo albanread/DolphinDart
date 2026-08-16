@@ -2389,6 +2389,15 @@ bool StGraphBuilder::IsInlinableControlFlow(MessageNode* node) {
     return IsBlockNode(node->receiver.get()) && node->args.size() == 1 &&
            IsBlockNode(node->args[0].get());
   }
+  // The UNARY forms. ANSI: `aBlock whileTrue` repeats the receiver while it
+  // answers true, i.e. `whileTrue: []` with the work in the condition.
+  // Dolphin writes it — `CommandDescription class >> nextId` scans for a free
+  // id with a `[...] whileTrue.` — and without the inline the send reaches a
+  // Dart closure as a method call and dies with "Closure call with mismatched
+  // arguments".
+  if (s == "whileTrue" || s == "whileFalse") {
+    return IsBlockNode(node->receiver.get()) && node->args.empty();
+  }
   if (s == "to:do:") {
     return node->args.size() == 2 && IsBlockNode(node->args[1].get());
   }
@@ -2616,20 +2625,26 @@ Fragment StGraphBuilder::TranslateControlFlow(MessageNode* node,
     return result;  // a value; the caller Drops it in statement position
   }
 
-  // --- whileTrue: / whileFalse: -----------------------------------------
-  if (s == "whileTrue:" || s == "whileFalse:") {
+  // --- whileTrue: / whileFalse: (and their unary forms) ------------------
+  if (s == "whileTrue:" || s == "whileFalse:" || s == "whileTrue" ||
+      s == "whileFalse") {
+    const bool unary = node->args.empty();
     BlockNode* cond_block = dynamic_cast<BlockNode*>(node->receiver.get());
-    BlockNode* body_block = dynamic_cast<BlockNode*>(node->args[0].get());
+    // The unary form has NO body — all the work is in the condition, which is
+    // evaluated once per iteration either way. `InlineBlockStmts(nullptr)`
+    // would be an empty fragment, so the body block is simply absent.
+    BlockNode* body_block =
+        unary ? nullptr : dynamic_cast<BlockNode*>(node->args[0].get());
     Fragment condition = InlineBlockValue(cond_block);  // pushes the bool
     TargetEntryInstr* body_entry;
     TargetEntryInstr* loop_exit;
-    if (s == "whileTrue:") {
+    if (s == "whileTrue:" || s == "whileTrue") {
       condition += BranchIfTrue(&body_entry, &loop_exit);
-    } else {  // whileFalse: — loop while the condition is false
+    } else {  // whileFalse — loop while the condition is false
       condition += BranchIfTrue(&loop_exit, &body_entry);
     }
     Fragment body(body_entry);
-    body += InlineBlockStmts(body_block);
+    if (body_block != nullptr) body += InlineBlockStmts(body_block);
     Instruction* entry;
     if (body.is_open()) {
       JoinEntryInstr* join = BuildJoinEntry();

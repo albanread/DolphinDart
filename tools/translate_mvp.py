@@ -96,6 +96,11 @@ TARGETS = [
     "Core/Object Arts/Dolphin/MVP/Base/UI.MenuItem.cls",
     "Core/Object Arts/Dolphin/MVP/Base/UI.Menu.cls",
     "Core/Object Arts/Dolphin/MVP/Base/UI.MenuBar.cls",
+    # The two concrete MenuItem subclasses. `MenuItem class >> new` is
+    # `subclassResponsibility` — it is abstract — and `fromString:` answers a
+    # `CommandMenuItem` or, for '-', the shared `DividerMenuItem` flyweight.
+    "Core/Object Arts/Dolphin/MVP/Base/UI.CommandMenuItem.cls",
+    "Core/Object Arts/Dolphin/MVP/Base/UI.DividerMenuItem.cls",
 
     # ── DD10: the EVENT family ─────────────────────────────────────────────
     # Once Dolphin's own `buildMessageMap` is installed as the routed set, its
@@ -111,6 +116,21 @@ TARGETS = [
     "Core/Object Arts/Dolphin/MVP/Base/UI.PointEvent.cls",
     "Core/Object Arts/Dolphin/MVP/Base/UI.MouseEvent.cls",
     "Core/Object Arts/Dolphin/MVP/Base/UI.KeyEvent.cls",
+    # The REST of the family, added together rather than one per failure.
+    # `UI.View` names ten event classes and its message map reaches all of
+    # them, so translating them piecemeal just means one more contained
+    # handler error per message that happens to arrive first. Grepped from
+    # View's own source rather than guessed:
+    #   ColorEvent DpiChangedEvent KeyEvent MouseEvent MouseWheelEvent
+    #   PaintEvent PointEvent PositionEvent ScrollEvent WindowsEvent
+    # (`TrackMouseEvent` is named but has no class file — it is a STRUCT,
+    #  TRACKMOUSEEVENT, which the generated floor already has.)
+    "Core/Object Arts/Dolphin/MVP/Base/UI.ColorEvent.cls",
+    "Core/Object Arts/Dolphin/MVP/Base/UI.DpiChangedEvent.cls",
+    "Core/Object Arts/Dolphin/MVP/Base/UI.MouseWheelEvent.cls",
+    "Core/Object Arts/Dolphin/MVP/Base/UI.PaintEvent.cls",
+    "Core/Object Arts/Dolphin/MVP/Base/UI.PositionEvent.cls",
+    "Core/Object Arts/Dolphin/MVP/Base/UI.ScrollEvent.cls",
 
     # ── DD10: CONTROLS ─────────────────────────────────────────────────────
     # A control is a window of a class COMCTL registered, so Dolphin gets into

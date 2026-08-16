@@ -88,3 +88,25 @@ Object subclass: NTLibrary [
         ^buf
     ]
 ]
+
+"── GetMenu — a hand-written prim, and why the floor does not have it ───────
+
+ `st/prims` is GENERATED from Dolphin's own `<stdcall:>` pragmas, so it holds
+ exactly what Dolphin declared. Dolphin never declares GetMenu: it keeps the
+ menu bar in its `ShellView` and never asks Windows for it back, so the
+ pragma does not exist to generate from.
+
+ This port wants it for one reason — a GATE that asks WINDOWS whether the
+ window really has the menu, rather than asking the Smalltalk object that
+ was told to attach it. A menu built and never attached satisfies every
+ other assertion.
+
+ Declared HERE rather than hand-edited into `st/prims`, which is a build
+ artifact. The alias layer is the right home: it already loads after the
+ generated libraries and already exists to add what the corpus idiom needs on
+ top of them."
+Object subclass: UserLibrary [
+    UserLibrary class >> getMenu: hWnd [
+        <primitive: FFI function: #GetMenu ret: #h args: #( g )>
+    ]
+]

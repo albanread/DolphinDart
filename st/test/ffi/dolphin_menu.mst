@@ -1,0 +1,88 @@
+"dolphin_menu.mst — Dolphin's OWN `UI.MenuBar` on a real window (DolphinDart DD10).
+
+ `WinMenu` (st/dolphin_compat/10_winmenu.mst) built menus by calling
+ CreateMenu/AppendMenu directly, because DD10 needed menu commands before the
+ Menu classes were reachable. This is the same thing with the stand-in
+ removed: `UI.MenuBar`, `UI.Menu` and `UI.MenuItem`, realized by Dolphin's own
+ `createHandle`/`realize`, attached by Dolphin's own `ShellView>>menuBar:`,
+ and fired through Dolphin's own `wmCommand:wParam:lParam:`.
+
+ WHAT MAKES THE COMMAND PATH REAL HERE. A menu command arrives as WM_COMMAND
+ with lParam NULL, and Dolphin's handler then looks the id up in the
+ CommandDescription registry:
+
+     (CommandDescription withId: wParam lowWord ifAbsent: nil)
+         ifNotNil: [:command | self onCommand: command]
+
+ So the id the menu item was built with has to be the id the registry knows —
+ which it is, because `MenuItem>>command:` registers it. That round trip is
+ the thing worth testing: an assertion that merely counted WM_COMMANDs would
+ pass with the wrong id and the wrong command."
+ShellView subclass: MenuShell [
+    | bar received receivedCount |
+
+    received [ ^received ]
+    receivedCount [ ^receivedCount ifNil: [ 0 ] ]
+    bar [ ^bar ]
+
+    MenuShell class >> routeDolphinMessages [ ^UiSession routeMessagesFrom: View ]
+
+    "Dolphin's own `fromStrings:` builds the whole tree — a MenuBar holding
+     Menus holding MenuItems — from nested arrays of strings, which is the
+     shortest statement of a menu an application author can write."
+    buildMenu [
+        receivedCount := 0.
+        bar := MenuBar new.
+        "DOLPHIN'S OWN MENU-STRING FORMAT, which is three parts split by `/`:
+         description / accelerator / command symbol. `MenuItem class >>
+         fromString:` raises `Illegal menu string` on anything else, and '-'
+         is the one special case — it answers the shared divider flyweight.
+         The first element of each nested array is the sub-menu's own title."
+        bar fromStrings: #(
+            #('&File' '&Open//fileOpen' '&Save//fileSave' '-' 'E&xit//exit')
+            #('&Edit' 'Cu&t//editCut' '&Copy//editCopy' '&Paste//editPaste')).
+        self menuBar: bar.
+        ^bar
+    ]
+
+    "The id Windows will send for a named item, taken from the MENU rather
+     than from a table this test keeps — so the gate fires the id the menu
+     actually carries."
+    "The numeric id Windows will send for a named command, taken from the
+     COMMAND DESCRIPTION REGISTRY — the same registry Dolphin's
+     `wmCommand:wParam:lParam:` resolves the id through, so the gate fires the
+     id the menu actually carries rather than one it invented."
+    idFor: aCommandSymbol [
+        | item |
+        item := self itemNamed: aCommandSymbol.
+        ^item isNil
+            ifTrue: [ 0 ]
+            ifFalse: [ CommandDescription idFor: item commandDescription ]
+    ]
+
+    itemNamed: aString [
+        bar items do: [ :sub |
+            sub isNil ifFalse: [
+                (sub respondsTo: #items) ifTrue: [
+                    sub items do: [ :each |
+                        (each notNil and: [ (each respondsTo: #commandDescription)
+                            and: [ each commandDescription notNil
+                            and: [ each commandDescription command = aString asSymbol ] ] ])
+                            ifTrue: [ ^each ] ] ] ] ].
+        ^nil
+    ]
+
+    "Dolphin's `View>>onCommand:` — the end of the menu command path. The
+     argument is a COMMAND DESCRIPTION, not an id, which is the whole point of
+     routing WM_COMMAND through Dolphin's own handler."
+    onCommand: aCommandDescription [
+        received := aCommandDescription.
+        receivedCount := self receivedCount + 1.
+        ^0
+    ]
+
+    "The menu handle Windows holds for this window, asked of Windows rather
+     than of the Menu object — a menu that was built but never attached would
+     satisfy every other assertion."
+    windowMenuHandle [ ^User32 getMenu: handle ]
+]

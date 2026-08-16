@@ -1,0 +1,129 @@
+"DividerMenuItem represents a divider that can be placed between other items in a <Menu>. Separate singleton instances for the various styles are held in class variables and answered by the #separator, #break and #barBreak [instance creation] methods.
+
+Class Variables:
+	Separator		<DividerMenuItem> singleton instance for the standard separator style.
+	DividerLookup	<LookupTable> mapping <integer> style flags to their <Symbol> style names.
+	BarBreak		<DividerMenuItem> singleton instance for the bar-break separater style.
+	Break		<DividerMenuItem> singleton instance for the break separater style"
+
+MenuItem subclass: DividerMenuItem [
+    <classVars: BarBreak Break Separator DividerLookup>
+    DividerMenuItem class >> classVarBarBreak [ ^BarBreak ]
+    DividerMenuItem class >> classVarBreak [ ^Break ]
+    DividerMenuItem class >> classVarSeparator [ ^Separator ]
+    DividerMenuItem class >> classVarDividerLookup [ ^DividerLookup ]
+
+    acceleratorKey [
+        "Private - Answer the accelerator key code for the receiver.
+        	Dividers are of course inactive."
+        ^0
+    ]
+    acceleratorKey: anInteger [
+        "Private - Set the receiver's accelerator key code to the argument, anInteger."
+    ]
+    command [
+        "Private - Answer the command selector for the receiver.
+        	There is of course no command associated with dividers."
+        ^nil
+    ]
+    commandDescription [
+        "Private - Answer the <commandDescription> for the receiver"
+        ^CommandDescription command: nil description: '|'
+    ]
+    displayOn: aPuttableStream [
+        "Append to the <puttableStream> first argument a String whose characters are a representation of the receiver that an end-user might want to see."
+        aPuttableStream nextPutAll: self displayString
+    ]
+    displayString [
+        	^[IdentityDictionary
+        		withAll: { 32 -> '||'. 64 -> '|'. 2048 -> '-' }] value
+        			at: self styleFlags
+    ]
+    id [
+        "Answers the menu item identifier for the receiver"
+        ^0
+    ]
+    isDivider [
+        "Answer whether the receiver is actually just a divider."
+        ^true
+    ]
+    isSelfEvaluating [
+        "Answer whether or not the receiver has a printString representation that evaluates back to an equivalent object."
+        ^true
+    ]
+    populateItemInfo: aMENUITEMINFO metrics: aSystemMetrics [
+        "Private - Copy the receiver's item information into the <MENUITEMINFOW> argument."
+        aMENUITEMINFO type: self styleFlags
+    ]
+    printOn: aStream [
+        "Appends the receiver to aStream as a representation that a 
+        	developer would want to see"
+        aStream print: self class. aStream space. aStream display: self styleName
+    ]
+    queryAlong: aCommandPolicy [
+        	^nil
+    ]
+    styleName [
+        "Answer a Symbol description of the style of the receiver"
+        ^DividerLookup at: self styleFlags
+    ]
+    styleName: aSymbol [
+        "Private - Set the receiver's style from the description in aSymbol. 
+        	This can be one of #separator, #break or #barBreak."
+        self styleFlags: (DividerLookup keyAtValue: aSymbol)
+    ]
+    text [
+        "Private - Answer the menu text (i.e. the text that appears in the menu) for the receiver."
+        ^''
+    ]
+    toStrings [
+        	^self displayString
+    ]
+    DividerMenuItem class >> barBreak [
+        "Answer unique DividerMenuItem which splits places following menu items in
+        	a new column. Vertical line splits the old and new column of menu items."
+        ^BarBreak ifNil: [BarBreak := self dividers at: '||']
+    ]
+    DividerMenuItem class >> break [
+        "Answer unique DividerMenuItem which splits places following menu items in
+        	a new column."
+        ^Break ifNil: [Break := self dividers at: '|']
+    ]
+    DividerMenuItem class >> initialize [
+        "Private - Initialize the receiver's class variables.
+
+        		DividerMenuItem initialize"
+        DividerLookup := (IdentityDictionary
+        				withAll: { 32 -> #barBreak. 64 -> #break. 2048 -> #separator })
+    ]
+    DividerMenuItem class >> new [
+        "Answers an instance of the receiver"
+        ^self separator 
+    ]
+    DividerMenuItem class >> onPreStripImage [
+        "Private - The image is about to be stripped. Nil the lazily initialized class variables."
+        self uninitialize
+    ]
+    DividerMenuItem class >> separator [
+        "Answer unique DividerMenuItem which draws a horizontal dividing line in menu."
+        ^Separator ifNil: [Separator := self dividers at: '-']
+    ]
+    DividerMenuItem class >> stbConvertFrom: anSTBClassFormat [
+        "Convert from earlier version models.
+        	1: 'flags' inst var pushed up - doesn't really require a conversion because the inst size and format remains the same."
+        anSTBClassFormat version == 0 ifTrue: [^[:data | data becomeA: DividerMenuItem]].
+        	^super stbConvertFrom: anSTBClassFormat
+    ]
+    DividerMenuItem class >> stbVersion [
+        "Answer the current binary filer version number for instances of the receiver."
+        ^1
+    ]
+    DividerMenuItem class >> styleNameChoices [
+        "Answer an Array of available style names for instances of the receiver."
+        ^DividerLookup values asArray
+    ]
+    DividerMenuItem class >> uninitialize [
+        "Private - Uninitialize the receiver as it is about to be removed from the system."
+        BarBreak := Break := Separator := nil
+    ]
+]

@@ -1,0 +1,9 @@
+WindowsEvent subclass: ColorEvent [
+    canvas [
+        "Answer the canvas to setup for the color"
+        ^Canvas withNonOwnedDC: self wParam.
+    ]
+    hdc [
+        	^self wParam
+    ]
+]

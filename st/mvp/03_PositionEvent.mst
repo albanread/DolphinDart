@@ -1,0 +1,112 @@
+"PositionEvent is the class of <Event> associated with a window reposition event originating from a WM_WINDOWPOSCHANGING or WM_WINDOWPOSCHANGED message."
+
+WindowsEvent subclass: PositionEvent [
+    | lpwp flags |
+
+    extent [
+        "Answer the extent of the window after the size event.
+        	N.B. This is not the width of the client area, but the external dimension.
+        	If the client area is required, it can be requested by simply sending an
+        	#clientExtent message to the window."
+        ^self lpwp extent
+    ]
+    extent: aPoint [
+        "Set the extent of the window for the size event.
+        	N.B. This is not the width of the client area, but the external dimension."
+        self width: aPoint x. self height: aPoint y
+    ]
+    flags [
+        "Answer an <integer> containing the SWP_XXX flags associated with this position change event."
+        "Implementation Note: For most PositionEvents we only need to access the flags, so optimise for this case, avoiding creation of a WINDOWPOS structure."
+
+        	^flags ifNil: [flags := lParam asExternalAddress uint32AtOffset: 24]
+    ]
+    flags: anInteger [
+        "Private - For testing purposes"
+        flags := anInteger
+    ]
+    height [
+        "Answer the height of the window after the size event.
+        	N.B. This is not the height of the client area, but the external dimension.
+        	If the client area is required, it can be requested by simply sending an
+        	#clientExtent message to the window."
+        ^self lpwp cy
+    ]
+    height: anInteger [
+        "Set the height of the window for the size event.
+        	N.B. This is not the height of the client area, but the external dimension."
+        ^self lpwp cy: anInteger
+    ]
+    isActivate [
+        "Answer whether the receiver is describing a window activation event."
+        ^self flags noMask: 16
+    ]
+    isClientAreaChanged [
+        "Answer whether the receiver is describing a change in the client area."
+        ^(self flags bitAnd: 33) ~= 1
+    ]
+    isHideWindow [
+        "Answer whether the receiver is describing a hide event."
+        ^self flags anyMask: 128
+    ]
+    isMove [
+        "Answer whether the receiver is describing a move event."
+        ^self flags noMask: 2
+    ]
+    isRectangleChanged [
+        "Answer whether the receiver is describing a position change event which has really affected the layout of the window, i.e. either or both of the position and size have been changed."
+        ^(self flags allMask: 3) not
+    ]
+    isResize [
+        "Answer whether the receiver is describing a resize event."
+        ^self flags noMask: 1
+    ]
+    isTall [
+        "Answer whether the rectangle associated with the receiver is tall (heigh > width). This assumes that the position event is for a resize."
+        ^self lpwp cy > lpwp cx
+    ]
+    isVisibilityChange [
+        "Answer whether the receiver is describing a hide/show event."
+        ^self flags anyMask: 192
+    ]
+    isZOrderChanged [
+        "Answer whether the receiver is describing a z-order change."
+        ^self flags noMask: 4
+    ]
+    lpwp [
+        "Private - Answer the value of the receiver's 'lpwp' instance variable."
+        ^lpwp ifNil: [lpwp := WINDOWPOS fromAddress: lParam asExternalAddress]
+    ]
+    position [
+        "Answer the position of the window origin."
+        ^self lpwp position
+    ]
+    printLParamOn: aStream [
+        "Private - Append a textual representation of the receiver's lParam
+        	to aStream, in a format appropriate for the type of event."
+        aStream print: self lpwp
+    ]
+    rectangle [
+        	^self lpwp rectangle
+    ]
+    width [
+        "Answer the width of the window after the size event.
+        	N.B. This is not the width of the client area, but the external dimension.
+        	If the client area is required, it can be requested by simply sending an
+        	#clientExtent message to the window."
+        ^self lpwp cx
+    ]
+    width: anInteger [
+        "Set the width of the window forthe size event.
+        	N.B. This is not the width of the client area, but the external dimension."
+        ^self lpwp cx: anInteger
+    ]
+    x [
+        "Answer the x-position of the window origin."
+        ^self lpwp x
+    ]
+    y [
+        "Answer the y-position of the window origin."
+        ^self lpwp y
+    ]
+]

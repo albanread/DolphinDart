@@ -1619,9 +1619,25 @@ void ST_ffiCall(Dart_NativeArguments args) {
     }
     Dart_Handle e = Dart_ListGetAt(list_h, i);
     int64_t v = 0;
-    if (Dart_IsError(Dart_IntegerToInt64(e, &v))) {
-      // A non-integer argument is a marshalling bug at the call site, not
-      // something to coerce quietly.
+    if (Dart_IsNull(e)) {
+      // NIL IS A NULL HANDLE — the mirror of the `#h` return convention.
+      //
+      // This used to refuse, on the grounds that a non-integer argument is a
+      // marshalling bug rather than something to coerce quietly. That was
+      // right when nil could never COME from the floor. `#h` changed it: a
+      // handle-returning call now answers nil for NULL, so nil is a value the
+      // floor itself produces and must therefore accept back.
+      //
+      // It also removes an inconsistency rather than adding one. A generated
+      // wrapper already coerces nil to 0 through `FFICoerce word:` (asserted
+      // by `st_marshal`), so a call WITH a wrapper accepted nil and the same
+      // call without one refused it. `View>>wmNcDestroy:` is where that bit:
+      // it does `self winFinalize` — which clears the handle — and then
+      // `defaultWindowProcessing:`, which is the unwrapped `defWindowProc:`.
+      //
+      // Everything that is not an integer and not nil still refuses.
+      v = 0;
+    } else if (Dart_IsError(Dart_IntegerToInt64(e, &v))) {
       STThrow("FFI: non-integer argument (expected a word)");
       return;
     }

@@ -157,7 +157,8 @@ Object subclass: DolphinBoot [
     DolphinBoot class >> initializeViewClasses [
         | failed |
         failed := OrderedCollection new.
-        { Rectangle. View. ShellView. SystemMetrics. TextEdit } do: [ :each |
+        { Rectangle. View. ShellView. SystemMetrics. TextEdit.
+          CommandDescription. Menu. MenuItem } do: [ :each |
             [ each initialize ] on: Error do: [ :e | failed add: each name ] ].
         ^failed asArray
     ]

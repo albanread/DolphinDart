@@ -56,12 +56,78 @@ Object subclass: ExternalMemory [
      `new` with its own `sizeInBytes`, so one inherited method answers
      correctly for all of them. Adding it per-file would be the same method
      copied N times, and a struct generated later would silently lack it."
-    ExternalMemory class >> newBuffer [ ^self new ]
+    ExternalMemory class >> newBuffer [
+        | buf |
+        buf := self new.
+        "SET THE SIZE FIELD, if the struct has one.
+
+         Many Win32 structs carry their own byte size in a leading field so
+         the API can tell which version of the struct it was handed, and the
+         call FAILS when it is zero. `SetMenuInfo` with a zeroed `cbSize`
+         answers false and changes nothing — it does not raise, and
+         `Menu>>applyFlags` then beeps, which is a long way from the cause.
+
+         Dolphin does this too: its sized structs inherit a base whose
+         `defineFields` puts the size first and whose creation fills it in.
+         Doing it HERE, once, covers the family — eight structs in the
+         generated floor have `cbSize` and WINDOWPLACEMENT has `length` —
+         rather than waiting for each to be found by a call that quietly did
+         nothing.
+
+         Guarded by `respondsTo:` rather than a list of class names, so a
+         struct generated later is covered the day it appears."
+        (buf respondsTo: #cbSize:) ifTrue: [ buf cbSize: self sizeInBytes ].
+        (buf respondsTo: #length:) ifTrue: [ buf length: self sizeInBytes ].
+        ^buf
+    ]
 
     "A typed window onto memory someone else owns."
     ExternalMemory class >> viewOn: parent at: byteOffset size: n [
         ^self basicNew setAddress: parent address + byteOffset size: n owned: false
     ]
+
+    "A NON-OWNING window onto a RAW ADDRESS — Dolphin's `ExternalAddress`.
+
+     Windows hands the image bare pointers all the time: lParam on
+     WM_WINDOWPOSCHANGED is a WINDOWPOS*, on WM_NOTIFY an NMHDR*. Dolphin
+     wraps those in an ExternalAddress, which carries the peek/poke protocol;
+     an integer does not, and `PositionEvent` reads through it with
+     `uint32AtOffset:`.
+
+     The size is UNKNOWN — the pointer came from Windows with no length — so
+     it is recorded as 0 and the accessors do not bounds-check against it.
+     That is the honest state of affairs for a raw pointer, and it is why this
+     is `fromAddress:` rather than something that pretends to know an extent."
+    ExternalMemory class >> fromAddress: anAddressOrMemory [
+        "Takes EITHER a raw integer address or something that already has one.
+         Dolphin's own code chains them — `WINDOWPOS fromAddress: lParam
+         asExternalAddress` hands a wrapped address straight to a struct
+         class's `fromAddress:` — and storing an ExternalMemory where an
+         integer address belongs fails later, at `address + i - 1`, with a
+         doesNotUnderstand on `+` rather than at the call that did it."
+        | addr |
+        addr := (anAddressOrMemory isKindOf: ExternalMemory)
+            ifTrue: [ anAddressOrMemory address ]
+            ifFalse: [ anAddressOrMemory ].
+        ^self basicNew setAddress: addr size: self addressedSize owned: false
+    ]
+
+    "How many bytes `fromAddress:` should claim. A raw pointer from Windows
+     carries no length, so the base answers 0 — but a STRUCT class knows its
+     own size, and answering it makes a view onto that pointer printable and
+     bounds-checkable like any other. Every generated struct defines
+     `sizeInBytes`; only `ExternalMemory` itself does not."
+    ExternalMemory class >> addressedSize [ ^self sizeInBytes ]
+
+    "The base's own size: UNKNOWN, hence 0. Every generated struct overrides
+     it with its real byte count.
+
+     A plain default rather than a `respondsTo:` probe, because a `self` send
+     inside a CLASS-side method resolves through class-side lookup and does
+     NOT fall back to `Object`'s instance protocol — `respondsTo:` is not
+     reachable there. (The same asymmetry is recorded at
+     `Object class >> bindingFor:` in st/dolphin_compat/03_kernel.mst.)"
+    ExternalMemory class >> sizeInBytes [ ^0 ]
 
     setAddress: p size: n owned: aBool [ address := p. size := n. owned := aBool ]
     isView [ ^owned ~~ true ]
@@ -76,6 +142,27 @@ Object subclass: ExternalMemory [
         (self isNull or: [ self isView ]) ifFalse: [
             Win32Rt localFree: address. address := 0 ]
     ]
+
+    "── Dolphin's OFFSET protocol — ZERO-based ──────────────────────────
+     `uint32At:` and its kin here are ONE-based, matching Smalltalk indexing
+     and the offsets genstructs emits. Dolphin's struct code also uses an
+     `...AtOffset:` family that is ZERO-based, straight from the C offsets:
+     `bytes uint32AtOffset: _OffsetOf_wID put: id`.
+     Both spellings exist in the corpus, so both exist here, and the `+ 1` is
+     the whole of the difference. Getting it backwards reads the neighbouring
+     field, which is a wrong ANSWER rather than an error."
+    byteAtOffset: i [ ^self byteAt: i + 1 ]
+    byteAtOffset: i put: v [ ^self byteAt: i + 1 put: v ]
+    uint32AtOffset: i [ ^self uint32At: i + 1 ]
+    uint32AtOffset: i put: v [ ^self uint32At: i + 1 put: v ]
+    int32AtOffset: i [ ^self int32At: i + 1 ]
+    uint16AtOffset: i [ ^self uint16At: i + 1 ]
+    uint16AtOffset: i put: v [ ^self uint16At: i + 1 put: v ]
+    int16AtOffset: i [ ^self int16At: i + 1 ]
+    intptrAtOffset: i [ ^self intptrAt: i + 1 ]
+    intptrAtOffset: i put: v [ ^self intptrAt: i + 1 put: v ]
+    uintPtrAtOffset: i [ ^self intptrAt: i + 1 ]
+    uintPtrAtOffset: i put: v [ ^self intptrAt: i + 1 put: v ]
 
     byteAt: i [ ^Win32 peek: address + i - 1 ]
     byteAt: i put: v [ ^Win32 poke: address + i - 1 put: v ]

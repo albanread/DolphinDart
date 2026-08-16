@@ -282,6 +282,24 @@ class StChar {
   bool operator ==(o) => o is StChar && o.code == code;  // value = by code point
   int get hashCode => code;
   toString() => new String.fromCharCode(code);
+
+  /// Dolphin's `Character>>split:` — "answer the sub-strings of the
+  /// readableString argument separated by the receiver". The RECEIVER is the
+  /// separator and the ARGUMENT is the string, which reads backwards until
+  /// you have seen `$/ split: aString` once.
+  ///
+  /// A method on the class, not a case in `_stCharProtocol`: a keyword send
+  /// to a bridged receiver compiles to a direct Dart call with the mangled
+  /// name (`split_`), so the protocol switch is never consulted for it.
+  ///
+  /// `MenuItem class >> fromString:` is the caller — Dolphin's menu strings
+  /// are `description/accelerator/command` and it requires exactly three
+  /// parts.
+  split_(s) {
+    var str = s is String ? s : stDisplayOf(s);
+    if (str.isEmpty) return <String>[];
+    return str.split(toString());
+  }
 }
 
 final List<StChar> _stCharTable =

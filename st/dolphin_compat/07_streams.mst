@@ -107,3 +107,12 @@ nil subclass: Object [
         ^s contents
     ]
 ]
+
+"`String class >> writeStream` and its sized twin — Dolphin's shorthand for
+ `WriteStream on: String new`. `MenuItem>>text` builds its display string
+ through one when it composes label and accelerator."
+Object subclass: String [
+    String class >> writeStream [ ^WriteStream on: String new ]
+    String class >> writeStream: anInteger [ ^WriteStream on: String new ]
+    String class >> smalltalkWriteStream: anInteger [ ^WriteStream on: String new ]
+]
