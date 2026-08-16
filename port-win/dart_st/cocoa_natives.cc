@@ -54,6 +54,8 @@ void ST_mvpSend(Dart_NativeArguments args);
 void ST_mvpStats(Dart_NativeArguments args);
 void ST_mvpResetStats(Dart_NativeArguments args);
 void ST_mvpCreateTopWindow(Dart_NativeArguments args);
+void ST_mvpControlWndProc(Dart_NativeArguments args);
+void ST_mvpBindOldProc(Dart_NativeArguments args);
 void ST_mvpCreateButton(Dart_NativeArguments args);
 void ST_mvpShow(Dart_NativeArguments args);
 void ST_mvpPump(Dart_NativeArguments args);
@@ -143,6 +145,8 @@ void ST_symbolFor(Dart_NativeArguments args);   // interned symbol lookup (perf 
   V(ST_mvpResetStormCounts, 0)                                            \
   V(ST_mvpSetStormRouting, 1)                                             \
   V(ST_mvpStormBurst, 3)                                                  \
+  V(ST_mvpControlWndProc, 0)                                              \
+  V(ST_mvpBindOldProc, 2)                                                 \
   V(ST_peekByte, 1)                                                            \
   V(ST_pokeByte, 2)                                                            \
   V(ST_peekF64, 1)                                                             \

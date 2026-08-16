@@ -54,6 +54,24 @@ Object subclass: Processor [
  was registered by the door, not by us, so no module handle is needed."
 Object subclass: VM [
     VM class >> applicationHandle [ ^0 ]
+
+    "The address Dolphin installs when it SUBCLASSES a control. `View>>
+     subclassWindow` is
+
+         dolphinWndProc := VM getWndProc.
+         (oldProc := self setWndProc: dolphinWndProc) = dolphinWndProc
+             ifFalse: [self oldWndProc: oldProc]
+
+     — unchanged here, because the door supplies exactly what Dolphin's VM
+     supplies: a window procedure that reflects into the image. `setWndProc:`
+     is SetWindowLongPtr with GWLP_WNDPROC and is already in the generated
+     floor, as is the CallWindowProcW that `ControlView` chains through.
+
+     The equality test in that method is why this must answer a STABLE
+     address: it is how Dolphin detects a window it has already subclassed and
+     avoids saving its own procedure as the one to chain to — which would be
+     an infinite loop, not a lost message."
+    VM class >> getWndProc [ ^Win32 mvpControlWndProc ]
 ]
 
 nil subclass: Object [

@@ -624,3 +624,73 @@ is not UTF-8. One stray 0xB4 was aborting whole generator runs. Deliberately
 NOT `errors="replace"`, which would substitute U+FFFD into source this project
 then translates — corruption with no diagnostic, the exact failure mode all of
 the above is about.
+
+## Control subclassing: the substrate, spiked before the class wave
+
+Gate `st_subclass` (22/22 overall). A real Win32 EDIT control, subclassed by
+Dolphin's own `View>>subclassWindow` shape, with the door's trampoline in the
+WndProc slot and comctl's original procedure chained behind it.
+
+**The image side needed no invention at all.** Dolphin's mechanism is
+
+```smalltalk
+subclassWindow
+    | dolphinWndProc oldProc |
+    dolphinWndProc := VM getWndProc.
+    (oldProc := self setWndProc: dolphinWndProc) = dolphinWndProc
+        ifFalse: [self oldWndProc: oldProc]
+```
+
+and `ControlView>>defaultWindowProcessing:wParam:lParam:` is a plain
+`User32 callWindowProc: oldWndProc ...`. `setWindowLongPtr:` and
+`callWindowProc:` were both already in the generated floor, so the ONLY
+substrate gap was `VM getWndProc` — an address to install.
+
+### Where this door differs from Dolphin's VM, and the one call that follows
+
+Dolphin's VM reflects EVERY message into the image, so its window procedure
+never needs to know what to chain to: the image always decides and chains when
+it declines. This door routes SELECTIVELY — DD9 measured a routed message at
+~26us, which is why the routed set exists at all — and a message it does not
+route must still reach the control's own procedure, or the control stops being
+one. `DefWindowProcW` is not a substitute; it is precisely what comctl's
+procedure replaces. An EDIT that never sees WM_CHAR shows no typing.
+
+So the trampoline needs the original per window, and `Win32 mvpBindOldProc:
+proc:` hands it the value Dolphin's own `subclassWindow` already captured —
+nothing is discovered twice, and the image stays the authority on what it
+subclassed. It is kept in a window PROPERTY, not a C++ map keyed by HWND: a
+property dies with the window, and Windows recycles handle values, so a stale
+map entry would eventually answer for a different window. Dropped on
+WM_NCDESTROY, the last message a window ever receives.
+
+### What the gate asserts, and why both halves are on one message
+
+Each half fails INVISIBLY on its own. A trampoline that routes nothing looks
+exactly like a working control — the EDIT keeps editing, because its own
+procedure is still there. A trampoline that swallows instead of chaining looks
+exactly like a working image — the handler runs, and only the control is
+broken. So WM_SETTEXT is routed, the image counts it, and the text is then
+read back OUT of the control: the count proves the door reached the image, and
+the text proves it chained to the procedure that actually stores it.
+
+Also asserted: `VM getWndProc` is STABLE across calls (`subclassWindow`'s
+equality test uses it to detect an already-subclassed window, and a varying
+address would chain the trampoline to itself — an infinite loop, not a lost
+message); an unrouted read does NOT enter the image; `defaultWindowProcessing:`
+is callable from Smalltalk, which is the path `UI.ControlView` will use; and
+unsubclassing restores comctl's procedure and stops the routing.
+
+**Two of my own assertions were defective on the first pass** — the same
+pattern this sprint keeps finding, now in the harness rather than the code.
+`must(seen >= before)` is satisfied unconditionally by a counter that never
+decreases, and the "unrouted" message I chose was WM_SETTEXT, which is the one
+I had just routed. Both rewritten to measure something: equality on the
+counter, and a read path (WM_GETTEXTLENGTH/WM_GETTEXT) that genuinely is not
+routed. A third, `must(host != 0)`, passed on the -1 that `num` answers for a
+RAISED expression — it reported a healthy host window for a send that did not
+work at all, and is now `> 0`.
+
+**Next:** translate `UI.ControlView` and `UI.TextEdit` onto this substrate,
+then drive `UI.TextPresenter` — which retires `TextField`/`WinTextEdit`, and
+with them `WinControl` and finally `WinView`.

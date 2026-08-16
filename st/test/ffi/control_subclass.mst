@@ -1,0 +1,128 @@
+"control_subclass.mst — Dolphin SUBCLASSES a real Win32 control (DolphinDart DD10).
+
+ A control — EDIT, BUTTON, LISTBOX — is a window belonging to a class comctl
+ registered, and its WndProc is what MAKES it that control: caret, selection,
+ keyboard handling, all of it. Dolphin gets its own code into that stream the
+ way every Windows program does — it SUBCLASSES, swapping the WndProc for its
+ own and chaining to the original.
+
+ This probe is the SUBSTRATE spike for that, ahead of the `UI.ControlView`
+ wave: it exercises Dolphin's own `subclassWindow` shape
+
+     dolphinWndProc := VM getWndProc.
+     (oldProc := self setWndProc: dolphinWndProc) = dolphinWndProc
+         ifFalse: [self oldWndProc: oldProc]
+
+ and Dolphin's own `defaultWindowProcessing:wParam:lParam:`
+
+     ^User32 callWindowProc: oldWndProc hWnd: handle msg: message
+             wParam: wParam lParam: lParam
+
+ on a real EDIT control, so the mechanism is proven before a class hierarchy
+ is built on top of it. Both are copied from Dolphin's `UI.View` and
+ `UI.ControlView` rather than invented; when those classes are translated they
+ replace this probe and the shapes must still work unchanged.
+
+ WHAT WOULD SILENTLY PASS WITHOUT THE PROBE BEING CAREFUL. A trampoline that
+ routed nothing looks identical to a working control — the EDIT goes on
+ editing, because its own procedure is still there. A trampoline that
+ swallowed messages instead of chaining looks identical to a working IMAGE —
+ the handler runs, and only the control is broken. So the gate asserts BOTH
+ halves on the SAME message: the image saw it, and the text still arrived."
+Object subclass: SubclassProbe [
+    | hwnd oldWndProc seen lastMsg |
+
+    "WM_SETTEXT. Routed here because it is the one message that proves both
+     halves at once: the image can count it, and the EDIT control's own
+     procedure is what actually STORES the text — so if the trampoline failed
+     to chain, `text` would come back empty."
+    SubclassProbe class >> wmSetText [ ^16r000C ]
+
+    SubclassProbe class >> on: aParentHandle [
+        ^self new setParent: aParentHandle
+    ]
+
+    setParent: aParentHandle [
+        | cls |
+        seen := 0.
+        "Created through the generated floor, exactly as `WinControl` does —
+         the control's window CLASS is comctl's, which is the whole point:
+         nothing here registers a class of ours."
+        cls := Utf16Buffer fromString: 'EDIT'.
+        hwnd := [ User32
+            createWindowEx: 0
+            lpClassName: cls address
+            lpWindowName: ''
+            dwStyle: 16r50000000      "WS_CHILD | WS_VISIBLE"
+            x: 0 y: 0 nWidth: 120 nHeight: 24
+            hWndParent: aParentHandle
+            hMenu: 0
+            hInstance: 0
+            lpParam: 0 ] ensure: [ cls free ].
+        hwnd isNil ifTrue: [ ^self error: 'EDIT creation failed' ].
+        ^self
+    ]
+
+    handle [ ^hwnd ]
+    seen [ ^seen ]
+    lastMsg [ ^lastMsg ]
+    oldWndProc [ ^oldWndProc ]
+
+    "Dolphin's `View>>subclassWindow`, verbatim in shape. The equality test is
+     load-bearing: it is how Dolphin notices a window it has ALREADY
+     subclassed and declines to record its own procedure as the one to chain
+     to — which would be an infinite loop rather than a lost message."
+    subclassWindow [
+        | dolphinWndProc oldProc |
+        dolphinWndProc := VM getWndProc.
+        oldProc := User32
+            setWindowLongPtr: hwnd
+            nIndex: -4                 "GWLP_WNDPROC"
+            dwNewLong: dolphinWndProc.
+        oldProc = dolphinWndProc ifFalse: [ oldWndProc := oldProc ].
+        "Tell the door what to chain to. Dolphin's VM needs no equivalent
+         because it reflects EVERY message and lets the image chain; this door
+         routes selectively, so a message it does not route has to reach the
+         control's own procedure from C++ or the control stops working."
+        Win32 mvpBindOldProc: hwnd proc: oldWndProc.
+        ^oldProc
+    ]
+
+    unsubclassWindow [
+        oldWndProc isNil ifTrue: [ ^nil ].
+        ^User32 setWindowLongPtr: hwnd nIndex: -4 dwNewLong: oldWndProc
+    ]
+
+    "The flat hook the door uses when no Dolphin message map is installed.
+     Answering nil means 'not mine' and the door chains — which is what this
+     handler wants: it is COUNTING the message, not consuming it."
+    onMessage: msg wParam: wp lParam: lp [
+        seen := seen + 1.
+        lastMsg := msg.
+        ^nil
+    ]
+
+    "Dolphin's `ControlView>>defaultWindowProcessing:wParam:lParam:`, verbatim.
+     The probe calls it directly to prove the chain is callable FROM THE IMAGE
+     as well as from C++ — that is the path `ControlView` will use."
+    defaultWindowProcessing: message wParam: wParam lParam: lParam [
+        ^User32
+            callWindowProc: oldWndProc
+            hWnd: hwnd
+            msg: message
+            wParam: wParam
+            lParam: lParam
+    ]
+
+    text [
+        | n buf |
+        n := User32 getWindowTextLength: hwnd.
+        n = 0 ifTrue: [ ^'' ].
+        buf := Utf16Buffer new: (n + 1) * 2.
+        User32 getWindowText: hwnd lpString: buf address nMaxCount: n + 1.
+        ^buf stringValue
+    ]
+    text: aString [ ^User32 setWindowText: hwnd lpString: aString displayString ]
+
+    destroy [ ^User32 destroyWindow: hwnd ]
+]

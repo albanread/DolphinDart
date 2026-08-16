@@ -1358,6 +1358,8 @@ stMvpSetAccelerators(int hwnd, int haccel) native "ST_mvpSetAccelerators";
 /// `View class >> winClassName` answers, so its own creation path builds
 /// windows whose WndProc is the door's.
 stMvpTopClassName() native "ST_mvpTopClassName";
+stMvpControlWndProc() native "ST_mvpControlWndProc";
+stMvpBindOldProc(int h, int proc) native "ST_mvpBindOldProc";
 stMvpResetStormCounts() native "ST_mvpResetStormCounts";
 stMvpSetStormRouting(bool on) native "ST_mvpSetStormRouting";
 /// Send `msg` to `h` `n` times; answers the elapsed NANOSECONDS. Timed in

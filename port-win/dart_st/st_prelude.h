@@ -117,6 +117,15 @@ Object subclass: Win32 [
      the pump is native, so nothing image-side ever sees one."
     Win32 class >> mvpSetAccelerators: hwnd haccel: haccel [ <stprim: stMvpSetAccelerators> ]
     Win32 class >> mvpTopClassName [ <stprim: stMvpTopClassName> ]
+    "CONTROL SUBCLASSING (DD10). `mvpControlWndProc` is the address Dolphin's
+     own `View>>subclassWindow` installs — it asks for it as `VM getWndProc`.
+     `mvpBindOldProc:proc:` then tells the door which procedure to chain to
+     for messages it does not route; Dolphin's VM needs no equivalent because
+     it reflects every message and lets the image chain, whereas this door
+     routes selectively and an unrouted message must still reach the control's
+     own procedure or the control stops behaving like one."
+    Win32 class >> mvpControlWndProc [ <stprim: stMvpControlWndProc> ]
+    Win32 class >> mvpBindOldProc: h proc: p [ <stprim: stMvpBindOldProc> ]
 ]
 
 "── The system object (corpus surface: Smalltalk millisecondClock) ──"

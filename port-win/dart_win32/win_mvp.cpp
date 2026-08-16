@@ -323,6 +323,112 @@ LRESULT CALLBACK MvpTopWndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
   }
 }
 
+// ── CONTROL SUBCLASSING (DD10) ──────────────────────────────────────────────
+//
+// A Win32 control — EDIT, BUTTON, LISTBOX — belongs to a class comctl
+// registered, whose WndProc is what MAKES it that control: the caret, the
+// selection, the keyboard handling, all of it. Dolphin gets its own code into
+// that stream the way every Windows program does, by SUBCLASSING: swap the
+// window's WndProc for its own and keep the original to chain to.
+//
+// The mechanism here is Dolphin's, unchanged, from `UI.View`:
+//
+//     subclassWindow
+//         | dolphinWndProc oldProc |
+//         dolphinWndProc := VM getWndProc.
+//         (oldProc := self setWndProc: dolphinWndProc) = dolphinWndProc
+//             ifFalse: [self oldWndProc: oldProc]
+//
+// `VM getWndProc` answers the address below; `setWndProc:` is SetWindowLongPtr
+// with GWLP_WNDPROC, already in the generated floor. `UI.ControlView` keeps
+// the old procedure in an ivar and chains to it from
+// `defaultWindowProcessing:wParam:lParam:` via CallWindowProcW — also already
+// in the floor. So the image side needs no substrate invention at all.
+//
+// WHERE THIS DOOR DIFFERS FROM DOLPHIN'S VM, and why the extra binding call
+// exists: Dolphin's VM reflects EVERY message into the image, so its WndProc
+// never needs to know the original procedure — the image always decides, and
+// chains when it declines. This door routes SELECTIVELY (DD9: a routed
+// message costs ~26us, so the routed set is the whole performance design), and
+// a message that is not routed must still reach the CONTROL's procedure or
+// the control stops working — an EDIT that never sees WM_CHAR shows no typing.
+// DefWindowProcW is not a substitute: it is precisely what the control's own
+// procedure replaces.
+//
+// So the trampoline needs the original per window. It is kept in a window
+// PROPERTY rather than a C++ side table: a property dies with the window,
+// which a map keyed by HWND does not — and Windows recycles handle values,
+// so a stale entry would eventually answer for a different window.
+static const wchar_t* kOldProcProp = L"DolphinDartOldWndProc";
+
+LRESULT CALLBACK MvpControlWndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
+  WNDPROC old = (WNDPROC)GetPropW(hwnd, kOldProcProp);
+
+  // Chain to the control's own procedure, or to DefWindowProcW only if we have
+  // nothing better. The latter is the "not bound yet" case, not a design
+  // choice: between SetWindowLongPtr and the image binding the old procedure
+  // there is a window of a few instructions, and a message can arrive in it.
+  auto chain = [&]() -> LRESULT {
+    if (old != nullptr) return CallWindowProcW(old, hwnd, msg, wp, lp);
+    return DefWindowProcW(hwnd, msg, wp, lp);
+  };
+
+  const LONG_PTR gen = GetWindowLongPtrW(hwnd, GWLP_USERDATA);
+  const bool live = (gen == (LONG_PTR)g_generation);
+
+  // WM_NCDESTROY is the last message any window receives, so it is the only
+  // safe place to drop the property. Leaving it set would leak an atom per
+  // control for the life of the process.
+  if (msg == WM_NCDESTROY) {
+    LRESULT r = chain();
+    RemovePropW(hwnd, kOldProcProp);
+    return r;
+  }
+
+  if (live && IsRoutedMessage(msg)) {
+    int64_t out = 0;
+    bool handled = false;
+    if (CallImage(kKindWinMsg, hwnd, (int64_t)msg, (int64_t)wp, (int64_t)lp,
+                  &out, &handled) &&
+        handled) {
+      return (LRESULT)out;
+    }
+    // The image answering nothing means "not in my map after all" — the same
+    // contract as the top-level door, and it chains rather than swallowing.
+  }
+  return chain();
+}
+
+}  // namespace
+
+// Answer the address of the trampoline, for `VM getWndProc`.
+void ST_mvpControlWndProc(Dart_NativeArguments args) {
+  Dart_SetReturnValue(
+      args, Dart_NewInteger((int64_t)(intptr_t)&MvpControlWndProc));
+}
+
+// Record the procedure the trampoline must chain to for this window.
+//
+// Called from the image with the value Dolphin's own `subclassWindow` already
+// captured, so nothing is discovered twice and the image stays the authority
+// on what it subclassed. Answers true when the window accepted the property.
+void ST_mvpBindOldProc(Dart_NativeArguments args) {
+  int64_t h = 0, proc = 0;
+  Dart_GetNativeIntegerArgument(args, 0, &h);
+  Dart_GetNativeIntegerArgument(args, 1, &proc);
+  HWND hwnd = (HWND)(intptr_t)h;
+  bool ok = false;
+  if (hwnd != nullptr && IsWindow(hwnd)) {
+    // Stamp the generation too. A control created through Dolphin's
+    // `View>>create` goes to comctl's WndProc, not ours, so it never saw our
+    // WM_NCCREATE and carries no generation — and an unstamped window fails
+    // the guard on every message, which would route nothing at all.
+    SetWindowLongPtrW(hwnd, GWLP_USERDATA, (LONG_PTR)g_generation);
+    ok = SetPropW(hwnd, kOldProcProp, (HANDLE)(intptr_t)proc) != 0;
+  }
+  Dart_SetReturnValue(args, Dart_NewBoolean(ok));
+}
+
 bool EnsureTopClass() {
   if (g_top_registered) return true;
   WNDCLASSEXW wc;
@@ -354,8 +460,6 @@ int64_t ArgInt(Dart_NativeArguments args, int i) {
   Dart_IntegerToInt64(Dart_GetNativeArgument(args, i), &v);
   return v;
 }
-
-}  // namespace
 
 // _mvpRegisterDispatch(Function f) — the single funnel, as the view-server does.
 void ST_mvpRegisterDispatch(Dart_NativeArguments args) {
