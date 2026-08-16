@@ -134,3 +134,50 @@ LastWindow-shaped router breaks.
 One thing the first run caught in the gate itself: invalidating a HIDDEN window
 produces no WM_PAINT, so the paint check passed on two zeroes and proved
 nothing. Both windows are shown first now.
+
+## The triad over real Win32 EDIT controls
+
+Gate: `test/st_text.dart` + `st/test/ffi/text_probe.mst`. **Two fields, one
+model.** Edit either and both it and the model move; the other field follows.
+Set the model directly and both follow.
+
+Everything load-bearing is Dolphin's: `UI.ValueHolder` is the model,
+`UI.NumberToText` the conversion, Dolphin's event system the notification,
+`InvalidFormat` the bad-input signal. Ours is `WinTextEdit` — a real Win32
+EDIT control (`st/dolphin_compat/09_wincontrol.mst`).
+
+**Controls come through the generated floor**, `User32 createWindowEx:…`,
+straight from Dolphin's own pragma — not the door's `mvpCreateButton`. That
+native was a DD7 spike convenience for proving WM_COMMAND arrived at all; a
+real control wants its own class name, style and id, and the prim already
+marshals every one. The door keeps only the TOP-LEVEL window class, because
+that is the one whose WndProc has to be ours.
+
+The text assertions read the WINDOW through `GetWindowTextW`. A gate that
+asked the presenter what it thinks the text is would pass on a field that
+never updated.
+
+### `lpClassName` is a POINTER, and that is Win32's doing
+
+`createWindowEx:` marshals `lpWindowName` for us but refuses a String for
+`lpClassName` — "FFI: cannot pass String as a pointer argument". Correct, and
+not a generator defect: the parameter accepts either a name **or a registered
+class ATOM**, so Dolphin's pragma cannot type it as a string. `WinControl`
+marshals it itself into a `Utf16Buffer`, freed under `ensure:`. The refusal is
+the floor working — a wrapper that accepted a String there would hand
+CreateWindowExW an object pointer.
+
+### Beep-and-revert, the reason DD4 gates this sprint
+
+A field whose text will not convert must do three things, and the gate asserts
+all three separately because any one of them can be got right while another is
+wrong: it must NOT write the model (no nil in the model), it must revert its
+own text to the model's current value rendered back through the converter, and
+it must leave every OTHER view alone. A fourth assertion flushes the reverted
+field again — a field that reverts visually but keeps a stale value behind
+would pass the first three and fail on the next flush.
+
+One structural note carried into the presenter: model→view refresh is guarded
+by an `updating` flag, because `flush` writes the model, which notifies, which
+lands back on the field. Without the guard a keystroke overwrites the text the
+user is still typing.

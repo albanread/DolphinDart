@@ -75,6 +75,8 @@ TARGETS = [
     # The presenter side.
     "Core/Object Arts/Dolphin/MVP/Base/UI.Presenter.cls",
     "Core/Object Arts/Dolphin/MVP/Base/UI.Shell.cls",
+    "Core/Object Arts/Dolphin/MVP/Base/UI.ValuePresenter.cls",
+    "Core/Object Arts/Dolphin/MVP/Presenters/Text/UI.TextPresenter.cls",
 ]
 
 # Parsed for hierarchy + pools, never emitted. DIRECTORIES, deliberately: a
@@ -90,6 +92,7 @@ REFERENCES = [
     "Core/Object Arts/Dolphin/MVP/Models/Value",
     "Core/Object Arts/Dolphin/MVP/Type Converters",
     "Core/Object Arts/Dolphin/MVP/Presenters/Number",
+    "Core/Object Arts/Dolphin/MVP/Presenters/Text",
 ]
 
 

@@ -1,0 +1,91 @@
+"TextPresenter is a <valuePresenter> that displays a <valueModel> onto a <readableString> value. A TextPresenter can be connected to any <valueView> capable of displaying <readableString> values. Often, this will be a <TextEdit> although alternative views may be chosen with the installation of an appropriate <typeConverter>."
+
+ValuePresenter subclass: TextPresenter [
+    | findDetails |
+
+    clear [
+        "Remove all contents in the receiver's view"
+        self value: ''
+    ]
+    dragOver: session [
+        "The drag operation described by the <DragDropSession>, session,
+        	has moved to a new position over the receiver's window. Use the session 
+        	to provide feedback to the user about allowable operations etc.
+        	Implementation Note: Override this message to suggest a default drop action of 
+        	pasting in the String at the drop position."
+        session operation: ((session isFormatAvailable: #String) ifTrue: [session intendedOperation]).
+        	"Superclass triggers event to allow observers to override."
+        	super dragOver: session
+    ]
+    drop: session [
+        "The drag operation described by the <DragDropSession>, session, has culminated
+        	in a drop over the receiver.
+        	Implementation Note: Override this message to implement default action of 
+        	pasting in the String or Chunk at the drop position. However any observers of the
+        	#drop: trigger of the receiver get first crack - they should set the suggested target to 
+        	nil in order to pre-empt the default action."
+        | targetPos answer |
+        	answer := super drop: session.
+        	targetPos := session suggestedTarget.
+        	targetPos isNil
+        		ifFalse: 
+        			[self view caretPosition: targetPos.
+        			session dragObjects do: 
+        					[:each |
+        					| text |
+        					text := each format: #String.
+        					self replaceSelection: text]].
+        	^answer
+    ]
+    findDetails [
+        "Answers the findDetails instance variable. The Array has four elements:
+        	(findWhatString, isForwardsBoolean, isCaseSensitiveBoolean, isWholeWordBoolean)."
+        ^findDetails
+    ]
+    findDetails: aFindDetails [
+        "Sets the findDetails instance variable to the argument."
+        findDetails := aFindDetails
+    ]
+    hasFindDetails [
+        	^self findDetails notNil
+    ]
+    hasSelection [
+        "Answer true if the receiver has a current selection"
+        ^self view hasSelection
+    ]
+    isModified [
+        "Answer whether the text in the receiver's model has been modified."
+        ^self view isModified
+    ]
+    isModified: aBoolean [
+        "Set/reset the receiver's dirty flag."
+        self view isModified: aBoolean
+    ]
+    isReadOnly [
+        	^self view isReadOnly
+    ]
+    isReadOnly: aBoolean [
+        	self view isReadOnly: aBoolean
+    ]
+    replaceSelection: aString [
+        "Replace the current selected range of text with aString"
+        ^self view replaceSelection: aString
+    ]
+    selectionRange [
+        "Answers an interval identifying the selected range of text"
+        ^self view selectionRange
+    ]
+    selectionRange: anInterval [
+        "Sets anInterval to be the selected range of text"
+        ^self view selectionRange: anInterval
+    ]
+    TextPresenter class >> defaultModel [
+        "Answer a default model to be assigned to the receiver when it
+        	is initialized."
+        ^String new asValue
+    ]
+    TextPresenter class >> icon [
+        "Answers an Icon that can be used to represent this class"
+        ^(self) defaultIcon
+    ]
+]

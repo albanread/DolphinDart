@@ -1,0 +1,96 @@
+"09_wincontrol.mst — real Win32 controls (DolphinDart DD10).
+
+ `WinView` (06_winview.mst) answers Dolphin's LAYOUT protocol over a raw HWND.
+ `WinControl` adds the two things a control needs beyond geometry: it CREATES
+ itself, and it carries text.
+
+ Created through the generated floor — `User32 createWindowEx:…`, straight from
+ Dolphin's own pragma — not through the door's `mvpCreateButton`. That native
+ was a DD7 spike convenience for proving WM_COMMAND arrived at all; a real
+ control wants its own class name, style and id, and the prim already marshals
+ every one of those (DD6b/c). The door keeps only the TOP-LEVEL window class,
+ because that is the one whose WndProc has to be ours.
+
+ SetWindowTextW/GetWindowTextW rather than WM_SETTEXT/WM_GETTEXT: same effect,
+ and the generated wrappers already handle the string marshalling in both
+ directions (`FFICoerce stringTemp:` out, a `Utf16Buffer` back)."
+WinView subclass: WinControl [
+    | controlId |
+
+    "WS_CHILD | WS_VISIBLE — every control this class makes is a visible child
+     of its parent. Styles beyond that are the subclass's business."
+    WinControl class >> baseStyle [ ^16r50000000 ]
+
+    "Create a real control of `aClassName` ('EDIT', 'BUTTON', 'STATIC', …) as a
+     child of `aParent`, and answer it wrapped. The id is what comes back in
+     WM_COMMAND's low word, which is how the owner tells its controls apart —
+     so it is required, not optional."
+    WinControl class >> class: aClassName parent: aParent id: anId
+                        style: extraStyle text: aString [
+        | h cls |
+        "`lpClassName` is typed as a POINTER, not a string, and that is Win32's
+         doing rather than the generator's: the parameter accepts either a
+         name or a registered class ATOM, so the pragma cannot call it a
+         string. The wrapper therefore marshals `lpWindowName` for us and
+         leaves this one alone — passing a Smalltalk String here is refused
+         outright ('FFI: cannot pass String as a pointer argument'), which is
+         the floor doing its job. Marshal it here, free it under ensure:."
+        cls := Utf16Buffer fromString: aClassName.
+        h := [ User32
+            createWindowEx: 0
+            lpClassName: cls address
+            lpWindowName: aString
+            dwStyle: (self baseStyle bitOr: extraStyle)
+            x: 0 y: 0 nWidth: 10 nHeight: 10
+            hWndParent: aParent handle
+            hMenu: anId
+            hInstance: 0
+            lpParam: 0 ] ensure: [ cls free ].
+        h = 0 ifTrue: [
+            ^Win32Error new setCode: Win32 lastError; signalWithCode ].
+        ^(self onHandle: h parent: aParent) setControlId: anId
+    ]
+
+    setControlId: anId [ controlId := anId ]
+    controlId [ ^controlId ]
+
+    "── text ────────────────────────────────────────────────────────────
+     `text` reads what the user actually typed, which is the whole point of an
+     edit control: the answer must come from the WINDOW, never from a cached
+     copy this object set earlier."
+    text [
+        | n buf |
+        n := User32 getWindowTextLength: hwnd.
+        n = 0 ifTrue: [ ^'' ].
+        buf := Utf16Buffer new: (n + 1) * 2.
+        User32 getWindowText: hwnd lpString: buf address nMaxCount: n + 1.
+        ^buf stringValue
+    ]
+    text: aString [
+        User32 setWindowText: hwnd lpString: aString displayString.
+        ^aString
+    ]
+]
+
+"An EDIT control. ES_AUTOHSCROLL (16r80) keeps typing past the right edge from
+ being swallowed, and WS_BORDER (16r800000) makes it look like a field."
+WinControl subclass: WinTextEdit [
+    WinTextEdit class >> in: aParent id: anId [
+        ^self class: 'EDIT' parent: aParent id: anId
+             style: 16r800080 text: ''
+    ]
+]
+
+"A BUTTON. BS_PUSHBUTTON is 0, so the base style is the whole of it."
+WinControl subclass: WinButton [
+    WinButton class >> in: aParent id: anId text: aString [
+        ^self class: 'BUTTON' parent: aParent id: anId style: 0 text: aString
+    ]
+]
+
+"A STATIC label."
+WinControl subclass: WinLabel [
+    WinLabel class >> in: aParent id: anId text: aString [
+        ^self class: 'STATIC' parent: aParent id: anId style: 0 text: aString
+    ]
+]

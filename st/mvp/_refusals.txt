@@ -26,6 +26,7 @@ C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.ShellView.cls:1406: [cas
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.ShellView.cls:1423: [cascade] cascade on a receiver this rewriter cannot bound — splitting it could change evaluation
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.ShellView.cls:1441: [cascade] cascade on a receiver this rewriter cannot bound — splitting it could change evaluation
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.ShellView.cls:1451: [cascade] cascade on a receiver this rewriter cannot bound — splitting it could change evaluation
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.ValuePresenter.cls:94: [hashhash] `##(self)` is not a foldable constant
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.View.cls:369: [hashhash] `##(1 bitInvert)` is not a foldable constant
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.View.cls:503: [hashhash] `##(2 @ 2)` is not a foldable constant
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.View.cls:583: [hashhash] `##(48 bitInvert)` is not a foldable constant
@@ -68,5 +69,10 @@ C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Models\Value\UI.ValueModel.cls:1
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Models\Value\UI.ValueModel.cls:140: [hashhash] `##(self)` is not a foldable constant
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Models\Value\UI.ValueModel.cls:145: [cascade] cascade on a receiver this rewriter cannot bound — splitting it could change evaluation
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Models\Value\UI.ValueModel.cls:145: [cascade] cascade on a receiver this rewriter cannot bound — splitting it could change evaluation
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Presenters\Text\UI.TextPresenter.cls:134: [hashhash] `##(self)` is not a foldable constant
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Presenters\Text\UI.TextPresenter.cls:139: [binding-literal] `#{...}` variable-binding literal has no house equivalent
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Presenters\Text\UI.TextPresenter.cls:149: [binding-literal] `#{...}` variable-binding literal has no house equivalent
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Presenters\Text\UI.TextPresenter.cls:159: [binding-literal] `#{...}` variable-binding literal has no house equivalent
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Presenters\Text\UI.TextPresenter.cls:169: [binding-literal] `#{...}` variable-binding literal has no house equivalent
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Type Converters\UI.AbstractToTextConverter.cls:52: [cascade] cascade on a receiver this rewriter cannot bound — splitting it could change evaluation
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Type Converters\UI.TypeConverter.cls:121: [hashhash] `##(self)` is not a foldable constant
