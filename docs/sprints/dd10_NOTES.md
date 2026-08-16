@@ -694,3 +694,104 @@ work at all, and is now `> 0`.
 **Next:** translate `UI.ControlView` and `UI.TextEdit` onto this substrate,
 then drive `UI.TextPresenter` — which retires `TextField`/`WinTextEdit`, and
 with them `WinControl` and finally `WinView`.
+
+## The control wave translates — and three front-end defects it exposed
+
+`UI.ControlView`, `UI.ValueConvertingControlView`, `UI.TextEdit` translated
+and loading; 22/22 gates. Getting the three classes to LOAD needed no
+hand-written Smalltalk beyond two named seams, but it broke three things in
+the front-end and translator that had never been reached before.
+
+### 1. `VMConstants.IsWin64` was folded to FALSE
+
+The corpus declares it in `DolphinClasses.st`:
+
+```
+'IsWin64' -> false.
+```
+
+— correct for the 32-bit image Dolphin shipped, and a fact about a different
+machine than this one. DolphinDart builds x64 and ARM64. Folding it
+faithfully is how a faithful translator emits wrong code, and this one was
+not cosmetic:
+
+```smalltalk
+setWndProc: anAddress
+    ^VMConstants.IsWin64
+        ifTrue: [User32 setWindowULongPtr: handle nIndex: GWL_WNDPROC ...]
+        ifFalse: [User32 setWindowULong: handle nIndex: GWL_WNDPROC ...]
+```
+
+On 64-bit the false branch is SetWindowLongW, which TRUNCATES a 64-bit window
+procedure address to 32 bits. It does not fail — it installs a garbage
+procedure. And `setWndProc:` is the single method every subclassed control
+goes through, so this would have hit the entire control wave at once.
+
+Fixed with a `_TARGET_CONSTANTS` override in the translator, applied at the
+resolution point so it holds whichever pool in the chain supplies the name.
+Deliberately a short explicit list: each entry is a claim about the target
+that someone checked, and anything unlisted keeps the corpus's answer.
+
+### 2. A refused `##(...)` could take a whole class file down
+
+`##(...)` is Dolphin evaluating something at COMPILE time and planting the
+result as a literal. When the folder could not fold one it emitted the
+contents as a plain parenthesised expression — which works only if the
+contents are an expression. `ControlView>>commonNotificationMap` is
+`##(| nmMap | nmMap := ...)`, and that became `^(| nmMap | ...`, which does
+not parse. One unfoldable constant in one method meant the whole class was
+missing at load.
+
+Now lowered to `[ ... ] value`. The contents of `##(...)` are always a valid
+BLOCK BODY even when they are not an expression, so this always parses, and
+evaluating at runtime instead of compile time is a performance difference
+rather than a semantic one for the constant-answering methods it appears in.
+
+### 3. `anInteger-1` lexed as `anInteger` and `-1`
+
+The lexer's rule was "a leading `-` is a sign when a digit follows". That is
+half the rule. `UI.TextEdit>>caretPosition:` is
+
+```smalltalk
+self selectionStart: anInteger end: anInteger-1
+```
+
+and reading `-1` as a literal there leaves two primaries side by side. The
+real rule is about what comes BEFORE: a `-` following something that can END
+a primary is a binary selector, because two primaries cannot be adjacent.
+
+**With one exception that matters more than the bug.** Inside a literal
+array there are no binary sends at all — `#(1 2 -3)` is three integers, and
+the token before `-3` is an integer. The parser turns a `kBinary` inside a
+literal array into a SYMBOL, so the naive fix would have made that array
+`#(1 2 #- 3)`: four elements, no diagnostic, no parse error. Literal-array
+context is therefore checked by walking back through the token stream, and
+only in the genuinely ambiguous case.
+
+### And a fourth: `$\0`
+
+Dolphin 8 has escaped character literals and the corpus uses them —
+`$\0`, `$\n`, `$\r`, `$\t`, `$\x<hex>`. The lexer took `$` plus exactly one
+character, so `$\0` became `$\` followed by the integer 0.
+
+Decoding them exposed a second-order problem: the builder passed the glyph to
+`String::New(c_str())`, and a C string cannot carry a NUL — `$\0` would have
+arrived as an EMPTY string and `glyph.codeUnitAt(0)` would throw on a
+perfectly valid literal. Now `String::FromUTF8` with an explicit length.
+
+### The two seams, and nothing else
+
+`st/mvp_compat/01_view_overrides.mst` adds exactly two methods, each named
+for the place this door is not Dolphin's VM:
+
+  * **who calls `subclassWindow:`** — Dolphin's VM calls it from a CBT hook
+    inside CreateWindowExW; this port binds views at WM_NCCREATE in its own
+    window procedure, which cannot work for a control because a control's
+    WM_NCCREATE goes to comctl's procedure and never reaches us. So
+    `ControlView>>basicCreateWindow:` subclasses after creation — the same
+    two steps in the same order the VM would have done.
+  * **the door needs the old procedure** — because it routes selectively
+    where Dolphin's VM reflects everything.
+
+Everything else — `subclassWindow`, `defaultWindowProcessing:wParam:lParam:`,
+the `oldWndProc` ivar — is Dolphin's own, unchanged.

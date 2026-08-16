@@ -1,21 +1,22 @@
 # dolphin2mst run report
 
-- inputs: **40** source files (`.cls` + `.pax`)
+- inputs: **43** source files (`.cls` + `.pax`)
 - shared-pool constants available: **6459** from **171** pools
 - loose methods adopted from `.pax`: **0**
-- parsed: **40**  (unbalanced/skipped: 0)
-- emitted: **40** `.mst`
-- methods: **2147**
-- refusals: **88**
+- parsed: **43**  (unbalanced/skipped: 0)
+- emitted: **43** `.mst`
+- methods: **2406**
+- refusals: **114**
 
 ## Refusals by rewrite class
 
 | Rewrite | Count |
 |---|--:|
-| `hashhash` | 42 |
-| `cascade` | 21 |
+| `hashhash` | 51 |
+| `cascade` | 22 |
+| `binding-literal` | 14 |
+| `pragma` | 14 |
 | `orphan-loose-methods` | 13 |
-| `binding-literal` | 12 |
 
 ## Per class
 
@@ -33,6 +34,7 @@
 | `CommandPolicy` | 21 | 0 |
 | `CommandQuery` | 39 | 2 |
 | `ContainerView` | 37 | 3 |
+| `ControlView` | 61 | 3 |
 | `CreateWindow` | 11 | 0 |
 | `CreateWindowApiCall` | 10 | 0 |
 | `CreateWindowFunction` | 12 | 0 |
@@ -51,12 +53,14 @@
 | `Rectangle` | 98 | 2 |
 | `Shell` | 39 | 2 |
 | `ShellView` | 156 | 11 |
+| `TextEdit` | 179 | 21 |
 | `TextPresenter` | 20 | 5 |
 | `TypeConverter` | 13 | 1 |
 | `UserLibrary (loose)` | 177 | 0 |
 | `ValueAdaptor` | 6 | 2 |
 | `ValueAspectAdaptor` | 17 | 1 |
 | `ValueBuffer` | 17 | 1 |
+| `ValueConvertingControlView` | 19 | 2 |
 | `ValueHolder` | 4 | 2 |
 | `ValueModel` | 17 | 2 |
 | `ValuePresenter` | 8 | 1 |

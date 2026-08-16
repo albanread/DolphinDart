@@ -25,7 +25,7 @@ ValueModel subclass: ValueAdaptor [
     ]
     ValueAdaptor class >> icon [
         "Answers an Icon that can be used to represent this class"
-        ^(self) defaultIcon
+        ^[self] value defaultIcon
     ]
     ValueAdaptor class >> subject: anObject [
         	^(self new)

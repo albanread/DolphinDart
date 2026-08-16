@@ -181,3 +181,50 @@ ExternalMemory subclass: Utf16Buffer [
 ]
 
 Utf16String := Utf16Buffer.
+
+"── CONTROL SUBCLASSING: the two places this door is not Dolphin's VM ────────
+
+ A control is a window of a class COMCTL registered, so Dolphin gets into its
+ message stream by SUBCLASSING it. `UI.ControlView` carries the whole
+ mechanism already — `subclassWindow:`, `subclassWindow`,
+ `defaultWindowProcessing:wParam:lParam:`, the `oldWndProc` ivar — and none of
+ it is reimplemented here. What IS here is the two seams where Dolphin's VM
+ does something this port's door does not, each named and no wider than it
+ has to be.
+
+ SEAM 1 — WHO CALLS `subclassWindow:`. Dolphin's VM calls it from a CBT hook
+ during CreateWindowExW. This port binds views at WM_NCCREATE instead, in the
+ door's own window procedure (`UiSession bindNewWindow:`) — which works for
+ every window of OUR class and cannot work for a control, because a control's
+ WM_NCCREATE goes to COMCTL's procedure and never reaches us at all. So the
+ control attaches itself after creation, which is the same two steps in the
+ same order: attach the handle, then substitute the procedure.
+
+ SEAM 2 — THE DOOR NEEDS THE OLD PROCEDURE. Dolphin's VM reflects EVERY
+ message into the image, so it never needs to know what to chain to. This
+ door routes selectively (DD9 measured ~26us per routed message), and an
+ unrouted message must still reach the control's own procedure or the control
+ stops working. `Win32 mvpBindOldProc:proc:` hands the door the value
+ `subclassWindow` has just captured — nothing is discovered twice, and the
+ image stays the authority on what it subclassed. Proven by `st_subclass`
+ before any of this was translated."
+View subclass: ControlView [
+    "SEAM 1. `super basicCreateWindow:` is Dolphin's, unchanged: it creates
+     the window and answers with `handle` set. The subclassing then happens
+     exactly where the VM would have done it — after the window exists and
+     before anyone sends it anything."
+    basicCreateWindow: aCreateWindow [
+        super basicCreateWindow: aCreateWindow.
+        handle isNil ifTrue: [ ^self ].
+        self subclassWindow: handle
+    ]
+
+    "SEAM 2. `super subclassWindow` is `View>>subclassWindow`, unchanged —
+     it asks `VM getWndProc`, installs it, and records the answer in
+     `oldWndProc` unless it was already ours."
+    subclassWindow [
+        super subclassWindow.
+        oldWndProc isNil ifTrue: [ ^self ].
+        Win32 mvpBindOldProc: handle proc: oldWndProc
+    ]
+]

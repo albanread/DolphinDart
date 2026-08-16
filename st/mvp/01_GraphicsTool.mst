@@ -167,7 +167,7 @@ Object subclass: GraphicsTool [
     ]
     GraphicsTool class >> icon [
         "Answers an Icon that can be used to represent this class"
-        ^(self) defaultIcon
+        ^[self] value defaultIcon
     ]
     GraphicsTool class >> new [
         "Answer a new, properly initialized, instance of the receiver."

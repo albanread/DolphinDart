@@ -166,10 +166,10 @@ ContainerView subclass: ShellView [
         ^13565952
     ]
     dialogMessageMap [
-        	^(IdentityDictionary withAll: {
+        	^[IdentityDictionary withAll: {
         				1024 - 1024 -> #dmGetDefId:wParam:lParam:.
         				1025 - 1024 -> #dmSetDefId:wParam:lParam: 
-        			})
+        			}] value
     ]
     dispatchUser: userId wParam: wParam lParam: lParam [
         "Private - Dispatch the WM_USER+userId message which was sent to the receiver.
@@ -242,7 +242,7 @@ ContainerView subclass: ShellView [
     ]
     filerProxyIn: anSTxOutFiler [
         	| proxy _casc1 | 
-        	proxy := super filerProxyIn: anSTxOutFiler._casc1 := proxy instVars. _casc1 at: (self indexOfInstVar: 'lastFocus') put: nil. _casc1 at: (self indexOfInstVar: 'combinedAcceleratorTable') put: nil. _casc1 at: (self indexOfInstVar: 'defaultButton') put: 0. _casc1 at: (self indexOfInstVar: 'actualIcons') put: nil.
+        	proxy := super filerProxyIn: anSTxOutFiler._casc1 := proxy instVars. _casc1 at: [self indexOfInstVar: 'lastFocus'] value put: nil. _casc1 at: [self indexOfInstVar: 'combinedAcceleratorTable'] value put: nil. _casc1 at: [self indexOfInstVar: 'defaultButton'] value put: 0. _casc1 at: [self indexOfInstVar: 'actualIcons'] value put: nil.
         	^proxy
     ]
     flash: anInteger [
@@ -362,7 +362,7 @@ ContainerView subclass: ShellView [
     invalidateUserInterface [
         "Invalidates the user interface of the receiver indicating that it needs
         	to be requeried using #validateUserInterface (usually at idle time)"
-        flags := flags bitAnd: (1024 bitInvert).
+        flags := flags bitAnd: [1024 bitInvert] value.
         	SessionManager classVarCurrent inputState prod
     ]
     isInitiallyCentered [
@@ -1068,7 +1068,7 @@ ContainerView subclass: ShellView [
     ]
     ShellView class >> icon [
         "Answers an Icon that can be used to represent this class"
-        ^(self defaultIcon)
+        ^[self defaultIcon] value
     ]
     ShellView class >> initialize [
         	View registerMessageMappings: self messageMappings

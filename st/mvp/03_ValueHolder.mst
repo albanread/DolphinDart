@@ -17,7 +17,7 @@ ValueModel subclass: ValueHolder [
     ]
     ValueHolder class >> icon [
         "Answers an Icon that can be used to represent this class"
-        ^(self) defaultIcon
+        ^[self] value defaultIcon
     ]
     ValueHolder class >> with: anObject [
         "Answers an instance of the receiver holding anObject as its value"

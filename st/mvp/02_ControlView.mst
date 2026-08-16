@@ -1,0 +1,413 @@
+"ControlView is the abstract superclass for all <view>s that are based on Windows controls. In general, controls are responsible for their own painting and so it is not necessary, or advisable, to override #onPaintRequired: in any of the ControlView subclasses.
+
+Some controls, but not all, allow control over the foreground and background colours used when painting. If neither of the #forecolor and #backcolor aspects is explicitly set then the default control colours will be used.
+
+In general, if you wish to add a new Windows control that is not already present in the system, then the usual place to start is by adding a subclass below ControlView.
+
+Instance Variables:
+	forecolor			<color> or nil, to use as an explicit foreground color.
+	oldWndProc		<integer> representing the ExternalAddress of the original control window procedure.
+
+Class Variables:
+	CommonControlCallError	<exceptionSignaler> to signal if an error occurs during a message to a common control.
+	NmMap			<IdentityDictionary> map of Windows notification messages to <selector>s."
+
+View subclass: ControlView [
+    <classVars: CommonControlCallError>
+    ControlView class >> classVarCommonControlCallError [ ^CommonControlCallError ]
+    | forecolor oldWndProc |
+
+    applyFont [
+        "Private - Apply the receiver's font to the associated Windows control"
+        super applyFont.
+        	self setFont: self actualFont
+    ]
+    backcolorChanged [
+        	self setControlBackcolor: self actualBackcolor.
+        	super backcolorChanged
+    ]
+    ccmGetVersion [
+        	^self sendMessage: 8200
+    ]
+    ccmSetVersion: anInteger [
+        "Inform the contorl that behavior compliant with a particular common control version is expected."
+        ^self sendMessage: 8199 wParam: anInteger lParam: 0
+    ]
+    clearHandle [
+        	handle := oldWndProc := nil
+    ]
+    commonNotificationMap [
+        "Private - Answer a 'map' between notification codes and the selector of the corresponding event handlers in the receiver. 
+        	We used to store this in a class variable, but then special steps are needed to ensure the notification handlers are not stripped during application deployment. By returning a constant from a method we ensure that the notification handlers are always reachable when traversing the reference graph."
+        ^[| nmMap |
+        	nmMap := IdentityDictionary new.
+        	nmMap
+        		at: -1 put: #nmOutOfMemory:;
+        		at: -2 put: #nmClick:;
+        		at: -3 put: #nmDblClk:;
+        		at: -4 put: #nmReturn:;
+        		at: -5 put: #nmRClick:;
+        		at: -6 put: #nmRDblClk:;
+        		at: -7 put: #nmSetFocus:;
+        		at: -8 put: #nmKillFocus:;
+        		at: -9 put: #nmStartWait:;
+        		at: -10 put: #nmEndWait:;
+        		at: -11 put: #nmDummy:.
+
+        	"IE3 Notifications - Common controls version 4.70"
+        	nmMap
+        		at: -12 put: #nmCustomDraw:;
+        		at: -13 put: #nmHover:.
+
+        	"IE4 Notifications - Common controls version 4.71"
+        	nmMap
+        		at: -14 put: #nmDummy:;
+        		at: -15 put: #nmKeyDown:;
+        		at: -16 put: #nmDummy:;
+        		at: -17 put: #nmDummy:;
+        		at: -18 put: #nmDummy:;
+        		at: -19 put: #nmDummy:;
+        		at: -20 put: #nmDummy:;
+        		at: -21 put: #nmDummy:;
+        		at: -22 put: #nmDummy:;
+        		at: -23 put: #nmDummy:;
+        		at: -24 put: #nmDummy:.
+
+        	"Tooltip support - because these are discontinuous, we can't use an array for the lookup table here"
+        	nmMap at: -530 put: #ttnGetDispInfoW:.
+        	nmMap shrink.
+        	nmMap] value
+    ]
+    defaultWindowProcessing: message wParam: wParam lParam: lParam [
+        "Private - Pass a message to the 'default' window procedure of the receiver."
+        ^User32
+        		callWindowProc: oldWndProc
+        		hWnd: handle
+        		msg: message
+        		wParam: wParam
+        		lParam: lParam
+    ]
+    defaultWindowStyle [
+        "Private - Answer a default style to use when creating an instance of the receiver.
+        	All controls have the WS_TABSTOP style by default.
+
+        	WARNING: There is a bug in the Windows tabbing algorithm.
+        	We specify the WS_EX_CONTROLPARENT style for ContainerViews otherwise tabs only
+        	work between siblings in a single level. If a ContainerView with this style
+        	contains no tabbable subViews, then pressing the TAB key will causes the
+        	application to hang."
+        ^super defaultWindowStyle bitOr: 65536
+    ]
+    errorInCommonControlCall [
+        "A call to one of the common control has failed, raise an exception.
+        	If this is because the view is closed then raise a ViewClosedError"
+        ^(self isOpen 
+        		ifTrue: [self class commonControlCallError]
+        		ifFalse: [self class viewClosedError]) signalWith: self
+    ]
+    errorOutOfMemory [
+        "Raise a OutOfMemoryError indicating that the receiver has run out of space"
+        ^OutOfMemoryError signal
+    ]
+    filerProxyIn: anSTxOutFiler [
+        "Private - Answer a filer proxy that represents the receiver for use with the <STxOutFiler> argument."
+        | proxy |
+        	proxy := super filerProxyIn: anSTxOutFiler.
+        	proxy instVars at: [self indexOfInstVar: 'oldWndProc'] value put: nil.
+        	^proxy
+    ]
+    forecolor [
+        "Answers the foreground colour of the receiver"
+        ^forecolor
+    ]
+    forecolor: aColorOrNil [
+        "Sets the foreground colour of the receiver to aColorOrNil.
+        	If aColorOrNil is nil then use the default color"
+        forecolor := aColorOrNil.
+        	self invalidate.
+    ]
+    getFont [
+        "Private - Get the control's current font."
+        | hFont |
+        	hFont := self sendMessage: 49.
+        	^hFont == 0 ifTrue: [Font system] ifFalse: [Font fromHandle: hFont dpi: self dpi]
+    ]
+    itemFromId: dwItemSpec [
+        "Private - Answers the sub-item of the receiver with the specified <integer> item spec,
+        	or nil if there is no such item. This is only relevant to controls that contain visual elements
+        	that are not themselves windows, such as toolbars."
+        ^nil
+    ]
+    nmClick: pNMHDR [
+        "Default handler for a NM_CLICK notification message.
+        	The return value for this notification is ignored by most subclasses, 
+        	though generally returning 0 will allow the control's default
+        	processing, returning a non-zero value will suppress the control's
+        	default processing."
+        ^0
+    ]
+    nmCustomDraw: pNMHDR [
+        "Default handler for a NM_CUSTOMDRAW notification message.
+        	Answer nil to accept default processing."
+        ^nil
+    ]
+    nmDblClk: pNMHDR [
+        "Default handler for a NM_DBLCLK notification message.
+        	Answer nil to accept default processing."
+        ^nil
+    ]
+    nmDummy: pNMHDR [
+        "Default handler for an uninteresting notification message."
+        ^0
+    ]
+    nmEndWait: pNMHDR [
+        "Default handler for a NM_ENDWAIT notification message.
+        	Answer nil to accept default processing."
+        ^nil
+    ]
+    nmHover: pNMHDR [
+        "Default handler for a NM_HOVER notification message.
+        	Answer nil to accept default processing."
+        ^nil
+    ]
+    nmKeyDown: pNMHDR [
+        "Default handler for a NM_KEYDOWN notification message.
+        	Answer nil to accept default processing.
+        	In some cases subclasses may answer 0 to prevent the control from processing the key press."
+        ^nil
+    ]
+    nmKillFocus: pNMHDR [
+        "Default handler for a NM_KILLFOCUS notification message.
+        	Answer nil to accept default processing."
+        ^nil
+    ]
+    nmNotify: pNMHDR [
+        "Private - Handler for a redirected generic WM_NOTIFY message."
+        ^(self commonNotificationMap lookup: (pNMHDR int32AtOffset: 8))
+        		ifNotNil: [:action | self perform: action with: pNMHDR]
+    ]
+    nmOutOfMemory: pNMHDR [
+        "Default handler for a NM_OUTOFMEMORY notification message.
+        	Signal an OutOfMemoryError"
+        ^self errorOutOfMemory
+    ]
+    nmRClick: pNMHDR [
+        "Default handler for a NM_RCLICK notification message.
+        	The return value for this notification is ignored by most subclasses, 
+        	though generally returning 0 will allow the control's default
+        	processing, returning a non-zero value will suppress the control's
+        	default processing."
+        ^nil
+    ]
+    nmRDblClk: pNMHDR [
+        "Default handler for a NM_RDBLCLK notification message.
+        	Answer nil to accept default processing."
+        ^nil
+    ]
+    nmReturn: pNMHDR [
+        "Default handler for a NM_RETURN notification message.
+        	Answer nil to accept default processing."
+        ^nil
+    ]
+    nmSetFocus: pNMHDR [
+        "Default handler for a NM_SETFOCUS notification message.
+        	Answer nil to accept default processing."
+        ^nil
+    ]
+    nmStartWait: pNMHDR [
+        "Default handler for a NM_STARTWAIT notification message.
+        	Answer nil to accept default processing."
+        ^nil
+    ]
+    oldWndProc [
+        "Private - Answer the window procedure of the control before we subclassed it."
+        ^oldWndProc
+    ]
+    oldWndProc: anAddress [
+        "Private - Set the window procedure of the control before we subclassed it."
+        oldWndProc := anAddress
+    ]
+    onColorRequired: aColorEvent [
+        "Private - Colour event handler for aColorEvent. We set up the canvas provided by the event
+        	with the appropriate foreground and background colours for the receiver. Windows
+        	WM_CTLCOLORXXX messages require that we answer the background brush handle."
+        "Implementation Note: From MSDN: 'The system does not automatically destroy the returned
+        	brush. It is the application's responsibility to destroy the brush when it is no longer
+        	needed.'. This presents us with a lifetime management issue for the brush that unfortunately
+        	requires that we store it into an instance variable."
+
+        	| canvas back brush |
+        	back := self basicActualBackcolor.
+        	canvas := aColorEvent canvas.
+        	back isDefault
+        		ifTrue: [brush := aColorEvent defaultWindowProcessing]
+        		ifFalse: 
+        			[brush := back brush.
+        			back isNone
+        				ifTrue: 
+        					[self paintTransparentBackgroundOn: canvas.
+        					canvas backgroundMode: 1]
+        				ifFalse: [canvas backcolor: back].
+        			canvas brush: brush].
+        	self forecolor ifNotNil: [:fore | canvas forecolor: fore].
+        	^brush asParameter
+    ]
+    onEraseRequired: aColorEvent [
+        "Handler for erase background event - allow the control to take care of this, unless
+        	transparent backcolor is set in which case the erase is suppressed.."
+        self actualBackcolor isNone ifTrue: [^true].
+        	^nil
+    ]
+    onInputMaskRequired: anEvent [
+        "Handler for a WM_GETDLGCODE request from Windows.
+        	Most controls will have their own specific implementation, so we override
+        	to just call the controls wndproc."
+        ^anEvent defaultWindowProcessing
+    ]
+    onViewCreated [
+        "The receiver's window has been created. Copy any instance variable information
+        	across."
+        super onViewCreated.
+        	self setFont: self actualFont
+    ]
+    paintTransparentBackgroundOn: canvas [
+        "Private - Paint the parent background behind the control onto the <Canvas> argument for partially transparent controls.
+        	The default is to do nothing, and generally nothing is needed as the controls will handle this correctly themselves."
+    ]
+    sendMessageNz: anIntegerMessageID wParam: wParam lpParam: lParam [
+        	| rc |
+        	rc := User32
+        				sendMessage: handle
+        				msg: anIntegerMessageID
+        				wParam: wParam
+        				lpParam: lParam.
+        	rc == 0 ifTrue: [self errorInCommonControlCall].
+        	^rc
+    ]
+    setControlBackcolor [
+        	| color |
+        	color := self basicActualBackcolor.
+        	color isDefault ifFalse: [self setControlBackcolor: color]
+    ]
+    setControlBackcolor: anIndexedColor [
+        "Private - Overridden by subclasses wrapping controls that support a background colour."
+    ]
+    setFont: aFont [
+        "Private - Apply the specified font to the receiver's associated Windows control"
+        | scaledFont |
+        	"Ensure that the font is realized at the correct DPI scale."
+        	scaledFont := aFont atDpi: self dpi.
+        	self
+        		sendMessage: 48
+        		wParam: scaledFont asParameter
+        		lParam: 0
+    ]
+    subclassWindow: hWnd [
+        "Private - Subclass the receiver's associated Win32 window by substituting the VM's 
+        	window procedure and saving the control's one, and record hWnd as the handle 
+        	of the receiver's window."
+        super subclassWindow: hWnd.
+        	self subclassWindow
+    ]
+    ttnGetDispInfo: anNMTTDISPINFOW [
+        "Private - Handler for the TTN_GETDISPINFOW notification message."
+        ^anNMTTDISPINFOW idIsHandle
+        		ifTrue: 
+        			[(View withHandle: anNMTTDISPINFOW idFrom)
+        				ifNotNil: [:view | view presenter onTipDetailsRequired: anNMTTDISPINFOW]]
+        		ifFalse: 
+        			[(self itemFromId: anNMTTDISPINFOW idFrom)
+        				ifNotNil: 
+        					[:tool |
+        					anNMTTDISPINFOW text: (self presenter onTipTextRequired: tool).
+        					0]]
+    ]
+    ttnGetDispInfoW: pNMHDR [
+        "Private - Default handler for the TTN_GETDISPINFOW notification message."
+        ^self ttnGetDispInfo: (NMTTDISPINFOW fromAddress: pNMHDR)
+    ]
+    unsubclassWindow [
+        	self setWndProc: oldWndProc
+    ]
+    wantParentNotifications [
+        "Answer whether the receiver's parent will be sent notifications from the receiver
+        	according to aBoolean.
+        	N.B. Dolphin reflects these notifications back to the receiver."
+        ^self extendedStyle noMask: 4
+    ]
+    wantParentNotifications: aBoolean [
+        "Set the whether the receiver's parent will be sent notifications from the receiver
+        	according to aBoolean.
+        	N.B. Dolphin reflects these notifications back to the receiver."
+        self exStyleMask: 4 set: aBoolean not recreateIfChanged: false
+    ]
+    winFinalize [
+        	self unsubclassWindow.
+        	^super winFinalize
+    ]
+    withOldWndProc: operation [
+        "Private - Evaluate the niladic valuable, operation, with the old (unsubclassed) window
+        	procedure. This avoids us having to process (and slow down!) messages in which we are not
+        	interested."
+        self unsubclassWindow.
+        	^operation ensure: [self subclassWindow]
+    ]
+    wmPaint: message wParam: wParam lParam: lParam [
+        "Private - Controls do their own painting so only allow the default."
+        self ensureLayoutValid.
+        	^self defaultWindowProcessing: message wParam: wParam lParam: lParam
+    ]
+    wmPrintClient: message wParam: wParam lParam: lParam [
+        	self ensureLayoutValid.
+        	^nil
+    ]
+    wmSysColorChange: message wParam: wParam lParam: lParam [
+        "Private - A system color has occurred. Just accept the default window processing as the
+        	control should handle it."
+        ^nil
+    ]
+    wmWindowPosChanged: message wParam: wParam lParam: lParam [
+        "Private - The position of the receiver is about to change in some manner.
+        	The superclass doesn't invoke default window processing in order to suppress
+        	the old WM_SIZE and WM_MOVE events which aren't needed by Dolphin 3.0,
+        	however most controls still depended on these messages so we must override to
+        	cause the default processing to be invoked."
+        super wmWindowPosChanged: message wParam: wParam lParam: lParam.
+        	^nil	"Accept default processing"
+    ]
+    ControlView class >> commonControlCallError [
+        "Answer the exceptionSignaler/exceptionSelector used to signal/catch common
+        	control message errors."
+        ^CommonControlCallError
+    ]
+    ControlView class >> controlColorMessages [
+        	^{306. 309. 310. 312}
+    ]
+    ControlView class >> initialize [
+        "Private - Initialise the map of generic notification codes to selectors. We could use an
+        	array, but a dictionary is more convenient and loses very little in performance.
+
+        		ControlView initialize"
+        CommCtrlLibrary addInitFlag: 16384.
+        	CommonControlCallError := Signal description: 'Common control call failed'.
+        	View registerMessageMappings: self messageMappings
+    ]
+    ControlView class >> maxTextLimit [
+        "Answer the absolute maximum amount of text that the receiver can ever hold."
+        ^16r7FFFFFFE
+    ]
+    ControlView class >> messageMappings [
+        	^(self controlColorMessages collect: [:each | each -> #wmCtlColor:wParam:lParam:])
+        		, {43 -> #wmDrawItem:wParam:lParam:. 44 -> #wmMeasureItem:wParam:lParam:}
+    ]
+    ControlView class >> onStartup [
+        "Perform post startup processing to initialize the View system"
+        "Load the Common Control Library."
+
+        	CommCtrlLibrary openDefault
+    ]
+    ControlView class >> winClassName [
+        "Private - Answer the name of the Windows window class to use when realizing the receiver."
+        ^self subclassResponsibility
+    ]
+]

@@ -306,7 +306,7 @@ Object subclass: View [
         "Private - Invalidates the layout of the receiver (only) indicating that the geometry
         	needs to be recalculated. Use #invalidateLayout to fully invalidate the parent chain
         	of views."
-        flags := flags bitAnd: (1 bitInvert)
+        flags := flags bitAnd: [1 bitInvert] value
     ]
     basicPaint: message wParam: wParam lParam: lParam [
         "Private - This window requires painting and this is to be performed in the
@@ -431,7 +431,7 @@ Object subclass: View [
         	normally have to be overridden in subclasses."
         | inflated |
         	inflated := self calcRectangleFromClientRectangle: aRectangle.
-        	^0 @ 0 extent: aRectangle extent * (2 @ 2) - inflated extent
+        	^0 @ 0 extent: aRectangle extent * [2 @ 2] value - inflated extent
     ]
     calcExtentFromClientExtent: aPoint [
         "Private - Given a client extent represented by the <Point> argument, answer the external
@@ -495,7 +495,7 @@ Object subclass: View [
         	handle := nil
     ]
     clearStateRestoring [
-        	flags := flags bitAnd: (48 bitInvert)
+        	flags := flags bitAnd: [48 bitInvert] value
     ]
     clientExtent [
         "Answer a <Point> representing the extent of the receiver's client area."
@@ -726,7 +726,7 @@ Object subclass: View [
         "Private - Answer the default size of the receiver in device-independent pixels (96-dpi DIPs). This is used only to determine the size of a view when it is created (although after scaling DIPs to the monitor DPI). Thereafter #preferredExtent is used when the desired size of a view is requested."
         "Note: This extent is somewhat unusual in being specified in device-independent pixels. This is because it is generally defined as a constant in code, and there are many implementations pre-dating the introduction of High DPI awareness."
 
-        	^(100 @ 100)
+        	^[100 @ 100] value
     ]
     defaultId [
         "Private - Answer the id to be used when the receiver is created 
@@ -1380,7 +1380,7 @@ Object subclass: View [
     ]
     getWindowLongPtr: anInteger [
         "Private - Answer the unsigned intptr value at the specified offset in the receiver."
-        ^false
+        ^true
         		ifTrue: [User32 getWindowLongPtr: handle nIndex: anInteger]
         		ifFalse: [User32 getWindowLong: handle nIndex: anInteger]
     ]
@@ -1403,7 +1403,7 @@ Object subclass: View [
         "Private - Answer the window procedure of the receiver."
         "Note: The compiler will optimise out the conditional because it is constant."
 
-        	^false
+        	^true
         		ifTrue: [User32 getWindowULongPtr: handle nIndex: -4]
         		ifFalse: [User32 getWindowULong: handle nIndex: -4]
     ]
@@ -2995,7 +2995,7 @@ Object subclass: View [
 
         	"Note that the compiler should optimise away the condition as VMConstants.IsWin64 is a constant value"
 
-        	^false
+        	^true
         		ifTrue: 
         			[User32
         				setWindowULongPtr: handle
@@ -4214,11 +4214,11 @@ Object subclass: View [
     ]
     View class >> defaultGetImageBlock [
         "Answer a monadic valuable to use to find out the image index of an object that will be placed in sub-instances of the receiver."
-        ^(Message selector: #iconImageIndex)
+        ^[Message selector: #iconImageIndex] value
     ]
     View class >> defaultGetTextBlock [
         "Answer a monadic valuable to use to find out the image index of an object that will be placed in sub-instances of the receiver."
-        ^(Message selector: #displayString)
+        ^[Message selector: #displayString] value
     ]
     View class >> defaultId [
         "Private - Answer a new id to use for a View"
@@ -4315,7 +4315,7 @@ Object subclass: View [
     ]
     View class >> icon [
         "Answers an Icon that can be used to represent this class"
-        ^(self) defaultIcon
+        ^[self] value defaultIcon
     ]
     View class >> initialize [
         "Private - Initialize the receiver's class variables:
@@ -4335,7 +4335,7 @@ Object subclass: View [
     ]
     View class >> newUnregistered: aHandle [
         	| class |
-        	class := self == (self) ifTrue: [self classForUnregisteredHandle: aHandle] ifFalse: [self].
+        	class := self == [self] value ifTrue: [self classForUnregisteredHandle: aHandle] ifFalse: [self].
         	^class new handle: aHandle
     ]
     View class >> onExit [
@@ -4365,7 +4365,7 @@ Object subclass: View [
     View class >> openTheme [
         	#highDpiToDo.	"Instances will need theme handle opened at relevant DPI. A single class-wide theme handle is inadequate."
         	^(self themePartName isNil or: [UxTheme isAppThemed not])
-        		ifTrue: [(Handle new)]
+        		ifTrue: [[Handle new] value]
         		ifFalse: 
         			["UxTheme openThemeDataForDpi: nil pszClassList: self themePartName asUtf16String dpi: User32 getDpiForSystem]"
         			UxTheme openThemeData: nil pszClassList: self themePartName asUtf16String]
@@ -4571,7 +4571,7 @@ Object subclass: View [
     View class >> topLevelViews [
         "Answer a Collection containing all top level Dolphin Views.
         	Note that this will include Views which are not Shells (e.g. tool tips)."
-        ^SessionManager classVarCurrent inputState topLevelWindows select: [:w | w isKindOf: (self)]
+        ^SessionManager classVarCurrent inputState topLevelWindows select: [:w | w isKindOf: [self] value]
     ]
     View class >> uninitialize [
         "Private - Remove any special selectors sent by the VM."
@@ -4628,6 +4628,6 @@ Object subclass: View [
         	Typically it is not necessary to override this message when creating custom views, the exceptional
         	cases being when one wants different attributes associated with the Window class than the Dolphin
         	defaults."
-        ^('DolphinWindow' asUtf16String)
+        ^['DolphinWindow' asUtf16String] value
     ]
 ]

@@ -72,7 +72,7 @@ Object subclass: TypeConverter [
     ]
     TypeConverter class >> icon [
         "Answers an Icon that can be used to represent this class"
-        ^(self) defaultIcon
+        ^[self] value defaultIcon
     ]
     TypeConverter class >> new [
         "Answer a new instance of the receiver. Instances require initialization"

@@ -512,6 +512,35 @@ def rewrite_qualified_classvars(body: str, owners) -> str:
 _QUALIFIED_CONST = re.compile(r"(?<![\w.])([A-Z][A-Za-z0-9_]*)\.(_?[A-Za-z][A-Za-z0-9_]*)(?![\w])")
 
 
+# TARGET CONSTANTS — values that describe THIS PORT'S target, not the source.
+#
+# The corpus carries its own answers for these, and folding them faithfully is
+# how a faithful translator produces wrong code: `DolphinClasses.st` says
+#
+#     'IsWin64' -> false.
+#
+# because the image it shipped for was 32-bit. DolphinDart builds x64 and
+# ARM64, both 64-bit, so the corpus value is a fact about a different machine.
+#
+# It is not cosmetic. `View>>setWndProc:` is
+#
+#     ^VMConstants.IsWin64
+#         ifTrue: [User32 setWindowULongPtr: handle nIndex: GWL_WNDPROC ...]
+#         ifFalse: [User32 setWindowULong: handle nIndex: GWL_WNDPROC ...]
+#
+# and on 64-bit the false branch calls SetWindowLongW, which TRUNCATES a
+# 64-bit window-procedure address to 32 bits. It does not fail: it installs a
+# garbage procedure. That method is the one control subclassing runs through,
+# so every subclassed control would have taken it.
+#
+# Deliberately a SHORT, EXPLICIT list rather than a heuristic. Each entry is a
+# claim about the target that someone has checked, and anything not listed
+# keeps the corpus's own answer.
+_TARGET_CONSTANTS = {
+    ("VMConstants", "IsWin64"): "true",
+}
+
+
 def rewrite_qualified_constants(body: str, table, chains=None) -> str:
     if table is None:
         return body
@@ -525,7 +554,12 @@ def rewrite_qualified_constants(body: str, table, chains=None) -> str:
         # `CreateWindowFunction` — looking only at CreateWindow's own constants
         # left it unfolded, the flattener rsplit it to a bare
         # `UseDefaultGeometry`, and ShellView's default geometry was nil.
-        val = table.lookup((chains or {}).get(owner, [owner]), name)
+        # The target's answer wins over the corpus's, and is applied HERE
+        # rather than by patching the pool so it holds whichever pool in the
+        # chain happened to supply the name.
+        val = _TARGET_CONSTANTS.get((owner.rsplit(".", 1)[-1], name))
+        if val is None:
+            val = table.lookup((chains or {}).get(owner, [owner]), name)
         if val is None:
             continue
         out.append(body[last:m.start()])
@@ -585,10 +619,23 @@ def rewrite_hashhash(src: str, where: str) -> Tuple[str, List[Refusal]]:
         folded = _fold_constant(inner)
         if folded is None:
             refusals.append(Refusal(where, "hashhash",
-                                    f"`##({inner.strip()[:60]})` is not a foldable constant"))
-            # Leave it as a plain parenthesised expression so the rest of the
-            # method still translates; the refusal is what gets acted on.
-            out = out[:m.start()] + "(" + inner + ")" + out[i + 1:]
+                                    f"`##({inner.strip()[:60]})` folded to a runtime block"))
+            # A BLOCK, evaluated — not a bare parenthesised expression.
+            #
+            # `##(...)` is Dolphin evaluating something once at COMPILE time and
+            # planting the result as a literal. When we cannot fold it, the
+            # honest fallback is to evaluate it at RUNTIME instead: same value,
+            # computed per call. That is a performance difference, not a
+            # semantic one, for the constant-answering methods this appears in.
+            #
+            # It must be `[ ... ] value` rather than `( ... )` because the
+            # contents are a BLOCK BODY, not necessarily an expression —
+            # `ControlView>>commonNotificationMap` is `##(| nmMap | nmMap :=
+            # ...)`, and wrapping that in parentheses produced `^(| nmMap | ...`
+            # which does not parse. One such method took the WHOLE class file
+            # down at load, which is how a refusal on one method became a
+            # missing class.
+            out = out[:m.start()] + "[" + inner + "] value" + out[i + 1:]
         else:
             out = out[:m.start()] + folded + out[i + 1:]
 

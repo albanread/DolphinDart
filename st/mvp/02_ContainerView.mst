@@ -76,7 +76,7 @@ View subclass: ContainerView [
     ]
     defaultExtent [
         "Private - Answer the default size of the receiver in device-independent pixels (96-dpi DIPs). This is used only to determine the size of a view when it is created (although after scaling DIPs to the monitor DPI). Thereafter #preferredExtent is used when the desired size of a view is requested."
-        ^(350 @ 250)
+        ^[350 @ 250] value
     ]
     defaultExtentOf: aShellView [
         "Answer the extent to use as the default for a shell that will be created within the
@@ -268,6 +268,6 @@ View subclass: ContainerView [
     ]
     ContainerView class >> icon [
         "Answers an Icon that can be used to represent this class"
-        ^(self) defaultIcon
+        ^[self] value defaultIcon
     ]
 ]

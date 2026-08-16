@@ -1033,8 +1033,16 @@ Fragment StGraphBuilder::TranslateLiteral(LiteralNode* node) {
       // A Character is a DISTINCT flyweight class (not a 1-char string) — so
       // `$a == $a` holds (shared Latin-1 instance) and `$a = 'a'` is false.
       // stCharLit(glyph) answers the flyweight for the glyph's code point.
+      //
+      // FromUTF8 with an explicit length, not `String::New(c_str())`: the
+      // lexer decodes Dolphin's escaped literals, and `$\0` is a NUL — which
+      // a C string cannot carry. `c_str()` would hand over an EMPTY string,
+      // and `glyph.codeUnitAt(0)` would then throw on a literal that is
+      // perfectly valid Smalltalk.
       Fragment f = Constant(String::ZoneHandle(
-          zone_, String::New(node->text.c_str(), Heap::kOld)));
+          zone_, String::FromUTF8(
+                     reinterpret_cast<const uint8_t*>(node->text.data()),
+                     static_cast<intptr_t>(node->text.size()), Heap::kOld)));
       f += PushArgument();
       f += StaticCall(
           Function::ZoneHandle(zone_, LookupCocoaFunction("stCharLit")), 1);

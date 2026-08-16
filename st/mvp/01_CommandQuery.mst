@@ -27,11 +27,11 @@ Object subclass: CommandQuery [
     ]
     beEnabled [
         "Set the receiver into the enabled state"
-        flags := flags bitAnd: (3 bitInvert)
+        flags := flags bitAnd: [3 bitInvert] value
     ]
     beUnchecked [
         "Set the receiver into the not checked state"
-        flags := flags bitAnd: (8 bitInvert)
+        flags := flags bitAnd: [8 bitInvert] value
     ]
     canPerform [
         "Answers true if the command described by the receiver can be performed.

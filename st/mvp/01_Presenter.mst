@@ -590,7 +590,7 @@ Object subclass: Presenter [
 
         	[(class legacyCommandQueryHandlers anySatisfy: [:each | self perform: each with: aCommandQuery])
         		ifTrue: [^true].
-        	class == (self)]
+        	class == [self] value]
         			whileFalse: [class := class superclass].
         	^false
     ]
@@ -812,7 +812,7 @@ Object subclass: Presenter [
     ]
     Presenter class >> icon [
         "Answers an Icon that can be used to represent this class"
-        ^(self) defaultIcon
+        ^[self] value defaultIcon
     ]
     Presenter class >> legacyCommandQueryHandlers [
         	^(legacyQueryCommandHandlers ifNil: [ #() ]) 

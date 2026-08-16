@@ -663,7 +663,7 @@ GraphicsTool subclass: Menu [
     ]
     Menu class >> icon [
         "Answers an Icon that can be used to represent this class"
-        ^(self) defaultIcon
+        ^[self] value defaultIcon
     ]
     Menu class >> initialize [
         	View registerMessageMappings: self menuMessageMappings.

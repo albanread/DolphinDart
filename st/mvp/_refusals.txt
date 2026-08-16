@@ -1,79 +1,109 @@
 C:\projects\dsfork\Core\Object Arts\Dolphin\Base\Core.Model.cls:85: [cascade] cascade on a receiver this rewriter cannot bound — splitting it could change evaluation
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\Graphics.Rectangle.cls:666: [cascade] cascade on a receiver this rewriter cannot bound — splitting it could change evaluation
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\Graphics.Rectangle.cls:696: [binding-literal] `#{...}` variable-binding literal has no house equivalent
-C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.CommandQuery.cls:44: [hashhash] `##(3 bitInvert)` is not a foldable constant
-C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.CommandQuery.cls:49: [hashhash] `##(8 bitInvert)` is not a foldable constant
-C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.ContainerView.cls:104: [hashhash] `##(350 @ 250)` is not a foldable constant
-C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.ContainerView.cls:364: [hashhash] `##(self)` is not a foldable constant
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.CommandQuery.cls:44: [hashhash] `##(3 bitInvert)` folded to a runtime block
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.CommandQuery.cls:49: [hashhash] `##(8 bitInvert)` folded to a runtime block
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.ContainerView.cls:104: [hashhash] `##(350 @ 250)` folded to a runtime block
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.ContainerView.cls:364: [hashhash] `##(self)` folded to a runtime block
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.ContainerView.cls:369: [binding-literal] `#{...}` variable-binding literal has no house equivalent
-C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.Menu.cls:860: [hashhash] `##(self)` is not a foldable constant
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.ControlView.cls:54: [hashhash] `##(| nmMap |
+	nmMap := IdentityDictionary new.
+	nmMap
+		at: -1 )` folded to a runtime block
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.ControlView.cls:133: [hashhash] `##(self indexOfInstVar: 'oldWndProc')` folded to a runtime block
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.ControlView.cls:542: [binding-literal] `#{...}` variable-binding literal has no house equivalent
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.Menu.cls:860: [hashhash] `##(self)` folded to a runtime block
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.Menu.cls:923: [binding-literal] `#{...}` variable-binding literal has no house equivalent
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.MenuBar.cls:43: [cascade] cascade on a receiver this rewriter cannot bound — splitting it could change evaluation
-C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.Presenter.cls:702: [hashhash] `##(self)` is not a foldable constant
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.Presenter.cls:702: [hashhash] `##(self)` folded to a runtime block
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.Presenter.cls:1039: [cascade] cascade on a receiver this rewriter cannot bound — splitting it could change evaluation
-C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.Presenter.cls:1097: [hashhash] `##(self)` is not a foldable constant
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.Presenter.cls:1097: [hashhash] `##(self)` folded to a runtime block
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.Presenter.cls:1116: [cascade] cascade on a receiver this rewriter cannot bound — splitting it could change evaluation
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.Presenter.cls:1122: [binding-literal] `#{...}` variable-binding literal has no house equivalent
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.Presenter.cls:1132: [binding-literal] `#{...}` variable-binding literal has no house equivalent
-C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.Shell.cls:292: [hashhash] `##(self)` is not a foldable constant
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.Shell.cls:292: [hashhash] `##(self)` folded to a runtime block
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.Shell.cls:300: [binding-literal] `#{...}` variable-binding literal has no house equivalent
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.ShellView.cls:202: [hashhash] `##(IdentityDictionary withAll: {
-				1024 - 1024 -> #dmGetDefId)` is not a foldable constant
-C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.ShellView.cls:287: [hashhash] `##(self indexOfInstVar: 'lastFocus')` is not a foldable constant
-C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.ShellView.cls:287: [hashhash] `##(self indexOfInstVar: 'combinedAcceleratorTable')` is not a foldable constant
-C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.ShellView.cls:287: [hashhash] `##(self indexOfInstVar: 'defaultButton')` is not a foldable constant
-C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.ShellView.cls:287: [hashhash] `##(self indexOfInstVar: 'actualIcons')` is not a foldable constant
-C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.ShellView.cls:433: [hashhash] `##(1024 bitInvert)` is not a foldable constant
-C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.ShellView.cls:1379: [hashhash] `##(self defaultIcon)` is not a foldable constant
+				1024 - 1024 -> #dmGetDefId)` folded to a runtime block
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.ShellView.cls:287: [hashhash] `##(self indexOfInstVar: 'lastFocus')` folded to a runtime block
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.ShellView.cls:287: [hashhash] `##(self indexOfInstVar: 'combinedAcceleratorTable')` folded to a runtime block
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.ShellView.cls:287: [hashhash] `##(self indexOfInstVar: 'defaultButton')` folded to a runtime block
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.ShellView.cls:287: [hashhash] `##(self indexOfInstVar: 'actualIcons')` folded to a runtime block
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.ShellView.cls:433: [hashhash] `##(1024 bitInvert)` folded to a runtime block
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.ShellView.cls:1379: [hashhash] `##(self defaultIcon)` folded to a runtime block
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.ShellView.cls:1406: [cascade] cascade on a receiver this rewriter cannot bound — splitting it could change evaluation
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.ShellView.cls:1423: [cascade] cascade on a receiver this rewriter cannot bound — splitting it could change evaluation
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.ShellView.cls:1441: [cascade] cascade on a receiver this rewriter cannot bound — splitting it could change evaluation
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.ShellView.cls:1451: [cascade] cascade on a receiver this rewriter cannot bound — splitting it could change evaluation
-C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.ValuePresenter.cls:94: [hashhash] `##(self)` is not a foldable constant
-C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.View.cls:369: [hashhash] `##(1 bitInvert)` is not a foldable constant
-C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.View.cls:503: [hashhash] `##(2 @ 2)` is not a foldable constant
-C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.View.cls:583: [hashhash] `##(48 bitInvert)` is not a foldable constant
-C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.View.cls:846: [hashhash] `##(100 @ 100)` is not a foldable constant
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.ValueConvertingControlView.cls:39: [hashhash] `##(100 @ 25)` folded to a runtime block
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.ValueConvertingControlView.cls:179: [hashhash] `##(self)` folded to a runtime block
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.ValuePresenter.cls:94: [hashhash] `##(self)` folded to a runtime block
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.View.cls:369: [hashhash] `##(1 bitInvert)` folded to a runtime block
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.View.cls:503: [hashhash] `##(2 @ 2)` folded to a runtime block
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.View.cls:583: [hashhash] `##(48 bitInvert)` folded to a runtime block
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.View.cls:846: [hashhash] `##(100 @ 100)` folded to a runtime block
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.View.cls:2225: [cascade] cascade on a receiver this rewriter cannot bound — splitting it could change evaluation
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.View.cls:3503: [cascade] cascade on a receiver this rewriter cannot bound — splitting it could change evaluation
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.View.cls:5375: [cascade] cascade on a receiver this rewriter cannot bound — splitting it could change evaluation
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.View.cls:5457: [binding-literal] `#{...}` variable-binding literal has no house equivalent
-C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.View.cls:5484: [hashhash] `##(Message selector: #iconImageIndex)` is not a foldable constant
-C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.View.cls:5489: [hashhash] `##(Message selector: #displayString)` is not a foldable constant
-C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.View.cls:5600: [hashhash] `##(self)` is not a foldable constant
-C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.View.cls:5624: [hashhash] `##(self)` is not a foldable constant
-C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.View.cls:5655: [hashhash] `##(External.Handle new)` is not a foldable constant
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.View.cls:5484: [hashhash] `##(Message selector: #iconImageIndex)` folded to a runtime block
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.View.cls:5489: [hashhash] `##(Message selector: #displayString)` folded to a runtime block
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.View.cls:5600: [hashhash] `##(self)` folded to a runtime block
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.View.cls:5624: [hashhash] `##(self)` folded to a runtime block
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.View.cls:5655: [hashhash] `##(External.Handle new)` folded to a runtime block
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.View.cls:5663: [cascade] cascade on a receiver this rewriter cannot bound — splitting it could change evaluation
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.View.cls:5705: [binding-literal] `#{...}` variable-binding literal has no house equivalent
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.View.cls:5721: [cascade] cascade on a receiver this rewriter cannot bound — splitting it could change evaluation
-C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.View.cls:5902: [hashhash] `##(self)` is not a foldable constant
-C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.View.cls:5968: [hashhash] `##('DolphinWindow' asUtf16String)` is not a foldable constant
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.View.cls:5902: [hashhash] `##(self)` folded to a runtime block
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.View.cls:5968: [hashhash] `##('DolphinWindow' asUtf16String)` folded to a runtime block
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Graphics\Graphics.Color.cls:75: [cascade] cascade on a receiver this rewriter cannot bound — splitting it could change evaluation
-C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Graphics\Graphics.Color.cls:211: [hashhash] `##(255.0 * 2)` is not a foldable constant
-C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Graphics\Graphics.Color.cls:211: [hashhash] `##(255.0 * 2)` is not a foldable constant
-C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Graphics\Graphics.Color.cls:238: [hashhash] `##(255.0 * 2)` is not a foldable constant
-C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Graphics\Graphics.Color.cls:364: [hashhash] `##(255.0 * 2)` is not a foldable constant
-C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Graphics\Graphics.Color.cls:373: [hashhash] `##(1000.0 * 255.0)` is not a foldable constant
-C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Graphics\Graphics.Color.cls:503: [hashhash] `##(self)` is not a foldable constant
-C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Graphics\Graphics.Color.cls:1147: [hashhash] `##(self)` is not a foldable constant
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Graphics\Graphics.Color.cls:211: [hashhash] `##(255.0 * 2)` folded to a runtime block
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Graphics\Graphics.Color.cls:211: [hashhash] `##(255.0 * 2)` folded to a runtime block
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Graphics\Graphics.Color.cls:238: [hashhash] `##(255.0 * 2)` folded to a runtime block
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Graphics\Graphics.Color.cls:364: [hashhash] `##(255.0 * 2)` folded to a runtime block
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Graphics\Graphics.Color.cls:373: [hashhash] `##(1000.0 * 255.0)` folded to a runtime block
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Graphics\Graphics.Color.cls:503: [hashhash] `##(self)` folded to a runtime block
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Graphics\Graphics.Color.cls:1147: [hashhash] `##(self)` folded to a runtime block
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Graphics\Graphics.Color.cls:1166: [cascade] cascade on a receiver this rewriter cannot bound — splitting it could change evaluation
-C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Graphics\Graphics.ColorDefault.cls:74: [hashhash] `##(self)` is not a foldable constant
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Graphics\Graphics.ColorDefault.cls:74: [hashhash] `##(self)` folded to a runtime block
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Graphics\Graphics.GraphicsTool.cls:237: [cascade] cascade on a receiver this rewriter cannot bound — splitting it could change evaluation
-C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Graphics\Graphics.GraphicsTool.cls:245: [hashhash] `##(self)` is not a foldable constant
-C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Models\Value\UI.ValueAdaptor.cls:59: [hashhash] `##(self)` is not a foldable constant
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Graphics\Graphics.GraphicsTool.cls:245: [hashhash] `##(self)` folded to a runtime block
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Models\Value\UI.ValueAdaptor.cls:59: [hashhash] `##(self)` folded to a runtime block
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Models\Value\UI.ValueAdaptor.cls:64: [cascade] cascade on a receiver this rewriter cannot bound — splitting it could change evaluation
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Models\Value\UI.ValueAspectAdaptor.cls:138: [cascade] cascade on a receiver this rewriter cannot bound — splitting it could change evaluation
-C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Models\Value\UI.ValueBuffer.cls:125: [hashhash] `##(self)` is not a foldable constant
-C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Models\Value\UI.ValueHolder.cls:42: [hashhash] `##(self)` is not a foldable constant
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Models\Value\UI.ValueBuffer.cls:125: [hashhash] `##(self)` folded to a runtime block
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Models\Value\UI.ValueHolder.cls:42: [hashhash] `##(self)` folded to a runtime block
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Models\Value\UI.ValueHolder.cls:47: [cascade] cascade on a receiver this rewriter cannot bound — splitting it could change evaluation
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Models\Value\UI.ValueModel.cls:132: [cascade] cascade on a receiver this rewriter cannot bound — splitting it could change evaluation
-C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Models\Value\UI.ValueModel.cls:140: [hashhash] `##(self)` is not a foldable constant
-C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Presenters\Text\UI.TextPresenter.cls:134: [hashhash] `##(self)` is not a foldable constant
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Models\Value\UI.ValueModel.cls:140: [hashhash] `##(self)` folded to a runtime block
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Presenters\Text\UI.TextEdit.cls:57: [pragma] unhandled pragma <commandQuery: #isTextModified>
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Presenters\Text\UI.TextEdit.cls:224: [pragma] unhandled pragma <commandQuery: #canCut>
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Presenters\Text\UI.TextEdit.cls:230: [pragma] unhandled pragma <commandQuery: #queryEditDelete:>
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Presenters\Text\UI.TextEdit.cls:238: [hashhash] `##(IdentityDictionary withAll: {256 -> #enSetFocus.
+				512 -> )` folded to a runtime block
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Presenters\Text\UI.TextEdit.cls:249: [pragma] unhandled pragma <commandQuery: #hasSelection>
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Presenters\Text\UI.TextEdit.cls:276: [pragma] unhandled pragma <commandQuery: #canCut>
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Presenters\Text\UI.TextEdit.cls:339: [pragma] unhandled pragma <commandQuery: #queryEditDelete:>
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Presenters\Text\UI.TextEdit.cls:348: [pragma] unhandled pragma <commandQuery: #queryFind:>
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Presenters\Text\UI.TextEdit.cls:409: [pragma] unhandled pragma <commandQuery: #queryFind:>
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Presenters\Text\UI.TextEdit.cls:434: [binding-literal] `#{...}` variable-binding literal has no house equivalent
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Presenters\Text\UI.TextEdit.cls:437: [pragma] unhandled pragma <commandQuery: #queryFindNext:>
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Presenters\Text\UI.TextEdit.cls:484: [pragma] unhandled pragma <commandQuery: #canFindReplace>
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Presenters\Text\UI.TextEdit.cls:854: [pragma] unhandled pragma <commandQuery: #canPaste>
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Presenters\Text\UI.TextEdit.cls:860: [pragma] unhandled pragma <commandQuery: #canPaste>
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Presenters\Text\UI.TextEdit.cls:933: [pragma] unhandled pragma <commandQuery: #canRedo>
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Presenters\Text\UI.TextEdit.cls:1084: [hashhash] `##(0|1|2)` folded to a runtime block
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Presenters\Text\UI.TextEdit.cls:1195: [pragma] unhandled pragma <commandQuery: #canUndo>
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Presenters\Text\UI.TextEdit.cls:1500: [hashhash] `##(self)` folded to a runtime block
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Presenters\Text\UI.TextEdit.cls:1565: [hashhash] `##(2 bitInvert)` folded to a runtime block
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Presenters\Text\UI.TextEdit.cls:1640: [cascade] cascade on a receiver this rewriter cannot bound — splitting it could change evaluation
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Presenters\Text\UI.TextEdit.cls:1640: [hashhash] `##(2 bitInvert)` folded to a runtime block
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Presenters\Text\UI.TextPresenter.cls:134: [hashhash] `##(self)` folded to a runtime block
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Presenters\Text\UI.TextPresenter.cls:139: [binding-literal] `#{...}` variable-binding literal has no house equivalent
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Presenters\Text\UI.TextPresenter.cls:149: [binding-literal] `#{...}` variable-binding literal has no house equivalent
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Presenters\Text\UI.TextPresenter.cls:159: [binding-literal] `#{...}` variable-binding literal has no house equivalent
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Presenters\Text\UI.TextPresenter.cls:169: [binding-literal] `#{...}` variable-binding literal has no house equivalent
-C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Type Converters\UI.TypeConverter.cls:121: [hashhash] `##(self)` is not a foldable constant
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Type Converters\UI.TypeConverter.cls:121: [hashhash] `##(self)` folded to a runtime block
 Core.Error: [orphan-loose-methods] 1 loose method(s) filed onto 'Core.Error', which was not translated
 Core.MessageSend: [orphan-loose-methods] 1 loose method(s) filed onto 'Core.MessageSend', which was not translated
 Core.Notification: [orphan-loose-methods] 1 loose method(s) filed onto 'Core.Notification', which was not translated

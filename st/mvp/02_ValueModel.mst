@@ -88,7 +88,7 @@ Model subclass: ValueModel [
     ]
     ValueModel class >> icon [
         "Answers an Icon that can be used to represent this class"
-        ^(self) defaultIcon
+        ^[self] value defaultIcon
     ]
     ValueModel class >> stbConvertFrom: anSTBClassFormat [
         "Convert from earlier version models.

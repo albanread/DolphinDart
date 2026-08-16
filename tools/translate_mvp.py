@@ -90,6 +90,18 @@ TARGETS = [
     "Core/Object Arts/Dolphin/MVP/Base/UI.Menu.cls",
     "Core/Object Arts/Dolphin/MVP/Base/UI.MenuBar.cls",
 
+    # ── DD10: CONTROLS ─────────────────────────────────────────────────────
+    # A control is a window of a class COMCTL registered, so Dolphin gets into
+    # its message stream by SUBCLASSING it — `ControlView>>subclassWindow`
+    # swaps the WndProc and chains to the original through
+    # `defaultWindowProcessing:wParam:lParam:`. The substrate for that is
+    # proven by `st_subclass` (the door's trampoline + `VM getWndProc`), so
+    # these translate onto something that already works rather than being the
+    # thing that discovers whether it does.
+    "Core/Object Arts/Dolphin/MVP/Base/UI.ControlView.cls",
+    "Core/Object Arts/Dolphin/MVP/Base/UI.ValueConvertingControlView.cls",
+    "Core/Object Arts/Dolphin/MVP/Presenters/Text/UI.TextEdit.cls",
+
     # WINDOW CREATION — Dolphin's own CreateWindowExW call, so `View>>create`
     # is Dolphin's code all the way down to the API. The substrate supplies
     # only what is genuinely ours: the window CLASS (its WndProc has to be the

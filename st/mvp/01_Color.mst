@@ -197,10 +197,10 @@ Object subclass: Color [
         			h < 0.0 ifTrue: [h := 360.0 + h]].
         	chroma := (max - min) asFloat / 255.0.
         	^{h.
-        		(max + min) asFloat / (255.0 * 2).
+        		(max + min) asFloat / [255.0 * 2] value.
         		chroma isZero
         			ifTrue: [chroma]
-        			ifFalse: [chroma / (1.0 - ((max + min) / (255.0 * 2) * 2.0 - 1.0) abs)]}
+        			ifFalse: [chroma / (1.0 - ((max + min) / [255.0 * 2] value * 2.0 - 1.0) abs)]}
     ]
     hlsSaturation [
         "Answer a <Float> in the range [0.0, 1.0] representing the HSL saturation of the receiver. Note any alpha is ignored
@@ -215,7 +215,7 @@ Object subclass: Color [
         	"Chroma is zero for black and white, which are the two cases of division by zero below."
         	^chroma isZero
         		ifTrue: [chroma]
-        		ifFalse: [chroma / (1.0 - ((max + min) / (255.0 * 2) * 2.0 - 1.0) abs)]
+        		ifFalse: [chroma / (1.0 - ((max + min) / [255.0 * 2] value * 2.0 - 1.0) abs)]
     ]
     hsv [
         "Answer a three-element <Array> representing the hue, saturation and brightness values that describe the receiver in the HSV colour system."
@@ -321,11 +321,11 @@ Object subclass: Color [
         	r := self red.
         	g := self green.
         	b := self blue.
-        	^(((r max: g) max: b) + ((r min: g) min: b)) / (255.0 * 2)
+        	^(((r max: g) max: b) + ((r min: g) min: b)) / [255.0 * 2] value
     ]
     luminance [
         "Answer a <Number> in the range [0,1] representing the luminance of the receiver, a brightness value weighted by the human eye's color sensitivity."
-        ^(299 * self red + (587 * self green) + (114 * self blue)) / (1000.0 * 255.0)
+        ^(299 * self red + (587 * self green) + (114 * self blue)) / [1000.0 * 255.0] value
     ]
     name [
         "Answer the symbolic name of the colour, or nil if it does not have a name (or known name)."
@@ -421,7 +421,7 @@ Object subclass: Color [
         	^self alpha: aFloat * 255
     ]
     species [
-        	^(self)
+        	^[self] value
     ]
     stbSaveOn: anSTBOutFiler [
         "Output the receiver to anSTBOutFiler."
@@ -959,7 +959,7 @@ Object subclass: Color [
     ]
     Color class >> icon [
         "Answers an Icon that can be used to represent this class"
-        ^(self) defaultIcon
+        ^[self] value defaultIcon
     ]
     Color class >> inactiveCaption [
         "Answer the 'inactive caption' system colour (i.e. the fill color of the captions of inactive windows)."

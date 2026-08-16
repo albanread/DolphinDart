@@ -47,6 +47,6 @@ ColorRef subclass: ColorDefault [
         ^self
     ]
     species [
-        	^(self)
+        	^[self] value
     ]
 ]

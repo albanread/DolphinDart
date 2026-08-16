@@ -224,7 +224,36 @@ Token Lexer::MakeSymbol(bool* error, LexError* err) {
   return t;
 }
 
-// Reads `$x` character literal, where x is any single character.
+// Appends `cp` to `s` as UTF-8.
+static void AppendUtf8(std::string* s, uint32_t cp) {
+  if (cp < 0x80) {
+    *s += static_cast<char>(cp);
+  } else if (cp < 0x800) {
+    *s += static_cast<char>(0xC0 | (cp >> 6));
+    *s += static_cast<char>(0x80 | (cp & 0x3F));
+  } else if (cp < 0x10000) {
+    *s += static_cast<char>(0xE0 | (cp >> 12));
+    *s += static_cast<char>(0x80 | ((cp >> 6) & 0x3F));
+    *s += static_cast<char>(0x80 | (cp & 0x3F));
+  } else {
+    *s += static_cast<char>(0xF0 | (cp >> 18));
+    *s += static_cast<char>(0x80 | ((cp >> 12) & 0x3F));
+    *s += static_cast<char>(0x80 | ((cp >> 6) & 0x3F));
+    *s += static_cast<char>(0x80 | (cp & 0x3F));
+  }
+}
+
+// Reads a `$x` character literal.
+//
+// Dolphin 8 added ESCAPED character literals, and the corpus uses them:
+// `$\0` for NUL, `$\n`, `$\r`, `$\t`, and `$\x<hex>` for a code point.
+// `UI.TextEdit>>cueBanner` compares `buf first ~~ $\0`, and reading that as
+// `$\` followed by the integer 0 left two primaries in a block — a parse
+// error whose column pointed at the digit.
+//
+// An UNRECOGNISED escape answers the backslash itself, which is what this
+// lexer did for every escape before: `$\` is a legitimate character literal,
+// and the corpus contains `$\ ` (backslash) meaning exactly that.
 Token Lexer::MakeCharOrDollar() {
   Token t;
   t.kind = Tok::kChar;
@@ -234,9 +263,51 @@ Token Lexer::MakeCharOrDollar() {
   int c = Peek();
   if (c == -1) {
     t.text = "";
-  } else {
-    t.text = std::string(1, static_cast<char>(Advance()));
+    return t;
   }
+  if (c != '\\') {
+    t.text = std::string(1, static_cast<char>(Advance()));
+    return t;
+  }
+  // A backslash: look at what follows before committing to an escape.
+  int e = Peek(1);
+  switch (e) {
+    case '0': Advance(); Advance(); t.text = std::string(1, '\0'); return t;
+    case 'a': Advance(); Advance(); t.text = "\a"; return t;
+    case 'b': Advance(); Advance(); t.text = "\b"; return t;
+    case 'f': Advance(); Advance(); t.text = "\f"; return t;
+    case 'n': Advance(); Advance(); t.text = "\n"; return t;
+    case 'r': Advance(); Advance(); t.text = "\r"; return t;
+    case 't': Advance(); Advance(); t.text = "\t"; return t;
+    case 'v': Advance(); Advance(); t.text = "\v"; return t;
+    case '\\': Advance(); Advance(); t.text = "\\"; return t;
+    case 'x': case 'X': {
+      // `$\x41` — hex digits, however many follow.
+      int n = 2;
+      uint32_t cp = 0;
+      bool any = false;
+      while (true) {
+        int d = Peek(n);
+        int v;
+        if (d >= '0' && d <= '9') v = d - '0';
+        else if (d >= 'a' && d <= 'f') v = d - 'a' + 10;
+        else if (d >= 'A' && d <= 'F') v = d - 'A' + 10;
+        else break;
+        cp = cp * 16 + static_cast<uint32_t>(v);
+        any = true;
+        n++;
+      }
+      if (!any) break;  // `$\x` with no digits — fall through to the default
+      for (int i = 0; i < n; i++) Advance();
+      t.text.clear();
+      AppendUtf8(&t.text, cp);
+      return t;
+    }
+    default:
+      break;
+  }
+  // Not an escape we know: the character IS the backslash.
+  t.text = std::string(1, static_cast<char>(Advance()));
   return t;
 }
 
@@ -289,10 +360,88 @@ bool Lexer::Tokenize(std::vector<Token>* tokens, LexError* err) {
     int line = line_, col = col_;
     int off = static_cast<int>(idx_);   // token start offset (debug info)
 
-    // Numbers. A leading '-' is a negative number literal only when a digit
-    // follows; otherwise '-' is a binary selector. This is the classic
-    // negative-literal-vs-binary-minus disambiguation.
-    if (std::isdigit(c) || (c == '-' && std::isdigit(Peek(1)))) {
+    // Numbers, and the classic negative-literal-vs-binary-minus
+    // disambiguation.
+    //
+    // A digit after '-' is NOT enough. `anInteger-1` has one, and reading
+    // `-1` as a literal there leaves two primaries side by side —
+    // `anInteger` `-1` — which is a parse error at a column that points at
+    // the digit and explains nothing. `UI.TextEdit>>caretPosition:` is
+    // `self selectionStart: anInteger end: anInteger-1`, and it took the
+    // whole class file down at load.
+    //
+    // The rule is about what comes BEFORE: a '-' that follows something which
+    // can END a primary is a binary selector, because two primaries cannot be
+    // adjacent. After a keyword, an assignment, an operator or an opening
+    // bracket there is no preceding primary, so the '-' is a sign.
+    //
+    //     foo: -1        sign     (previous token is a keyword)
+    //     x := -1        sign     (previous is :=)
+    //     3 + -1         sign     (previous is a binary selector)
+    //     anInteger-1    binary   (previous is an identifier)
+    //     (a + b)-1      binary   (previous is `)`)
+    //     #(1 2)-1       binary   (previous is `)`)
+    // ...EXCEPT inside a literal array, where there are no binary sends at
+    // all: `#(1 2 -3)` is three integers, and the previous token is an
+    // integer. Getting this wrong is worse than a parse error — the parser
+    // turns a kBinary inside a literal array into a SYMBOL, so the array
+    // would have become `#(1 2 #- 3)`: four elements, no diagnostic.
+    //
+    // Determined by walking back rather than by keeping a counter, because
+    // tokens are appended from a dozen places in this loop and a counter
+    // maintained in only some of them is a bug waiting to happen. The walk
+    // runs only in the genuinely ambiguous case — a '-' with a digit after it
+    // and a primary before it.
+    //
+    // A bare '(' is not a decision: inside a literal array it opens a NESTED
+    // array, so the walk keeps going and lets an enclosing token decide. A
+    // '[' or '{' is a decision — neither can occur inside a literal array.
+    auto inside_literal_array = [&]() -> bool {
+      int depth = 0;
+      for (int i = static_cast<int>(tokens->size()) - 1; i >= 0; i--) {
+        switch ((*tokens)[i].kind) {
+          case Tok::kRParen: case Tok::kRBracket: case Tok::kRBrace:
+            depth++;
+            break;
+          case Tok::kLBracket: case Tok::kLBrace:
+            if (depth == 0) return false;
+            depth--;
+            break;
+          case Tok::kLParen:
+            if (depth > 0) depth--;
+            break;
+          case Tok::kSymbolArray: case Tok::kByteArrayL:
+            if (depth == 0) return true;
+            depth--;
+            break;
+          default:
+            break;
+        }
+      }
+      return false;
+    };
+
+    bool minus_is_sign = true;
+    if (c == '-' && !tokens->empty() && std::isdigit(Peek(1)) &&
+        !inside_literal_array()) {
+      switch (tokens->back().kind) {
+        case Tok::kIdent:
+        case Tok::kInt:
+        case Tok::kFloat:
+        case Tok::kString:
+        case Tok::kSymbol:
+        case Tok::kChar:
+        case Tok::kRParen:
+        case Tok::kRBracket:
+        case Tok::kRBrace:
+          minus_is_sign = false;
+          break;
+        default:
+          break;
+      }
+    }
+    if (std::isdigit(c) ||
+        (c == '-' && minus_is_sign && std::isdigit(Peek(1)))) {
       bool nerr = false;
       Token t = MakeNumber(&nerr, err);
       if (nerr) return false;
