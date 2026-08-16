@@ -1,4 +1,0 @@
-ShellView subclass: AbstractSplash [
-    | splashDelay bitmap overlayWith |
-
-]

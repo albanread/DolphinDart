@@ -1,4 +1,0 @@
-GraphicsTool subclass: AcceleratorTable [
-    | commands |
-
-]

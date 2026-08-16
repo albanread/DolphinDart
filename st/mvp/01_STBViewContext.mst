@@ -1,4 +1,0 @@
-Object subclass: STBViewContext [
-    | parent owner |
-
-]

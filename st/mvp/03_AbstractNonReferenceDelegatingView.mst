@@ -1,2 +1,0 @@
-AbstractDelegatingView subclass: AbstractNonReferenceDelegatingView [
-]

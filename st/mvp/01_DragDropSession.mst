@@ -1,8 +1,0 @@
-Object subclass: DragDropSession [
-    <classVars: Current DefaultImages OperationDescriptions>
-    DragDropSession class >> classVarCurrent [ ^Current ]
-    DragDropSession class >> classVarDefaultImages [ ^DefaultImages ]
-    DragDropSession class >> classVarOperationDescriptions [ ^OperationDescriptions ]
-    | dragSource dragPoint suggestedSource dragObjects defaultOperation dropTarget suggestedTarget operationsSupportedByDropTarget operation inDropTargetScrollZone dragImages scrollProcess |
-
-]

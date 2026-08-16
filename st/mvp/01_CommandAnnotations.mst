@@ -1,4 +1,0 @@
-Object subclass: CommandAnnotations [
-    | targetClass commandQueries menuPopulators accelerators acceleratorKeys |
-
-]

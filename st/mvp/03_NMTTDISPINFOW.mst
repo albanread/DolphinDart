@@ -1,4 +1,0 @@
-NMHDR subclass: NMTTDISPINFOW [
-    | text |
-
-]

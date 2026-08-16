@@ -1,6 +1,0 @@
-Object subclass: DisplayMonitor [
-    <classVars: Instances>
-    DisplayMonitor class >> classVarInstances [ ^Instances ]
-    | handle info devices dpi metrics defaultWindowExtent lastWindowPosition cascadeOffset workArea deviceName isPrimary rectangle |
-
-]

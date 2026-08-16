@@ -1,4 +1,0 @@
-SessionManager subclass: GUISessionManager [
-    | savedWindows |
-
-]

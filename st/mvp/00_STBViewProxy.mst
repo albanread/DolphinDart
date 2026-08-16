@@ -1,4 +1,0 @@
-STxProxy subclass: STBViewProxy [
-    | viewClass instVars state showCmd subViews resolution events version |
-
-]

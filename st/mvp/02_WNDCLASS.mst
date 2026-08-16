@@ -1,4 +1,0 @@
-Structure subclass: WNDCLASS [
-    | menuName className |
-
-]

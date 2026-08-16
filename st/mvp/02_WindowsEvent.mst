@@ -1,4 +1,0 @@
-Event subclass: WindowsEvent [
-    | message wParam lParam lResult |
-
-]

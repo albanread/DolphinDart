@@ -1,4 +1,0 @@
-CommandDescription subclass: ClosedCommandDescription [
-    | queryBlock receiver |
-
-]

@@ -1,4 +1,0 @@
-Interactor subclass: CapturingInteractor [
-    | oldInteractor stateFlags |
-
-]

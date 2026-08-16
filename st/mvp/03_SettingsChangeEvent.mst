@@ -1,4 +1,0 @@
-WindowsEvent subclass: SettingsChangeEvent [
-    | area |
-
-]

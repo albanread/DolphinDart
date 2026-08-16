@@ -1,4 +1,0 @@
-RuntimeSessionManager subclass: DefaultShellSessionManager [
-    | mainShellClass |
-
-]

@@ -1,4 +1,0 @@
-SystemFont subclass: UxThemeFont [
-    | themedObject |
-
-]

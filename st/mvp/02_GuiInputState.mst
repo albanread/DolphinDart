@@ -1,5 +1,0 @@
-InputState subclass: GuiInputState [
-    <classVars: EnumHandlesDescriptor>
-    GuiInputState class >> classVarEnumHandlesDescriptor [ ^EnumHandlesDescriptor ]
-
-]

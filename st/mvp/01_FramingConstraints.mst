@@ -1,4 +1,0 @@
-Object subclass: FramingConstraints [
-    | leftFraming leftOffset rightFraming rightOffset topFraming topOffset bottomFraming bottomOffset |
-
-]

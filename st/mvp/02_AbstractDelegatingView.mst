@@ -1,4 +1,0 @@
-View subclass: AbstractDelegatingView [
-    | resourceIdentifier referee |
-
-]

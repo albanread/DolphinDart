@@ -1,2 +1,0 @@
-CommandPolicy subclass: DelegatingCommandPolicy [
-]

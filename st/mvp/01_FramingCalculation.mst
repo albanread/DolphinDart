@@ -1,6 +1,0 @@
-Object subclass: FramingCalculation [
-    <classVars: Calculations>
-    FramingCalculation class >> classVarCalculations [ ^Calculations ]
-    | name framingBlock offsetBlock flags |
-
-]

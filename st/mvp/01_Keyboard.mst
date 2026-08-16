@@ -1,7 +1,0 @@
-Object subclass: Keyboard [
-    <classVars: DefaultInstance InvariantInstance>
-    Keyboard class >> classVarDefaultInstance [ ^DefaultInstance ]
-    Keyboard class >> classVarInvariantInstance [ ^InvariantInstance ]
-    | state virtualKeys modifierKeys keyNames |
-
-]

@@ -1,4 +1,0 @@
-Event subclass: SelectionChangeEvent [
-    | newSelections oldSelections cause |
-
-]

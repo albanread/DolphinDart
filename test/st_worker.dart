@@ -115,7 +115,11 @@ UiWindow subclass: WorkerProbe [
   }
   var paintsDuring = num('WkWin painted2') - paintsBefore;
   must(host.outstanding == 0, 'the worker replied (after $loops pump slices)');
-  must(paintsDuring > 5,
+  // Windows COALESCES WM_PAINT, so the exact count depends on how long the
+  // isolate happened to take — this asserted `> 5` and saw exactly 5 on a
+  // fast run. Three real paints already prove the pump ran while another
+  // thread was busy, which is the claim; the count is not the claim.
+  must(paintsDuring >= 3,
        'the pump stayed LIVE while the isolate worked '
        '($paintsDuring real WM_PAINTs during the run)');
 

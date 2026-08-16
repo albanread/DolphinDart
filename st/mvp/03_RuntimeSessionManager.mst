@@ -1,2 +1,0 @@
-GUISessionManager subclass: RuntimeSessionManager [
-]

@@ -1,2 +1,0 @@
-PointEvent subclass: MouseEvent [
-]
