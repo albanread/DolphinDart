@@ -113,6 +113,9 @@ Object subclass: Win32 [
     Win32 class >> mvpSetRoutedMessages: msgs [ <stprim: stMvpSetRoutedMessages> ]
     Win32 class >> mvpRoutedMessageCount [ <stprim: stMvpRoutedMessageCount> ]
     Win32 class >> mvpSendMsg: h msg: m wparam: w lparam: l [ <stprim: stMvpSendMsg> ]
+    "Accelerators are a PUMP concern: TranslateAcceleratorW needs the MSG, and
+     the pump is native, so nothing image-side ever sees one."
+    Win32 class >> mvpSetAccelerators: hwnd haccel: haccel [ <stprim: stMvpSetAccelerators> ]
 ]
 
 "── The system object (corpus surface: Smalltalk millisecondClock) ──"

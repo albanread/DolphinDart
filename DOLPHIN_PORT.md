@@ -71,6 +71,24 @@ corpus, with per-document standing notes).
    the expected case).
 6. **The goal is the Dolphin MVP GUI running** — DD12's gate is the project's
    acceptance test.
+7. **THE MVP IS DOLPHIN'S, IN SMALLTALK** (added 2026-08-16, after a caught
+   drift). The deliverable is Dolphin's own MVP framework — translated
+   Smalltalk — running. Never an MVP-shaped framework of our own, in any
+   language. **Dart is an implementation substrate with exactly the standing
+   C++ has in this VM**: the door/pump, the FFI floor, the worker transport
+   and the test harnesses may be Dart, the same way primitives may be C++ —
+   MVP and application logic may not be either. Hand-written compat Smalltalk
+   that duplicates a translated Dolphin class's role is SCAFFOLDING: it must
+   be named as such in the sprint notes together with the exact thing that
+   retires it, and a gate only counts toward the goal when its load-bearing
+   classes are Dolphin's own.
+8. **Workers on Dart isolates REPLACE Dolphin's processes/green threads**
+   (2026-08-16). This VM has no green processes and will not grow any. A
+   Dolphin `fork`/`Process` site translates to a `Worker do:with:then:`
+   submission whose continuation is POSTED to the UI thread — never to a
+   green-thread scheduler. `docs/WORKERS.md` is the doctrine and the
+   mechanism; `st/world/47_worker.mst` is a specification document only
+   (numbered-primitive bodies, inert here).
 
 ## 2. The substrate, measured (2026-08-15)
 

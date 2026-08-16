@@ -59,6 +59,10 @@ int g_generation = 1;
 int g_paint_faults = 0;
 bool g_top_registered = false;
 
+// The accelerator table the pump consults, and the window it belongs to.
+HACCEL g_accel = nullptr;
+HWND g_accel_hwnd = nullptr;
+
 // --- THE STORM CENSUS (DolphinDart DD9) -------------------------------------
 //
 // Resize relayout is this sprint's gate, and resize is exactly where the
@@ -427,11 +431,36 @@ void ST_mvpPump(Dart_NativeArguments args) {
   int64_t n = 0;
   MSG m;
   while (n < budget && PeekMessageW(&m, nullptr, 0, 0, PM_REMOVE)) {
+    // ACCELERATORS ARE A PUMP CONCERN (DD10). TranslateAcceleratorW turns a
+    // key chord into the WM_COMMAND its table names and dispatches it itself,
+    // so it must run BEFORE TranslateMessage/DispatchMessageW and the message
+    // must then be dropped — passing it on as well would deliver both the
+    // command and the raw keystroke. There is nowhere else this can live: the
+    // pump is native, so an image-side accelerator table would never see the
+    // MSG.
+    if (g_accel != nullptr && g_accel_hwnd != nullptr &&
+        TranslateAcceleratorW(g_accel_hwnd, g_accel, &m)) {
+      n++;
+      continue;
+    }
     TranslateMessage(&m);
     DispatchMessageW(&m);
     n++;
   }
   Dart_SetReturnValue(args, Dart_NewInteger(n));
+}
+
+// Install the accelerator table the pump consults, for one window. Passing 0
+// for either clears it — a torn-down window must not leave its accelerators
+// live, since TranslateAcceleratorW on a dead HWND is undefined.
+void ST_mvpSetAccelerators(Dart_NativeArguments args) {
+  g_accel_hwnd = (HWND)(intptr_t)ArgInt(args, 0);
+  g_accel = (HACCEL)(intptr_t)ArgInt(args, 1);
+  if (g_accel_hwnd == nullptr || g_accel == nullptr) {
+    g_accel_hwnd = nullptr;
+    g_accel = nullptr;
+  }
+  Dart_SetReturnValue(args, Dart_NewBoolean(g_accel != nullptr));
 }
 
 // Send a real WM_COMMAND, as a button click does.

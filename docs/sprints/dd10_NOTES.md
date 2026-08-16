@@ -270,3 +270,55 @@ from scratch with its own statics, so a task registered by calling a function
 from `main` is absent on the other side — tasks must be visible at
 library-init time in BOTH isolates. Letting an application supply its own
 means a place in that literal, or a generated one.
+
+## COURSE CORRECTION (2026-08-16): the MVP is Dolphin's, in Smalltalk
+
+The project owner caught a real drift, now binding as `DOLPHIN_PORT.md` scope
+rules 7 and 8: **the deliverable is Dolphin's own MVP framework — translated
+Smalltalk — running.** Dart is an implementation substrate with exactly the
+standing C++ has (door/pump, FFI floor, worker transport, harnesses), and
+**Workers on isolates replace Dolphin's processes/green threads outright**.
+No MVP logic was ever written in Dart — but a parallel HAND-WRITTEN SMALLTALK
+mini-framework grew around the translated classes, which is the same failure
+in a different coat. This section is the honest ledger.
+
+### Genuinely Dolphin's, already load-bearing
+
+`Model`/`ValueModel`/`ValueHolder`/`ValueBuffer`; `TypeConverter`/
+`NumberToText` and the `InvalidFormat` path; `CommandDescription`/
+`CommandQuery`/`CommandPolicy`; `BorderLayout`/`LayoutContext`/
+`LayoutPlacement` and the `Rectangle`/`Point` geometry; `buildMessageMap`
+dispatch. Translated and loaded but NOT yet driven: `Presenter`, `Shell`,
+`ValuePresenter`, `TextPresenter`, `Menu`/`MenuItem`/`MenuBar`.
+
+### Substrate — legitimately ours, stays
+
+The door, pump and routed set; the FFI floor with its generated prims and
+structs; the worker transport; the accelerator table in the pump
+(`TranslateAcceleratorW` needs the MSG and the pump is native); `UiSession`
+as the kernel bridge, with an eye on Dolphin's `InputState` for later.
+
+### SCAFFOLDING — named, with what retires each
+
+| Stand-in | Duplicates | Retired by |
+|---|---|---|
+| `TextField` (text_probe) | **`UI.TextPresenter`'s whole role** — the clearest drift | driving `UI.TextPresenter` + `UI.TextEdit` |
+| `WinTextEdit`/`WinButton`/`WinLabel`/`WinControl` | `UI.TextEdit` and the control-view classes | `UI.View` window ownership + the control wave |
+| `WinView` | `UI.View` as a layout subject | `UI.View` owning windows (`View>>create` through the door's class) |
+| `WinMenu` | `UI.Menu`'s realization | `UI.Menu` realizing its own HMENU through the floor; `WinMenu` shrinks to raw calls or vanishes |
+| `WinAccelerators` | `UI.AcceleratorTable`'s realization | translated `AcceleratorTable` driving the pump's table |
+| `CounterApp` + `test/st_app.dart` | the acceptance app | the REAL acceptance app, built from Dolphin's `Shell`/`TextPresenter`/`Menu` |
+
+### The DD10 gate is REDEFINED
+
+`CounterApp` is demoted on arrival to a SUBSTRATE DEMONSTRATION. It proves the
+substrate carries a whole application — triad, converters, commands,
+accelerator, isolate worker — and that is worth keeping. **It does not count
+as the DD10 acceptance app**, because its presenter and view layer are
+hand-written. DD10 is done when Dolphin's own `TextPresenter`/`Shell`/`Menu`
+are the load-bearing classes of the acceptance app.
+
+The next work item is therefore **Dolphin View window ownership** —
+`View>>create` running against the door's window class — after which
+`UI.TextEdit`/`UI.TextPresenter` replace `WinTextEdit`/`TextField`, and the
+scaffolding column above starts emptying.

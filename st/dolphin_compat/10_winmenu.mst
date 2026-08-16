@@ -129,3 +129,57 @@ Object subclass: WinMenu [
 
     destroy [ handle isNil ifFalse: [ User32 destroyMenu: handle. handle := nil ] ]
 ]
+
+"── accelerators ────────────────────────────────────────────────────────
+ A real HACCEL, built from an ACCEL array and handed to the PUMP.
+
+ It cannot live in the image: `TranslateAcceleratorW` needs the MSG, and this
+ port's pump is native, so nothing image-side ever sees one. `Win32
+ mvpSetAccelerators:haccel:` installs the table the pump consults, and the
+ pump drops any message the table claims — passing it on as well would
+ deliver both the command and the raw keystroke.
+
+ ACCEL is 6 bytes: fVirt (byte 0), key (uint16 at 1), cmd (uint16 at 3) —
+ written here through byteAt:/uint16At: at their 1-based offsets, since winkb
+ could not size the flags enum."
+Object subclass: WinAccelerators [
+    | handle |
+
+    "FVIRTKEY (1) | FCONTROL (8) — a Ctrl chord on a virtual key, which is
+     what a menu accelerator almost always is."
+    WinAccelerators class >> fCtrlKey [ ^9 ]
+
+    "`pairs` is a collection of {virtualKeyCode. commandId}."
+    WinAccelerators class >> ctrlKeys: pairs [
+        | n mem i h |
+        n := pairs size.
+        n = 0 ifTrue: [ ^nil ].
+        mem := ExternalMemory new: n * 6.
+        i := 0.
+        "ACCEL is {BYTE fVirt; WORD key; WORD cmd} — and `key` sits at byte
+         offset 2, not 1: the WORD is aligned, which is why sizeof is 6 with a
+         pad byte after fVirt. The generated ACCEL.mst records exactly this
+         (key `uint16At: 3`, cmd `uint16At: 5`, 1-based). The first version
+         packed key at byte 1 and the table matched nothing — an accelerator
+         that never fires, with no error anywhere."
+        pairs do: [ :each |
+            mem byteAt: i * 6 + 1 put: WinAccelerators fCtrlKey.
+            mem uint16At: i * 6 + 3 put: (each at: 1).
+            mem uint16At: i * 6 + 5 put: (each at: 2).
+            i := i + 1 ].
+        h := [ User32 createAcceleratorTable: mem address cEntries: n ]
+            ensure: [ mem free ].
+        h = 0 ifTrue: [
+            ^Win32Error new setCode: Win32 lastError; signalWithCode ].
+        ^self basicNew setHandle: h
+    ]
+
+    setHandle: h [ handle := h ]
+    handle [ ^handle ]
+
+    "Install for `anHwnd`. The pump consults exactly one table at a time,
+     which is all a single-shell app needs; DD12's modal stack will want a
+     stack of them."
+    installFor: anHwnd [ ^Win32 mvpSetAccelerators: anHwnd haccel: handle ]
+    WinAccelerators class >> uninstall [ ^Win32 mvpSetAccelerators: 0 haccel: 0 ]
+]

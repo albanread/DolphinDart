@@ -1350,6 +1350,10 @@ stMvpRoutedMessageCount() native "ST_mvpRoutedMessageCount";
 /// Send an arbitrary message and answer its LRESULT — how a probe checks that
 /// a routed handler's answer is what Windows actually saw.
 stMvpSendMsg(int h, int msg, int wp, int lp) native "ST_mvpSendMsg";
+/// Install the accelerator table the PUMP consults. Accelerators cannot
+/// live in the image: the pump is native, so nothing image-side ever sees
+/// the MSG that TranslateAcceleratorW needs.
+stMvpSetAccelerators(int hwnd, int haccel) native "ST_mvpSetAccelerators";
 stMvpResetStormCounts() native "ST_mvpResetStormCounts";
 stMvpSetStormRouting(bool on) native "ST_mvpSetStormRouting";
 /// Send `msg` to `h` `n` times; answers the elapsed NANOSECONDS. Timed in

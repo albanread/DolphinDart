@@ -4,6 +4,14 @@
 transport `test/worker_host.dart`; image side
 `st/dolphin_compat/11_worker.mst`.
 
+**Workers REPLACE Dolphin's processes/green threads — outright, as binding
+scope rule 7/8 of `DOLPHIN_PORT.md` records.** Every `fork`/`forkAt:`/
+`Process` site in the corpus maps to a `Worker do:with:then:` submission with
+a posted continuation. There is no green-thread scheduler in this port and
+there never will be one. The transport being Dart is the same statement as a
+primitive being C++: an implementation substrate under Smalltalk, never a
+second home for application logic.
+
 Dolphin runs long work on green processes (`fork`, `forkAt:`), scheduled inside
 one OS thread by its own scheduler. This VM has no green processes and will not
 grow any: Dart's concurrency unit is the **isolate**, which has its own heap and
