@@ -390,3 +390,57 @@ the corpus's own value is the wrong one.**
 than raising; `<commandQuery:>` pragmas dropped (14 sites); and the VISIBLE
 SHELL — a real message loop, keyboard reaching a control, a menu clicked by a
 person. That last one is still the honest gap and is not closed by any gate.
+
+---
+
+## DD11 — the browser gate: registered, WIP, and blocked on one thing
+
+`st_browser` builds a three-pane shell over LIVE reflection data
+(`ClassMirror allClasses` / `selectorsOf:`), populates a TreeView through
+Dolphin's own `TreeModel>>add:asChildOf:`, and asks WINDOWS for the item
+counts (TVM_GETCOUNT, LVM_GETITEMCOUNT) rather than trusting the models.
+
+What passes already: the reflection data is real and the hierarchy assertions
+hold; the shell opens; `populateTree` completes; **the tree has one root**,
+which is the shape assertion — Magnitude is the root and Number/Integer
+descend from it, so a flat tree fails there and nowhere else.
+
+Two things were needed to get that far, both now in:
+
+* **`TVINSERTSTRUCTW`** — genstructs sized it 24 bytes because Win32Metadata
+  models its `item` as an anonymous union. It is 96. That is an
+  under-allocation handed straight to comctl32, not a missing accessor.
+  Restated in `03_struct_accessors.mst`, derived from the two numbers the
+  generator did get right. LOOSE_ENDS 3.19.
+* **Handle typedefs, derived rather than listed.** Win32Metadata models every
+  opaque handle as a struct with one pointer-sized `Value` field. `HWND` was
+  in genstructs' hardcoded name list; `HTREEITEM` was not, so it came out as a
+  read-only nested VIEW and `TVINSERTSTRUCTW>>hParent:` did not exist at all.
+  The rule is now derived from the metadata, which also stops the list growing
+  once per control family.
+
+### The blocker, and it is older than this sprint
+
+`Array class >> new:withAll:` and `Array class >> writeStream:` are sent by
+Dolphin's tree and list code. Adding them to `st/world/10_array.mst` did
+nothing. Neither did a trivial `zzProbe` in the same class body immediately
+before the working `Array class >> with:`.
+
+`Array` is BRIDGED — `Array class name` answers `_Type@…` — and its class side
+is populated from somewhere a `.mst` reopen does not reach. The proof that
+this predates DD11: `Array class >> withAll:`, written in
+`52_collection_ext.mst` long ago, has never been reachable either.
+
+**A class-side method on `Array` in a `.mst` file loads without complaint and
+is never called.** That is the exact silent-no-op shape this project keeps
+paying for, and it is now LOOSE_ENDS 3.18 with a named retirement.
+
+The two missing methods are both reached from inside a WM_NOTIFY handler,
+which contains its errors by design, so they never surface as a failed
+assertion — only as `handler error in …>>wmNotify:` lines. Worth remembering
+when the next control refuses to populate.
+
+**Next:** find where `Array`'s class-side protocol is registered and either add
+the two methods there or make a bridged class's class-side reopen install
+properly. The second is the real fix; the first leaves the trap for the next
+selector.

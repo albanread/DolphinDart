@@ -537,3 +537,57 @@ naming `value`.
 
 **This is a permanent placement, not a stand-in** — recorded here because the
 obvious "cleanup" is to move it into Smalltalk, and that breaks everything.
+
+### 3.18 Class-side reopens of `Array` are INERT — and always have been
+`Array` is a BRIDGED class: `Array class name` answers `_Type@…`, a Dart Type.
+This file's naming rule already warns that a compat method on a bridged class
+(Character, String, Integer) does not reach the native receiver's extension
+holder from a later file. The CLASS side of `Array` is the same, and worse —
+it does not work from ANY file, including the one that defines the class.
+
+Measured three ways in DD11:
+
+* `Array class >> withAll:` is written in `st/world/52_collection_ext.mst` and
+  has never been reachable. It predates this sprint by a long way.
+* A trivial `Array class >> zzProbe [ ^42 ]` added to `10_array.mst`, in the
+  same class body and immediately before the working `Array class >> with:`,
+  is not found either — so it is not a load-order or a merge question.
+* `Array respondsTo: #new:withAll:` answers false.
+
+`Array class >> with:` and friends DO work, so the class side is populated
+from somewhere that source reopens do not reach.
+
+**The cost, today:** `Array new: <n> withAll: <v>` and `Array writeStream: <n>`
+are both sent by Dolphin's TreeView/ListView code from inside a WM_NOTIFY
+handler. The handler contains its errors by design — a raising handler would
+take the window down — so they appear only as `handler error in
+…>>wmNotify:` lines in a gate's output and never as a failed assertion. This
+is what blocks `st_browser`.
+
+**Retirement:** find where `Array`'s class-side protocol is registered (it is
+not in `st/world`) and add the two methods there, or make a source reopen of a
+bridged class's class side actually install. The second is the real fix — the
+first leaves the trap for the next selector.
+
+**Until then: do not add a class-side method to `Array` in a `.mst` file.** It
+will load without complaint and never be called.
+
+### 3.19 `TVINSERTSTRUCTW` is sized by hand — winkb cannot see its `item`
+Win32Metadata models `TVINSERTSTRUCTW`'s `item` as an ANONYMOUS UNION
+(`_Anonymous_e__Union`, recorded as a 64-bit primitive), so `genstructs`
+emitted `sizeInBytes 24` for a 96-byte structure — 8 + 8 + an inline 80-byte
+`TVITEMEXW` at offset 16.
+
+That is an UNDER-ALLOCATION, not a missing accessor: `newBuffer` would hand
+comctl32 a 24-byte buffer to read 96 bytes from.
+
+`st/mvp_compat/03_struct_accessors.mst` restates the size, DERIVED from the
+two numbers the generator did get right (`_OffsetOf_Anonymous` and
+`TVITEMEXW sizeInBytes`) rather than written as a literal, plus a typed view
+for `item` and Dolphin's `hParent:hInsertAfter:` / `allCallbacks` /
+`callbacksForItem:` constructors.
+
+**Retirement:** resolve an anonymous-union member to its largest alternative
+in `genstructs`. winkb records the union's members; the generator does not
+walk them. Any other struct with an anonymous union has the same silent
+under-allocation waiting.

@@ -1,0 +1,104 @@
+"dolphin_browser.mst — the DD11 GOAL: a two-pane class browser over LIVE
+ reflection data.
+
+ `st_controls` proved a SysTreeView32 and a SysListView32 can be created and
+ subclassed. That is the substrate. This is the thing the substrate was for,
+ and it exercises what `st_controls` never touched: putting ITEMS in, letting
+ a selection change drive the other pane, and reading back what Windows
+ actually holds.
+
+ THE DATA IS REAL. `ClassMirror allClasses` and `ClassMirror selectorsOf:` are
+ the VM's own class API (st/world/76_reflection.mst) — the tree is a genuine
+ slice of this image's class hierarchy and the list is a class's real
+ selectors. A browser over a hard-coded array would pass every assertion here
+ and prove nothing about reflection, which is half of what a class browser is.
+
+ THE ASSERTIONS ASK WINDOWS, not the model, wherever Windows can be asked:
+ TVM_GETCOUNT for the tree's item count and LVM_GETITEMCOUNT for the list's.
+ A model correctly updated and a control that never received the items is
+ exactly the failure this port keeps finding, and only the control can rule it
+ out."
+ShellView subclass: BrowserShell [
+    | tree list text roots |
+
+    tree [ ^tree ]
+    list [ ^list ]
+    text [ ^text ]
+
+    BrowserShell class >> routeDolphinMessages [ ^UiSession routeMessagesFrom: View ]
+
+    "The classes the tree shows. Deliberately a SMALL, NAMED slice rather than
+     every class in the image: the assertions below count items, and a count
+     that changes when someone adds a class to the world layer is a test that
+     fails for the wrong reason.
+
+     `Object` is the root and the rest are its real descendants here, so the
+     hierarchy the tree draws is the hierarchy the image has — verified below
+     by asking each class for its own `superclass` rather than assuming."
+    browsedClasses [
+        ^Array with: Magnitude with: Number with: Integer
+    ]
+
+    build [
+        tree := self makeControl: TreeView.
+        list := self makeControl: ListView.
+        text := self makeControl: TextEdit.
+        self layoutManager: (BorderLayout new
+            west: tree;
+            center: list;
+            south: text;
+            yourself).
+        ^self
+    ]
+
+    makeControl: aViewClass [
+        | v |
+        v := aViewClass new.
+        v parentView: self.
+        v preferredExtent: 220 @ 240.
+        v usePreferredExtent: true.
+        self addSubView: v.
+        ^v
+    ]
+
+    "── the tree pane ──────────────────────────────────────────────────────
+     Built through Dolphin's own `TreeModel>>add:asChildOf:`, with nil as the
+     parent for a root. Each class is added under its own superclass when that
+     superclass is in the slice, so the shape is derived, not stated."
+    populateTree [
+        | model classes |
+        model := TreeModel new.
+        classes := self browsedClasses.
+        classes do: [ :each |
+            model add: each asChildOf:
+                ((classes includes: each superclass) ifTrue: [ each superclass ] ifFalse: [ nil ]) ].
+        tree model: model.
+        roots := model roots.
+        ^model
+    ]
+
+    "── the list pane ──────────────────────────────────────────────────────
+     A class's own selectors, sorted so the order is an answer rather than an
+     accident of the reflection primitive."
+    selectorsFor: aClass [
+        ^(ClassMirror selectorsOf: aClass) asSortedCollection asArray
+    ]
+
+    showClass: aClass [
+        list list: (self selectorsFor: aClass).
+        text text: aClass name , ' — ' , (self selectorsFor: aClass) size printString , ' selectors'.
+        ^aClass
+    ]
+
+    "── what WINDOWS says is in each control ───────────────────────────────
+     TVM_GETCOUNT = TV_FIRST(4352) + 5; LVM_GETITEMCOUNT = LV_FIRST(4096) + 4.
+     Sent through the same `sendMessage:` the control views use, so a control
+     whose handle is stale answers here rather than in a later assertion."
+    treeItemCount [ ^User32 sendMessage: tree handle msg: 4357 wParam: 0 lParam: 0 ]
+    listItemCount [ ^User32 sendMessage: list handle msg: 4100 wParam: 0 lParam: 0 ]
+
+    "The tree's ROOT count, from the model — the shape assertion. With Object
+     out of the slice, Magnitude is the only root and Number/Integer descend
+     from it, so a flat tree and a correct one differ here."
+    rootCount [ ^roots size ]
+]

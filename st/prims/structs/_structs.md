@@ -1,7 +1,7 @@
 # Generated Win32 structs
 
 - struct pointer types used by the corpus: **1280**
-- **generated: 384** (offsets from winkb `struct_fields`)
+- **generated: 383** (offsets from winkb `struct_fields`)
 - not in winkb: **917**
 - fields without an accessor: **266**
 
@@ -151,7 +151,6 @@
 | `HGLOBAL` | 8 | 1 | 0 |
 | `HOSTENT` | 32 | 5 | 1 |
 | `HRESULT` | 4 | 1 | 1 |
-| `HTREEITEM` | 8 | 1 | 0 |
 | `HTTP_BANDWIDTH_LIMIT_INFO` | 8 | 2 | 1 |
 | `HTTP_BINDING_INFO` | 16 | 2 | 1 |
 | `HTTP_BYTE_RANGE` | 16 | 2 | 1 |

@@ -54,7 +54,8 @@ _ENUM_ACCESSOR = {8: ("byteAt", 1), 16: ("uint16At", 2),
 
 
 def field_accessor(type_name: str, structs: Dict[str, int],
-                   enums: Optional[Dict[str, int]] = None
+                   enums: Optional[Dict[str, int]] = None,
+                   handles: Optional[set] = None
                    ) -> Tuple[Optional[str], int]:
     """(accessor-or-None, width). None accessor => emit a view or skip."""
     t = type_name.rsplit(".", 1)[-1]
@@ -65,6 +66,17 @@ def field_accessor(type_name: str, structs: Dict[str, int],
     if t in ("HWND", "HDC", "HANDLE", "HMENU", "HICON", "HCURSOR", "HBRUSH",
              "HINSTANCE", "HBITMAP", "HFONT", "HPEN", "HRGN", "WPARAM", "LPARAM",
              "LRESULT", "WNDPROC", "PWSTR", "PCWSTR", "PSTR", "PCSTR"):
+        return "intptrAt", _PTR_WIDTH
+    # A HANDLE TYPEDEF, derived rather than listed. Win32Metadata models every
+    # opaque handle as a struct with exactly one pointer-sized field named
+    # `Value` — `HWND` is one, and so is `HTREEITEM`, which the list above does
+    # not name. Treated as a nested struct it came out as a read-only VIEW with
+    # no setter at all, so `TVINSERTSTRUCTW>>hParent:` did not exist and a tree
+    # item could not be given a parent.
+    #
+    # Deriving it also stops the list above from having to grow once per
+    # control family: HIMAGELIST, HDWP and the rest match the same shape.
+    if handles and t in handles:
         return "intptrAt", _PTR_WIDTH
     if t in structs:                       # a nested struct: a view, not a copy
         return None, structs[t]
@@ -198,6 +210,16 @@ def main(argv: List[str]) -> int:
         n: b for n, b in db.execute(
             "select type_name, size_bits from types where kind='enum' "
             "and size_bits is not null")}
+    # HANDLE TYPEDEFS, derived: a struct whose ONLY field is a pointer-sized
+    # `Value`. See `field_accessor`.
+    handle_types = {n for (n,) in db.execute(
+        "select t.type_name from types t join struct_fields f "
+        "  on f.struct_type_id = t.type_id "
+        "where t.kind='struct' "
+        "group by t.type_id "
+        "having count(*) = 1 "
+        "   and max(f.field_name) = 'Value' "
+        "   and max(f.type_name) in ('isize','usize','i64','u64')")}
 
     wanted = corpus_struct_names(args.corpus)
     # Dolphin spells several structs with the GDI `L` suffix (RECTL/POINTL/SIZEL)
@@ -239,7 +261,7 @@ def main(argv: List[str]) -> int:
         name = pending.pop()
         for _, _, ftype, _ in fields.get(name, []):
             t = ftype.rsplit(".", 1)[-1]
-            acc, _w = field_accessor(ftype, {}, enum_bits)
+            acc, _w = field_accessor(ftype, {}, enum_bits, handle_types)
             if acc is not None or t in fields or t in winkb_to_corpus:
                 continue
             if load(t):
@@ -250,7 +272,7 @@ def main(argv: List[str]) -> int:
     # assuming one pass is enough (PAINTSTRUCT contains a RECT; MSG ends with a
     # POINT, and getting that wrong made MSG 44 bytes instead of 48).
     def width_of(ftype: str) -> int:
-        acc, w = field_accessor(ftype, {}, enum_bits)
+        acc, w = field_accessor(ftype, {}, enum_bits, handle_types)
         if acc is not None:
             return w
         t = ftype.rsplit(".", 1)[-1]
@@ -261,7 +283,7 @@ def main(argv: List[str]) -> int:
         """The struct's alignment: the widest scalar it contains, capped at 8."""
         a = 1
         for _, _, ftype, _ in rows:
-            acc, w = field_accessor(ftype, {}, enum_bits)
+            acc, w = field_accessor(ftype, {}, enum_bits, handle_types)
             if acc is not None:
                 a = max(a, min(w, 8))
             else:
@@ -352,7 +374,7 @@ def main(argv: List[str]) -> int:
         lines.append(f"    {name} class >> _{name}_Size [ ^{sizes[name]} ]")
         lines.append("")
         for ordinal, fname, ftype, off in rows:
-            acc, width = field_accessor(ftype, sizes, enum_bits)
+            acc, width = field_accessor(ftype, sizes, enum_bits, handle_types)
             sel = fname[0].lower() + fname[1:]
             nested = winkb_to_corpus.get(ftype.rsplit(".", 1)[-1])
             if acc is None and nested and nested in sizes:

@@ -26,7 +26,8 @@ ExternalMemory subclass: TVITEMEXW [
 
     mask [ ^self uint32At: 1 ]
     mask: v [ ^self uint32At: 1 put: v ]
-    hItem [ ^HTREEITEM viewOn: self at: 8 size: 8 ]
+    hItem [ ^self intptrAt: 9 ]
+    hItem: v [ ^self intptrAt: 9 put: v ]
     state [ ^self uint32At: 17 ]
     state: v [ ^self uint32At: 17 put: v ]
     stateMask [ ^self uint32At: 21 ]

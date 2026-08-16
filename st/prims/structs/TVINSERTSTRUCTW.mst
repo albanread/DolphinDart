@@ -12,7 +12,9 @@ ExternalMemory subclass: TVINSERTSTRUCTW [
     TVINSERTSTRUCTW class >> _OffsetOf_Anonymous [ ^16 ]
     TVINSERTSTRUCTW class >> _TVINSERTSTRUCTW_Size [ ^24 ]
 
-    hParent [ ^HTREEITEM viewOn: self at: 0 size: 8 ]
-    hInsertAfter [ ^HTREEITEM viewOn: self at: 8 size: 8 ]
+    hParent [ ^self intptrAt: 1 ]
+    hParent: v [ ^self intptrAt: 1 put: v ]
+    hInsertAfter [ ^self intptrAt: 9 ]
+    hInsertAfter: v [ ^self intptrAt: 9 put: v ]
     "anonymous: _Anonymous_e__Union at 16 — no accessor (width unknown); use byteAt: directly"
 ]

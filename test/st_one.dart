@@ -20,13 +20,11 @@ main(List<String> a) {
       var r = stRun(new File(f).readAsStringSync());
       if (r.toString().startsWith('ERR')) print('LOAD FAIL ' + f + ': ' + r.toString());
     } } }
-  stRun(new File('st/test/ffi/dolphin_controls.mst').readAsStringSync());
-  print('  initViewClasses -> ' + ev('DolphinBoot initializeViewClasses'));
-  print('  NextId after init  -> ' + ev('View classVarNextId'));
-  stRun('UiSession startUp.');
-  stRun('CShell := ControlsShell new.'); stRun('CShell create.');
-  stRun('Object subclass: Raw [ Raw class >> go [ ^CShell build ] ]');
-  try { stClassSend0(stClassNamed('Raw'), 'go'); print('BUILD OK'); }
-  catch (e, st) { print('RAW THREW: ' + e.toString()); print(st.toString()); }
+  for (var e in ['Array withAll: #(1 2)',
+                 '(Array new: 3 withAll: 7) printString',
+                 '(Array with: 1 with: 2) printString',
+                 '(Array writeStream: 4) class name',
+                 '(Array respondsTo: #new:withAll:) printString'])
+    print('  ' + e.padRight(40) + ' -> ' + ev(e));
   exit(0);
 }

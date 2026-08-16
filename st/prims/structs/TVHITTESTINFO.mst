@@ -15,5 +15,6 @@ ExternalMemory subclass: TVHITTESTINFO [
     pt [ ^POINT viewOn: self at: 0 size: 8 ]
     flags [ ^self uint32At: 9 ]
     flags: v [ ^self uint32At: 9 put: v ]
-    hItem [ ^HTREEITEM viewOn: self at: 16 size: 8 ]
+    hItem [ ^self intptrAt: 17 ]
+    hItem: v [ ^self intptrAt: 17 put: v ]
 ]

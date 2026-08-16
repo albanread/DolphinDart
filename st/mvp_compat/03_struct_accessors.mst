@@ -105,3 +105,78 @@ ExternalMemory subclass: MENUITEMINFOW [
         ^self
     ]
 ]
+
+"── TVINSERTSTRUCTW and TVITEMEXW — the tree-insert pair ────────────────
+ THE GENERATOR CANNOT SIZE THIS ONE, and the reason is specific: Win32Metadata
+ models `TVINSERTSTRUCTW`'s `item` as an ANONYMOUS UNION
+ (`_Anonymous_e__Union`) recorded as a 64-bit primitive, so genstructs emits
+ `sizeInBytes 24` for a structure that is really 96 — 8 for hParent, 8 for
+ hInsertAfter, and an inline 80-byte TVITEMEXW at offset 16.
+
+ That is not a missing accessor, it is an UNDER-ALLOCATION: `newBuffer` would
+ hand comctl32 a 24-byte buffer to read 96 bytes out of. So the size is
+ restated here, DERIVED from the two numbers the generator did get right —
+ `_OffsetOf_Anonymous` (16) and `TVITEMEXW sizeInBytes` (80) — rather than
+ written as a literal, so it follows the metadata if the layout ever changes.
+
+ RETIREMENT: resolve an anonymous-union member to its largest alternative in
+ `genstructs`. winkb records the union's members; the generator does not walk
+ them. Recorded in docs/LOOSE_ENDS.md.
+
+ The CONSTRUCTORS are Dolphin's own, from `OS.TVINSERTSTRUCTW.cls` and
+ `OS.TVITEMW.cls`, transcribed rather than `--reopen`ed because both build on
+ Dolphin's `CallbackPrototype` class constant and its `bytes:`/`shallowCopy`
+ protocol — an ExternalStructure mechanism this port does not have. Written
+ directly, the same values reach the same fields."
+ExternalMemory subclass: TVITEMEXW [
+    "Dolphin's `allCallbacks`: ask the control to CALL BACK for text, image
+     and child count rather than storing them. This is what makes a virtual
+     tree virtual — the item goes in with no data and TVN_GETDISPINFO fetches
+     it on paint.
+
+     I_IMAGECALLBACK and I_CHILDRENCALLBACK are -1; LPSTR_TEXTCALLBACK is the
+     same bit pattern read unsigned, which is why it goes through `pszText:`
+     (a pointer field) as -1 rather than 16rFFFFFFFF.
+     TVIF_TEXT 1 | TVIF_IMAGE 2 | TVIF_CHILDREN 16r40 = 67."
+    allCallbacks [
+        self iImage: -1.
+        self cChildren: 16rFFFFFFFF.
+        self pszText: -1.
+        ^self mask: (self mask bitOr: 67)
+    ]
+
+    TVITEMEXW class >> callbacksForItem: anExternalHandle [
+        ^self newBuffer allCallbacks hItem: anExternalHandle; yourself
+    ]
+]
+
+ExternalMemory subclass: TVINSERTSTRUCTW [
+    TVINSERTSTRUCTW class >> sizeInBytes [
+        ^TVINSERTSTRUCTW _OffsetOf_Anonymous + TVITEMEXW sizeInBytes
+    ]
+    TVINSERTSTRUCTW class >> byteSize [ ^self sizeInBytes ]
+    byteSize [ ^TVINSERTSTRUCTW sizeInBytes ]
+    TVINSERTSTRUCTW class >> new [ ^self new: TVINSERTSTRUCTW sizeInBytes ]
+
+    "The inline TVITEMEXW, as a TYPED view so its own accessors are reachable.
+     A generic view would answer raw bytes and `item allCallbacks` would be a
+     doesNotUnderstand."
+    item [
+        ^TVITEMEXW viewOn: self
+            at: TVINSERTSTRUCTW _OffsetOf_Anonymous
+            size: TVITEMEXW sizeInBytes
+    ]
+
+    "Dolphin's `hParent:hInsertAfter:`. The item is set to all-callbacks here,
+     as Dolphin's `initialize` does when it builds its CallbackPrototype —
+     every caller of this constructor is a VIRTUAL update mode, which adds
+     items with no data and answers the callbacks later."
+    TVINSERTSTRUCTW class >> hParent: parentHandle hInsertAfter: siblingHandle [
+        | s |
+        s := self newBuffer.
+        s hParent: parentHandle.
+        s hInsertAfter: siblingHandle.
+        s item allCallbacks.
+        ^s
+    ]
+]
