@@ -22,6 +22,7 @@
 #include <windows.h>
 
 #include <cstdio>
+#include <cstring>
 
 #include "include/dart_api.h"
 
@@ -80,6 +81,10 @@ HWND g_accel_hwnd = nullptr;
 // messages, same process, one flag apart.
 const int kKindStorm = 4;      // a storm message reflected, when routing is on
 const int kKindWinMsg = 5;     // a reflected Windows message: (msg, wParam, lParam)
+// WM_NCCREATE: a window has just come into existence. Dolphin binds its view
+// to the HWND at exactly this moment, from the slot the creating process was
+// holding it in.
+const int kKindCreate = 6;
 
 // Census slots. Indexed by kStormMsgs order; the last slot is everything else.
 enum {
@@ -236,6 +241,20 @@ LRESULT CALLBACK MvpTopWndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
   const bool live = (gen == (LONG_PTR)g_generation);
 
   switch (msg) {
+    case WM_NCCREATE: {
+      // STAMP AND BIND. Every window this WndProc serves gets the current
+      // generation here, whoever created it — `mvpCreateTopWindow` stamps its
+      // own, but a window created by Dolphin's `View>>create` through
+      // CreateWindowExW has nobody else to do it, and an unstamped window
+      // fails the generation guard on every later message.
+      //
+      // Then tell the image, because this is Dolphin's binding moment: it is
+      // inside CreateWindowExW, so the view is still sitting in the slot the
+      // creating code put it in and the HWND is not yet known to anyone else.
+      SetWindowLongPtrW(hwnd, GWLP_USERDATA, (LONG_PTR)g_generation);
+      CallImage(kKindCreate, hwnd, 0, 0, 0, nullptr, nullptr);
+      return DefWindowProcW(hwnd, msg, wp, lp);
+    }
     case WM_PAINT: {
       PAINTSTRUCT ps;
       HDC hdc = BeginPaint(hwnd, &ps);
@@ -488,6 +507,22 @@ void ST_mvpBumpGeneration(Dart_NativeArguments args) {
 void ST_mvpIsWindow(Dart_NativeArguments args) {
   HWND h = (HWND)(intptr_t)ArgInt(args, 0);
   Dart_SetReturnValue(args, Dart_NewBoolean(h != nullptr && IsWindow(h)));
+}
+
+// The door's top-level window class name. `View class >> winClassName`
+// answers this, so Dolphin's own creation path builds windows whose WndProc
+// is ours.
+void ST_mvpTopClassName(Dart_NativeArguments args) {
+  // REGISTER IT BEFORE ANSWERING. The door registers its window class lazily,
+  // and until DD10 the only path in was `mvpCreateTopWindow`, which does it
+  // itself. Dolphin's own `View>>create` asks for the NAME and then calls
+  // CreateWindowExW directly — so an unregistered class answered 0 with
+  // GetLastError 0, the least informative failure Win32 offers. A name for a
+  // class that does not exist is not a useful answer.
+  EnsureTopClass();
+  Dart_SetReturnValue(args, Dart_NewStringFromUTF8(
+      reinterpret_cast<const uint8_t*>("DolphinDartMvpWindow"),
+      strlen("DolphinDartMvpWindow")));
 }
 
 void ST_mvpPaintFaults(Dart_NativeArguments args) {

@@ -161,6 +161,13 @@ def rewrite_cascades(body: str, where: str) -> Tuple[str, List[Refusal]]:
             out_lines.append(stmt)
             continue
         parts = _split_top_level(stmt, ";")
+        # A `;` NESTED inside a block or parens is not this statement's
+        # cascade — `MessageMap isNil ifTrue: [x foo; bar]` has one top-level
+        # part. Rewriting anyway bound the receiver to a temp for nothing;
+        # harmless, but it made `View class >> initialize` unreadable.
+        if len(parts) == 1:
+            out_lines.append(stmt)
+            continue
         head = parts[0]
         ret = head.lstrip().startswith("^")
         head_body = head.lstrip()[1:] if ret else head
@@ -452,6 +459,50 @@ def collect_temps(blanked: str) -> set:
 _IDENT = re.compile(r"(?<![\w:#])(_?[A-Za-z][A-Za-z0-9_]*)(?![\w:])")
 
 
+# `Point.Zero` — a qualified CLASS-VARIABLE read, not a namespaced class name.
+#
+# Dolphin writes `^Point.Zero` to read Graphics.Point's class variable. BOTH
+# segments are capitalised, so the dotted-reference flattener matched it and
+# rsplit to the last segment, leaving a bare `Zero` bound to NOTHING — nil at
+# runtime, with no diagnostic anywhere. Measured over the corpus: 384 sites,
+# 62 distinct, headed by `Point.Zero` (60), `SessionManager.Current` (49),
+# `Color.Black` (29). Found when Dolphin's own `View>>defaultPosition`
+# (`^Point.Zero`) answered nil and `View>>create` died on `nil extent:`.
+#
+# Rewritten to an unambiguous accessor send — `Point classVarZero` — and every
+# emitted class gets a reader for each of its class variables. When the owner
+# is NOT translated (Point comes from the world, not the corpus) the send is a
+# loud doesNotUnderstand rather than a silent nil, and the compat layer
+# supplies the accessor.
+#
+# The discriminator against a genuine namespace reference (`Graphics.Point`)
+# is whether the second segment is DECLARED as a class variable of the first.
+_QUALIFIED_CVAR = re.compile(
+    r"(?<![\w.])([A-Z][A-Za-z0-9]*)\.([A-Z][A-Za-z0-9]*)(?![\w])")
+
+
+def classvar_accessor(name: str) -> str:
+    """The accessor spelling for a class variable read from outside."""
+    return "classVar" + name
+
+
+def rewrite_qualified_classvars(body: str, owners) -> str:
+    """`Owner.CVar` -> `Owner classVarCVar`, for known class variables only."""
+    if not owners:
+        return body
+    blanked = strip_code(body)
+    out, last = [], 0
+    for m in _QUALIFIED_CVAR.finditer(blanked):
+        owner, name = body[m.start(1):m.end(1)], body[m.start(2):m.end(2)]
+        if name not in owners.get(owner, ()):
+            continue
+        out.append(body[last:m.start()])
+        out.append(owner + " " + classvar_accessor(name))
+        last = m.end()
+    out.append(body[last:])
+    return "".join(out)
+
+
 # `NMHDR._OffsetOf_hwndFrom` — a class constant read through its OWNING class,
 # rather than through an imported pool. The struct classes use this constantly to
 # reach each other's field offsets. It is not a namespace reference (the second
@@ -564,17 +615,37 @@ def lower_prim157(m: Method, cd: ClassDef, where: str,
     # still refused (`Graphics.ARGB>>fromArgbCode:` — 1 against 0 own — remains
     # a refusal, since its target is an inherited field this lowering does not
     # address).
-    if n_args > len(cd.ivars):
+    # THE ARGUMENTS FILL SLOTS 1..N OF THE WHOLE OBJECT, inherited fields
+    # FIRST — they are not offset past the superclass's.
+    #
+    # Settled by evidence rather than reasoning. `UI.CreateWindowApiCall` holds
+    # `rectangle dpi` (slots 1-2) and its subclass `UI.CreateWindow` holds
+    # `styles title` (3-4); Dolphin's
+    #
+    #     CreateWindow class >> rectangle:dpi:styles:title:  <primitive: 157>
+    #
+    # takes exactly those four in exactly that order. An offset-past-the-parent
+    # reading cannot explain it — there are only two own slots for four
+    # arguments. Primitive 157 copies the argument list into the new object's
+    # instance variables 1..N, full stop.
+    #
+    # The earlier version offset by the superclass count. Every constructor met
+    # before this one had a parent with NO ivars, so the two readings gave the
+    # same answer and the difference stayed invisible: `Graphics.Point x:y:`
+    # and `Graphics.Rectangle origin:corner:` both sit directly under Object.
+    # The first class with an ivar-carrying parent is where it would have
+    # written the wrong fields, silently.
+    #
+    # So the total must cover the WHOLE chain: fewer arguments than slots is
+    # fine (the rest stay nil), more has nowhere to go.
+    total = super_ivar_count + len(cd.ivars)
+    if n_args > total:
         return None, [Refusal(where, "prim157",
-                              f"{cd.name}>>{m.selector}: {n_args} args vs {len(cd.ivars)} "
-                              f"instance variables — nowhere to put them")]
-    # `instVarAt:` is 1-based over the FULL instance-variable order, inherited
-    # fields first, so this class's own variables start after the superclass's.
-    # Getting the offset wrong shifts every field by one — a defect that surfaces
-    # arbitrarily far from its cause, which is why the count must be known
-    # exactly (a `None` above refuses) rather than assumed.
-    base = super_ivar_count
-    stores = " ".join(f"instVarAt: {base + i + 1} put: {a};"
+                              f"{cd.name}>>{m.selector}: {n_args} args vs {total} "
+                              f"instance variables in the whole chain "
+                              f"({super_ivar_count} inherited + {len(cd.ivars)} own) "
+                              f"— nowhere to put them")]
+    stores = " ".join(f"instVarAt: {i + 1} put: {a};"
                       for i, a in enumerate(m.arg_names))
     return f"^self basicNew {stores} yourself", []
 
@@ -600,7 +671,8 @@ def emit_class(pf: ParsedFile, renames: Dict[str, str],
                super_ivars: Dict[str, Optional[int]],
                pool_table=None, extra_methods: Optional[List[Method]] = None,
                classdef: Optional[ClassDef] = None,
-               inherited_imports: Optional[List[str]] = None) -> EmitResult:
+               inherited_imports: Optional[List[str]] = None,
+               classvar_owners: Optional[Dict[str, set]] = None) -> EmitResult:
     cd = classdef or pf.classdef
     if cd is None:
         return EmitResult("", [Refusal(pf.path, "classdef", "no class-definition chunk")])
@@ -618,6 +690,14 @@ def emit_class(pf: ParsedFile, renames: Dict[str, str],
     lines.append(f"{sup} subclass: {name} [")
     if cd.cvars:
         lines.append(f"    <classVars: {' '.join(cd.cvars)}>")
+        # READERS for every class variable. `Point.Zero` in another class is
+        # rewritten to `Point classVarZero`, and this is what it lands on —
+        # emitted for all of them rather than only the referenced ones, so the
+        # rewrite is always resolvable for a translated owner without tracking
+        # cross-file usage. One line each.
+        for _cv in cd.cvars:
+            lines.append(f"    {name} class >> {classvar_accessor(_cv)} "
+                         f"[ ^{_cv} ]")
     if cd.ivars:
         lines.append(f"    | {' '.join(cd.ivars)} |")
     if cd.cvars or cd.ivars:
@@ -697,6 +777,7 @@ def emit_class(pf: ParsedFile, renames: Dict[str, str],
                 continue
             # Pools fold BEFORE `##()`, so a compile-time expression written
             # over pool names (`##(BM_CLICK bitOr: 4)`) has literals to fold.
+            body = rewrite_qualified_classvars(body, classvar_owners)
             body = rewrite_qualified_constants(body, pool_table)
             body, r = rewrite_pool_constants(
                 body, where, own_imports, pool_table, shadowed | set(m.arg_names))

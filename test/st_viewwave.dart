@@ -89,6 +89,19 @@ main(List<String> a) {
       print('  loaded ' + base(p));
     }
   }
+  // The LATE compat layer, which must load AFTER the wave: it overrides
+  // methods the translated classes define, so loading it earlier would simply
+  // be overwritten by them. (Layer order is load-bearing — third time in this
+  // project, after the DD9 alias globals and the depth-prefixed emission.)
+  if (new Directory('st/mvp_compat').existsSync()) {
+    for (var p in mstIn('st/mvp_compat')) {
+      var r = stRun(new File(p).readAsStringSync());
+      if (r.toString().startsWith('ERR')) {
+        bad++;
+        print('  LATE FAIL ' + base(p) + ': ' + cut(r));
+      }
+    }
+  }
   print('\nVIEW WAVE: ' + ok.toString() + ' loaded, ' + bad.toString() + ' failed');
   fails += bad;
 

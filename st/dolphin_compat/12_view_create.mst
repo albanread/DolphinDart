@@ -1,0 +1,109 @@
+"12_view_create.mst — the substrate under Dolphin's own window creation
+ (DolphinDart DD10).
+
+ `View>>create` -> `createWindow:` -> `basicCreateWindow:` -> `CreateWindow>>
+ create:` -> `User32 createWindowEx:` is DOLPHIN'S CODE, unmodified, all the
+ way to the API. This file supplies only the three things underneath it that
+ are genuinely the substrate's:
+
+   1. **The window CLASS.** Its WndProc has to be the door's, because that is
+      what reflects messages into the image. Dolphin registers its own class
+      and answers the name from `View class >> winClassName`; here that answers
+      the door's class name instead. This is the one place the substrate MUST
+      win — everything above it stays Dolphin's.
+
+   2. **The module handle.** `VM applicationHandle` in Dolphin. 0 is correct
+      for CreateWindowExW here.
+
+   3. **THE GREEN-PROCESS SLOT.** `basicCreateWindow:` does
+
+          Processor activeProcess newWindow: self.
+          handle := aCreateWindow create: self.
+          Processor activeProcess newWindow: nil.
+
+      Dolphin uses the active PROCESS as a thread-local holding slot so its
+      WndProc can bind the view to the HWND when WM_NCCREATE arrives inside
+      CreateWindowExW. Scope rule 8 says isolates replace Dolphin's processes,
+      and this is that rule at its smallest: with one UI thread the slot is
+      just a variable. Providing it — rather than rewriting
+      `basicCreateWindow:` — is what keeps Dolphin's method running verbatim.
+
+ The door stamps and reports WM_NCCREATE, `UiSession` binds the pending view,
+ and Dolphin's `presenter onViewCreated` then fires on a fully registered
+ window."
+
+"── the green-process slot (scope rule 8) ───────────────────────────────
+ One UI thread, so one slot. Named for what Dolphin calls it, so the call site
+ in `basicCreateWindow:` reads unchanged."
+Object subclass: UiProcess [
+    <classVars: Current>
+    | newWindow |
+    UiProcess class >> current [
+        Current isNil ifTrue: [ Current := self basicNew ]. ^Current
+    ]
+    newWindow [ ^newWindow ]
+    newWindow: aView [ newWindow := aView ]
+]
+
+Object subclass: Processor [
+    Processor class >> activeProcess [ ^UiProcess current ]
+]
+
+"Dolphin's `VM` — only the one accessor the creation path reaches. 0 is a
+ valid hInstance for CreateWindowExW; the class the window is created against
+ was registered by the door, not by us, so no module handle is needed."
+Object subclass: VM [
+    VM class >> applicationHandle [ ^0 ]
+]
+
+nil subclass: Object [
+    "`CreateWindow>>create:` passes `winClassName asUtf16String` for
+     lpClassName, which is a POINTER parameter (Win32 takes a name OR a
+     registered class atom there). `FFICoerce pointer:` accepts an
+     ExternalMemory and takes its address, so answering the buffer is exactly
+     right — and the buffer must outlive the call, which it does because the
+     caller holds it until the send returns."
+    asUtf16String [ ^Utf16Buffer fromString: self displayString ]
+]
+
+"── SessionManager / InputState: Dolphin's window registry ──────────────
+ `View>>attachHandle:` — on the create path and every attach path — does
+
+     SessionManager Current inputState windowAt: anIntegerOrHandle put: self
+
+ `InputState` is Dolphin's HWND -> view map, and this port already has one:
+ `UiSession`'s registry, which per-window routing (DD10) made load-bearing.
+ So this is a BRIDGE, not a second registry — every method here delegates.
+ Two maps would drift, and the one the door routes through would win silently.
+
+ `SessionManager` is otherwise Dolphin's whole application-lifecycle class; only
+ the part the view path reaches is here."
+Object subclass: InputState [
+    <classVars: Current>
+    InputState class >> current [
+        Current isNil ifTrue: [ Current := self basicNew ]. ^Current
+    ]
+    windowAt: anHandle put: aView [ ^UiSession register: aView for: anHandle ]
+    windowAt: anHandle [ ^UiSession viewFor: anHandle ]
+    windowAt: anHandle ifAbsent: aBlock [
+        ^(UiSession viewFor: anHandle) ifNil: [ aBlock value ]
+    ]
+    removeWindowAt: anHandle [ ^UiSession deregister: anHandle ]
+    isDolphinWindow: anHandle [ ^(UiSession viewFor: anHandle) notNil ]
+    "Dolphin prods the input state to wake an idle-time UI validation pass.
+     The pump already runs `onIdle` every empty slice, so there is nothing to
+     wake — answering self is the honest no-op, not a stub."
+    prod [ ^self ]
+]
+
+Object subclass: SessionManager [
+    <classVars: Current>
+    "Read as `SessionManager.Current` in the corpus (49 sites — the second most
+     common qualified class-variable read), which the translator rewrites to
+     this accessor."
+    SessionManager class >> classVarCurrent [
+        Current isNil ifTrue: [ Current := self basicNew ]. ^Current
+    ]
+    SessionManager class >> current [ ^self classVarCurrent ]
+    inputState [ ^InputState current ]
+]

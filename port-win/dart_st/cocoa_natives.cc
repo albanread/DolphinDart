@@ -67,6 +67,7 @@ void ST_mvpSetRoutedMessages(Dart_NativeArguments args);
 void ST_mvpRoutedMessageCount(Dart_NativeArguments args);
 void ST_mvpSendMsg(Dart_NativeArguments args);
 void ST_mvpSetAccelerators(Dart_NativeArguments args);
+void ST_mvpTopClassName(Dart_NativeArguments args);
 void ST_mvpResetStormCounts(Dart_NativeArguments args);
 void ST_mvpSetStormRouting(Dart_NativeArguments args);
 void ST_mvpStormBurst(Dart_NativeArguments args);
@@ -138,6 +139,7 @@ void ST_symbolFor(Dart_NativeArguments args);   // interned symbol lookup (perf 
   V(ST_mvpRoutedMessageCount, 0)                                          \
   V(ST_mvpSendMsg, 4)                                                     \
   V(ST_mvpSetAccelerators, 2)                                             \
+  V(ST_mvpTopClassName, 0)                                                \
   V(ST_mvpResetStormCounts, 0)                                            \
   V(ST_mvpSetStormRouting, 1)                                             \
   V(ST_mvpStormBurst, 3)                                                  \

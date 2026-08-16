@@ -167,6 +167,17 @@ def main(argv: List[str]) -> int:
             if cd.class_constants and cd.class_constants != "{}":
                 n_consts += pool_table.add(cd.name, cd.class_constants)
 
+    # Class BASE name -> its declared class variables, over BOTH sets. This is
+    # what tells a qualified class-variable read (`Point.Zero`) apart from a
+    # namespaced class reference (`Graphics.Point`) — the second segment is
+    # only a class variable if its owner actually declares it.
+    classvar_owners: Dict[str, set] = {}
+    for pf in list(reference.values()) + list(parsed.values()):
+        for cd in (pf.classdefs or ([pf.classdef] if pf.classdef else [])):
+            if cd.cvars:
+                base = cd.name.rsplit(".", 1)[-1]
+                classvar_owners.setdefault(base, set()).update(cd.cvars)
+
     by_name_all = {cd.name: cd
                    for pf in list(reference.values()) + list(parsed.values())
                    for cd in (pf.classdefs or ([pf.classdef] if pf.classdef else []))}
@@ -195,7 +206,8 @@ def main(argv: List[str]) -> int:
             extra = loose.pop(cd.name, [])
             adopted += len(extra)
             res = emit.emit_class(pf, renames, ivars, pool_table, extra, cd,
-                                  inherited_pool_chain(by_name_all, cd.name))
+                                  inherited_pool_chain(by_name_all, cd.name),
+                                  classvar_owners)
             refusals.extend(res.refusals)
             notes.extend(res.notes)
             name = emit.flatten_name(cd.name, renames)

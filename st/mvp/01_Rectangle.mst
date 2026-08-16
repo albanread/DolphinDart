@@ -10,6 +10,7 @@ Rectangles inhabit the same Smalltalk standard ""left-handed"" coordinate system
 
 Object subclass: Rectangle [
     <classVars: Empty>
+    Rectangle class >> classVarEmpty [ ^Empty ]
     | origin corner |
 
     _expandRectangle: aRectangle [
@@ -460,7 +461,7 @@ Object subclass: Rectangle [
     ]
     Rectangle class >> extent: aPoint [
         "Answer an instance of the receiver of the extent, aPoint with origin at (0@0)."
-        ^self origin: Zero corner: aPoint
+        ^self origin: Point classVarZero corner: aPoint
     ]
     Rectangle class >> initialize [
         "Empty can't be a class constant or it creates a load order problem in that the Number>>@ method is not defined when the class is declared in the .pax file"

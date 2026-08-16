@@ -8,6 +8,16 @@ There are also the virtual colours, `ThemeColor` and `PluggableColor`, to repres
 
 Object subclass: Color [
     <classVars: Black ColorNames CommonColors Default Face3d NamedColors None White Window WindowText>
+    Color class >> classVarBlack [ ^Black ]
+    Color class >> classVarColorNames [ ^ColorNames ]
+    Color class >> classVarCommonColors [ ^CommonColors ]
+    Color class >> classVarDefault [ ^Default ]
+    Color class >> classVarFace3d [ ^Face3d ]
+    Color class >> classVarNamedColors [ ^NamedColors ]
+    Color class >> classVarNone [ ^None ]
+    Color class >> classVarWhite [ ^White ]
+    Color class >> classVarWindow [ ^Window ]
+    Color class >> classVarWindowText [ ^WindowText ]
 
     = aColor [
         "Answer whether the receiver and argument are equivalent (i.e. represent the same colour)."
@@ -351,7 +361,9 @@ Object subclass: Color [
         ^Pen
     ]
     printArgbOn: aPuttableStream [
-        | _casc1 | aPuttableStream nextPut: $(. aPuttableStream print: Color._casc1 := self isOpaque. _casc1 ifFalse: 
+        aPuttableStream nextPut: $(. aPuttableStream print: Color.
+        	self isOpaque
+        		ifFalse: 
         			[aPuttableStream
         				display: ' a: ';
         				print: self alpha].aPuttableStream display: ' r: '. aPuttableStream print: self red. aPuttableStream display: ' g: '. aPuttableStream print: self green. aPuttableStream display: ' b: '. aPuttableStream print: self blue. ^aPuttableStream nextPut: $)
@@ -969,7 +981,8 @@ Object subclass: Color [
         	default := ColorDefault basicNew
         				setCode: 4278190080;
         				beImmutableObject;
-        				yourself.self addNamed: #default color: default. self addClassVariable: 'Default' value: default. self addClassVariable: 'None'
+        				yourself.self addNamed: #default color: default. self addClassVariable: 'Default' value: default.
+        	self addClassVariable: 'None'
         		value: (ColorNone basicNew
         				setCode: 4294967295;
         				beImmutableObject;

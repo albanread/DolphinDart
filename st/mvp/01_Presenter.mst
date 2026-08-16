@@ -265,7 +265,7 @@ Object subclass: Presenter [
         "Private - Initialize the receiver."
         "When overriding this method do remember to supersend!"
 
-        	view := Current.
+        	view := DeafObject classVarCurrent.
         	subPresenters := OrderedCollection new.
         	helpId := self defaultHelpId.
         	self createComponents
@@ -503,7 +503,7 @@ Object subclass: Presenter [
         	view isStateRestoring 
         		ifFalse: 
         			["If not recreating the view then discard it"
-        			view := Current]
+        			view := DeafObject classVarCurrent]
     ]
     onViewOpened [
         "The receiver has been connected to its view after initial creation. Now run through all our sub-presenters and connect them in turn to same named sub-views within aCompositeView.
@@ -577,7 +577,8 @@ Object subclass: Presenter [
     ]
     queryContextCommand: aCommandQuery as: aCommandMessage [
         	| originalCommand | 
-        	originalCommand := aCommandQuery commandDescription. aCommandQuery commandDescription: (originalCommand copy
+        	originalCommand := aCommandQuery commandDescription.
+        	aCommandQuery commandDescription: (originalCommand copy
         				command: aCommandMessage;
         				yourself).
         	^[self queryCommand: aCommandQuery] ensure: [aCommandQuery commandDescription: originalCommand]
@@ -722,7 +723,8 @@ Object subclass: Presenter [
         	^self commandAnnotations acceleratorKeys , self defaultAdditionalAccelerators
     ]
     Presenter class >> additionalKeyBindings [
-        | _casc1 | _casc1 := self getAdditionalKeyBindings. ^_casc1 ifNil: 
+        	^self getAdditionalKeyBindings
+        		ifNil: 
         			[self additionalAccelerators collect: 
         					[:each |
         					(CommandDescription command: each first)
@@ -730,7 +732,7 @@ Object subclass: Presenter [
         						yourself]]
     ]
     Presenter class >> commandAnnotations [
-        	^Current annotationsFor: self
+        	^CommandAnnotationsRegister classVarCurrent annotationsFor: self
     ]
     Presenter class >> create [
         "Answers an instance of the receiver with a default view"

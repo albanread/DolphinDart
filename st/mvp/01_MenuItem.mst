@@ -10,6 +10,7 @@ Class Variables:
 
 Object subclass: MenuItem [
     <classVars: Dividers>
+    MenuItem class >> classVarDividers [ ^Dividers ]
     | flags |
 
     acceleratorKey [
@@ -131,7 +132,8 @@ Object subclass: MenuItem [
         	^self subclassResponsibility
     ]
     MenuItem class >> dividers [
-         ^Dividers ifNil: 
+        	^Dividers
+        		ifNil: 
         			[Dividers := LookupTable new
         						at: '-'
         							put: (DividerMenuItem basicNew

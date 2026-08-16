@@ -13,6 +13,7 @@ Instance Variables:
 
 GraphicsTool subclass: Menu [
     <classVars: DrawStateCallbackDescriptor>
+    Menu class >> classVarDrawStateCallbackDescriptor [ ^DrawStateCallbackDescriptor ]
     | items text name flags image metrics id lastQuery _reserved2 |
 
     acceleratorKey [
@@ -426,7 +427,8 @@ GraphicsTool subclass: Menu [
         	^nil
     ]
     lastQuery [
-         ^lastQuery ifNil: 
+        	^lastQuery
+        		ifNil: 
         			[lastQuery := CommandQuery new
         						beEnabled;
         						yourself]
@@ -687,14 +689,14 @@ GraphicsTool subclass: Menu [
     ]
     Menu class >> stbConvertFromVersion0: anArray [
         "1: items becomes an Array"
-         ^self stbConvertFromVersion2: (anArray shallowCopy
+        ^self stbConvertFromVersion2: (anArray shallowCopy
         				at: 3 put: (anArray at: 3) asArray;
         				yourself)
     ]
     Menu class >> stbConvertFromVersion2: anArray [
         "Private - Version 3 (D6) adds flags, image, and bitmap instance variables.
         	The flags must be zeroed, but the other two default to nil."
-         ^self stbConvertFromVersion3: ((Array new: 8)
+        ^self stbConvertFromVersion3: ((Array new: 8)
         				replaceFrom: 1
         					to: anArray size
         					with: anArray;

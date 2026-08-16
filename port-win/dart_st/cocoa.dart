@@ -1354,6 +1354,10 @@ stMvpSendMsg(int h, int msg, int wp, int lp) native "ST_mvpSendMsg";
 /// live in the image: the pump is native, so nothing image-side ever sees
 /// the MSG that TranslateAcceleratorW needs.
 stMvpSetAccelerators(int hwnd, int haccel) native "ST_mvpSetAccelerators";
+/// The door's top-level window class name — what Dolphin's
+/// `View class >> winClassName` answers, so its own creation path builds
+/// windows whose WndProc is the door's.
+stMvpTopClassName() native "ST_mvpTopClassName";
 stMvpResetStormCounts() native "ST_mvpResetStormCounts";
 stMvpSetStormRouting(bool on) native "ST_mvpSetStormRouting";
 /// Send `msg` to `h` `n` times; answers the elapsed NANOSECONDS. Timed in

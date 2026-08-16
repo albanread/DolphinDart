@@ -22,6 +22,7 @@ Class Variables:
 
 ContainerView subclass: ShellView [
     <classVars: DialogMessageMap>
+    ShellView class >> classVarDialogMessageMap [ ^DialogMessageMap ]
     | menuBar acceleratorTable combinedAcceleratorTable lastFocus defaultButton largeIcon smallIcon maxExtent minExtent actualIcons svFlags dpi |
 
     acceleratorTable [
@@ -362,7 +363,7 @@ ContainerView subclass: ShellView [
         "Invalidates the user interface of the receiver indicating that it needs
         	to be requeried using #validateUserInterface (usually at idle time)"
         flags := flags bitAnd: (1024 bitInvert).
-        	Current inputState prod
+        	SessionManager classVarCurrent inputState prod
     ]
     isInitiallyCentered [
         "Private - Answer whether the receiver should be centered within its parent when created."
@@ -477,7 +478,8 @@ ContainerView subclass: ShellView [
     ]
     menuBar: aMenuBarOrNil [
         "Set the menu bar for this window to aMenuBarOrNil"
-        | _casc1 | _casc1 := aMenuBarOrNil notNil. _casc1 ifTrue: 
+        aMenuBarOrNil notNil 
+        		ifTrue: 
         			[menuBar := aMenuBarOrNil.
         			self updateMenuBar]
         		ifFalse: 

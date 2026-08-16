@@ -89,6 +89,14 @@ TARGETS = [
     "Core/Object Arts/Dolphin/MVP/Base/UI.MenuItem.cls",
     "Core/Object Arts/Dolphin/MVP/Base/UI.Menu.cls",
     "Core/Object Arts/Dolphin/MVP/Base/UI.MenuBar.cls",
+
+    # WINDOW CREATION — Dolphin's own CreateWindowExW call, so `View>>create`
+    # is Dolphin's code all the way down to the API. The substrate supplies
+    # only what is genuinely ours: the window CLASS (its WndProc has to be the
+    # door's) and the module handle.
+    "Core/Object Arts/Dolphin/MVP/Base/UI.CreateWindowFunction.cls",
+    "Core/Object Arts/Dolphin/MVP/Base/UI.CreateWindowApiCall.cls",
+    "Core/Object Arts/Dolphin/MVP/Base/UI.CreateWindow.cls",
 ]
 
 # Parsed for hierarchy + pools, never emitted. DIRECTORIES, deliberately: a

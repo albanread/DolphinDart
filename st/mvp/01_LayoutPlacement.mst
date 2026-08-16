@@ -65,7 +65,7 @@ Object subclass: LayoutPlacement [
     ]
     visibleExtent [
         "Answer a <point> representing the extent of the associated view that is expected to be visible after the placement has been applied. This doesn't take into account partial visibility; if the view is to be visible it is assumed the whole extent will be visible. This is intended for use in determining the amount of space that should be reserved for a view as part of a layout calculation."
-        self isVisible ifFalse: [^Zero].
+        self isVisible ifFalse: [^Point classVarZero].
         	rectangle ifNotNil: [:rect | ^rect extent].
         	^view getWindowRect extent
     ]

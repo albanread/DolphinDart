@@ -94,7 +94,7 @@ Object subclass: LayoutContext [
     visibleExtentOf: aView [
         "Answer a <Point>, being the window extent (not client extent) of the specified <View> that will be visible at the end of the layout operation."
         ^(placements lookup: aView)
-        		ifNil: [aView hasVisibleStyle ifTrue: [aView getWindowRect extent] ifFalse: [Zero]]
+        		ifNil: [aView hasVisibleStyle ifTrue: [aView getWindowRect extent] ifFalse: [Point classVarZero]]
         		ifNotNil: [:placement | placement visibleExtent]
     ]
     LayoutContext class >> forContainer: aView [

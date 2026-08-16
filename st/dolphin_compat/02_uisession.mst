@@ -93,6 +93,25 @@ Object subclass: UiSession [
         kind = 3 ifTrue: [ ^self send: #onDestroy: to: view arg: a ].
         kind = 5 ifTrue: [
             ^self dispatchMessage: a wParam: b lParam: c to: view ].
+        kind = 6 ifTrue: [ ^self bindNewWindow: h ].
+        ^0
+    ]
+
+    "WM_NCCREATE — Dolphin's binding moment, and the reason
+     `basicCreateWindow:` runs verbatim. We are INSIDE CreateWindowExW: the
+     view being created is still sitting in the slot the creating code put it
+     in (`Processor activeProcess newWindow:`, which scope rule 8 makes a
+     plain variable), and this HWND is not yet known to anyone else. Bind them.
+
+     A window created by the door's own `mvpCreateTopWindow` has nothing in
+     the slot, so this is a no-op for it — which is correct: those register
+     themselves through `UiWindow class >> open:by:`."
+    UiSession class >> bindNewWindow: anHwnd [
+        | view |
+        view := Processor activeProcess newWindow.
+        view isNil ifTrue: [ ^0 ].
+        (self viewFor: anHwnd) isNil ifFalse: [ ^0 ].
+        self register: view for: anHwnd.
         ^0
     ]
 

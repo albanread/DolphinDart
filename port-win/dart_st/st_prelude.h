@@ -116,6 +116,7 @@ Object subclass: Win32 [
     "Accelerators are a PUMP concern: TranslateAcceleratorW needs the MSG, and
      the pump is native, so nothing image-side ever sees one."
     Win32 class >> mvpSetAccelerators: hwnd haccel: haccel [ <stprim: stMvpSetAccelerators> ]
+    Win32 class >> mvpTopClassName [ <stprim: stMvpTopClassName> ]
 ]
 
 "── The system object (corpus surface: Smalltalk millisecondClock) ──"

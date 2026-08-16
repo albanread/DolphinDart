@@ -67,7 +67,7 @@ View subclass: ContainerView [
         				ifTrue: [self defaultExtentOf: aShellView]
         				ifFalse: [aCreateWindow extent * targetDpi // aCreateWindow dpi].
         	aCreateWindow
-        		position: (aShellView isInitiallyCentered ifTrue: [self centerExtent: extent] ifFalse: [Zero])
+        		position: (aShellView isInitiallyCentered ifTrue: [self centerExtent: extent] ifFalse: [Point classVarZero])
         		extent: extent
         		dpi: targetDpi.aShellView dpi: targetDpi. aShellView basicCreateWindow: aCreateWindow
     ]
@@ -112,7 +112,7 @@ View subclass: ContainerView [
         	which the sub views have to be inset from the border of the receiver. This method should be
         	overridden by subclasses where the container cannot allow the sub views access to the entire
         	client area."
-        ^Empty
+        ^Rectangle classVarEmpty
     ]
     initialize [
         "Private - Initialize the receiver"
@@ -135,7 +135,7 @@ View subclass: ContainerView [
         					[(aRectangleOrPointOrNil isKindOf: Point)
         						ifTrue: [aRectangleOrPointOrNil corner: aRectangleOrPointOrNil]
         						ifFalse: [aRectangleOrPointOrNil]].
-        	newInsets = Empty ifTrue: [newInsets := nil].
+        	newInsets = Rectangle classVarEmpty ifTrue: [newInsets := nil].
         	newInsets = insets ifTrue: [^self].
         	insets := newInsets.
         	self invalidateLayout

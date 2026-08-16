@@ -80,6 +80,10 @@ AbstractRGB subclass: ARGB [
         		green: 200
         		blue: 201
     ]
+    ARGB class >> fromArgbCode: anInteger [
+        "Answer an instance representing the specified encoded value. Note that the encoding is RGB, as used by ARGB, not the BGR encoding used by ColorRef's"
+        | _casc1 | _casc1 := self basicNew. _casc1 instVarAt: 1 put: anInteger. ^_casc1 yourself
+    ]
     ARGB class >> fromInteger: anInteger [
         "Private - Answer an instance with the specified code value, which is assumed to be in the receiver's native encoding. This should only be used for loading from STB."
         ^self fromArgbCode: anInteger

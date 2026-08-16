@@ -224,6 +224,29 @@ check("imports: the chain is walked to the root, nearest ancestor first",
       inherited_pool_chain(_by, "UI.ShellView"),
       ["UI.ContainerView", "UI.View", "OS.Win32Constants", "OS.Win32Errors"])
 
+# --- qualified CLASS-VARIABLE reads ------------------------------------------
+# `^Point.Zero` reads Graphics.Point's class variable. Both segments are
+# capitalised, so the flattener rsplit it to a bare unbound `Zero` — nil at
+# runtime, no diagnostic. 384 sites across the corpus.
+from emit import rewrite_qualified_classvars
+_owners = {"Point": {"Zero"}, "Color": {"Black", "White"}}
+check("classvar: a qualified read becomes an accessor send",
+      rewrite_qualified_classvars("^Point.Zero", _owners), "^Point classVarZero")
+check("classvar: several in one body",
+      rewrite_qualified_classvars("^Color.Black = Color.White", _owners),
+      "^Color classVarBlack = Color classVarWhite")
+# The discriminator: a namespaced CLASS reference must be left for the
+# flattener, and it is only left because `Point` is not declared a class
+# variable of `Graphics`.
+check("classvar: a namespace reference is NOT touched",
+      rewrite_qualified_classvars("^Graphics.Point new", _owners),
+      "^Graphics.Point new")
+check("classvar: an undeclared second segment is not touched",
+      rewrite_qualified_classvars("^Point.Nonesuch", _owners), "^Point.Nonesuch")
+check("classvar: comments are left alone",
+      rewrite_qualified_classvars('"see Point.Zero" ^1', _owners),
+      '"see Point.Zero" ^1')
+
 # --- rewrite: namespace flattening -------------------------------------------
 check("flatten: dotted reference",
       flatten_refs("^Graphics.Point x: 1 y: 2", {}), "^Point x: 1 y: 2")
@@ -244,27 +267,36 @@ check("prim157: no refusal on the clean case", ref, [])
 
 got, ref = lower_prim157(m157, cd157, "t:1", None)
 check("prim157: refuses an unknown superclass ivar count", (got, len(ref)), (None, 1))
-# Inherited fields come FIRST in the instVarAt: order, so a superclass with 3
-# of its own pushes this class's variables to slots 4 and 5. Off-by-one here
-# shifts every field of every instance, so the arithmetic is pinned exactly.
-got, ref = lower_prim157(m157, cd157, "t:1", 3)
-check("prim157: offsets past the superclass's fields", got,
-      "^self basicNew instVarAt: 4 put: xc; instVarAt: 5 put: yc; yourself")
-check("prim157: no refusal once the count is known", ref, [])
 
-# FEWER args than ivars is well defined: the first N are set, the rest stay nil.
-# Refusing this left LayoutContext unable to make a placement at all.
+# THE ARGUMENTS FILL SLOTS 1..N OF THE WHOLE OBJECT, inherited fields first —
+# NOT offset past the superclass. Settled by UI.CreateWindow, whose parent
+# holds `rectangle dpi` (1-2) and which holds `styles title` (3-4): its
+# `rectangle:dpi:styles:title:` primitive-157 constructor takes all four in
+# that order, which an offset reading cannot express with two own slots.
+got, ref = lower_prim157(m157, cd157, "t:1", 3)
+check("prim157: slots are 1..N regardless of inherited fields", got,
+      "^self basicNew instVarAt: 1 put: xc; instVarAt: 2 put: yc; yourself")
+check("prim157: and that is not a refusal", ref, [])
+
+# Fewer args than slots is well defined: the first N are set, the rest stay nil.
 m_few = Method(selector="x:", arg_names=["only"], pattern="x: only", comment="",
                body="", class_side=True, line=1)
 got, ref = lower_prim157(m_few, cd157, "t:1", 0)
-check("prim157: fewer args than ivars sets the first ones", got,
+check("prim157: fewer args than slots sets the first ones", got,
       "^self basicNew instVarAt: 1 put: only; yourself")
 check("prim157: and is not a refusal", ref, [])
-# MORE args than ivars has nowhere to put them.
+
+# A class with no own ivars can still take an argument IF the chain has a slot
+# for it — Graphics.ARGB>>fromArgbCode: is exactly that case.
 cd0 = ClassDef(name="Graphics.ARGB", superclass="Graphics.AbstractRGB", ivars=[],
                cvars=[], civars=[], imports=[], class_constants="{}")
 got, ref = lower_prim157(m_few, cd0, "t:1", 1)
-check("prim157: more args than ivars is still refused", (got, len(ref)), (None, 1))
+check("prim157: an inherited slot counts", got,
+      "^self basicNew instVarAt: 1 put: only; yourself")
+# More args than the WHOLE chain has slots has nowhere to go.
+got, ref = lower_prim157(m_few, cd0, "t:1", 0)
+check("prim157: more args than the chain holds is refused",
+      (got, len(ref)), (None, 1))
 
 # --- report ------------------------------------------------------------------
 if FAILS:

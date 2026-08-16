@@ -106,6 +106,25 @@ nil subclass: Object [
      stream tried to grow."
     species [ ^self class ]
 
+    "Dolphin marks an object immutable so the VM traps writes to it — a
+     primitive this VM has no equivalent for. Answering SELF is the honest
+     no-op: the object is genuinely not protected, and pretending otherwise
+     (by copying, say) would change identity for something the caller expects
+     to be the same object. `View class >> initialize` marks its MessageMap
+     this way, which is where it was found.
+
+     Recorded as a KNOWN DIVERGENCE rather than a stub: nothing in the port
+     depends on write-trapping, and if something ever does it must be given a
+     real mechanism, not this."
+    "Dolphin's ExternalHandle protocol, which a raw handle Integer answers
+     here because this port passes handles as integers. `View>>
+     basicCreateWindow:` tests `handle isNull` right after CreateWindowExW."
+    isNull [ ^self = 0 ]
+    notNull [ ^self isNull not ]
+
+    beImmutableObject [ ^self ]
+    isImmutable [ ^false ]
+
     propertyAt: aKey [ ^(PropertyRegistry propertiesOf: self) at: aKey ifAbsent: [ nil ] ]
     propertyAt: aKey ifAbsent: aBlock [
         ^(PropertyRegistry propertiesOf: self) at: aKey ifAbsent: aBlock
@@ -143,6 +162,24 @@ Error subclass: Win32Error [
     code [ ^code ]
     signalWithCode [ ^self signal: 'Win32 error ', code printString ]
 ]
+"Dolphin's pre-ANSI `Signal`: a named, raisable condition created with
+ `Signal description: 'text'` and raised with `signal`/`signal:`. Kept as a
+ real Error subclass so `on: Error do:` catches one, and so the description a
+ caller gave it survives to the messageText. `View class >> initialize` builds
+ `ViewClosedError := Signal description: 'View closed'` — the first caller."
+Error subclass: Signal [
+    | description |
+    Signal class >> description: aString [
+        ^self basicNew setDescription: aString
+    ]
+    setDescription: aString [ description := aString. messageText := aString ]
+    description [ ^description ]
+    "Raising a Signal INSTANCE: Dolphin signals the condition object itself,
+     so this answers a fresh raise carrying the same description rather than
+     mutating the shared condition."
+    signalWith: aString [ ^self class new setDescription: aString; signal ]
+]
+
 Error subclass: InvalidFormat [ ]
 Error subclass: OperationAborted [ ]
 

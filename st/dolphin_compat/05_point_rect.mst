@@ -21,6 +21,15 @@
  order) and that is fine — the name is resolved when the method RUNS, the same
  way every reference to `Win32` in this layer is."
 Object subclass: Point [
+    "Dolphin's `Graphics.Point` holds `Zero` (0@0) in a CLASS VARIABLE, read
+     from other classes as `Point.Zero` — 60 sites, the corpus's most common
+     qualified class-variable read. The translator rewrites those to
+     `Point classVarZero`; this is what they land on, because our Point comes
+     from the world rather than the corpus and so has no generated accessor.
+     Found when `View>>defaultPosition` answered nil and `View>>create` died
+     on `nil extent:`."
+    Point class >> classVarZero [ ^0 @ 0 ]
+
     "Dolphin: `^Rectangle origin: self extent: aPoint`."
     extent: aPoint [ ^Rectangle origin: self extent: aPoint ]
 

@@ -36,6 +36,10 @@ Class Variables:
 
 Object subclass: View [
     <classVars: MessageMap NextId ViewClosedError WndClassAtom>
+    View class >> classVarMessageMap [ ^MessageMap ]
+    View class >> classVarNextId [ ^NextId ]
+    View class >> classVarViewClosedError [ ^ViewClosedError ]
+    View class >> classVarWndClassAtom [ ^WndClassAtom ]
     | handle creationParent creationStyles presenter model backcolor preferredExtent flags contextMenu font events interactor |
 
     actualBackcolor [
@@ -87,7 +91,7 @@ Object subclass: View [
         					[:hwnd :lParam |
         					aMonadicValuable value: hwnd.
         					true]
-        				descriptor: EnumHandlesDescriptor.
+        				descriptor: GuiInputState classVarEnumHandlesDescriptor.
         	answer := User32
         				enumChildWindows: self handle
         				lpEnumFunction: callback asParameter
@@ -169,7 +173,7 @@ Object subclass: View [
         	permits AllViews to be an IdentityDictionary, and a faster lookup results
         	for the critical message dispatching."
         self handle: anIntegerOrHandle asExternalHandle.
-        	Current inputState windowAt: anIntegerOrHandle put: self
+        	SessionManager classVarCurrent inputState windowAt: anIntegerOrHandle put: self
     ]
     backcolor [
         "Answers the background colour of the receiver"
@@ -404,7 +408,7 @@ Object subclass: View [
     ]
     binaryStoreUsing: anSTXOutFiler [
         "Stores the receiver in a serialized form using the <STxOutFiler> argument such that it can be reconstituted to an equivalent view. For Views we need to store a proxy that captures any external state not represented directly in the Smalltalk object."
-        | _casc1 | _casc1 := DpiAwareness unaware. _casc1 inContextDo: 
+        DpiAwareness unaware inContextDo: 
         			[| viewProxy |
         			viewProxy := self whileInvisibleDo: 
         							[(self filerProxyIn: anSTXOutFiler)
@@ -716,7 +720,7 @@ Object subclass: View [
     ]
     defaultBackcolor [
         "Private - Answer the default colour for the receiver's background"
-        ^Window
+        ^Color classVarWindow
     ]
     defaultExtent [
         "Private - Answer the default size of the receiver in device-independent pixels (96-dpi DIPs). This is used only to determine the size of a view when it is created (although after scaling DIPs to the monitor DPI). Thereafter #preferredExtent is used when the desired size of a view is requested."
@@ -732,7 +736,7 @@ Object subclass: View [
         ^self class defaultId
     ]
     defaultPosition [
-        	^Zero
+        	^Point classVarZero
     ]
     defaultProportion [
         "Private - Answer the default proportion to be assumed by the receiver when associated with
@@ -1066,7 +1070,7 @@ Object subclass: View [
     eraseParentBackground: aCanvas [
         	| lResult parent org |
         	parent := self parentView.
-        	org := self mapPoint: Zero to: parent.
+        	org := self mapPoint: Point classVarZero to: parent.
         	org := aCanvas offsetWindowOrigin: org.
         	lResult := parent
         				sendMessage: 20
@@ -1241,7 +1245,7 @@ Object subclass: View [
     forecolor [
         "Answers the foreground colour of the receiver.
         	Overidden by subclasses that support foreground colours"
-        ^WindowText
+        ^Color classVarWindowText
     ]
     forecolor: aColorOrNil [
         "Sets the foreground colour of the receiver to aColorOrNil.
@@ -1675,7 +1679,7 @@ Object subclass: View [
     ]
     isDolphinWindow [
         "Private - Answers true if this view is managed by Dolphin."
-        ^Current inputState isDolphinWindow: handle
+        ^SessionManager classVarCurrent inputState isDolphinWindow: handle
     ]
     isDragSource [
         "Private - Answer whether the receiver can take part in a drag and drop session as a drag source."
@@ -2737,8 +2741,10 @@ Object subclass: View [
     requestLayoutRectangle: aRectangle [
         "Request that the receiver occupies aRectangle. If under the control of a layout manager we
         	have to delegate the request through this"
-        | parentLayoutManager _casc1 | 
-        	parentLayoutManager := self parentView layoutManager._casc1 := parentLayoutManager isNil. _casc1 ifTrue: 
+        | parentLayoutManager | 
+        	parentLayoutManager := self parentView layoutManager.
+        	parentLayoutManager isNil 
+        		ifTrue: 
         			[self
         				position: aRectangle topLeft;
         				extent: aRectangle extent]
@@ -3138,7 +3144,7 @@ Object subclass: View [
     subViewsDo: aMonadicValuable [
         "Evaluate the <monadicValuable> argument for each of the receiver's sub-views, in z-order sequence"
         | child inputState |
-        	inputState := Current inputState.
+        	inputState := SessionManager classVarCurrent inputState.
         	child := User32 getWindow: handle uCmd: 5.
         	[child isNil] whileFalse: 
         			[(inputState lookupWindow: child) ifNotNil: [:childView | aMonadicValuable value: childView].
@@ -3148,7 +3154,7 @@ Object subclass: View [
         "Private - Evaluate the <monadicValuable> argument for each of the receiver's sub-views, in z-order sequence.
         	Answer the first non-nil value returned by the block, or nil if there are no non-nil results."
         | child inputState |
-        	inputState := Current inputState.
+        	inputState := SessionManager classVarCurrent inputState.
         	child := User32 getWindow: handle uCmd: 5.
         	[child isNil] whileFalse: 
         			[(inputState lookupWindow: child)
@@ -3401,7 +3407,7 @@ Object subclass: View [
         	destroy message that caused this finalization."
         self freeTheme.
         	self isStateRestoring ifFalse: [self release].
-        	Current inputState removeWindowAt: handle
+        	SessionManager classVarCurrent inputState removeWindowAt: handle
     ]
     withAllParents [
         "Answer an <sequencedReadableCollection> of self and all its parent Views, in inverse hierarchy order."
@@ -3524,7 +3530,7 @@ Object subclass: View [
         "Private - Handles a WM_DPICHANGED message. This is only sent to top-level windows (e.g. ShellViews in Dolphin), so we don't actually expect to handle it at this level.
         		- wParam encodes the new DPI with the X-axis value in the low word, and y-axis in the high word (although the docs make clear that both will always be the same value)
         		- lParam is a pointer to a RECTL providing the suggested new rectangle for the window."
-        | _casc1 | _casc1 := self presenter. ^_casc1 onDpiChanged: ((DpiChangedEvent
+        ^self presenter onDpiChanged: ((DpiChangedEvent
         				window: self
         				message: message
         				wParam: wParam
@@ -3563,7 +3569,7 @@ Object subclass: View [
         "We must be careful not to put the main VM thread to sleep if the Window going idle is actually owned by another thread, for example a system dialog started by an overlapped call."
 
         	(User32 getWindowThreadProcessId: lParam lpdwProcessId: nil) = Kernel32 getCurrentThreadId
-        		ifTrue: [Current inputState enterIdle].
+        		ifTrue: [SessionManager classVarCurrent inputState enterIdle].
         	^0
     ]
     wmEnterMenuLoop: message wParam: wParam lParam: lParam [
@@ -3574,7 +3580,7 @@ Object subclass: View [
         	while the menu loop is active. Be warned, this uses a magic number for the timer
         	(WM_ENTERIDLE = 289). The timer fires every 1/10th of a second."
 
-        	Current inputState startIdleTimer.
+        	SessionManager classVarCurrent inputState startIdleTimer.
         	^nil
     ]
     wmEraseBkGnd: message wParam: wParam lParam: lParam [
@@ -3592,7 +3598,7 @@ Object subclass: View [
         "Private - The system has exited the modal menu loop. 
         	Implementation Note: See wmEnterMenuLoop:&c. We must ensure the idle
         	kick timer is killed."
-        Current inputState stopIdleTimer.
+        SessionManager classVarCurrent inputState stopIdleTimer.
         	^nil
     ]
     wmGetDlgCode: message wParam: wParam lParam: aMSGAddress [
@@ -3629,7 +3635,7 @@ Object subclass: View [
     wmHScroll: message wParam: wParam lParam: lParam [
         "Private - A vertical Scroll event has occured. Pass onto receiver's controller. Have to check
         	whether the event came from a standard scrool bar or a scroll bar controller."
-        ^(lParam == 0 ifTrue: [self] ifFalse: [Current inputState lookupWindow: lParam])
+        ^(lParam == 0 ifTrue: [self] ifFalse: [SessionManager classVarCurrent inputState lookupWindow: lParam])
         		ifNotNil: 
         			[:window |
         			window onHScroll: (ScrollEvent
@@ -3811,7 +3817,7 @@ Object subclass: View [
         				wParam: wParam
         				lParam: lParam.
         	self clearHandle.
-        	self isStateRestoring ifFalse: [interactor := creationParent := presenter := Current].	"If not being recreated, discard the presenter"
+        	self isStateRestoring ifFalse: [interactor := creationParent := presenter := DeafObject classVarCurrent].	"If not being recreated, discard the presenter"
         	^answer
     ]
     wmNcHitTest: message wParam: wParam lParam: lParam [
@@ -3833,7 +3839,7 @@ Object subclass: View [
         	 are very frequent and mostly ignored."
 
         	| pNMHdr |
-        	^(Current inputState
+        	^(SessionManager classVarCurrent inputState
         		lookupWindow: ((pNMHdr := lParam asExternalAddress) uintPtrAtOffset: 0))
         			ifNotNil: [:control | control nmNotify: pNMHdr]
     ]
@@ -3984,7 +3990,7 @@ Object subclass: View [
     wmVScroll: message wParam: wParam lParam: lParam [
         "Private - A vertical Scroll event has occured. Pass onto the receiver's controller. Have to check
         	whether the event came from a standard scroll bar or a scroll bar controller."
-        ^(lParam == 0 ifTrue: [self] ifFalse: [Current inputState lookupWindow: lParam])
+        ^(lParam == 0 ifTrue: [self] ifFalse: [SessionManager classVarCurrent inputState lookupWindow: lParam])
         		ifNotNil: 
         			[:window |
         			window onVScroll: (ScrollEvent
@@ -4198,7 +4204,7 @@ Object subclass: View [
         ^(self topLevelViews reject: [ :w | w close ]) isEmpty
     ]
     View class >> commandAnnotations [
-        	^Current annotationsFor: self
+        	^CommandAnnotationsRegister classVarCurrent annotationsFor: self
     ]
     View class >> cursor [
         "Answers the default cursor to be used for the mouse pointer when over instances of the receiver.
@@ -4236,7 +4242,7 @@ Object subclass: View [
     ]
     View class >> desktop [
         "Answer the Desktop View"
-        ^Current
+        ^DesktopView classVarCurrent
     ]
     View class >> desktopHandle [
         "Private - Answer the handle of the Desktop window."
@@ -4246,7 +4252,7 @@ Object subclass: View [
         "Private - Forcibly close all windows (the Windows will not receiver a WM_CLOSE).
         	This is a rather drastic action in that any unsaved data in any window will be lost."
         self topLevelViews do: [:w | w destroy].
-        	Current inputState purgeDeadWindows
+        	SessionManager classVarCurrent inputState purgeDeadWindows
     ]
     View class >> focus [
         "Answers the View with focus or nil if there is none.
@@ -4295,7 +4301,7 @@ Object subclass: View [
         	to its parent, even if that parent is also unknown, and so on.
         	See also #withHandle:, which answers only registered (known)
         	Views."
-        | _casc1 | ^SessionManager._casc1 := Current inputState. _casc1 windowAt: aHandle
+        ^SessionManager classVarCurrent inputState windowAt: aHandle
         		ifAbsent: 
         			[(self newUnregistered: aHandle)
         				parentView: (View fromHandle: (User32 getParent: aHandle));
@@ -4314,9 +4320,11 @@ Object subclass: View [
     View class >> initialize [
         "Private - Initialize the receiver's class variables:
         		View initialize"
-        | _casc1 | NextId := 0.
-        	ViewClosedError := Signal description: 'View closed'._casc1 := "Note that the message map is not const variable, since view packages may add new messages they want to receive, although must do so by sending #registerMessageMappings:"
-        	MessageMap isNil. _casc1 ifTrue: 
+        NextId := 0.
+        	ViewClosedError := Signal description: 'View closed'.
+        	"Note that the message map is not const variable, since view packages may add new messages they want to receive, although must do so by sending #registerMessageMappings:"
+        	MessageMap isNil
+        		ifTrue: 
         			[MessageMap := self buildMessageMap
         						beImmutableObject;
         						yourself]
@@ -4480,7 +4488,7 @@ Object subclass: View [
         	background colour, and there is also a special colour 'none' that indicates that the
         	background should be transparent if this is supported by the control (though not many
         	controls do support transparency)."
-        (anArray at: 6) ifNil: [anArray at: 6 put: Default].
+        (anArray at: 6) ifNil: [anArray at: 6 put: Color classVarDefault].
         	^anArray
     ]
     View class >> stbConvertFromVersion2: anArray [
@@ -4563,7 +4571,7 @@ Object subclass: View [
     View class >> topLevelViews [
         "Answer a Collection containing all top level Dolphin Views.
         	Note that this will include Views which are not Shells (e.g. tool tips)."
-        ^Current inputState topLevelWindows select: [:w | w isKindOf: (self)]
+        ^SessionManager classVarCurrent inputState topLevelWindows select: [:w | w isKindOf: (self)]
     ]
     View class >> uninitialize [
         "Private - Remove any special selectors sent by the VM."
@@ -4613,7 +4621,7 @@ Object subclass: View [
         	reasons, but this can be changed by using #asExternalHandle instead of #asInteger,
         	although you will need to visit #dispatchMessage:, (and any other direct users 
         	of AllViews)."
-        ^Current inputState lookupWindow: aHandle
+        ^SessionManager classVarCurrent inputState lookupWindow: aHandle
     ]
     View class >> wndClassName [
         "Private - Answer the Windows class name to be registered with Win32 for instances of the receiver.

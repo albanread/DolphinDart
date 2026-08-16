@@ -1,0 +1,97 @@
+"01_view_overrides.mst — View overrides that must load AFTER st/mvp
+ (DolphinDart DD10).
+
+ LAYER ORDER IS LOAD-BEARING, for the third time in this project (the DD9
+ alias globals and the depth-prefixed emission were the first two). These
+ methods override ones the TRANSLATED `UI.View` defines, so a file in
+ `st/dolphin_compat` — which loads before `st/mvp` — is simply overwritten by
+ the class it is trying to adjust. This layer loads last:
+
+   st/world;st/dolphin_compat;st/prims/rt;st/prims/structs;st/prims;
+   st/prims/aliases;st/mvp;st/mvp_compat
+
+ Nothing here reimplements Dolphin logic. Each method replaces a call into a
+ part of Dolphin this port does not have, with the substrate's equivalent."
+
+"── the class the door owns ─────────────────────────────────────────────"
+nil subclass: View [
+    "Dolphin registers a window class per View subclass and answers its name.
+     Here every View is created against the DOOR's class, because its WndProc
+     is the one that reflects messages into the image. Registering a second
+     class with our WndProc would work identically and buy nothing."
+    View class >> winClassName [ ^Win32 mvpTopClassName ]
+    View class >> wndClassName [ ^Win32 mvpTopClassName ]
+
+    "Dolphin asks the desktop for a creation parent when none is set, and then
+     TALKS to it: `CreateWindowFunction>>scaleToDpiOf:` sends
+     `scaleChildCreation:` to the parent. So the desktop cannot be nil — it
+     has to be an object that answers the parent protocol."
+    View class >> desktop [ ^DesktopView current ]
+]
+
+"── the desktop ────────────────────────────────────────────────────────
+ The creation parent of a top-level window. Its HWND is 0 (CreateWindowExW
+ takes 0 for `no parent`), and its DPI is 96 — the DD9 brief's recorded trim,
+ `dpi ^96`, no per-monitor awareness in v1. `scaleChildCreation:` is therefore
+ the identity: there is nothing to scale between 96 and 96, and inventing a
+ factor here would move every window by a number nobody chose."
+Object subclass: DesktopView [
+    <classVars: Current>
+    DesktopView class >> current [
+        Current isNil ifTrue: [ Current := self basicNew ]. ^Current
+    ]
+    asParameter [ ^0 ]
+    handle [ ^0 ]
+    dpi [ ^96 ]
+    scaleChildCreation: aCreateWindow [ ^aCreateWindow ]
+    isOpen [ ^true ]
+    parentView [ ^nil ]
+    "`ShellView>>initialize` sets its parent to the desktop and then asks the
+     parent whether it IS the desktop, to decide whether it is a top-level
+     window. Answering true is the whole point of this object."
+    isDesktop [ ^true ]
+    view [ ^self ]
+]
+
+
+"── running Dolphin's class-side initialize ─────────────────────────────
+ Dolphin's package loader sends `initialize` to a class after filing it in,
+ and six classes in this wave rely on it: `View class >> initialize` sets
+ `NextId := 0`, builds the MessageMap and makes the ViewClosedError — without
+ it `View>>defaultId` does `nil + 1`.
+
+ The layer loader has no package concept, so this is the explicit equivalent.
+ It is NOT automatic-on-load by design: the order matters (a class-side
+ initialize may read another class's variables), and a list that is read and
+ checked beats a traversal whose order nobody controls."
+Object subclass: DolphinBoot [
+    "A brace array: `Array with:` stops at four arguments in this dialect."
+    DolphinBoot class >> classesToInitialize [
+        ^{ Rectangle. Color. CommandDescription. View. ShellView. Menu }
+    ]
+
+    "Answers the classes that FAILED, so a caller can assert on the list rather
+     than on a count. Each is attempted independently: a class whose
+     `initialize` reaches something this port has not translated yet must not
+     stop the ones that would have worked. Today that is `Color` (needs the
+     colour-table classes) and `CommandDescription` (wants a weak lookup
+     table) — both recorded here rather than quietly dropped from the list,
+     because the list is the statement of what SHOULD initialize."
+    DolphinBoot class >> initializeClasses [
+        | failed |
+        failed := OrderedCollection new.
+        self classesToInitialize do: [ :each |
+            (each respondsTo: #initialize)
+                ifTrue: [
+                    [ each initialize ]
+                        on: Error
+                        do: [ :e | failed add: each name ] ] ].
+        ^failed asArray
+    ]
+
+    "The ones that must work for a View to be created at all."
+    DolphinBoot class >> initializeViewClasses [
+        Rectangle initialize. View initialize. ShellView initialize.
+        ^true
+    ]
+]
