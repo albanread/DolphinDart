@@ -238,7 +238,43 @@ raise would turn any remaining instance of this shape loud, and is worth doing
 — carefully, since something may be depending on the current answer by
 accident.
 
-### 3.8 An INTEGER on the command route
+### 3.9 `nameOf:` is missing
+Sending `printString` to a `Presenter` raises `does not understand nameOf:`,
+from somewhere in its `printOn:`. Seen while probing; not chased. Harmless
+until something prints a presenter, which a debugger or a log line will.
+
+### 3.8 ~~An INTEGER on the command route~~ — CLOSED
+**The door was swallowing WM_COMMAND.** Its DD7 spike channel intercepted
+message 273 before the routed branch and carried only `LOWORD(wParam)` — the
+control id. Dolphin's `View class >> buildMessageMap` maps 273 to
+`wmCommand:wParam:lParam:`, which needs the FULL wParam and lParam to tell a
+menu command (lParam null → look up a CommandDescription by id → `onCommand:`)
+from a control notification (lParam is the control's hwnd → `command:id:`).
+The narrow channel reached Dolphin's `onCommand: aCommandDescription` with an
+INTEGER.
+
+The door now offers the routed path first and falls back to the spike channel,
+so a gate installing Dolphin's map gets Dolphin's handler with real arguments
+and a spike window keeps the contract it was written against.
+
+Behind it, two more: `Integer>>lowWord`/`highWord` (Dolphin's word accessors,
+absent), and the whole EVENT family — `UI.Event`, `WindowsEvent`, `PointEvent`,
+`MouseEvent`, `KeyEvent` — which every mouse and key handler constructs and
+which were unbound globals, so each handler sent to nil.
+
+### 3.10 ~~The binding moment did not bind the HANDLE~~ — CLOSED
+`UiSession bindNewWindow:` registered the view in the hwnd→view map so the
+door could ROUTE to it, and never gave the VIEW its handle. Dolphin's handlers
+assume `handle` is live from WM_NCCREATE onward: `View>>wmCreate:` ends in
+`event defaultWindowProcessing`, which is `User32 defWindowProc: handle ...` —
+a pure-word prim with NO wrapper, so a nil handle is not coerced to 0, it is
+an FFI refusal. `handle` stayed nil until CreateWindowExW *returned*, which is
+after every message it sends during creation.
+
+Now uses Dolphin's own `attachHandle:`, which does both halves.
+
+**This was invisible for three sprints** because no gate had installed
+Dolphin's message map, so no Dolphin handler ran during creation.
 `Class 'int' has no instance method 'queryCommand_'`, from the WM_COMMAND path
 in `st_textedit`. Contained by the handler-error path; the gate is green
 because nothing asserts on command routing there yet.
@@ -297,6 +333,20 @@ methods to 1, over the good floor.
 
 **Standing rule:** a generator or gate invoked from a one-liner is a defect.
 Put it in a script.
+
+### 4.2a Contained handler errors are now COUNTED and located — done
+`UiSession noteHandlerError:` used to print the exception's messageText alone:
+no message number, no selector, no receiver. A diagnostic that says only that
+something went wrong somewhere.
+
+It now reports `<ViewClass>>><selector> (WM n) — <Class>: <text>` and
+increments `UiSession handlerErrors`, which gates assert is ZERO. That is the
+only way a deliberately swallowed error becomes a test failure rather than a
+line in a log nobody reads — every command in `st_textedit` was dying while
+every assertion in it still passed.
+
+**Add `expect('no handler error was contained', 'UiSession handlerErrors
+printString', "'0'")` to any gate that pumps messages.**
 
 ### 4.2 A shared `test/gate_util.dart` — recommended, still not built
 `ev`/`must`/`expect` and the paint-liveness helper are copy-pasted across 20+

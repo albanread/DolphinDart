@@ -12,9 +12,14 @@ C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.ControlView.cls:54: [has
 		at: -1 )` folded to a runtime block
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.ControlView.cls:133: [hashhash] `##(self indexOfInstVar: 'oldWndProc')` folded to a runtime block
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.ControlView.cls:542: [binding-literal] `#{...}` variable-binding literal has no house equivalent
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.Event.cls:39: [cascade] cascade on a receiver this rewriter cannot bound — splitting it could change evaluation
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.Event.cls:44: [hashhash] `##(self)` folded to a runtime block
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.Menu.cls:860: [hashhash] `##(self)` folded to a runtime block
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.Menu.cls:923: [binding-literal] `#{...}` variable-binding literal has no house equivalent
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.MenuBar.cls:43: [cascade] cascade on a receiver this rewriter cannot bound — splitting it could change evaluation
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.MouseEvent.cls:109: [hashhash] `##(IdentityDictionary withAll: {#left -> 1.
+				#right -> 2.
+		)` folded to a runtime block
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.Presenter.cls:702: [hashhash] `##(self)` folded to a runtime block
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.Presenter.cls:1039: [cascade] cascade on a receiver this rewriter cannot bound — splitting it could change evaluation
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.Presenter.cls:1097: [hashhash] `##(self)` folded to a runtime block

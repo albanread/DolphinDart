@@ -39,3 +39,32 @@ Number subclass: Integer [
             ifFalse: [ self bitAnd: integerMask bitInvert ]
     ]
 ]
+
+"── word accessors, Dolphin's own ───────────────────────────────────────────
+
+ `View>>wmCommand:wParam:lParam:` splits WM_COMMAND's wParam with these: the
+ notification code is the high word and the control id is the low word. Both
+ are verbatim from `Core.Integer`.
+
+ `highWord` masks after shifting rather than merely shifting, which matters
+ here and not in Dolphin: a Dolphin SmallInteger is 30-bit and wParam arrives
+ already truncated, whereas this port's integers are full 64-bit Dart ints, so
+ an unmasked shift would carry the upper half of a 64-bit wParam into the
+ answer. Keeping Dolphin's mask makes the two agree."
+Object subclass: Integer [
+    lowWord [ ^self bitAnd: 16rFFFF ]
+    highWord [ ^(self bitShift: -16) bitAnd: 16rFFFF ]
+    lowSWord [
+        "The low word as a SIGNED 16-bit value — coordinates in lParam are
+         signed, and a window dragged above or left of the origin gives
+         negative ones."
+        | w |
+        w := self bitAnd: 16rFFFF.
+        ^w > 16r7FFF ifTrue: [ w - 16r10000 ] ifFalse: [ w ]
+    ]
+    highSWord [
+        | w |
+        w := (self bitShift: -16) bitAnd: 16rFFFF.
+        ^w > 16r7FFF ifTrue: [ w - 16r10000 ] ifFalse: [ w ]
+    ]
+]

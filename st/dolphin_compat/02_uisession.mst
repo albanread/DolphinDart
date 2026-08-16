@@ -19,7 +19,7 @@
  which is why `dispatch:` wraps the view send here and not somewhere higher."
 
 Object subclass: UiSession [
-    <classVars: Windows LastWindow Actions IdleCount MessageCount MessageMap>
+    <classVars: Windows LastWindow Actions IdleCount MessageCount MessageMap HandlerErrors>
 
     UiSession class >> reset [
         Windows := IdentityDictionary new.
@@ -111,7 +111,22 @@ Object subclass: UiSession [
         view := Processor activeProcess newWindow.
         view isNil ifTrue: [ ^0 ].
         (self viewFor: anHwnd) isNil ifFalse: [ ^0 ].
-        self register: view for: anHwnd.
+        "ATTACH, don't merely register. Registering puts the view in the
+         hwnd->view map so the door can ROUTE to it; attaching also gives the
+         VIEW its handle, and Dolphin's handlers assume that from WM_NCCREATE
+         onward. `View>>wmCreate:wParam:lParam:` ends in
+
+             ^event defaultWindowProcessing
+
+         which is `User32 defWindowProc: handle msg: ...` — a pure-word prim
+         with no wrapper, so a nil handle is not coerced to 0, it is an FFI
+         refusal. Registering alone left `handle` nil until CreateWindowExW
+         RETURNED, which is after every message it sends during creation.
+         `attachHandle:` does both halves and is Dolphin's own method.
+         Spike windows have no `attachHandle:` and are registered as before."
+        (view respondsTo: #attachHandle:)
+            ifTrue: [ view attachHandle: anHwnd ]
+            ifFalse: [ self register: view for: anHwnd ].
         ^0
     ]
 
@@ -149,11 +164,18 @@ Object subclass: UiSession [
             (aView respondsTo: #onMessage:wParam:lParam:) ifFalse: [ ^nil ].
             ^[ aView onMessage: msg wParam: wp lParam: lp ]
                 on: Error
-                do: [ :e | self noteHandlerError: e. nil ] ].
+                do: [ :e |
+                    self noteHandlerError: e
+                         message: msg
+                         selector: #onMessage:wParam:lParam:
+                         view: aView.
+                    nil ] ].
         (aView respondsTo: sel) ifFalse: [ ^nil ].
         ^[ aView perform: sel with: msg with: wp with: lp ]
             on: Error
-            do: [ :e | self noteHandlerError: e. nil ]
+            do: [ :e |
+                self noteHandlerError: e message: msg selector: sel view: aView.
+                nil ]
     ]
 
     "The map is a 1024-slot Array indexed by (message number + 1) — Dolphin's
@@ -213,10 +235,35 @@ Object subclass: UiSession [
         ^self send: aSelector to: LastWindow arg: arg
     ]
 
-    UiSession class >> noteHandlerError: anException [
-        Transcript showCr: 'UiSession: handler error — ', anException messageText.
+    "A CONTAINED handler error must still say WHERE. The old report was the
+     exception's messageText alone — `FFI: non-integer argument (expected a
+     word)` with no message number, no selector and no receiver, which is a
+     diagnostic that tells you only that something went wrong somewhere. The
+     containment is right; the silence about the site was not.
+
+     Everything added here is already in hand at the call site, so this costs
+     nothing until something actually raises."
+    UiSession class >> noteHandlerError: anException message: msg selector: sel
+                       view: aView [
+        HandlerErrors := (HandlerErrors ifNil: [ 0 ]) + 1.
+        Transcript showCr: 'UiSession: handler error in ',
+            (aView isNil ifTrue: [ 'nil' ] ifFalse: [ aView class name ]),
+            '>>', (sel isNil ifTrue: [ '?' ] ifFalse: [ sel ]) displayString,
+            ' (WM ', msg printString, ') — ',
+            anException class name, ': ', anException messageText.
         ^nil
     ]
+
+    "Kept for the two-argument callers elsewhere in this file."
+    UiSession class >> noteHandlerError: anException [
+        ^self noteHandlerError: anException message: -1 selector: nil view: nil
+    ]
+
+    "How many contained handler errors have been seen. A gate can assert this
+     is ZERO — which is the only way an error that is deliberately swallowed
+     ever becomes visible to a test rather than to whoever reads the log."
+    UiSession class >> handlerErrors [ ^HandlerErrors ifNil: [ 0 ] ]
+    UiSession class >> resetHandlerErrors [ HandlerErrors := 0 ]
 
     UiSession class >> messageCount [ ^MessageCount ifNil: [ 0 ] ]
 

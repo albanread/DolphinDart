@@ -1,0 +1,24 @@
+Object subclass: Event [
+    | window |
+
+    hwnd [
+        	^window asParameter
+    ]
+    setSource: aWindow [
+        	window := aWindow
+    ]
+    window [
+        "Answers a window which was the target for this event. This window
+        	must be a registered Dolphin window."
+        ^window
+    ]
+    Event class >> forSource: aWindow [
+        	^(self basicNew)
+        		setSource: aWindow;
+        		yourself
+    ]
+    Event class >> icon [
+        "Answers an Icon that can be used to represent this class."
+        ^[self] value defaultIcon
+    ]
+]

@@ -28,6 +28,15 @@ ShellView subclass: TextEditShell [
         ^editView
     ]
 
+    "Install Dolphin's OWN message map as the routed set, so WM_COMMAND
+     reaches `View>>wmCommand:wParam:lParam:` with its real arguments rather
+     than the door's narrow control-id channel. `buildMessageMap` is an
+     explicit list of exactly what the class handles, which is why the routed
+     set can be taken from it wholesale."
+    TextEditShell class >> routeDolphinMessages [
+        ^UiSession routeMessagesFrom: View
+    ]
+
     "Is the sub-view REALLY a Windows EDIT, or just a window we called one?
      Asked of Windows rather than of the class: `GetClassName` answers what
      the window was actually registered as, so a view that quietly fell back

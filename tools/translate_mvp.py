@@ -97,6 +97,21 @@ TARGETS = [
     "Core/Object Arts/Dolphin/MVP/Base/UI.Menu.cls",
     "Core/Object Arts/Dolphin/MVP/Base/UI.MenuBar.cls",
 
+    # ── DD10: the EVENT family ─────────────────────────────────────────────
+    # Once Dolphin's own `buildMessageMap` is installed as the routed set, its
+    # mouse and key handlers run — and every one of them builds an event
+    # object: `wmMouseMove:` answers `MouseEvent window: self message: ...`,
+    # `wmContextMenu:` a PointEvent, `wmChar:` a KeyEvent. Untranslated those
+    # were unbound globals, so each handler sent to nil.
+    #
+    # Small classes, and the whole chain is needed because the constructor is
+    # `WindowsEvent class >> window:message:wParam:lParam:`, two levels up.
+    "Core/Object Arts/Dolphin/MVP/Base/UI.Event.cls",
+    "Core/Object Arts/Dolphin/MVP/Base/UI.WindowsEvent.cls",
+    "Core/Object Arts/Dolphin/MVP/Base/UI.PointEvent.cls",
+    "Core/Object Arts/Dolphin/MVP/Base/UI.MouseEvent.cls",
+    "Core/Object Arts/Dolphin/MVP/Base/UI.KeyEvent.cls",
+
     # ── DD10: CONTROLS ─────────────────────────────────────────────────────
     # A control is a window of a class COMCTL registered, so Dolphin gets into
     # its message stream by SUBCLASSING it — `ControlView>>subclassWindow`

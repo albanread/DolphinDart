@@ -1,19 +1,19 @@
 # dolphin2mst run report
 
-- inputs: **46** source files (`.cls` + `.pax`)
+- inputs: **51** source files (`.cls` + `.pax`)
 - shared-pool constants available: **6522** from **173** pools
 - loose methods adopted from `.pax`: **1**
-- parsed: **46**  (unbalanced/skipped: 0)
-- emitted: **47** `.mst`
-- methods: **2493**
-- refusals: **114**
+- parsed: **51**  (unbalanced/skipped: 0)
+- emitted: **52** `.mst`
+- methods: **2540**
+- refusals: **117**
 
 ## Refusals by rewrite class
 
 | Rewrite | Count |
 |---|--:|
-| `hashhash` | 54 |
-| `cascade` | 22 |
+| `hashhash` | 56 |
+| `cascade` | 23 |
 | `binding-literal` | 14 |
 | `pragma` | 14 |
 | `orphan-loose-methods` | 10 |
@@ -39,8 +39,10 @@
 | `CreateWindowApiCall` | 10 | 0 |
 | `CreateWindowFunction` | 12 | 0 |
 | `DelegatingCommandPolicy` | 1 | 0 |
+| `Event` | 5 | 2 |
 | `GraphicsTool` | 32 | 2 |
 | `IntegerToText` | 1 | 0 |
+| `KeyEvent` | 9 | 0 |
 | `LayoutContext` | 16 | 0 |
 | `LayoutManager` | 11 | 0 |
 | `LayoutPlacement` | 11 | 0 |
@@ -48,9 +50,11 @@
 | `MenuBar` | 7 | 1 |
 | `MenuItem` | 35 | 0 |
 | `Model` | 9 | 1 |
+| `MouseEvent` | 13 | 1 |
 | `NullConverter` | 2 | 0 |
 | `NumberToText` | 2 | 0 |
 | `Object (loose)` | 7 | 1 |
+| `PointEvent` | 5 | 0 |
 | `Presenter` | 152 | 6 |
 | `Rectangle` | 98 | 2 |
 | `Shell` | 39 | 2 |
@@ -69,3 +73,4 @@
 | `ValueModel` | 17 | 2 |
 | `ValuePresenter` | 8 | 1 |
 | `View` | 667 | 18 |
+| `WindowsEvent` | 15 | 0 |

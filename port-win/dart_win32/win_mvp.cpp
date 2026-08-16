@@ -275,13 +275,47 @@ LRESULT CALLBACK MvpTopWndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
       EndPaint(hwnd, &ps);
       return 0;
     }
-    case WM_COMMAND:
+    case WM_COMMAND: {
+      if (!live) return DefWindowProcW(hwnd, msg, wp, lp);
+      // TWO CONTRACTS SHARE THIS MESSAGE, and the routed one wins.
+      //
+      // Dolphin's `View class >> buildMessageMap` maps 273 to
+      // `wmCommand:wParam:lParam:`, which needs the FULL wParam and lParam to
+      // tell the three cases apart:
+      //
+      //     lParam null  -> a menu command; look up a CommandDescription by
+      //                     its id and send `onCommand:` with THAT
+      //     otherwise    -> a control notification; find the control by its
+      //                     hwnd (lParam) and send `command:id:`
+      //
+      // The kKindCommand channel below carries only LOWORD(wParam) — the
+      // control id — which is all the DD7 probes ever wanted, and is NOT
+      // enough to make that distinction. Sending it to a translated view
+      // reached Dolphin's `onCommand: aCommandDescription` with an INTEGER,
+      // and every command died on `'int' has no instance method
+      // queryCommand_` inside the contained handler-error path.
+      //
+      // So: offer the routed path first. A gate that installs Dolphin's
+      // message map (`routeMessagesFrom: View`) gets Dolphin's own handler
+      // with the real arguments; a spike window that routes nothing keeps the
+      // narrow channel it was written against.
+      if (IsRoutedMessage(msg)) {
+        int64_t out = 0;
+        bool handled = false;
+        if (CallImage(kKindWinMsg, hwnd, (int64_t)msg, (int64_t)wp,
+                      (int64_t)lp, &out, &handled) &&
+            handled) {
+          return (LRESULT)out;
+        }
+        return DefWindowProcW(hwnd, msg, wp, lp);
+      }
       // A child control notifying its parent: the control id is LOWORD(wp).
       // The command's payload is the CONTROL id; the hwnd is the OWNER the
       // notification arrived at, which is the window that has to handle it.
-      if (live) CallImage(kKindCommand, hwnd, (int64_t)LOWORD(wp), 0, 0,
-                          nullptr, nullptr);
+      CallImage(kKindCommand, hwnd, (int64_t)LOWORD(wp), 0, 0, nullptr,
+                nullptr);
       return 0;
+    }
     case WM_DESTROY:
       if (live) CallImage(kKindDestroy, hwnd, 0, 0, 0, nullptr, nullptr);
       return 0;

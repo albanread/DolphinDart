@@ -10,6 +10,16 @@ as the goal gate and our own GamePane kept as the games-with-sound extension.
   agent briefs in [docs/sprints/](docs/sprints/)
 - **Prior art:** [docs/prior_art/winvm/](docs/prior_art/winvm/README.md)
   (the WINVM attempt's corpus, with standing notes)
+- **SNAGS — read before assuming something works:**
+  [docs/LOOSE_ENDS.md](docs/LOOSE_ENDS.md). Every stand-in, accepted
+  divergence and open defect this port knowingly carries, each with what
+  kills it. **File snags there as you hit them**, not only in a comment at
+  the site: the site is the right place for HOW, and the wrong place for
+  what is still owed. A stand-in is allowed; a stand-in without a named
+  retirement is not.
+- **Run the gates:** `python tools/gates.py` (all), or
+  `python tools/gates.py textedit` (one). The table in that script holds
+  every gate's layers, arguments and host — never retype an invocation.
 - **Dolphin sources:** `C:\projects\dsfork` (MIT; MVP verified byte-identical
   to upstream D8). The fork's own VM does not work and is reading material
   only — we port the language layer, never its bytecode interpreter.

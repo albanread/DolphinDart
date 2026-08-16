@@ -1,0 +1,92 @@
+Event subclass: WindowsEvent [
+    | message wParam lParam lResult |
+
+    defaultWindowProcessing [
+        "Forward this event to the associated window's default window procedure and answer the
+        	intptr value it returns."
+        ^lResult
+        		ifNil: 
+        			[window
+        				defaultWindowProcessing: message
+        				wParam: wParam
+        				lParam: lParam]
+    ]
+    isHandled [
+        "Answer whether the application has handled the event. This typically suppresses default
+        	handling, and the event is not passed to the default window procedure."
+        ^lResult notNil
+    ]
+    lParam [
+        	^lParam
+    ]
+    lParam: anInteger [
+        	lParam := anInteger
+    ]
+    lParamX [
+        "Answer the X-value signed integer packed into the low half of the receiver's lParam field.
+        	Note that this could be a 16 or 32-bit value depending on whether the host OS is 32 or
+        	64-bit"
+        ^self lParam lowPartSigned
+    ]
+    lParamY [
+        "Answer the Y-value signed integer packed into the high half of the receiver's lParam field.
+        	Note that this could be a 16 or 32-bit value depending on whether the host OS is 32 or
+        	64-bit"
+        ^self lParam highPartSigned
+    ]
+    lResult [
+        "Answer the LRESULT value for this message to be returned to windows. Normally nil unless an
+        	event handler wishes to suppress default message handling."
+        ^lResult
+    ]
+    lResult: anObject [
+        "Set the result of the event to the argument. Note that a non-nil value will suppress
+        	default message handling."
+        lResult := anObject asUIntPtr
+    ]
+    message [
+        	^message
+    ]
+    printLParamOn: aStream [
+        "Private - Append a textual representation of the receiver's lParam to aStream, in a format
+        	appropriate for the type of event."
+        aStream print: self lParam
+    ]
+    printOn: aStream [
+        "Append a textual representation of the receiver to aStream."
+        | msg | 
+        	self basicPrintOn: aStream.
+        	msg := View selectorForMessage: self message.
+        	aStream nextPut: $(.aStream print: self window. aStream space.
+        	msg isNil
+        		ifTrue: 
+        			[self message
+        				printOn: aStream
+        				base: 16
+        				showRadix: true]
+        		ifFalse: [aStream nextPutAll: msg].
+        	aStream space.
+        	self printWParamOn: aStream.
+        	aStream space.
+        	self printLParamOn: aStream.
+        	aStream nextPut: $)
+    ]
+    printWParamOn: aStream [
+        	aStream print: self wParam
+    ]
+    window: aView message: msgInteger wParam: wInteger lParam: lInteger [
+        "Private - Initialize the receiver's instance variables from the parameters."
+        window := aView.
+        	message := msgInteger.
+        	wParam := wInteger.
+        	lParam := lInteger
+    ]
+    wParam [
+        	^wParam
+    ]
+    WindowsEvent class >> window: aView message: msgInteger wParam: wInteger lParam: lInteger [
+        "Answer an instance of the receiver containing the message details specified by the
+        	parameters."
+        | _casc1 | _casc1 := self basicNew. _casc1 instVarAt: 1 put: aView. _casc1 instVarAt: 2 put: msgInteger. _casc1 instVarAt: 3 put: wInteger. _casc1 instVarAt: 4 put: lInteger. ^_casc1 yourself
+    ]
+]

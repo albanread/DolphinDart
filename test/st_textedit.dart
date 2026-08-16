@@ -80,6 +80,13 @@ main(List<String> a) {
   expect('every view class initialized',
       'DolphinBoot initializeViewClasses printString', "'()'");
   stRun('UiSession startUp.');
+  // Dolphin's own message map as the routed set. Without it the door falls
+  // back to its DD7 control-id channel, which reaches
+  // `View>>onCommand: aCommandDescription` with an INTEGER — every command
+  // then dies inside the contained handler-error path, invisible to a gate
+  // that does not look for it.
+  must(num('TextEditShell routeDolphinMessages') > 0,
+      'Dolphin message map installed as the routed set');
 
   // ── a shell that owns a text field ──────────────────────────────────────
   stRun('TeShell := TextEditShell new. TeShell create. TeShell show.');
@@ -146,6 +153,19 @@ main(List<String> a) {
   stRun("User32 setWindowText: TeShell editView handle lpString: 'as if typed'.");
   expect('and the view reads what the control holds',
       'TeShell editView text', "'as if typed'");
+
+  // ── NOTHING WAS SWALLOWED ────────────────────────────────────────────────
+  //
+  // The door contains a raise inside a message handler: the pump has to keep
+  // pumping, and Win32 has no notion of a Smalltalk exception. That is right,
+  // and it also means a broken handler is invisible to a gate that only
+  // asserts on outcomes — every command in this gate was dying on
+  // `'int' has no instance method queryCommand_` while every assertion above
+  // still passed.
+  //
+  // So the count is asserted. This is the only way a deliberately swallowed
+  // error becomes a test failure rather than a line in a log nobody reads.
+  expect('no handler error was contained', 'UiSession handlerErrors printString', "'0'");
 
   // ── teardown ────────────────────────────────────────────────────────────
   expect('destroy succeeded', 'TeShell destroy printString', "'true'");
