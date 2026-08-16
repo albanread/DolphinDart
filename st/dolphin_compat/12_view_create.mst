@@ -146,3 +146,62 @@ Object subclass: SessionManager [
     SessionManager class >> current [ ^self classVarCurrent ]
     inputState [ ^InputState current ]
 ]
+
+"── Cursor — SCAFFOLDING, and it unblocks the ACTION PATH ──────────────────
+
+ `UI.View` has two sites that wrap work in a wait cursor:
+
+     performAction        Cursor wait showWhile: [self presenter trigger: #actionPerformed]
+     performLongAction:   answer := Cursor wait showWhile: [ ... ]
+
+ With no `Cursor` in the image those sent to nil, and the raise was CONTAINED
+ by `UiSession`'s handler-error path — so it appeared only as two lines of
+ diagnostic during shell creation, and the action path was quietly broken for
+ any view that reached it. DD10's command gate is green because its enablement
+ is written explicitly rather than routed through `performAction`; DD12's
+ dialogs would not have been.
+
+ SEMANTICS ARE DOLPHIN'S, from `Graphics.Icon>>showWhile:` — and the two
+ details that make it correct are both deliberate:
+
+   * the block runs under `ensure:`, so a raise inside the action still
+     restores the cursor rather than leaving the machine looking hung;
+   * the cursor restored is the one `SetCursor` ACTUALLY returned, not the one
+     we believed was current. Dolphin's own comment makes that point, and it
+     matters because anything else in the process may have changed it.
+
+ RETIREMENT: delete this when `Graphics.Cursor` and `Graphics.Icon` are
+ translated with DD11's graphics wave. `showWhile:` is `Icon`'s, not
+ `Cursor`'s, so the two arrive together. Until then this answers the Win32
+ system cursors only — `Cursor wait` and `Cursor arrow` — which is all `UI.View`
+ asks for."
+Object subclass: Cursor [
+    <classVars: Current>
+    | handle |
+
+    "IDC_WAIT / IDC_ARROW. `LoadCursorW(NULL, id)` loads a SYSTEM cursor, so
+     the module handle is 0 and the id is passed where a string pointer would
+     otherwise go — Win32's MAKEINTRESOURCE, which is just the small integer."
+    Cursor class >> wait [ ^self fromSystemId: 32514 ]
+    Cursor class >> arrow [ ^self fromSystemId: 32512 ]
+    Cursor class >> fromSystemId: anId [
+        ^self new setHandle: (User32 loadCursor: 0 lpCursorName: anId)
+    ]
+    Cursor class >> current [ ^Current ]
+    Cursor class >> classVarCurrent [ ^Current ]
+
+    setHandle: h [ handle := h ]
+    handle [ ^handle ]
+    asParameter [ ^handle ]
+
+    "Dolphin's `Graphics.Icon>>showWhile:`, verbatim in behaviour."
+    showWhile: aBlock [
+        | previous actual |
+        previous := Current.
+        Current := self.
+        actual := User32 setCursor: handle.
+        ^aBlock ensure: [
+            Current := previous.
+            User32 setCursor: actual ]
+    ]
+]

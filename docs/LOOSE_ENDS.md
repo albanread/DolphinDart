@@ -106,6 +106,32 @@ doesNotUnderstand.
 keeping — it converts a silent no-op into a loud one, which is this project's
 whole standing rule.
 
+### 1.6 `Cursor`
+`st/dolphin_compat/12_view_create.mst`
+
+Answers the Win32 SYSTEM cursors only (`wait`, `arrow`) with Dolphin's
+`Graphics.Icon>>showWhile:` semantics. That is everything `UI.View` asks for.
+
+**Retires when:** `Graphics.Cursor` and `Graphics.Icon` are translated with
+DD11's graphics wave — together, because `showWhile:` is `Icon`'s, not
+`Cursor`'s.
+
+### 1.7 `Object>>conformsToProtocol:` answers false
+`st/dolphin_compat/03_kernel.mst`
+
+**The boundary:** a model that handles its own commands will NOT be placed on
+the command route, so its `queryCommand:`/`performCommand:` are never
+consulted. Commands still route through the presenter and view chain, which is
+where DD10's app puts them, and conforming to `#commandTarget` is opt-in in
+Dolphin so false is also the common answer.
+
+Cannot be faked usefully: the question is whether INSTANCES conform, and
+`respondsTo:` (prim 246) answers for the receiver — sent to a class it tests
+the class side, the wrong dictionary.
+
+**Retires when:** the front-end exposes `Behavior>>canUnderstand:` (DD11
+reflection work).
+
 ---
 
 ## 2. Accepted divergences — documented, not scheduled
@@ -147,7 +173,21 @@ This is a project-level decision (`docs/WORKERS.md`), not a gap.
 
 ## 3. Open — seen, reproducible, not chased
 
-### 3.1 `Cursor` is undefined → `'wait' called on null`
+### 3.1 ~~`Cursor` is undefined~~ — CLOSED, and what it uncovered
+A compat `Cursor` now exists (`st/dolphin_compat/12_view_create.mst`) with
+Dolphin's `showWhile:` semantics: the block runs under `ensure:`, and the
+cursor restored is the one `SetCursor` ACTUALLY returned rather than the one
+we believed was current. It is scaffolding — see 1.6.
+
+Fixing it let the action path run one step further each time, which uncovered
+a chain: `DelegatingCommandPolicy` untranslated (so `CommandPolicy
+defaultClass` answered nil), `identityIncludes:` and `conformsToProtocol:`
+missing, and then **the `new:` defect in 3.7**, which was much bigger than any
+of them.
+
+*Original entry, kept because the diagnosis is the useful part:*
+
+### 3.1a `Cursor` was undefined → `'wait' called on null`
 **Symptom:** during shell creation, twice:
 `UiSession: handler error — NoSuchMethodError: The method 'wait' was called on null`
 
@@ -168,6 +208,43 @@ path, which is why it is green; DD12's dialogs will.
 **Fix:** a `Cursor` compat class with `wait`/`normal` and `showWhile:`
 (SetCursor + restore), or translate `Graphics.Cursor` with the DD11 graphics
 wave. The second is better and lands anyway.
+
+### 3.7 ~~`new:` on a growable collection answered the CLASS~~ — CLOSED
+**The largest silent wrong answer found so far, and it was pre-existing.**
+
+No growable collection defined a class-side `new:`, so the send fell through
+to `Behavior>>new: n` → `basicNew: n`, and `basicNew:` on a NON-INDEXABLE
+class answers the class itself rather than failing. `OrderedCollection new:
+12`, `Set new: 4`, `Dictionary new: 4` all answered a `_Type`: an object that
+responds to sends and is simply not the thing asked for.
+
+`CommandPolicy>>routeFrom:` opens with `path := OrderedCollection new: 12`, so
+**every command route in the port had been building on a class** — surfacing
+three layers away as `Class '_Type' has no instance method
+'identityIncludes_'`.
+
+Fixed per class (`st/world/52_collection_ext.mst`), NOT on `Collection`: Array
+and String are Collections too and theirs is indexable `new:`, so a definition
+on `Collection` would have sat between them and `Behavior` and broken
+`Array new: 4` while fixing the rest. Guarded in
+`st/test/features/test_collection_protocol.mst` with `isKindOf:` rather than a
+size check — a class answers 0 to `size` as readily as an empty collection
+does, so a size check would have passed throughout.
+
+**THE ROOT CAUSE IS STILL OPEN.** `basicNew:` on a non-indexable class
+answering the class, rather than raising, is the front-end behaviour that made
+this invisible. The per-class `new:` fixes the symptom. Making `basicNew:`
+raise would turn any remaining instance of this shape loud, and is worth doing
+— carefully, since something may be depending on the current answer by
+accident.
+
+### 3.8 An INTEGER on the command route
+`Class 'int' has no instance method 'queryCommand_'`, from the WM_COMMAND path
+in `st_textedit`. Contained by the handler-error path; the gate is green
+because nothing asserts on command routing there yet.
+
+Something is appending an integer as a command target. This is DD10's own
+remaining item 4 (commands in anger), so it is next rather than deferred.
 
 ### 3.2 `<commandQuery:>` pragmas are dropped — 14 sites
 All 14 remaining `[pragma]` refusals are `<commandQuery: #canCut>` and kin, all

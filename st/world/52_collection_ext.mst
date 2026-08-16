@@ -135,3 +135,32 @@ Collection subclass: SequenceableCollection [
         ^self
     ]
 ]
+
+"── `new:` on the GROWABLE collections ──────────────────────────────────────
+
+ `OrderedCollection new: 12` answered the CLASS. So did `Set new: 4`,
+ `Dictionary new: 4`, and every other growable collection: none of them
+ defined a class-side `new:`, so the send fell through to
+ `Behavior>>new: n [ ^self basicNew: n ]`, and `basicNew:` on a class that is
+ not INDEXABLE answers the class itself rather than failing.
+
+ That is a silent wrong answer of the worst kind — the result is an object, it
+ responds to sends, and it is simply not the thing that was asked for. It
+ surfaced three layers away inside Dolphin's command routing, as
+ `Class '_Type' has no instance method 'identityIncludes_'`, because
+ `CommandPolicy>>routeFrom:` opens with `path := OrderedCollection new: 12`.
+ Every command route in the port had been building on a class.
+
+ IN DOLPHIN AND ANSI, the argument is a CAPACITY HINT, not a size: `new: 12`
+ answers an EMPTY collection with room for twelve. So forwarding to `new` is
+ correct behaviour, not an approximation — these implementations grow on
+ demand, so the hint has nothing to buy.
+
+ DEFINED PER CLASS, NOT ON `Collection`. Array and String are Collections too,
+ and theirs is INDEXABLE `new:` — n slots, handled by the VM through
+ `basicNew:`. A definition on `Collection` would sit between them and
+ `Behavior`, and would have broken `Array new: 4` while fixing the others."
+OrderedCollection class extend [ new: anInteger <Integer> ^ <Self> [ ^self new ] ]
+Set class extend [ new: anInteger <Integer> ^ <Self> [ ^self new ] ]
+Bag class extend [ new: anInteger <Integer> ^ <Self> [ ^self new ] ]
+Dictionary class extend [ new: anInteger <Integer> ^ <Self> [ ^self new ] ]

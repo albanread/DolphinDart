@@ -13,6 +13,32 @@
 STestCase subclass: TestCollectionProtocol [
     tests [
         "── Array (fixed size) ──"
+        "── `new:` ON A GROWABLE COLLECTION ANSWERS AN INSTANCE ──────────
+         Regression guard. Every growable collection lacked a class-side
+         `new:`, so the send fell through to `Behavior>>new: n` ->
+         `basicNew: n`, and `basicNew:` on a NON-INDEXABLE class answers the
+         CLASS. `OrderedCollection new: 12` was a Type — an object that
+         responds to sends and is not the thing asked for.
+         `CommandPolicy>>routeFrom:` opens with exactly that line, so every
+         command route in the port had been building on a class, surfacing
+         three layers away as `_Type has no instance method
+         identityIncludes_`.
+         Asserted with `isKindOf:` rather than a size: a class answers 0 to
+         `size` as readily as an empty collection does, so a size check would
+         have passed throughout."
+        self check: ((OrderedCollection new: 12) isKindOf: OrderedCollection)
+             is: true label: 'OrderedCollection new: answers an instance'.
+        self check: ((Set new: 4) isKindOf: Set)
+             is: true label: 'Set new: answers an instance'.
+        self check: ((Dictionary new: 4) isKindOf: Dictionary)
+             is: true label: 'Dictionary new: answers an instance'.
+        self check: ((Bag new: 4) isKindOf: Bag)
+             is: true label: 'Bag new: answers an instance'.
+        "and the INDEXABLE ones keep their own meaning — n slots, not a hint.
+         A `Collection class >> new:` would have sat between Array and
+         Behavior and broken this while fixing the four above."
+        self check: (Array new: 4) size is: 4 label: 'Array new: is still n slots'.
+
         self check: #(1 2 3) size is: 3 label: 'Array size'.
         self check: (#(10 20 30) at: 2) is: 20 label: 'Array at:'.
         self check: #(1 2 3) first is: 1 label: 'first'.

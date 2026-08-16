@@ -302,3 +302,48 @@ nil subclass: Object [
      produced."
     asExternalHandle [ ^self ]
 ]
+
+"`identityIncludes:` — ANSI, and absent from the world.
+
+ Membership by IDENTITY rather than equality. `CommandPolicy>>appendTarget:`
+ and `includesTarget:` both use it to avoid putting the same command target on
+ the route twice, and `=` would be wrong there: two different views can be
+ equal without being the same target."
+Object subclass: Collection [
+    identityIncludes: anObject [
+        self do: [ :each | each == anObject ifTrue: [ ^true ] ].
+        ^false
+    ]
+]
+
+"`conformsToProtocol:` — a BOUNDED stand-in, and the boundary is stated.
+
+ Dolphin registers named protocols on classes and asks
+ `aClass conformsToProtocol: #commandTarget` to decide whether an object may
+ be put on a command route. There are two senders, both in the command
+ framework:
+
+     CommandPolicy>>appendPresenter:   (model class conformsToProtocol: #commandTarget)
+                                           ifTrue: [self appendTarget: model]
+     CommandDescription>>...           (self command class conformsToProtocol: #commandTarget)
+
+ This port has no protocol registry, and cannot fake one usefully: the
+ question is whether INSTANCES of the class understand the protocol, and
+ `respondsTo:` (prim 246) answers for the RECEIVER — sent to a class it tests
+ the class side, which is the wrong dictionary.
+
+ ANSWERING FALSE is therefore the honest answer, and it is also the common
+ one: conforming to `#commandTarget` is opt-in in Dolphin, and ordinary models
+ (a ValueHolder, an application object) do not. THE BOUNDARY: a model that
+ DOES handle its own commands will not be placed on the command route, so its
+ `queryCommand:`/`performCommand:` are never consulted. Commands still route
+ through the presenter and view chain, which is where DD10's app puts them.
+
+ RETIREMENT: a real answer needs class-side introspection of the INSTANCE
+ method dictionary (`Behavior>>canUnderstand:`), which the front-end does not
+ expose. Worth adding with the DD11 reflection work; until then a model that
+ needs to handle commands must be given a presenter that does."
+nil subclass: Object [
+    Object class >> conformsToProtocol: aSymbol [ ^false ]
+    conformsToProtocol: aSymbol [ ^false ]
+]

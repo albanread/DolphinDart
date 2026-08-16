@@ -1,11 +1,11 @@
 # dolphin2mst run report
 
-- inputs: **45** source files (`.cls` + `.pax`)
+- inputs: **46** source files (`.cls` + `.pax`)
 - shared-pool constants available: **6522** from **173** pools
 - loose methods adopted from `.pax`: **1**
-- parsed: **45**  (unbalanced/skipped: 0)
-- emitted: **46** `.mst`
-- methods: **2492**
+- parsed: **46**  (unbalanced/skipped: 0)
+- emitted: **47** `.mst`
+- methods: **2493**
 - refusals: **114**
 
 ## Refusals by rewrite class
@@ -38,6 +38,7 @@
 | `CreateWindow` | 11 | 0 |
 | `CreateWindowApiCall` | 10 | 0 |
 | `CreateWindowFunction` | 12 | 0 |
+| `DelegatingCommandPolicy` | 1 | 0 |
 | `GraphicsTool` | 32 | 2 |
 | `IntegerToText` | 1 | 0 |
 | `LayoutContext` | 16 | 0 |

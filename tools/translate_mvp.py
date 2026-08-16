@@ -85,6 +85,13 @@ TARGETS = [
     "Core/Object Arts/Dolphin/MVP/Base/UI.CommandDescription.cls",
     "Core/Object Arts/Dolphin/MVP/Base/UI.CommandQuery.cls",
     "Core/Object Arts/Dolphin/MVP/Base/UI.CommandPolicy.cls",
+    # `CommandPolicy class >> defaultClass` answers this, and `View>>
+    # commandPolicy` is `self topShell commandPolicyWithSource: ...` ->
+    # `self commandPolicyClass commandSource: sourceView`. Untranslated it was
+    # an unbound global, so `defaultClass` answered nil and every command
+    # route died on `nil commandSource:` — inside the contained handler-error
+    # path, so it showed only as a diagnostic line.
+    "Core/Object Arts/Dolphin/MVP/Base/UI.DelegatingCommandPolicy.cls",
     "Core/Object Arts/Dolphin/MVP/Graphics/Graphics.GraphicsTool.cls",
     "Core/Object Arts/Dolphin/MVP/Base/UI.MenuItem.cls",
     "Core/Object Arts/Dolphin/MVP/Base/UI.Menu.cls",

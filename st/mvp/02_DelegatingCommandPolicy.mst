@@ -1,0 +1,9 @@
+CommandPolicy subclass: DelegatingCommandPolicy [
+    visitPresenter: presenter [
+        "Visit the <presenter>, presenter, as the next in the chain-of-command, 
+        	adding its contributions to that chain. Answer the next <presenter> to visit,
+        	or answer the argument to get the default behaviour which is to move up
+        	to the parent presenter."
+        ^presenter addToCommandRoute: self
+    ]
+]
