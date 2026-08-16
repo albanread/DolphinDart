@@ -7,6 +7,17 @@ ExternalMemory subclass: CHOOSECOLORW [
     byteSize [ ^72 ]
     CHOOSECOLORW class >> new [ ^self new: 72 ]
 
+    CHOOSECOLORW class >> _OffsetOf_lStructSize [ ^0 ]
+    CHOOSECOLORW class >> _OffsetOf_hwndOwner [ ^8 ]
+    CHOOSECOLORW class >> _OffsetOf_hInstance [ ^16 ]
+    CHOOSECOLORW class >> _OffsetOf_rgbResult [ ^24 ]
+    CHOOSECOLORW class >> _OffsetOf_lpCustColors [ ^32 ]
+    CHOOSECOLORW class >> _OffsetOf_Flags [ ^40 ]
+    CHOOSECOLORW class >> _OffsetOf_lCustData [ ^48 ]
+    CHOOSECOLORW class >> _OffsetOf_lpfnHook [ ^56 ]
+    CHOOSECOLORW class >> _OffsetOf_lpTemplateName [ ^64 ]
+    CHOOSECOLORW class >> _CHOOSECOLORW_Size [ ^72 ]
+
     lStructSize [ ^self uint32At: 1 ]
     lStructSize: v [ ^self uint32At: 1 put: v ]
     hwndOwner [ ^self intptrAt: 9 ]

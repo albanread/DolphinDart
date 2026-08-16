@@ -7,6 +7,12 @@ ExternalMemory subclass: RECTL [
     byteSize [ ^16 ]
     RECTL class >> new [ ^self new: 16 ]
 
+    RECTL class >> _OffsetOf_left [ ^0 ]
+    RECTL class >> _OffsetOf_top [ ^4 ]
+    RECTL class >> _OffsetOf_right [ ^8 ]
+    RECTL class >> _OffsetOf_bottom [ ^12 ]
+    RECTL class >> _RECTL_Size [ ^16 ]
+
     left [ ^self int32At: 1 ]
     left: v [ ^self uint32At: 1 put: v ]
     top [ ^self int32At: 5 ]

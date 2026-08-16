@@ -7,6 +7,14 @@ ExternalMemory subclass: TRIVERTEX [
     byteSize [ ^16 ]
     TRIVERTEX class >> new [ ^self new: 16 ]
 
+    TRIVERTEX class >> _OffsetOf_x [ ^0 ]
+    TRIVERTEX class >> _OffsetOf_y [ ^4 ]
+    TRIVERTEX class >> _OffsetOf_Red [ ^8 ]
+    TRIVERTEX class >> _OffsetOf_Green [ ^10 ]
+    TRIVERTEX class >> _OffsetOf_Blue [ ^12 ]
+    TRIVERTEX class >> _OffsetOf_Alpha [ ^14 ]
+    TRIVERTEX class >> _TRIVERTEX_Size [ ^16 ]
+
     x [ ^self int32At: 1 ]
     x: v [ ^self uint32At: 1 put: v ]
     y [ ^self int32At: 5 ]

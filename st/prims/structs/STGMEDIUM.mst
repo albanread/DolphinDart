@@ -7,6 +7,11 @@ ExternalMemory subclass: STGMEDIUM [
     byteSize [ ^32 ]
     STGMEDIUM class >> new [ ^self new: 32 ]
 
+    STGMEDIUM class >> _OffsetOf_tymed [ ^0 ]
+    STGMEDIUM class >> _OffsetOf_u [ ^4 ]
+    STGMEDIUM class >> _OffsetOf_pUnkForRelease [ ^24 ]
+    STGMEDIUM class >> _STGMEDIUM_Size [ ^32 ]
+
     tymed [ ^self uint32At: 1 ]
     tymed: v [ ^self uint32At: 1 put: v ]
     "u: _u_e__Union at 4 — no accessor (width unknown); use byteAt: directly"

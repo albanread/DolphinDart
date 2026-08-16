@@ -7,6 +7,10 @@ ExternalMemory subclass: MIB_IPFORWARDTABLE [
     byteSize [ ^16 ]
     MIB_IPFORWARDTABLE class >> new [ ^self new: 16 ]
 
+    MIB_IPFORWARDTABLE class >> _OffsetOf_dwNumEntries [ ^0 ]
+    MIB_IPFORWARDTABLE class >> _OffsetOf_table [ ^8 ]
+    MIB_IPFORWARDTABLE class >> _MIB_IPFORWARDTABLE_Size [ ^16 ]
+
     dwNumEntries [ ^self uint32At: 1 ]
     dwNumEntries: v [ ^self uint32At: 1 put: v ]
     "table: Windows.Win32.NetworkManagement.IpHelper.MIB_IPFORWARDROW[] at 8 — no accessor (width unknown); use byteAt: directly"

@@ -1,0 +1,55 @@
+ImageManager subclass: IconImageManager [
+    <classVars: Current>
+    IconImageManager class >> classVarCurrent [ ^Current ]
+    IconImageManager class >> classVarCurrent: v [ ^Current := v ]
+    | bitmaps |
+
+    bitmapForIcon: anIcon extent: aPoint [
+        	| forExtent |
+        	forExtent := bitmaps at: aPoint ifAbsentPutClean: [LookupTable new].
+        	^(forExtent lookup: anIcon) ifNil: [forExtent at: anIcon asImageKey put: (anIcon asAlphaBitmap: aPoint)]
+    ]
+    initialize [
+        "Private - Initialize the receiver."
+        super initialize.
+        	maskcolor := Color none.
+        	bitmaps := LookupTable new
+    ]
+    newImages [
+        	bitmaps := LookupTable new.
+        	^super newImages
+    ]
+    stbSaveOn: anSTBOutFiler [
+        "Save out a binary representation of the receiver to anSTBOutFiler."
+        anSTBOutFiler saveSingleton: self
+    ]
+    IconImageManager class >> current [
+        "Answer the singleton instance of the receiver"
+        Current isNil ifTrue: [Current := super new].
+        	^Current
+    ]
+    IconImageManager class >> new [
+        "Private - The receiver is a singleton class"
+        ^self shouldNotImplement
+    ]
+    IconImageManager class >> onPreStripImage [
+        "Private -  Assist in the image stripping process by clearning down any
+        	lazily initialized variables held by the receiver."
+        Current ifNotNil: [Current purge]
+    ]
+    IconImageManager class >> reset [
+        "Reset the receiver. Kill off the current singleton instance"
+        Current := nil
+    ]
+    IconImageManager class >> stbReadFrom: anSTBInFiler format: anSTBClassConversion size: anInteger [
+        "Read an instance of the receiver from the binary filer, aSTBInFiler."
+        | singleton |
+        	singleton := self current.
+        	anSTBInFiler register: singleton.
+        	^singleton
+    ]
+    IconImageManager class >> uninitialize [
+        "Private - Uninitialize the receiver as it is about to be removed from the system."
+        Current := nil
+    ]
+]

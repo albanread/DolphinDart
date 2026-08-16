@@ -7,6 +7,11 @@ ExternalMemory subclass: LOGPEN [
     byteSize [ ^16 ]
     LOGPEN class >> new [ ^self new: 16 ]
 
+    LOGPEN class >> _OffsetOf_lopnStyle [ ^0 ]
+    LOGPEN class >> _OffsetOf_lopnWidth [ ^4 ]
+    LOGPEN class >> _OffsetOf_lopnColor [ ^12 ]
+    LOGPEN class >> _LOGPEN_Size [ ^16 ]
+
     lopnStyle [ ^self uint32At: 1 ]
     lopnStyle: v [ ^self uint32At: 1 put: v ]
     lopnWidth [ ^POINT viewOn: self at: 4 size: 8 ]

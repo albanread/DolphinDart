@@ -7,6 +7,11 @@ ExternalMemory subclass: SPWORDPRONUNCIATIONLIST [
     byteSize [ ^24 ]
     SPWORDPRONUNCIATIONLIST class >> new [ ^self new: 24 ]
 
+    SPWORDPRONUNCIATIONLIST class >> _OffsetOf_ulSize [ ^0 ]
+    SPWORDPRONUNCIATIONLIST class >> _OffsetOf_pvBuffer [ ^8 ]
+    SPWORDPRONUNCIATIONLIST class >> _OffsetOf_pFirstWordPronunciation [ ^16 ]
+    SPWORDPRONUNCIATIONLIST class >> _SPWORDPRONUNCIATIONLIST_Size [ ^24 ]
+
     ulSize [ ^self uint32At: 1 ]
     ulSize: v [ ^self uint32At: 1 put: v ]
     "pvBuffer: u8* at 8 — no accessor (width unknown); use byteAt: directly"

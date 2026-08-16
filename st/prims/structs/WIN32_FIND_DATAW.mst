@@ -7,6 +7,18 @@ ExternalMemory subclass: WIN32_FIND_DATAW [
     byteSize [ ^572 ]
     WIN32_FIND_DATAW class >> new [ ^self new: 572 ]
 
+    WIN32_FIND_DATAW class >> _OffsetOf_dwFileAttributes [ ^0 ]
+    WIN32_FIND_DATAW class >> _OffsetOf_ftCreationTime [ ^4 ]
+    WIN32_FIND_DATAW class >> _OffsetOf_ftLastAccessTime [ ^12 ]
+    WIN32_FIND_DATAW class >> _OffsetOf_ftLastWriteTime [ ^20 ]
+    WIN32_FIND_DATAW class >> _OffsetOf_nFileSizeHigh [ ^28 ]
+    WIN32_FIND_DATAW class >> _OffsetOf_nFileSizeLow [ ^32 ]
+    WIN32_FIND_DATAW class >> _OffsetOf_dwReserved0 [ ^36 ]
+    WIN32_FIND_DATAW class >> _OffsetOf_dwReserved1 [ ^40 ]
+    WIN32_FIND_DATAW class >> _OffsetOf_cFileName [ ^44 ]
+    WIN32_FIND_DATAW class >> _OffsetOf_cAlternateFileName [ ^564 ]
+    WIN32_FIND_DATAW class >> _WIN32_FIND_DATAW_Size [ ^572 ]
+
     dwFileAttributes [ ^self uint32At: 1 ]
     dwFileAttributes: v [ ^self uint32At: 1 put: v ]
     ftCreationTime [ ^FILETIME viewOn: self at: 4 size: 8 ]

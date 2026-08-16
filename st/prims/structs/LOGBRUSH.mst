@@ -7,6 +7,11 @@ ExternalMemory subclass: LOGBRUSH [
     byteSize [ ^16 ]
     LOGBRUSH class >> new [ ^self new: 16 ]
 
+    LOGBRUSH class >> _OffsetOf_lbStyle [ ^0 ]
+    LOGBRUSH class >> _OffsetOf_lbColor [ ^4 ]
+    LOGBRUSH class >> _OffsetOf_lbHatch [ ^8 ]
+    LOGBRUSH class >> _LOGBRUSH_Size [ ^16 ]
+
     "lbStyle: Windows.Win32.Graphics.Gdi.BRUSH_STYLE at 0 — no accessor (width unknown); use byteAt: directly"
     lbColor [ ^COLORREF viewOn: self at: 4 size: 4 ]
     lbHatch [ ^self intptrAt: 9 ]

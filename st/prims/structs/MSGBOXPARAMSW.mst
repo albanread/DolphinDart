@@ -7,6 +7,18 @@ ExternalMemory subclass: MSGBOXPARAMSW [
     byteSize [ ^80 ]
     MSGBOXPARAMSW class >> new [ ^self new: 80 ]
 
+    MSGBOXPARAMSW class >> _OffsetOf_cbSize [ ^0 ]
+    MSGBOXPARAMSW class >> _OffsetOf_hwndOwner [ ^8 ]
+    MSGBOXPARAMSW class >> _OffsetOf_hInstance [ ^16 ]
+    MSGBOXPARAMSW class >> _OffsetOf_lpszText [ ^24 ]
+    MSGBOXPARAMSW class >> _OffsetOf_lpszCaption [ ^32 ]
+    MSGBOXPARAMSW class >> _OffsetOf_dwStyle [ ^40 ]
+    MSGBOXPARAMSW class >> _OffsetOf_lpszIcon [ ^48 ]
+    MSGBOXPARAMSW class >> _OffsetOf_dwContextHelpId [ ^56 ]
+    MSGBOXPARAMSW class >> _OffsetOf_lpfnMsgBoxCallback [ ^64 ]
+    MSGBOXPARAMSW class >> _OffsetOf_dwLanguageId [ ^72 ]
+    MSGBOXPARAMSW class >> _MSGBOXPARAMSW_Size [ ^80 ]
+
     cbSize [ ^self uint32At: 1 ]
     cbSize: v [ ^self uint32At: 1 put: v ]
     hwndOwner [ ^self intptrAt: 9 ]

@@ -7,6 +7,10 @@ ExternalMemory subclass: SIZEL [
     byteSize [ ^8 ]
     SIZEL class >> new [ ^self new: 8 ]
 
+    SIZEL class >> _OffsetOf_cx [ ^0 ]
+    SIZEL class >> _OffsetOf_cy [ ^4 ]
+    SIZEL class >> _SIZEL_Size [ ^8 ]
+
     cx [ ^self int32At: 1 ]
     cx: v [ ^self uint32At: 1 put: v ]
     cy [ ^self int32At: 5 ]

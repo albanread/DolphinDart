@@ -7,6 +7,10 @@ ExternalMemory subclass: CUSTDATA [
     byteSize [ ^16 ]
     CUSTDATA class >> new [ ^self new: 16 ]
 
+    CUSTDATA class >> _OffsetOf_cCustData [ ^0 ]
+    CUSTDATA class >> _OffsetOf_prgCustData [ ^8 ]
+    CUSTDATA class >> _CUSTDATA_Size [ ^16 ]
+
     cCustData [ ^self uint32At: 1 ]
     cCustData: v [ ^self uint32At: 1 put: v ]
     "prgCustData: Windows.Win32.System.Com.CUSTDATAITEM* at 8 — no accessor (width unknown); use byteAt: directly"

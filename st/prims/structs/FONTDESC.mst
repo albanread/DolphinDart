@@ -7,6 +7,16 @@ ExternalMemory subclass: FONTDESC [
     byteSize [ ^64 ]
     FONTDESC class >> new [ ^self new: 64 ]
 
+    FONTDESC class >> _OffsetOf_cbSizeofstruct [ ^0 ]
+    FONTDESC class >> _OffsetOf_lpstrName [ ^8 ]
+    FONTDESC class >> _OffsetOf_cySize [ ^16 ]
+    FONTDESC class >> _OffsetOf_sWeight [ ^48 ]
+    FONTDESC class >> _OffsetOf_sCharset [ ^50 ]
+    FONTDESC class >> _OffsetOf_fItalic [ ^52 ]
+    FONTDESC class >> _OffsetOf_fUnderline [ ^56 ]
+    FONTDESC class >> _OffsetOf_fStrikethrough [ ^60 ]
+    FONTDESC class >> _FONTDESC_Size [ ^64 ]
+
     cbSizeofstruct [ ^self uint32At: 1 ]
     cbSizeofstruct: v [ ^self uint32At: 1 put: v ]
     lpstrName [ ^self intptrAt: 9 ]

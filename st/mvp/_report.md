@@ -1,22 +1,23 @@
 # dolphin2mst run report
 
-- inputs: **74** source files (`.cls` + `.pax`)
-- shared-pool constants available: **6522** from **173** pools
+- inputs: **82** source files (`.cls` + `.pax`)
+- shared-pool constants available: **7872** from **207** pools
 - loose methods adopted from `.pax`: **1**
-- parsed: **74**  (unbalanced/skipped: 0)
-- emitted: **75** `.mst`
-- methods: **3179**
-- refusals: **133**
+- parsed: **82**  (unbalanced/skipped: 0)
+- emitted: **83** `.mst`
+- methods: **3917**
+- refusals: **175**
 
 ## Refusals by rewrite class
 
 | Rewrite | Count |
 |---|--:|
-| `hashhash` | 66 |
-| `cascade` | 29 |
-| `binding-literal` | 14 |
-| `pragma` | 14 |
+| `hashhash` | 81 |
+| `cascade` | 43 |
+| `pragma` | 25 |
+| `binding-literal` | 15 |
 | `orphan-loose-methods` | 10 |
+| `qq` | 1 |
 
 ## Per class
 
@@ -53,12 +54,19 @@
 | `Font` | 26 | 0 |
 | `GraphicsTool` | 32 | 2 |
 | `Icon` | 62 | 2 |
+| `IconImageManager` | 10 | 0 |
+| `IconicListAbstract` | 112 | 14 |
 | `Image` | 59 | 5 |
+| `ImageList` | 39 | 3 |
+| `ImageManager` | 28 | 1 |
 | `IntegerToText` | 1 | 0 |
 | `KeyEvent` | 9 | 0 |
 | `LayoutContext` | 16 | 0 |
 | `LayoutManager` | 11 | 0 |
 | `LayoutPlacement` | 11 | 0 |
+| `ListControlView` | 81 | 1 |
+| `ListModel` | 52 | 1 |
+| `ListView` | 274 | 12 |
 | `Menu` | 101 | 2 |
 | `MenuBar` | 7 | 1 |
 | `MenuItem` | 35 | 0 |
@@ -86,6 +94,7 @@
 | `SystemMetrics` | 77 | 2 |
 | `TextEdit` | 179 | 21 |
 | `TextPresenter` | 20 | 5 |
+| `TreeView` | 142 | 10 |
 | `TypeConverter` | 13 | 1 |
 | `UserLibrary (loose)` | 177 | 0 |
 | `ValueAdaptor` | 6 | 2 |

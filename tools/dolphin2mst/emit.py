@@ -583,6 +583,32 @@ def rewrite_qualified_constants(body: str, table, chains=None) -> str:
         if val is None:
             val = table.lookup((chains or {}).get(owner, [owner]), name)
         if val is None:
+            # NOT FOLDABLE — but leaving `Owner.NAME` alone is a SYNTAX ERROR,
+            # not a deferral: the parser sees `Owner` followed by `.NAME` and
+            # the whole class file fails to load. `UI.IconicListAbstract` read
+            # `NMCUSTOMDRAW._OffsetOf_dwDrawStage`, whose constants live in a
+            # struct `.cls` this pipeline does not parse (the structs come
+            # from winkb), and took the file down.
+            #
+            # Rewritten to an accessor SEND instead, the same choice and the
+            # same reasoning as the class-variable rewrite above: a
+            # doesNotUnderstand at the call is loud and locatable, where a
+            # parse error is neither about the right thing nor recoverable.
+            # `genstructs` emits `_OffsetOf_<field>` class-side for every
+            # generated struct, so these resolve.
+            #
+            # ONLY FOR THINGS THAT LOOK LIKE CONSTANTS. `External.FunctionDescriptor`
+            # also matches this pattern and is a NAMESPACED CLASS NAME, not a
+            # constant — the flattener turns it into `FunctionDescriptor`, and
+            # rewriting it to `External FunctionDescriptor` first made
+            # `Menu class >> initialize` send to a nil `External`. The
+            # discriminator is the one this file already documents: a constant
+            # starts with `_` or is SHOUT_CASE; a class name is CamelCase.
+            if not (name.startswith("_") or name.upper() == name):
+                continue
+            out.append(body[last:m.start()])
+            out.append(owner + " " + name)
+            last = m.end()
             continue
         out.append(body[last:m.start()])
         out.append(val)

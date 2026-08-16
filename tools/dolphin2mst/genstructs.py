@@ -224,6 +224,26 @@ def main(argv: List[str]) -> int:
                  f"    byteSize [ ^{sizes[name]} ]",
                  f"    {name} class >> new [ ^self new: {sizes[name]} ]",
                  ""]
+        # THE `_OffsetOf_` FAMILY, class-side.
+        #
+        # Dolphin's own code reads a field offset through its owning struct
+        # class — `pNMHDR uint32AtOffset: NMCUSTOMDRAW._OffsetOf_dwDrawStage`
+        # in `IconicListAbstract>>nmCustomDraw:` — because a WM_NOTIFY handler
+        # gets a raw pointer and has to index into it by hand.
+        #
+        # Those constants live in Dolphin's `.cls` for the struct, which this
+        # generator does not read: it reads winkb. So they are emitted here,
+        # from the same offsets the accessors use, and the translator rewrites
+        # `Owner._OffsetOf_x` to the send `Owner _OffsetOf_x`.
+        #
+        # ZERO-BASED, matching Dolphin: `_OffsetOf_` is the C offset, which is
+        # why the accessors above add 1 for this dialect's 1-based indexing.
+        # Emitting the 1-based number here would be off by one everywhere it
+        # is used, silently.
+        for _ord, _fname, _ftype, _off in rows:
+            lines.append(f"    {name} class >> _OffsetOf_{_fname} [ ^{_off} ]")
+        lines.append(f"    {name} class >> _{name}_Size [ ^{sizes[name]} ]")
+        lines.append("")
         for ordinal, fname, ftype, off in rows:
             acc, width = field_accessor(ftype, sizes)
             sel = fname[0].lower() + fname[1:]

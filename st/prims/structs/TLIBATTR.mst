@@ -7,6 +7,14 @@ ExternalMemory subclass: TLIBATTR [
     byteSize [ ^24 ]
     TLIBATTR class >> new [ ^self new: 24 ]
 
+    TLIBATTR class >> _OffsetOf_guid [ ^0 ]
+    TLIBATTR class >> _OffsetOf_lcid [ ^8 ]
+    TLIBATTR class >> _OffsetOf_syskind [ ^12 ]
+    TLIBATTR class >> _OffsetOf_wMajorVerNum [ ^16 ]
+    TLIBATTR class >> _OffsetOf_wMinorVerNum [ ^18 ]
+    TLIBATTR class >> _OffsetOf_wLibFlags [ ^20 ]
+    TLIBATTR class >> _TLIBATTR_Size [ ^24 ]
+
     "guid: System.Guid at 0 — no accessor (width unknown); use byteAt: directly"
     lcid [ ^self uint32At: 9 ]
     lcid: v [ ^self uint32At: 9 put: v ]

@@ -7,6 +7,15 @@ ExternalMemory subclass: STATPROPSETSTG [
     byteSize [ ^48 ]
     STATPROPSETSTG class >> new [ ^self new: 48 ]
 
+    STATPROPSETSTG class >> _OffsetOf_fmtid [ ^0 ]
+    STATPROPSETSTG class >> _OffsetOf_clsid [ ^8 ]
+    STATPROPSETSTG class >> _OffsetOf_grfFlags [ ^16 ]
+    STATPROPSETSTG class >> _OffsetOf_mtime [ ^20 ]
+    STATPROPSETSTG class >> _OffsetOf_ctime [ ^28 ]
+    STATPROPSETSTG class >> _OffsetOf_atime [ ^36 ]
+    STATPROPSETSTG class >> _OffsetOf_dwOSVersion [ ^44 ]
+    STATPROPSETSTG class >> _STATPROPSETSTG_Size [ ^48 ]
+
     "fmtid: System.Guid at 0 — no accessor (width unknown); use byteAt: directly"
     "clsid: System.Guid at 8 — no accessor (width unknown); use byteAt: directly"
     grfFlags [ ^self uint32At: 17 ]

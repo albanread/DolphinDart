@@ -7,6 +7,14 @@ ExternalMemory subclass: SAFEARRAY [
     byteSize [ ^32 ]
     SAFEARRAY class >> new [ ^self new: 32 ]
 
+    SAFEARRAY class >> _OffsetOf_cDims [ ^0 ]
+    SAFEARRAY class >> _OffsetOf_fFeatures [ ^2 ]
+    SAFEARRAY class >> _OffsetOf_cbElements [ ^4 ]
+    SAFEARRAY class >> _OffsetOf_cLocks [ ^8 ]
+    SAFEARRAY class >> _OffsetOf_pvData [ ^16 ]
+    SAFEARRAY class >> _OffsetOf_rgsabound [ ^24 ]
+    SAFEARRAY class >> _SAFEARRAY_Size [ ^32 ]
+
     cDims [ ^self uint16At: 1 ]
     "fFeatures: Windows.Win32.System.Com.ADVANCED_FEATURE_FLAGS at 2 — no accessor (width unknown); use byteAt: directly"
     cbElements [ ^self uint32At: 5 ]

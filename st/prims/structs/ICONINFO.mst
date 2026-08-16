@@ -7,6 +7,13 @@ ExternalMemory subclass: ICONINFO [
     byteSize [ ^32 ]
     ICONINFO class >> new [ ^self new: 32 ]
 
+    ICONINFO class >> _OffsetOf_fIcon [ ^0 ]
+    ICONINFO class >> _OffsetOf_xHotspot [ ^4 ]
+    ICONINFO class >> _OffsetOf_yHotspot [ ^8 ]
+    ICONINFO class >> _OffsetOf_hbmMask [ ^16 ]
+    ICONINFO class >> _OffsetOf_hbmColor [ ^24 ]
+    ICONINFO class >> _ICONINFO_Size [ ^32 ]
+
     fIcon [ ^self int32At: 1 ]
     fIcon: v [ ^self uint32At: 1 put: v ]
     xHotspot [ ^self uint32At: 5 ]

@@ -7,6 +7,11 @@ ExternalMemory subclass: PICTDESC [
     byteSize [ ^16 ]
     PICTDESC class >> new [ ^self new: 16 ]
 
+    PICTDESC class >> _OffsetOf_cbSizeofstruct [ ^0 ]
+    PICTDESC class >> _OffsetOf_picType [ ^4 ]
+    PICTDESC class >> _OffsetOf_Anonymous [ ^8 ]
+    PICTDESC class >> _PICTDESC_Size [ ^16 ]
+
     cbSizeofstruct [ ^self uint32At: 1 ]
     cbSizeofstruct: v [ ^self uint32At: 1 put: v ]
     picType [ ^self uint32At: 5 ]

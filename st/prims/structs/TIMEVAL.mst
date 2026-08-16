@@ -7,6 +7,10 @@ ExternalMemory subclass: TIMEVAL [
     byteSize [ ^8 ]
     TIMEVAL class >> new [ ^self new: 8 ]
 
+    TIMEVAL class >> _OffsetOf_tv_sec [ ^0 ]
+    TIMEVAL class >> _OffsetOf_tv_usec [ ^4 ]
+    TIMEVAL class >> _TIMEVAL_Size [ ^8 ]
+
     tv_sec [ ^self int32At: 1 ]
     tv_sec: v [ ^self uint32At: 1 put: v ]
     tv_usec [ ^self int32At: 5 ]

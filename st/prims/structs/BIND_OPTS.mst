@@ -7,6 +7,12 @@ ExternalMemory subclass: BIND_OPTS [
     byteSize [ ^16 ]
     BIND_OPTS class >> new [ ^self new: 16 ]
 
+    BIND_OPTS class >> _OffsetOf_cbStruct [ ^0 ]
+    BIND_OPTS class >> _OffsetOf_grfFlags [ ^4 ]
+    BIND_OPTS class >> _OffsetOf_grfMode [ ^8 ]
+    BIND_OPTS class >> _OffsetOf_dwTickCountDeadline [ ^12 ]
+    BIND_OPTS class >> _BIND_OPTS_Size [ ^16 ]
+
     cbStruct [ ^self uint32At: 1 ]
     cbStruct: v [ ^self uint32At: 1 put: v ]
     grfFlags [ ^self uint32At: 5 ]

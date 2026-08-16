@@ -7,6 +7,13 @@ ExternalMemory subclass: SHSTOCKICONINFO [
     byteSize [ ^32 ]
     SHSTOCKICONINFO class >> new [ ^self new: 32 ]
 
+    SHSTOCKICONINFO class >> _OffsetOf_cbSize [ ^0 ]
+    SHSTOCKICONINFO class >> _OffsetOf_hIcon [ ^8 ]
+    SHSTOCKICONINFO class >> _OffsetOf_iSysImageIndex [ ^16 ]
+    SHSTOCKICONINFO class >> _OffsetOf_iIcon [ ^20 ]
+    SHSTOCKICONINFO class >> _OffsetOf_szPath [ ^24 ]
+    SHSTOCKICONINFO class >> _SHSTOCKICONINFO_Size [ ^32 ]
+
     cbSize [ ^self uint32At: 1 ]
     cbSize: v [ ^self uint32At: 1 put: v ]
     hIcon [ ^self intptrAt: 9 ]

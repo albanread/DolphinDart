@@ -7,6 +7,12 @@ ExternalMemory subclass: CRYPTPROTECT_PROMPTSTRUCT [
     byteSize [ ^24 ]
     CRYPTPROTECT_PROMPTSTRUCT class >> new [ ^self new: 24 ]
 
+    CRYPTPROTECT_PROMPTSTRUCT class >> _OffsetOf_cbSize [ ^0 ]
+    CRYPTPROTECT_PROMPTSTRUCT class >> _OffsetOf_dwPromptFlags [ ^4 ]
+    CRYPTPROTECT_PROMPTSTRUCT class >> _OffsetOf_hwndApp [ ^8 ]
+    CRYPTPROTECT_PROMPTSTRUCT class >> _OffsetOf_szPrompt [ ^16 ]
+    CRYPTPROTECT_PROMPTSTRUCT class >> _CRYPTPROTECT_PROMPTSTRUCT_Size [ ^24 ]
+
     cbSize [ ^self uint32At: 1 ]
     cbSize: v [ ^self uint32At: 1 put: v ]
     dwPromptFlags [ ^self uint32At: 5 ]

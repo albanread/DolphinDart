@@ -7,6 +7,13 @@ ExternalMemory subclass: MIB_UDPSTATS [
     byteSize [ ^20 ]
     MIB_UDPSTATS class >> new [ ^self new: 20 ]
 
+    MIB_UDPSTATS class >> _OffsetOf_dwInDatagrams [ ^0 ]
+    MIB_UDPSTATS class >> _OffsetOf_dwNoPorts [ ^4 ]
+    MIB_UDPSTATS class >> _OffsetOf_dwInErrors [ ^8 ]
+    MIB_UDPSTATS class >> _OffsetOf_dwOutDatagrams [ ^12 ]
+    MIB_UDPSTATS class >> _OffsetOf_dwNumAddrs [ ^16 ]
+    MIB_UDPSTATS class >> _MIB_UDPSTATS_Size [ ^20 ]
+
     dwInDatagrams [ ^self uint32At: 1 ]
     dwInDatagrams: v [ ^self uint32At: 1 put: v ]
     dwNoPorts [ ^self uint32At: 5 ]

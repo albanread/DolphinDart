@@ -7,6 +7,10 @@ ExternalMemory subclass: POINTL [
     byteSize [ ^8 ]
     POINTL class >> new [ ^self new: 8 ]
 
+    POINTL class >> _OffsetOf_x [ ^0 ]
+    POINTL class >> _OffsetOf_y [ ^4 ]
+    POINTL class >> _POINTL_Size [ ^8 ]
+
     x [ ^self int32At: 1 ]
     x: v [ ^self uint32At: 1 put: v ]
     y [ ^self int32At: 5 ]

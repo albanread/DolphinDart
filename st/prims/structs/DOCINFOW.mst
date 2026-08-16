@@ -7,6 +7,13 @@ ExternalMemory subclass: DOCINFOW [
     byteSize [ ^40 ]
     DOCINFOW class >> new [ ^self new: 40 ]
 
+    DOCINFOW class >> _OffsetOf_cbSize [ ^0 ]
+    DOCINFOW class >> _OffsetOf_lpszDocName [ ^8 ]
+    DOCINFOW class >> _OffsetOf_lpszOutput [ ^16 ]
+    DOCINFOW class >> _OffsetOf_lpszDatatype [ ^24 ]
+    DOCINFOW class >> _OffsetOf_fwType [ ^32 ]
+    DOCINFOW class >> _DOCINFOW_Size [ ^40 ]
+
     cbSize [ ^self int32At: 1 ]
     cbSize: v [ ^self uint32At: 1 put: v ]
     lpszDocName [ ^self intptrAt: 9 ]

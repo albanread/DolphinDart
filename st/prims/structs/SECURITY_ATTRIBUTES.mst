@@ -7,6 +7,11 @@ ExternalMemory subclass: SECURITY_ATTRIBUTES [
     byteSize [ ^20 ]
     SECURITY_ATTRIBUTES class >> new [ ^self new: 20 ]
 
+    SECURITY_ATTRIBUTES class >> _OffsetOf_nLength [ ^0 ]
+    SECURITY_ATTRIBUTES class >> _OffsetOf_lpSecurityDescriptor [ ^8 ]
+    SECURITY_ATTRIBUTES class >> _OffsetOf_bInheritHandle [ ^16 ]
+    SECURITY_ATTRIBUTES class >> _SECURITY_ATTRIBUTES_Size [ ^20 ]
+
     nLength [ ^self uint32At: 1 ]
     nLength: v [ ^self uint32At: 1 put: v ]
     "lpSecurityDescriptor: void* at 8 — no accessor (width unknown); use byteAt: directly"

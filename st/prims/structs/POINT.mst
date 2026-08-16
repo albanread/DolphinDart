@@ -7,6 +7,10 @@ ExternalMemory subclass: POINT [
     byteSize [ ^8 ]
     POINT class >> new [ ^self new: 8 ]
 
+    POINT class >> _OffsetOf_x [ ^0 ]
+    POINT class >> _OffsetOf_y [ ^4 ]
+    POINT class >> _POINT_Size [ ^8 ]
+
     x [ ^self int32At: 1 ]
     x: v [ ^self uint32At: 1 put: v ]
     y [ ^self int32At: 5 ]

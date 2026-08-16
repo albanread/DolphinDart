@@ -1,0 +1,1135 @@
+"TreeView is a <treeView> wrapping the Windows ""SysTreeView32"" common control. It is for single selection use and, therefore, implements the <selectableItems> protocol for use with any <treeModel>. 
+
+A TreeView is capable of displaying its items in one of three modes (#smallIcons, #largeIcons, #noIcons) which can be set using the #viewMode aspect. 
+
+The refresh mode of a tree can be controlled with the #updateMode aspect. The tree can be configured to re-request the icon and text for items on every repaint (#dynamic), or to request the icon and text on first paint only (#lazy), or to request the icon and text when the nodes are added (#static). The dynamic mode is most commonly used, and is the easiest way to have changes reflected immediately. #lazy is useful where the tree is potentially large and calculating the icon or text is expensive. #static is useful where there may be synchronisation issues between repainting and the tree model changing behind the scenes.
+
+Instance Variables:
+	handleObjectMap	<LookupTable> of Windows tree view handles to item <Object>s
+	indentSeparation		<integer> indentation in pixels of each tree level.
+	viewMode			<Symbol>  describing the mode in which the tree is displaying items.
+	tvFlags				<integer>. Various flags.
+	_unused			Reserved for future use
+	
+Class Variables:
+	DisableExpandAllMask	<integer> mask applied against tvFlags
+	NonVirtualMask			<integer> mask applied against tvFlags
+	TvnMap				<Array> mapping TVN??? notification messages to <selector>s.
+	UpdateModes			<Array> 
+	UpdateModeMask		<integer> mask for extracting updateMode from tvFlags"
+
+IconicListAbstract subclass: TreeView [
+    <classVars: DisableExpandAllMask LegacyUpdateModeMask UpdateModes>
+    TreeView class >> classVarDisableExpandAllMask [ ^DisableExpandAllMask ]
+    TreeView class >> classVarDisableExpandAllMask: v [ ^DisableExpandAllMask := v ]
+    TreeView class >> classVarLegacyUpdateModeMask [ ^LegacyUpdateModeMask ]
+    TreeView class >> classVarLegacyUpdateModeMask: v [ ^LegacyUpdateModeMask := v ]
+    TreeView class >> classVarUpdateModes [ ^UpdateModes ]
+    TreeView class >> classVarUpdateModes: v [ ^UpdateModes := v ]
+    | handleObjectMap indentSeparation viewMode tvFlags objectHandleMap tvStyle updateMode _unused29 _unused30 _unused31 _unused32 _unused33 _unused34 |
+
+    addRoot: anObject [
+        	updateMode
+        		addItems: { anObject }
+        		inHandle: 0
+        		afterHandle: -65534.
+        	self hasLinesAtRoot ifFalse: [self expand: anObject]
+    ]
+    applyExtendedStyles [
+        "Private - Apply any extended TreeView styles after view creation or recreation. 
+        	At present these are not configurable - we just hard-code the use of double-buffering to reduce flickering, which can otherwise be very noticeable with custom-drawing, especially if the CDIS_DISABLED state is used."
+        User32
+        		sendMessageU: handle
+        		msg: 4396
+        		wParam: 4
+        		lParam: 4
+    ]
+    applyImageLists [
+        "Private - Set the receiver's image lists from the image managers."
+        | imList stateImList imageSize | 
+        	imageSize := self scaledImageExtent.
+        	imList := imageSize > 0
+        				ifTrue: 
+        					[stateImList := self stateImageManager ifNotNil: [:sim | sim imageListWithExtent: imageSize].
+        					self imageManager imageListWithExtent: imageSize].User32 sendMessageU: handle
+        			msg: 4361
+        			wParam: 2
+        			lParam: stateImList asParameter. User32 sendMessageU: handle
+        			msg: 4361
+        			wParam: 0
+        			lParam: imList asParameter
+    ]
+    basicAdd: anObject atIndex: anInteger [
+        "Private - Adds an item to the list view at the index given by anInteger"
+        ^self shouldNotImplement
+    ]
+    basicClear [
+        "Private - Clears all items from the tree view and also clears the map"
+        "First empty the handle object map so we don't respond to any messages when selection, etc, reset."
+
+        	self newMaps.
+        	"The Windows tree view control appears to send repeated selection change messages as item are deleted. Prevent this by resetting the selection here"
+        	self resetSelection.
+
+        	"Now delete all elements"
+        	User32
+        		sendMessage: handle
+        		msg: 4353
+        		wParam: 0
+        		lParam: -65536
+    ]
+    basicEditItemLabel: hItem [
+        "Private - Initiate in-place editing of the item in the receiver with the specified
+        	handle. Answers the handle of the edit control (or 0 if fails)."
+        ^self
+        		sendMessage: 4417
+        		wParam: 0
+        		lParam: hItem asParameter
+    ]
+    basicItemFromPoint: aPoint [
+        "Private - Answer a TVHITTESTINFO populated with details of the item under the <Point>
+        	argument."
+        | struct |
+        	struct := TVHITTESTINFO position: aPoint.
+        	self
+        		sendMessage: 4369
+        		wParam: 0
+        		lpParam: struct.
+        	^struct
+    ]
+    basicParentOf: aHandle [
+        "Private - Answer the handle of the parent of the item in the receiver with handle, aHandle."
+        ^User32
+        		sendMessageU: handle
+        		msg: 4362
+        		wParam: 3
+        		lParam: aHandle
+    ]
+    basicRefreshContents [
+        	| roots |
+        	self basicClear.
+        	roots := self model roots.
+        	roots isEmpty ifTrue: [^self].
+        	updateMode
+        		addItems: roots
+        		inHandle: 0
+        		afterHandle: -65534.
+        	self hasLinesAtRoot ifFalse: [roots reverseDo: [:each | self expand: each]]
+    ]
+    basicRemove: aHandle [
+        "Private - Remove the object with aHandle from the TreeView and from the receiver's map.
+        	Answer aHandle.
+        	Implementation Note: We first remove the handle from the map as the TreeView may, oddly,
+        	ask for display details for the item we are removing (in particular whether it has children
+        	if using children callback mode) and this will cause confusion if our model has already
+        	removed the item."
+        objectHandleMap removeKey: (handleObjectMap removeKey: aHandle).
+        	User32
+        		sendMessage: handle
+        		msg: 4353
+        		wParam: 0
+        		lParam: aHandle.
+        	^aHandle
+    ]
+    basicRemoveAtIndex: anInteger [
+        "Private - Delete the item with the specified <integer> handle."
+        ^self shouldNotImplement
+    ]
+    basicResetSelection [
+        "Private - Clear all selections. Do not issue a selection changed
+        	notification."
+        ^self 
+        		sendMessage: 4363
+        		wParam: 9
+        		lParam: 0
+    ]
+    beDefaultThemed [
+        	self hasHotTracking: true.
+        	super beDefaultThemed
+    ]
+    collapse: anObject [
+        "Collapse the displayed hierarchy below anObject, triggering a selection
+        	change event if one of the children of the object was previously selected.
+        	Note that we ask the tree view to actually remove the nodes. This saves
+        	memory and makes the tree behave in a more dynamic fashion, since 
+        	when it is re-expanded it will pick up any changes in the model."
+        self collapseHandle: (self handleFromObject: anObject)
+    ]
+    collapseHandle: aHandle [
+        	| selection |
+        	selection := self selectionOrNil.
+        	User32
+        		sendMessage: handle
+        		msg: 4354
+        		wParam: 32769
+        		lParam: aHandle.
+        	(self isSelected: selection)
+        		ifFalse: 
+        			["The selection was changed"
+        			self onSelChanged: nil]
+    ]
+    connectModel [
+        "Connect the receiver to its model, wiring events, etc.
+        	Implementation Note: Completely replace the superclass implementation, as 
+        	<TreeModel>s publish a completely different set of events."
+        | _casc1 | _casc1 := self model. _casc1 when: #treeChanged: send: #onTreeChanged: to: self. _casc1 when: #item:addedInParent: send: #onItem:addedInParent: to: self. _casc1 when: #item:removedFromParent: send: #onItem:removedFromParent: to: self. _casc1 when: #item:movedToParent: send: #onItem:movedToParent: to: self. _casc1 when: #itemUpdated: send: #onItemUpdated: to: self
+    ]
+    customDrawContextClass [
+        "Private - Answer the class of NM??CUSTOMDRAW structure associated with the receiver."
+        ^NMTVCUSTOMDRAW
+    ]
+    defaultWindowStyle [
+        "Private - Answer a default base style to use when creating a TreeView."
+        ^super defaultWindowStyle bitOr: 35
+    ]
+    displayedContents [
+        "Answers the displayed contents of the receiver. These may be different from the contents of the model
+        	if the receiver hasn't yet chosen to display all of the model items"
+        ^handleObjectMap values
+    ]
+    editLabelStyle [
+        "Private - Answer the <integer> style mask used to control whether label editing is enabled
+        	in the receiver's control."
+        ^8
+    ]
+    ensureVisible: aHandle [
+        "Ensure that the tree view node represented by aHandle is visible 
+        	by scrolling the receiver's window appropriately"
+        ^(self sendMessage: 4372 wParam: 0 lParam: aHandle) asBoolean
+
+    ]
+    expand: anObject [
+        "Expand anObject to show its children."
+        (self handleFromObject: anObject)
+        		ifNotNil: 
+        			[:hItem |
+        			User32
+        				sendMessage: handle
+        				msg: 4354
+        				wParam: 2
+        				lParam: hItem]
+    ]
+    expandAll [
+        "Expand the entire tree below the current selection."
+        Cursor wait showWhile: [self expandAll: self selectionOrNil]
+    ]
+    expandAll: anObject [
+        "Expand the complete hierarchy below anObject (i.e. expand the node and, recursively, 
+        	all its sub-nodes)."
+        self expand: anObject.
+        	(self model childrenOf: anObject) do: [:each | self expandAll: each].
+    ]
+    findNode: anObject [
+        	^(self handleFromObject: anObject)
+        		ifNil: 
+        			["Maybe the object does not exist in the model, so lets check"
+        			(self model includes: anObject) ifFalse: [^nil].
+        			"The object is not yet expanded in the tree"
+        			(self model allParentsOf: anObject) do: [:each | self expand: each].
+        			self handleFromObject: anObject]
+    ]
+    forecolor: aColorOrNil [
+        "Sets the foreground colour of the receiver to aColorOrNil.
+        	If aColorOrNil is nil then use the default color"
+        | clrref |
+        	super forecolor: aColorOrNil.
+        	clrref := ((aColorOrNil ifNil: [ Color classVarWindowText ]) ) asCOLORREF.
+        	self
+        		sendMessage: 4382
+        		wParam: 0
+        		lParam: clrref
+    ]
+    getEditControl [
+        	^self sendMessage: 4367
+    ]
+    getItemState: anExternalHandle [
+        	| tvItem | 
+        	tvItem := (TVITEMW hItem: anExternalHandle)
+        				mask: 72;
+        				yourself.
+        	User32
+        		sendMessage: handle
+        		msg: 4414
+        		wParam: 0
+        		lpParam: tvItem.
+        	^tvItem
+    ]
+    getItemText: itemHandle [
+        	| tvItem | 
+        	tvItem := (TVITEMW hItem: itemHandle)
+        				newTextBuffer: 128;
+        				yourself.
+        	User32
+        		sendMessage: handle
+        		msg: 4414
+        		wParam: 0
+        		lpParam: tvItem.
+        	^tvItem pszText
+    ]
+    getSelectionsByIndex [
+        "Private - Query the control for the current selection"
+        | selection |
+        	selection := User32
+        				sendMessageU: handle
+        				msg: 4362
+        				wParam: 9
+        				lParam: nil.
+        	^selection == 0 ifTrue: [#()] ifFalse: [{ selection }]
+    ]
+    getSingleSelection [
+        "Private - Answer the 'index' (or in the case of the receiver, the handle) of the selected object in 
+        	the receiver, or zero if there is no selection."
+        ^User32
+        		sendMessageU: handle
+        		msg: 4362
+        		wParam: 9
+        		lParam: nil
+    ]
+    handleFromObject: anObject [
+        	^objectHandleMap lookup: anObject
+    ]
+    handleFromObject: anObject ifAbsent: exceptionHandler [
+        "Private - Answer the handle associated with anObject in the receiver,
+        	or the result of evaluating the <niladicValuable>, exceptionHandler,
+        	if the object is not found."
+        ^objectHandleMap at: anObject ifAbsent: exceptionHandler
+    ]
+    hasAutomaticHorizontalScrolling [
+        "Answer whether the view will scroll automatically in the horizontal plane to bring items into view."
+        ^tvStyle allMask: 32
+    ]
+    hasAutomaticHorizontalScrolling: aBoolean [
+        "Set whether the view will scroll automatically in the horizontal plane to bring items into view."
+        "Contrary to the documentation this does not remove the horizontal scroll bar, rather it moves the viewing window left or right as it judges appropriate for the selection or mouse position."
+
+        	self treeViewStyleMask: 32 set: aBoolean
+    ]
+    hasButtons [
+        "Answer whether the receiver has expand/contract buttons associated
+        	with its nodes which the user can single click over to expand/contract the
+        	nodes children."
+        ^self baseStyleAllMask: 1
+    ]
+    hasButtons: aBoolean [
+        "Set whether the receiver has expand/contract buttons associated
+        	with its nodes which the user can single click over to expand/contract the
+        	nodes children. Can be changed dynamically without recreating
+        	the underlying control."
+        self baseStyleMask: 1 set: aBoolean recreateIfChanged: false
+    ]
+    hasCheckBoxes [
+        "Answer whether the receiver has check-boxes associated with its items."
+        ^self baseStyleAllMask: 256
+    ]
+    hasCheckBoxes: aBoolean [
+        "Sets the receiver to either have or not have check-boxes associated with its items.
+        	Note that this style is permanent and requires a re-create to take effect."
+        self baseStyleMask: 256 set: aBoolean recreateIfChanged: true
+    ]
+    hasFadingExpandos [
+        "Answer whether the expandos in the tree fade away when not hovering over it."
+        "N.B. this flickers a lot without double-buffering enabled (see #isDouble Buffered)."
+
+        	^tvStyle allMask: 64
+    ]
+    hasFadingExpandos: aBoolean [
+        "Set whether the expandos in the tree fade away when not hovering over it."
+        "N.B. this flickers a lot without double-buffering enabled (see #isDouble Buffered)."
+
+        	self treeViewStyleMask: 64 set: aBoolean
+    ]
+    hasFullRowSelect [
+        "Answer whether the receiver highlights the whole row when a selection is made, or just the label."
+        ^self baseStyleAllMask: 4096
+    ]
+    hasFullRowSelect: aBoolean [
+        	self baseStyleMask: 4096 set: aBoolean recreateIfChanged: false
+    ]
+    hasHotTracking [
+        "Answer whether the receiver has the hot-tracking style."
+        ^self baseStyleAllMask: 512
+    ]
+    hasHotTracking: aBoolean [
+        "Sets the receiver into or out of hot-tracking mode."
+        self baseStyleMask: 512 set: aBoolean recreateIfChanged: false
+    ]
+    hasInfoTips [
+        "Answer whether the receiver has Info. Tips (per-item bubble help popped when hovering)."
+        ^self baseStyleAllMask: 2048
+    ]
+    hasInfoTips: aBoolean [
+        "Sets whether the receiver has Info. Tips (per-item bubble help popped when hovering)."
+        self baseStyleMask: 2048 set: aBoolean recreateIfChanged: false
+    ]
+    hasLines [
+        "Answer whether the receiver has lines connecting its nodes."
+        ^self baseStyleAllMask: 2
+    ]
+    hasLines: aBoolean [
+        "Set whether the receiver has lines connecting its nodes.
+        	This style can be changed dynamically without recreating the underlying
+        	control."
+        self baseStyleMask: 2 set: aBoolean recreateIfChanged: false
+    ]
+    hasLinesAtRoot [
+        "Answer whether the receiver has lines and buttons for its root entries."
+        ^self baseStyleAllMask: 4
+    ]
+    hasLinesAtRoot: aBoolean [
+        "Sets the receiver to have lines and buttons for its root entries
+        	depending on the value of aBoolean. This is the TVS_LINESATROOT style,
+        	which can be changed dynamically without needing to recreate the control."
+        self baseStyleMask: 4 set: aBoolean recreateIfChanged: false
+    ]
+    hasSelection [
+        	^self selectionByIndex ~~ 0
+    ]
+    hideDropHighlight [
+        "Private - Hide any drop highlight within the receiver."
+        super hideDropHighlight.self sendMessage: 4363 wParam: 8 lParam: nil. self update
+    ]
+    includesItem: anObject [
+        "Answer whether the argument is displayed in this tree."
+        ^(self handleFromObject: anObject) notNil
+    ]
+    indentSeparation [
+        "Answer the pixel identation of child items from their parents excluding
+        	the width of the current set of icons being shown."
+        ^indentSeparation
+    ]
+    indentSeparation: anIntegerOrNil [
+        "Set the pixel identation of child items from their parents excluding the width of the
+        	current set of icons being shown. Setting the indent to nil will cause the use of the
+        	default setting of the control."
+        indentSeparation := anIntegerOrNil.
+        	self updateIndentation.
+    ]
+    initialize [
+        "Private - Initialise the instance on creation."
+        super initialize.
+        	viewMode := #noIcons.
+        	tvStyle := tvFlags := 0.
+        	"Default to dynamic/virtual mode where the tree does not hold any data required for display, but requests it every time painting is required."
+        	updateMode := TreeViewDynamicUpdateMode forIconicList: self
+    ]
+    isDoubleBuffered [
+        "Answer whether the tree display is double-buffered to avoid flicker. This is useful for trees that are frequently updated by background events."
+        ^tvStyle allMask: 4
+    ]
+    isDoubleBuffered: aBoolean [
+        "Set whether thet tree display is double-buffered to avoid flicker. This is useful for	trees that are frequently updated by background events."
+        self treeViewStyleMask: 4 set: aBoolean
+    ]
+    isExpandAllEnabled [
+        "Answer whether the tree will expand all nodes below the selected node when the '*' key is
+        	pressed on the numeric pad. This is enabled by default, but should be turned off if the tree
+        	is very large or contains cycles."
+        ^tvFlags noMask: 1
+    ]
+    isExpandAllEnabled: aBoolean [
+        "Set whether the tree will expand all nodes below the selected node when the '*' key is
+        	pressed on the numeric pad. This is enabled by default, but should be turned off if the tree
+        	is very large or contains cycles."
+        tvFlags := tvFlags mask: 1 set: aBoolean not
+    ]
+    isExpanded: anObject [
+        "Answers if the node associated with anObject is expanded."
+        | hItem |
+        	hItem := objectHandleMap lookup: anObject.
+        	^hItem notNil and: [(self getItemState: hItem) dwState allMask: 32]
+    ]
+    isLargeIcons [
+        "Answer true if the receiver is in large icon mode."
+        ^self viewMode == #largeIcons
+    ]
+    isMonoExpandable [
+        "Answer whether the receiver has the single-expand style."
+        ^self baseStyleAllMask: 1024
+    ]
+    isMonoExpandable: aBoolean [
+        "Sets the receiver into or out of single-expand mode."
+        self baseStyleMask: 1024 set: aBoolean recreateIfChanged: false
+    ]
+    isSelected: anObject [
+        "Answer whether the <Object> argument is the selected item in the tree."
+        ^self model searchPolicy 
+        		compare: self selectionOrNil with: anObject
+    ]
+    isSmallIcons [
+        "Answer true if the receiver is in small icon mode."
+        ^self viewMode == #smallIcons
+    ]
+    isVirtual [
+        "Answer true if the receiver configures the tree to ask for text and images by callback (i.e. lazy or dynamic mode).
+        	To configure the tree in non-virtual mode the #updateMode should be set to #static."
+        ^updateMode isVirtual
+    ]
+    itemBorders [
+        "Answers a <Point> the x and y values of which are the left and top borders of items."
+        | result |
+        	result := self sendMessage: 4387 wParam: 0 lParam: 0.
+        	"The LOWORD is a SHORT that specifies the size of the left border, in pixels. The HIWORD is a SHORT that specifies the size of the top border, in pixels."
+        	^(result bitAnd: 16rFFFF) @ (result bitShift: -16)
+    ]
+    itemCount [
+        "Answer the total number of items in the view."
+        ^self sendMessage: 4357
+    ]
+    itemFromNMHDRW: pNMHDR [
+        	^TVITEMW fromAddress: pNMHDR yourAddress + [NMHDR byteSize] value
+    ]
+    itemHeight [
+        "Answers the height of the items in the tree."
+        ^self sendMessage: 4380
+    ]
+    itemRect: itemHandle textOnly: aBoolean [
+        "Answers the <Rectangle> surrounding the receiver's item with the specified handle, optionally for the text part of the label only."
+        | rect |
+        	rect := RECTL newBuffer.
+        	"The handle of the item being queried is passed in the output RECT buffer"
+        	rect bytes uintPtrAtOffset: 0 put: itemHandle asInteger.
+        	User32
+        		sendMessage: handle
+        		msg: 4356
+        		wParam: aBoolean asParameter
+        		lpParam: rect.
+        	^rect asRectangle
+    ]
+    itemStructure [
+        	^TVITEMW
+    ]
+    minimumIndent [
+        "Private - Answer the minimum indent separation. This includes the width of any images."
+        ^16
+    ]
+    newMaps [
+        "Private -"
+        "Not IdentityDictionary as handles may be large ints"
+
+        	handleObjectMap := LookupTable new.
+        	objectHandleMap := self model searchPolicy newLookupTable
+    ]
+    nmDeleteItem: pNMHDR [
+        "Private - Default handler for the TVN_DELETEITEM notification message.
+        	Remove the itemOld object from our map if it is present."
+        handleObjectMap isEmpty
+        		ifFalse: 
+        			[(handleObjectMap
+        				removeKey: (pNMHDR uintPtrAtOffset: 20)
+        				ifAbsent: nil) ifNotNil: [:object | objectHandleMap removeKey: object]].
+        	"Answer nil to accept the default processing (which we must do or the TreeView leaks... apparently, although I can't see why it would since this is a notification originally sent to the parent?)."
+        	^nil
+    ]
+    nmNotify: pNMHDR [
+        "Private - Handler for a redirected TreeView WM_NOTIFY message."
+        ^([(Array new: -400 - -460 + 1 withAll: #nmDummy:)
+        		at: -400 - -450 + 1 put: #tvnSelChanging:;
+        		at: -400 - -451 + 1 put: #nmSelChanged:;
+        		at: -400 - -452 + 1 put: #nmGetDispInfoW:;
+        		at: -400 - -453 + 1 put: #nmSetDispInfoW:;
+        		at: -400 - -454 + 1 put: #tvnItemExpanding:;
+        		at: -400 - -455 + 1 put: #tvnItemExpanded:;
+        		at: -400 - -456 + 1 put: #nmBeginDrag:;
+        		at: -400 - -457 + 1 put: #nmBeginRDrag:;
+        		at: -400 - -458 + 1 put: #nmDeleteItem:;
+        		at: -400 - -412 + 1 put: #nmKeyDown:;
+        		at: -400 - -414 + 1 put: #tvnGetInfoTip:;
+        		at: -400 - -420 + 1 put: #tvnAsyncDraw:;
+        		at: -400 - -417 + 1 put: #tvnItemChanging:;
+        		at: -400 - -419 + 1 put: #tvnItemChanged:;
+        		at: -400 - -459 + 1 put: #nmBeginLabelEdit:;
+        		at: -400 - -460 + 1 put: #nmEndLabelEdit:;
+        		yourself] value lookup: -399 - (pNMHDR int32AtOffset: 8))
+        		ifNil: [super nmNotify: pNMHDR]
+        		ifNotNil: [:action | self perform: action with: pNMHDR]
+    ]
+    nmRClick: pNMHDR [
+        "Handle the NM_RCLICK notification message. 
+        	Implementation Note: We make some slight modifications to the TreeView control's default behaviour here:
+        		1) Add selection on right click.
+        		2) Pop context menu on right click.
+        	We take control of the triggering a context menu for the tree, because the control's behaviour is rather 
+        	irregular (see Microsoft Knowledge Base article Q222905).
+
+        	Note that the TreeView is unusual among Windows' controls in that it only changes selection on
+        	mouse up, not on mouse down. We stick with this as it has the useful property that drags can be
+        	initiated with an item other than the current selection."
+        | newSel pt curSel |
+        	pt := Cursor position.
+        	newSel := self selectionFromPoint: (self mapScreenToClient: pt).
+        	curSel := self selectionByIndex.
+        	(newSel = curSel or: 
+        			["Selection change permitted?"
+        			(self
+        				onSelChangingFrom: (self objectFromHandle: curSel ifAbsent: nil)
+        				to: (self objectFromHandle: newSel ifAbsent: nil)
+        				cause: #mouse) and: 
+        						[self selectionByIndex: newSel.
+        						true]])
+        		ifTrue: 
+        			[self
+        				sendMessage: 123
+        				wParam: handle
+        				lParam: pt asUIntPtr].
+        	"Return non-zero to prevent the default processing"
+        	^1
+    ]
+    notificationClass [
+        "Private - Answer the class of NMXXXXVIEW structure associated with the receiver."
+        ^NMTREEVIEWW
+    ]
+    objectFromHandle: aHandle ifAbsent: exceptionHandler [
+        "Private - Answer the object in the receiver associated with aHandle,
+        	or the result of evaluating the <niladicValuable>, exceptionHandler,
+        	if the handle is not in the map."
+        ^handleObjectMap at: aHandle ifAbsent: exceptionHandler
+    ]
+    onDestroyed [
+        "Private - Handler for window destruction notification.
+        	Implementation Note: In order to speed up deletion we first reset the handleObjectMap so that
+        	the item deletion notifications are handled more speedily - unfortunately
+        	we can't turn them off altogether, as then the tree leaks."
+        self newMaps.
+        	^super onDestroyed
+    ]
+    onDisplayDetailsRequired: aTVITEM [
+        "Private - Get the display info for the requested <TVITEM>."
+        | object requestMask |
+        	object := handleObjectMap lookup: aTVITEM hItem.
+        	"The TreeView sometimes asks for display details for items that are being removed, or are being added but for which we do not yet have the handle"
+        	object ifNil: [^0].
+        	requestMask := aTVITEM mask.
+        	(requestMask allMask: 64)
+        		ifTrue: 
+        			[aTVITEM children: (model hasChildren: object) asParameter.
+        			"If only requesting children details, tell the control to not ask again, regardless of updateMode"
+        			requestMask == 64
+        				ifTrue: 
+        					[aTVITEM maskIn: 4096.
+        					^0]].
+        	((requestMask allMask: 2) and: [self hasIcons])
+        		ifTrue: 
+        			[aTVITEM
+        				images: (((self getImageBlock ifNotNil: [:getImage | getImage value: object]) ifNil: [ -1 ]) )
+        						- 1].
+        	(requestMask allMask: 1) ifTrue: [aTVITEM textInBuffer: (self getTextBlock value: object)].
+        	updateMode viewStoresItemData ifTrue: [aTVITEM maskIn: 4096].
+        	"Suppress default processing"
+        	^0
+    ]
+    onItem: anObject addedAtIndex: anIntegerIndex [
+        "Event received when anObject has been added to the receiver's
+        	model at anIntegerIndex. Trees use #onItem:addedInParent:"
+        ^self shouldNotImplement
+    ]
+    onItem: anObject addedInParent: aParentObject [
+        "Event received when anObject has been added to the receiver's
+        	model within aParentObject."
+        "Update parent if it has gained its first child."
+
+        	| parentHandle parentTvItem siblings previousSiblingIndex previousSiblingHandle |
+        	aParentObject isNil
+        		ifTrue: 
+        			["Adding a root object"
+        			self addRoot: anObject.
+        			^self].
+
+        	"Get the TVITEM structure for the parent"
+        	(parentHandle := self handleFromObject: aParentObject) ifNil: [^self].
+        	parentTvItem := self getItemState: parentHandle.
+        	"#348: When TVM_GETITEM is sent the control, if it has not previously been repainted, may send back a 
+        	children callback to request the number of children of the parent, to which the answer is now '1' (since that 
+        	is determined by asking the model). However the control does not display the expansion button in this case
+        	(a bug), so we must refresh it even if there is already one child just in case."
+        	parentTvItem cChildren <= 1 ifTrue: [self refreshHasChildren: parentHandle].
+        	parentTvItem isStateExpandedOnce ifFalse: [^self].
+        	(self handleFromObject: anObject)
+        		ifNotNil: 
+        			["Don't add it again, e.g. when !hasLinesAtRoot addition of new root expands the immediate children 
+        			automatically so when adding a chain up to the root the node may already have been added."
+        			^self].
+        	siblings := self model childrenOf: aParentObject.
+        	previousSiblingIndex := (self model
+        				keyOfNode: anObject
+        				in: siblings
+        				ifAbsent: 0) - 1.
+
+        	"The model may have added more than one sibling, so we have to locate the first of them that we know about currently"
+        	previousSiblingHandle := nil.
+
+        	[previousSiblingIndex > 0
+        		and: [(previousSiblingHandle := self handleFromObject: (siblings at: previousSiblingIndex)) isNil]]
+        			whileTrue: [previousSiblingIndex := previousSiblingIndex - 1].
+        	updateMode
+        		addItems: { anObject }
+        		inHandle: parentHandle
+        		afterHandle: (previousSiblingHandle ifNil: [ -65535 ]) 
+    ]
+    onItem: anObject movedToParent: aParentObject [
+        "Event received when anObject has been moved in the receiver's
+        	hierarchy to be a child of aParentObject."
+        self presenter noEventsDo: 
+        			["Add new node and remove old one"
+        			| selection |
+        			selection := self selectionOrNil.
+        			(self handleFromObject: anObject) 
+        				ifNotNil: 
+        					[:hItem | 
+        					| hParent |
+        					hParent := self basicParentOf: hItem.
+        					self basicRemove: hItem.
+        					self refreshHasChildren: hParent].
+        			self onItem: anObject addedInParent: aParentObject.
+        			"Allow for the fact that the item may no longer be in tree because the parent is not"
+        			self restoreSelection: selection]
+    ]
+    onItem: anObject removedAtIndex: anInteger [
+        "Event received when the <Object>, anObject, has been removed from the receiver's
+        	model at the <integer> index, anInteger. Trees use #onItem:removedFromParent:."
+        ^self shouldNotImplement
+    ]
+    onItem: anObject removedFromParent: aParentObject [
+        "Event received when anObject has been removed from the receiver's
+        	model from aParentObject"
+        (self handleFromObject: anObject)
+        		ifNotNil: 
+        			[:hItem |
+        			| hParent selectionBugWorkaroundRequired |
+        			hParent := self basicParentOf: hItem.
+        			"Work around TreeView bug - it doesn't send selection change event when the last item is deleted"
+        			selectionBugWorkaroundRequired := hParent isNull and: [self model isEmpty].
+        			self basicRemove: hItem.
+        			selectionBugWorkaroundRequired ifTrue: [self onSelChanged: nil].
+        			hParent notNull ifTrue: [self refreshHasChildren: hParent]]
+    ]
+    onItem: anObject updatedAtIndex: anInteger [
+        "TreeView's cannot be connected directly to a ListModel."
+        ^self shouldNotImplement
+    ]
+    onItems: anObject addedAtIndex: anIntegerIndex [
+        "Event received when anObject has been added to the receiver's
+        	model at anIntegerIndex. Trees use #onItem:addedInParent:"
+        ^self shouldNotImplement
+    ]
+    onItemUpdated: anObject [
+        "Event received when anObject has been updated.
+        	Refresh the tree representation of this object"
+        self updateItem: anObject
+    ]
+    onSelChanging: anExternalAddress [
+        "Private - Selection is changing in the receiver as a direct result of user input. Details
+        	about the selection change are recorded in the <NMTREEVIEW> structure pointed at
+        	by the argument. A #selectionChanging: event is triggered to enquire as to whether the 
+        	selection change is permissible. If it is not then any observer that wishes to veto the change 
+        	must set the value of the <SelectionChangingEvent> to false."
+        "Implementation Note: The TreeView is unusual among Windows controls in that it sends selection 
+        	changing notifications for programmatic changes, as well as for user input, so we have to identify
+        	and ignore these."
+
+        	| nmtv action |
+        	self isStateRestoring
+        		ifTrue: 
+        			["Selection changing notifications are not propagated during state restoral."
+        			^true].
+        	nmtv := NMTREEVIEWW fromAddress: anExternalAddress.
+        	action := nmtv action.
+        	"The TreeView sends a notification with the undocumented action code 4096 when it wants to reset
+        	 selection to the root. It doesn't seem to be happy without a selection, and tries to select the root whenever
+        	 reactivated with no selection. Answering false for any unexpected action codes prevents unwanted selection 
+        	changes from occurring."
+        	action > 2 ifTrue: [^false].
+        	^action == 0 or: 
+        			[self
+        				onSelChangingFrom: (self objectFromHandle: nmtv itemOld hItem ifAbsent: nil)
+        				to: (self objectFromHandle: nmtv itemNew hItem ifAbsent: nil)
+        				cause: (#(#mouse #keyboard) at: action)]
+    ]
+    onSelChangingFrom: oldSelection to: newSelection cause: aSymbol [
+        	| event | 
+        	event := SelectionChangingEvent forSource: self.event newSelection: newSelection. event oldSelection: oldSelection. event cause: aSymbol.
+        	"If the old selection is nil, and the source of the change is unknown, then  assume the 
+        	selection change cannot be prevented, as it may result from the deletion of an item."
+        	self presenter onSelectionChanging: event.
+        	^event value
+    ]
+    onTreeChanged: anObject [
+        "The tree structure below the argument has been changed. If nil this 
+        	indicates that the entire tree from the root down may have changed.
+        	Refresh the receiver appropriately.
+        	Implementation Note: Any notifications for objects not currently in 
+        	the tree are ignored (these might be because the model has been changed 
+        	but this tree view is not expanded to show the element in question)."
+        anObject isNil ifTrue: [^self refreshContents].
+        	(self handleFromObject: anObject)
+        		ifNotNil: 
+        			[:hItem |
+        			self collapseHandle: hItem.
+        			updateMode updateItem: anObject at: hItem]
+    ]
+    onViewCreated [
+        "The receiver's window has been created. Copy across to it any information
+        	held in instance variables"
+        super onViewCreated.
+        	self newMaps.
+        	"Some vagary of the TreeView causes the font to be incorrectly restored during ControlView>>onCreated. We force it again here"
+        	self applyFont.
+        	self refreshContents.
+        	tvStyle == 0
+        		ifFalse: 
+        			[User32
+        				sendMessage: handle
+        				msg: 4396
+        				wParam: -1
+        				lParam: tvStyle].
+        	self updateIndentation.
+        	self applyExtendedStyles
+    ]
+    refreshContents [
+        "Repopulate the receiver with the elements of the receiver's model."
+        self isOpen ifFalse: [^self].
+        	self noRedrawDo: [self basicRefreshContents]
+    ]
+    refreshHasChildren: anExternalHandle [
+        "Private - Update the TreeView's understanding of whether the element of the receiver	with the specified handle has children or not. This affects whether the TreeView displays an expansion button or not."
+        | tvItem | 
+        	tvItem := (TVITEMW hItem: anExternalHandle)
+        				childrenCallback;
+        				yourself.
+        	User32
+        		sendMessage: handle
+        		msg: 4415
+        		wParam: 0
+        		lpParam: tvItem
+    ]
+    resetSelection [
+        "Sets the receiver to have no selected object."
+        ^self basicResetSelection
+    ]
+    resolutionScaledBy: aPoint [
+        "Private - The receiver is being loaded and it has been determined that the pixel resolution has changed since the point at which the view was saved. Scale any internal pixels by <Point>the point argument."
+        indentSeparation isNil ifTrue: [^self].
+        	indentSeparation := (indentSeparation * aPoint x) truncated
+    ]
+    restoreSelection: anObject [
+        "Private - Restore the selection in the receiver to be the <Object> argument, if that object
+        	is still in the tree."
+        self selection: anObject ifAbsent: []
+    ]
+    selection: anObject ifAbsent: exceptionHandler [
+        "Select the first occurrence of the <Object>, anObject, in the receiver
+        	and answer it. If there are no occurrences then answer the
+        	result of evaluating the <niladicValuable>, exceptionHandler."
+        | nodeHandle |
+        	anObject isNil ifTrue: [^self resetSelection].
+        	nodeHandle := (self findNode: anObject) ifNil: [^exceptionHandler cull: anObject].
+        	^(self selectionByIndex: nodeHandle ifAbsent: nil)
+        		ifNil: [exceptionHandler cull: anObject]
+        		ifNotNil: [anObject]
+    ]
+    selectionByIndex [
+        "Answer the 'index' (or in the case of the receiver, the handle) of the selected object in the receiver, or 0 if there is no selection."
+        ^User32
+        		sendMessageU: handle
+        		msg: 4362
+        		wParam: 9
+        		lParam: nil
+    ]
+    selectionByIndex: itemHandle ifAbsent: exceptionHandler [
+        "Select the object identified by the 'handle', itemHandle, in the receiver.
+        	Answer the 'handle' of the resulting selection (the selection might not
+        	change if the selection changing request is denied)."
+        | oldSel |
+        	(oldSel := self selectionByIndex) = itemHandle
+        		ifFalse: 
+        			[(self setSingleSelection: itemHandle)
+        				ifTrue: [(self objectFromHandle: itemHandle ifAbsent: nil) ifNil: [^exceptionHandler value]]
+        				ifFalse: [^itemHandle]].
+        	"Either the selection was already that indicated or the change was refused by onSelChanging handlers"
+        	^oldSel
+    ]
+    selectionFromPoint: pos [
+        "Private - Answer the <integer> selection that would occur if a mouse click at the
+        	<Point>, pos, was passed to the control."
+        ^((self itemFromPoint: pos) ifNil: [ 0 ]) 
+    ]
+    selectionIfNone: aBlock [
+        "Answer the selected object in the receiver or the
+        	result of evaluating aBlock if there is no selection."
+        | h |
+        	h := self selectionByIndex.
+        	^h isNull ifTrue: [aBlock value] ifFalse: [self objectFromHandle: h ifAbsent: nil]
+    ]
+    selectionState [
+        "Private - Answer a <MessageSend> which, when evaluated, will restore the current selection, or nil if there is no selection to restore."
+        | h |
+        	h := self selectionByIndex.
+        	^h == 0
+        		ifFalse: 
+        			[(self objectFromHandle: h ifAbsent: nil)
+        				ifNotNil: 
+        					[:selection |
+        					MessageSend
+        						receiver: self
+        						selector: #restoreSelection:
+        						argument: selection]]
+    ]
+    setControlBackcolor: aColor [
+        	self 
+        		sendMessage: 4381
+        		wParam: 0
+        		lParam: aColor asCOLORREF
+    ]
+    setSingleSelection: itemHandle [
+        	^(self 
+        		sendMessage: 4363
+        		wParam: 9
+        		lParam: itemHandle) == 0
+    ]
+    setViewMode: aSymbol [
+        	viewMode := aSymbol
+    ]
+    showDropHighlight: anItem [
+        "Private - Shows a drop highlight for anItem within the receiver."
+        super showDropHighlight: anItem.self sendMessage: 4363 wParam: 8 lParam: anItem. self update.
+    ]
+    showsSelAlways [
+        "Answers true if the receiver always displays its selection, if any, even
+        	if it doesn't have focus."
+        ^self baseStyleAllMask: 32
+    ]
+    showsSelAlways: aBoolean [
+        "Set whether the receiver always displays its selection, if any, even
+        	if it doesn't have focus."
+        self 
+        		baseStyleMask: 32
+        		set: aBoolean
+        		recreateIfChanged: true	"Recreate required to take effect"
+    ]
+    treeViewStyleMask: anInteger set: aBoolean [
+        "Private - Sets/clears the tree view extended style bits in the <integer> first argument according to the <Boolean> second argument. Answer the previous extended style flags."
+        | valueMask prevStyle |
+        	valueMask := anInteger bitAnd: 0 - aBoolean asInteger.
+        	prevStyle := User32
+        				sendMessage: handle
+        				msg: 4396
+        				wParam: anInteger
+        				lParam: valueMask.
+        	tvStyle := (prevStyle bitAnd: anInteger bitInvert) bitOr: valueMask.
+        	^prevStyle
+    ]
+    tvmInsertItem: anObject tvis: aTVINSERTSTRUCT [
+        	| hItem |
+        	hItem := User32
+        				sendMessageU: handle
+        				msg: 4402
+        				wParam: 0
+        				lpParam: aTVINSERTSTRUCT.
+        	hItem == 0 ifFalse: [objectHandleMap at: (handleObjectMap at: hItem put: anObject) put: hItem]
+    ]
+    tvmSetItem: tvItem [
+        	User32
+        		sendMessage: self handle
+        		msg: 4415
+        		wParam: 0
+        		lpParam: tvItem
+    ]
+    tvnGetInfoTip: pNMTVGETINFOTIPW [
+        "Private - Default handler for the TVN_GETINFOTIP notification message."
+        getInfoTipBlock isNil
+        		ifFalse: 
+        			[| nmtv |
+        			nmtv := NMTVGETINFOTIPW fromAddress: pNMTVGETINFOTIPW.
+        			(self objectFromHandle: nmtv itemHandle ifAbsent: nil)
+        				ifNotNil: [:object | nmtv text: (getInfoTipBlock value: object)]].
+
+        	"The control ignores the return value for this notification code."
+        	^0
+    ]
+    tvnItemChanged: pNMTVITEMCHANGE [
+        "Private - Notification that an item in the tree has changed."
+        "The documentation says to return FALSE to accept the change, or TRUE to prevent the change, but this is presumably a copy&paste error from TVN_ITEMCHANGING, since the item has already changed."
+
+        	^0
+    ]
+    tvnItemChanging: pNMTVITEMCHANGE [
+        "Private - Notification that an item in the tree is about to change. Return FALSE to accept the change, or TRUE to prevent the change."
+        ^0
+    ]
+    tvnItemExpanded: pNMHDR [
+        "Private - Default handler for the TVN_ITEMEXPANDEDW notification message."
+        "Return value not used, but suppress needless call to DefWindowProc on the parent"
+
+        	^0
+    ]
+    tvnItemExpanding: pNMHDR [
+        "Private - Default handler for the TVN_ITEMEXPANDINGW notification message."
+        | tviParent hParent |
+        	(pNMHDR uint32AtOffset: 12) == 2 ifFalse: [^0].
+        	tviParent := TVITEMW fromAddress: pNMHDR asInteger + 56.
+        	"See if we have been expanded before"
+        	tviParent isStateExpandedOnce ifTrue: [^0].
+        	"If not, add the children"
+        	hParent := tviParent hItem.
+        	(self objectFromHandle: hParent ifAbsent: nil)
+        		ifNotNil: 
+        			[:parentObject |
+        			| children |
+        			children := self model childrenOf: parentObject.
+        			children isEmpty
+        				ifFalse: 
+        					[Cursor wait showWhile: 
+        							[updateMode
+        								addItems: children
+        								inHandle: hParent
+        								afterHandle: -65534]].
+        			"Inform the parent item that we don't want to be informed when we are expanded again"
+        			tviParent beStateExpandedOnce].
+        	^0	"Allow the expansion to proceed - returning TRUE would prevent"
+    ]
+    tvnSelChanging: pNMHDR [
+        "Private - Default handler for the TVN_SELCHANGINGW notification message.
+        	Answer false to permit the selection to change, true to prevent it.
+        	Note that the tree view sends this for all selection changes, whether programmatically
+        	or user initiated."
+        ^(self onSelChanging: pNMHDR) not
+    ]
+    updateAll [
+        "Re-render the model's contents. This is a similar operation to #refreshContents, except that it is assumed that the models contents are the same objects, but may have changed internally so that their visual representation must be updated. The effect will depend on the current update mode:
+        		#dynamic - the view is just invalidated to trigger repaint, which will re-request text, icons, etc
+        		#lazy, #static - the view is asked to refresh each item individually."
+        updateMode updateAllItems
+    ]
+    updateAllItems [
+        "Private - Update the text and images the tree view stores for each item in non-dynamic tree."
+        handleObjectMap
+        		keysAndValuesDo: [:eachHandle :eachObject | updateMode updateItem: eachObject at: eachHandle]
+    ]
+    updateIndentation [
+        "Private - Update the identation of child items to reflect the current values
+        	of the icon extents and identSeparation."
+        indentSeparation
+        		ifNil: 
+        			["Tell the control to use its default ident"
+        			self sendMessage: 4359 wParam: 0]
+        		ifNotNil: 
+        			[| imageWidth |
+        			imageWidth := self scaledImageExtent x.
+        			self
+        				sendMessage: 4359
+        				wParam: (imageWidth + indentSeparation max: self minimumIndent)
+        				lParam: 0.
+        			indentSeparation := (self sendMessage: 4358) - imageWidth]
+    ]
+    updateItem: anObject [
+        	(self handleFromObject: anObject) ifNotNil: [:hItem | updateMode updateItem: anObject at: hItem]
+    ]
+    updateItem: anObject at: anInteger [
+        	self shouldNotImplement
+    ]
+    updateMode [
+        "Answer the configured update mode, one of:
+        		#dynamic	- Display details re-requested by callback on every paint
+        		#lazy		- Supported by TreeView only. Display details initially requested by callback on first paint only
+        		#static		- Items fully populated with display details when first added
+        	The display details referred to are the label text, icon, and (in a tree) whether or not the item has children."
+        ^updateMode name
+    ]
+    updateMode: aSymbol [
+        "Set the desired update mode, one of:
+        		#dynamic	- display details re-requested by callback on every paint
+        		#lazy		- display details initially requested by callback on first paint only
+        		#static	- tree nodes fully populated with display details when first added
+        	The display details referred to are the label test, icon, and whether or not the node has children.
+        	Note that the update mode should not be changed after the tree has been populated."
+        updateMode := (UpdateModes at: (aSymbol ifNil: [ #dynamic ]) ) forIconicList: self
+    ]
+    viewMode [
+        "Answer the view mode of the receiver. See the class method #viewModes for the
+        	set of valid symbols."
+        ^viewMode
+
+    ]
+    viewModeChanged [
+        	super viewModeChanged.
+        	self updateIndentation
+    ]
+    wantCustomDrawItemNotifications: pNMHDR [
+        "Implementation Note: The TreeView control sends prepaint notifications with an
+        	empty paint area and invalid colours. We suppress these as they are, ahem, unhelpful."
+        ^self customDrawBlock notNil and: 
+        			[(pNMHDR int32AtOffset: 28)
+        				- (pNMHDR int32AtOffset: 20) > 0
+        				and: 
+        					[(pNMHDR int32AtOffset: 32)
+        						- (pNMHDR int32AtOffset: 24) > 0]]
+    ]
+    wmKeyDown: message wParam: wParam lParam: lParam [
+        "Private - Handle WM_KEYDOWN.
+        	Implementation Note: We override here in order to be able to disable the 'Expand All'
+        	accelerator (the numeric pad's multiply key), which may be undesirable if the 'tree'
+        	being represented is either very large, or has cycles."
+        ^(wParam == 106 and: [self isExpandAllEnabled not]) 
+        		ifTrue: [0]
+        		ifFalse: 
+        			[super 
+        				wmKeyDown: message
+        				wParam: wParam
+        				lParam: lParam].
+    ]
+    TreeView class >> defaultModel [
+        "Answer a default model to be assigned to the receiver when it is initialized."
+        ^TreeModel new
+    ]
+    TreeView class >> icon [
+        "Answers an Icon that can be used to represent this class"
+        ^[self] value defaultIcon
+    ]
+    TreeView class >> initialize [
+        	CommCtrlLibrary addInitFlag: 2
+    ]
+    TreeView class >> stbConvertFromVersion10: anArray [
+        "Private - Perform an STB conversion from a version 10 <TreeView> to version 11,
+        	i.e. append tvFlags and reserve another slot for later use."
+        | size array | 
+        	array := super stbConvertFromVersion10: anArray.
+        	size := array size.
+        	"2 instance variables were added"
+        	^(Array new: size + 2)
+        		replaceFrom: 1
+        			to: size
+        			with: array
+        			startingAt: 1;
+        		at: size + 1 put: 0;
+        		yourself
+    ]
+    TreeView class >> stbConvertProxy: anSTBViewProxy [
+        	| size vars | 
+        	super stbConvertProxy: anSTBViewProxy.
+        	anSTBViewProxy version < 14 ifFalse: [^self].
+        	vars := anSTBViewProxy instVars.
+        	size := vars size.
+        	(vars resize: size + 8)
+        		at: size + 1 put: 0;
+        		at: size + 2
+        			put: (([{ TreeViewDynamicUpdateMode. TreeViewStaticUpdateMode. TreeViewLazyUpdateMode }] value
+        					at: (((vars at: [self indexOfInstVar: 'tvFlags'] value) bitAnd: 6) bitShift: -1) + 1)
+        						forIconicList: anSTBViewProxy)
+    ]
+    TreeView class >> stbVersion [
+        "14: Adds tvStyle, updateMode, and 6 spares"
+        ^14
+    ]
+    TreeView class >> themePartName [
+        	^#TreeView
+    ]
+    TreeView class >> uninitialize [
+        	CommCtrlLibrary removeInitFlag: 2
+    ]
+    TreeView class >> updateModes [
+        	^UpdateModes keys asSortedArray
+    ]
+    TreeView class >> winClassName [
+        "Private - Answer the name of the Windows window class to use when realizing the receiver."
+        ^'SysTreeView32'
+    ]
+]

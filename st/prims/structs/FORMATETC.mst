@@ -7,6 +7,13 @@ ExternalMemory subclass: FORMATETC [
     byteSize [ ^28 ]
     FORMATETC class >> new [ ^self new: 28 ]
 
+    FORMATETC class >> _OffsetOf_cfFormat [ ^0 ]
+    FORMATETC class >> _OffsetOf_ptd [ ^8 ]
+    FORMATETC class >> _OffsetOf_dwAspect [ ^16 ]
+    FORMATETC class >> _OffsetOf_lindex [ ^20 ]
+    FORMATETC class >> _OffsetOf_tymed [ ^24 ]
+    FORMATETC class >> _FORMATETC_Size [ ^28 ]
+
     cfFormat [ ^self uint16At: 1 ]
     "ptd: Windows.Win32.System.Com.DVTARGETDEVICE* at 8 — no accessor (width unknown); use byteAt: directly"
     dwAspect [ ^self uint32At: 17 ]

@@ -7,6 +7,10 @@ ExternalMemory subclass: TYPEDESC [
     byteSize [ ^16 ]
     TYPEDESC class >> new [ ^self new: 16 ]
 
+    TYPEDESC class >> _OffsetOf_Anonymous [ ^0 ]
+    TYPEDESC class >> _OffsetOf_vt [ ^8 ]
+    TYPEDESC class >> _TYPEDESC_Size [ ^16 ]
+
     "anonymous: _Anonymous_e__Union at 0 — no accessor (width unknown); use byteAt: directly"
     "vt: Windows.Win32.System.Variant.VARENUM at 8 — no accessor (width unknown); use byteAt: directly"
 ]

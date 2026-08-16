@@ -7,6 +7,10 @@ ExternalMemory subclass: PROPSPEC [
     byteSize [ ^16 ]
     PROPSPEC class >> new [ ^self new: 16 ]
 
+    PROPSPEC class >> _OffsetOf_ulKind [ ^0 ]
+    PROPSPEC class >> _OffsetOf_Anonymous [ ^8 ]
+    PROPSPEC class >> _PROPSPEC_Size [ ^16 ]
+
     "ulKind: Windows.Win32.System.Com.StructuredStorage.PROPSPEC_KIND at 0 — no accessor (width unknown); use byteAt: directly"
     "anonymous: _Anonymous_e__Union at 8 — no accessor (width unknown); use byteAt: directly"
 ]

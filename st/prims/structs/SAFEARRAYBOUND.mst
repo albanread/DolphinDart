@@ -7,6 +7,10 @@ ExternalMemory subclass: SAFEARRAYBOUND [
     byteSize [ ^8 ]
     SAFEARRAYBOUND class >> new [ ^self new: 8 ]
 
+    SAFEARRAYBOUND class >> _OffsetOf_cElements [ ^0 ]
+    SAFEARRAYBOUND class >> _OffsetOf_lLbound [ ^4 ]
+    SAFEARRAYBOUND class >> _SAFEARRAYBOUND_Size [ ^8 ]
+
     cElements [ ^self uint32At: 1 ]
     cElements: v [ ^self uint32At: 1 put: v ]
     lLbound [ ^self int32At: 5 ]

@@ -7,6 +7,14 @@ ExternalMemory subclass: MSG [
     byteSize [ ^48 ]
     MSG class >> new [ ^self new: 48 ]
 
+    MSG class >> _OffsetOf_hwnd [ ^0 ]
+    MSG class >> _OffsetOf_message [ ^8 ]
+    MSG class >> _OffsetOf_wParam [ ^16 ]
+    MSG class >> _OffsetOf_lParam [ ^24 ]
+    MSG class >> _OffsetOf_time [ ^32 ]
+    MSG class >> _OffsetOf_pt [ ^36 ]
+    MSG class >> _MSG_Size [ ^48 ]
+
     hwnd [ ^self intptrAt: 1 ]
     message [ ^self uint32At: 9 ]
     message: v [ ^self uint32At: 9 put: v ]

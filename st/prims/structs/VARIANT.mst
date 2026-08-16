@@ -7,5 +7,8 @@ ExternalMemory subclass: VARIANT [
     byteSize [ ^8 ]
     VARIANT class >> new [ ^self new: 8 ]
 
+    VARIANT class >> _OffsetOf_Anonymous [ ^0 ]
+    VARIANT class >> _VARIANT_Size [ ^8 ]
+
     "anonymous: _Anonymous_e__Union at 0 — no accessor (width unknown); use byteAt: directly"
 ]

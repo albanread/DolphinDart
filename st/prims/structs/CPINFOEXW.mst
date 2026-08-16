@@ -7,6 +7,14 @@ ExternalMemory subclass: CPINFOEXW [
     byteSize [ ^32 ]
     CPINFOEXW class >> new [ ^self new: 32 ]
 
+    CPINFOEXW class >> _OffsetOf_MaxCharSize [ ^0 ]
+    CPINFOEXW class >> _OffsetOf_DefaultChar [ ^4 ]
+    CPINFOEXW class >> _OffsetOf_LeadByte [ ^6 ]
+    CPINFOEXW class >> _OffsetOf_UnicodeDefaultChar [ ^18 ]
+    CPINFOEXW class >> _OffsetOf_CodePage [ ^20 ]
+    CPINFOEXW class >> _OffsetOf_CodePageName [ ^24 ]
+    CPINFOEXW class >> _CPINFOEXW_Size [ ^32 ]
+
     maxCharSize [ ^self uint32At: 1 ]
     maxCharSize: v [ ^self uint32At: 1 put: v ]
     "defaultChar: u8[] at 4 — no accessor (width unknown); use byteAt: directly"

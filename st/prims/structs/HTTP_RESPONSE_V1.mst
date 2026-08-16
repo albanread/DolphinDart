@@ -7,6 +7,16 @@ ExternalMemory subclass: HTTP_RESPONSE_V1 [
     byteSize [ ^552 ]
     HTTP_RESPONSE_V1 class >> new [ ^self new: 552 ]
 
+    HTTP_RESPONSE_V1 class >> _OffsetOf_Flags [ ^0 ]
+    HTTP_RESPONSE_V1 class >> _OffsetOf_Version [ ^4 ]
+    HTTP_RESPONSE_V1 class >> _OffsetOf_StatusCode [ ^8 ]
+    HTTP_RESPONSE_V1 class >> _OffsetOf_ReasonLength [ ^10 ]
+    HTTP_RESPONSE_V1 class >> _OffsetOf_pReason [ ^16 ]
+    HTTP_RESPONSE_V1 class >> _OffsetOf_Headers [ ^24 ]
+    HTTP_RESPONSE_V1 class >> _OffsetOf_EntityChunkCount [ ^536 ]
+    HTTP_RESPONSE_V1 class >> _OffsetOf_pEntityChunks [ ^544 ]
+    HTTP_RESPONSE_V1 class >> _HTTP_RESPONSE_V1_Size [ ^552 ]
+
     flags [ ^self uint32At: 1 ]
     flags: v [ ^self uint32At: 1 put: v ]
     version [ ^HTTP_VERSION viewOn: self at: 4 size: 4 ]

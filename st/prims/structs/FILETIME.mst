@@ -7,6 +7,10 @@ ExternalMemory subclass: FILETIME [
     byteSize [ ^8 ]
     FILETIME class >> new [ ^self new: 8 ]
 
+    FILETIME class >> _OffsetOf_dwLowDateTime [ ^0 ]
+    FILETIME class >> _OffsetOf_dwHighDateTime [ ^4 ]
+    FILETIME class >> _FILETIME_Size [ ^8 ]
+
     dwLowDateTime [ ^self uint32At: 1 ]
     dwLowDateTime: v [ ^self uint32At: 1 put: v ]
     dwHighDateTime [ ^self uint32At: 5 ]

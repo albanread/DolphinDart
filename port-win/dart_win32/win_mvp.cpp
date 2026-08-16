@@ -20,6 +20,7 @@
 // Dart handle across the invoke.
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
+#include <commctrl.h>
 
 #include <cstdio>
 #include <cstring>
@@ -463,7 +464,36 @@ void ST_mvpBindOldProc(Dart_NativeArguments args) {
   Dart_SetReturnValue(args, Dart_NewBoolean(ok));
 }
 
+// COMMON CONTROLS must be initialized before the first one is CREATED, on the
+// UI thread. `InitCommonControlsEx` is what registers the comctl32 window
+// classes — SysListView32, SysTreeView32, SysTabControl32 and the rest — and
+// without it `CreateWindowExW` for any of them fails with ERROR_CANNOT_FIND_WND_CLASS.
+//
+// PUT HERE rather than in a lazily-hit native, which is the DD11 brief's own
+// trap: the first control created decides whether the whole comctl32 wave
+// works, and a lazy call can end up on the wrong thread or after the fact.
+// This runs on the same path that registers the door's own window class, so
+// it cannot be skipped by any route that makes a window.
+//
+// ICC_WIN95_CLASSES covers list/tree/tab/status/toolbar/progress/trackbar —
+// everything DD11 needs. Asking for classes that are already registered is
+// harmless and idempotent.
+bool g_comctl_ready = false;
+
+bool EnsureCommonControls() {
+  if (g_comctl_ready) return true;
+  INITCOMMONCONTROLSEX icc;
+  ZeroMemory(&icc, sizeof(icc));
+  icc.dwSize = sizeof(icc);
+  icc.dwICC = ICC_WIN95_CLASSES | ICC_DATE_CLASSES | ICC_USEREX_CLASSES |
+              ICC_COOL_CLASSES | ICC_INTERNET_CLASSES | ICC_STANDARD_CLASSES |
+              ICC_LINK_CLASS;
+  g_comctl_ready = (InitCommonControlsEx(&icc) != FALSE);
+  return g_comctl_ready;
+}
+
 bool EnsureTopClass() {
+  EnsureCommonControls();
   if (g_top_registered) return true;
   WNDCLASSEXW wc;
   ZeroMemory(&wc, sizeof(wc));

@@ -7,6 +7,13 @@ ExternalMemory subclass: SPEVENT [
     byteSize [ ^32 ]
     SPEVENT class >> new [ ^self new: 32 ]
 
+    SPEVENT class >> _OffsetOf__bitfield [ ^0 ]
+    SPEVENT class >> _OffsetOf_ulStreamNum [ ^4 ]
+    SPEVENT class >> _OffsetOf_ullAudioStreamOffset [ ^8 ]
+    SPEVENT class >> _OffsetOf_wParam [ ^16 ]
+    SPEVENT class >> _OffsetOf_lParam [ ^24 ]
+    SPEVENT class >> _SPEVENT_Size [ ^32 ]
+
     _bitfield [ ^self int32At: 1 ]
     _bitfield: v [ ^self uint32At: 1 put: v ]
     ulStreamNum [ ^self uint32At: 5 ]

@@ -7,6 +7,16 @@ ExternalMemory subclass: SYSTEMTIME [
     byteSize [ ^16 ]
     SYSTEMTIME class >> new [ ^self new: 16 ]
 
+    SYSTEMTIME class >> _OffsetOf_wYear [ ^0 ]
+    SYSTEMTIME class >> _OffsetOf_wMonth [ ^2 ]
+    SYSTEMTIME class >> _OffsetOf_wDayOfWeek [ ^4 ]
+    SYSTEMTIME class >> _OffsetOf_wDay [ ^6 ]
+    SYSTEMTIME class >> _OffsetOf_wHour [ ^8 ]
+    SYSTEMTIME class >> _OffsetOf_wMinute [ ^10 ]
+    SYSTEMTIME class >> _OffsetOf_wSecond [ ^12 ]
+    SYSTEMTIME class >> _OffsetOf_wMilliseconds [ ^14 ]
+    SYSTEMTIME class >> _SYSTEMTIME_Size [ ^16 ]
+
     wYear [ ^self uint16At: 1 ]
     wMonth [ ^self uint16At: 3 ]
     wDayOfWeek [ ^self uint16At: 5 ]

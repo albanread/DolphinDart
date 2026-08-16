@@ -7,6 +7,12 @@ ExternalMemory subclass: BP_PAINTPARAMS [
     byteSize [ ^24 ]
     BP_PAINTPARAMS class >> new [ ^self new: 24 ]
 
+    BP_PAINTPARAMS class >> _OffsetOf_cbSize [ ^0 ]
+    BP_PAINTPARAMS class >> _OffsetOf_dwFlags [ ^4 ]
+    BP_PAINTPARAMS class >> _OffsetOf_prcExclude [ ^8 ]
+    BP_PAINTPARAMS class >> _OffsetOf_pBlendFunction [ ^16 ]
+    BP_PAINTPARAMS class >> _BP_PAINTPARAMS_Size [ ^24 ]
+
     cbSize [ ^self uint32At: 1 ]
     cbSize: v [ ^self uint32At: 1 put: v ]
     "dwFlags: Windows.Win32.UI.Controls.BP_PAINTPARAMS_FLAGS at 4 — no accessor (width unknown); use byteAt: directly"

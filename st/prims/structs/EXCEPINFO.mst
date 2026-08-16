@@ -7,6 +7,17 @@ ExternalMemory subclass: EXCEPINFO [
     byteSize [ ^60 ]
     EXCEPINFO class >> new [ ^self new: 60 ]
 
+    EXCEPINFO class >> _OffsetOf_wCode [ ^0 ]
+    EXCEPINFO class >> _OffsetOf_wReserved [ ^2 ]
+    EXCEPINFO class >> _OffsetOf_bstrSource [ ^8 ]
+    EXCEPINFO class >> _OffsetOf_bstrDescription [ ^16 ]
+    EXCEPINFO class >> _OffsetOf_bstrHelpFile [ ^24 ]
+    EXCEPINFO class >> _OffsetOf_dwHelpContext [ ^32 ]
+    EXCEPINFO class >> _OffsetOf_pvReserved [ ^40 ]
+    EXCEPINFO class >> _OffsetOf_pfnDeferredFillIn [ ^48 ]
+    EXCEPINFO class >> _OffsetOf_scode [ ^56 ]
+    EXCEPINFO class >> _EXCEPINFO_Size [ ^60 ]
+
     wCode [ ^self uint16At: 1 ]
     wReserved [ ^self uint16At: 3 ]
     bstrSource [ ^BSTR viewOn: self at: 8 size: 8 ]

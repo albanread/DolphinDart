@@ -7,6 +7,10 @@ ExternalMemory subclass: HTTP_CACHE_POLICY [
     byteSize [ ^8 ]
     HTTP_CACHE_POLICY class >> new [ ^self new: 8 ]
 
+    HTTP_CACHE_POLICY class >> _OffsetOf_Policy [ ^0 ]
+    HTTP_CACHE_POLICY class >> _OffsetOf_SecondsToLive [ ^4 ]
+    HTTP_CACHE_POLICY class >> _HTTP_CACHE_POLICY_Size [ ^8 ]
+
     "policy: Windows.Win32.Networking.HttpServer.HTTP_CACHE_POLICY_TYPE at 0 — no accessor (width unknown); use byteAt: directly"
     secondsToLive [ ^self uint32At: 5 ]
     secondsToLive: v [ ^self uint32At: 5 put: v ]

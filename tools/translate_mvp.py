@@ -142,6 +142,34 @@ TARGETS = [
     "Core/Object Arts/Dolphin/MVP/Graphics/Graphics.Icon.cls",
     "Core/Object Arts/Dolphin/MVP/Graphics/Graphics.Cursor.cls",
     "Core/Object Arts/Dolphin/MVP/Graphics/Graphics.Canvas.cls",
+    # `IconicListAbstract` — the shared parent of ListView, TreeView and
+    # TabView — holds the image-list plumbing, so no common control can be
+    # constructed without this one.
+    "Core/Object Arts/Dolphin/MVP/Graphics/Graphics.ImageList.cls",
+    # `IconicListAbstract>>initialize` ends `imageManager := self
+    # defaultImageManager`, which is `^IconImageManager current` — so the
+    # manager pair comes with the image list.
+    "Core/Object Arts/Dolphin/MVP/Graphics/Graphics.ImageManager.cls",
+    "Core/Object Arts/Dolphin/MVP/Graphics/Graphics.IconImageManager.cls",
+
+    # ── DD11: the COMMON CONTROLS ──────────────────────────────────────────
+    # comctl32's window classes, reached the same way `UI.TextEdit` reaches
+    # EDIT: Dolphin SUBCLASSES them, and the substrate for that is the
+    # trampoline `st_subclass` proved. `InitCommonControlsEx` now runs on the
+    # door's class-registration path — the DD11 brief's named trap, because
+    # the first control created decides whether the whole wave works and a
+    # lazily-hit call can land on the wrong thread.
+    #
+    # The chain, ListControlView -> IconicListAbstract -> ListView/TreeView,
+    # is taken whole: `IconicListAbstract` is where the image-list and
+    # get-text plumbing lives, so neither leaf works without it.
+    # `ListControlView class >> defaultModel` is `^ListModel new`, so every
+    # list-shaped control needs it before it can be constructed at all.
+    "Core/Object Arts/Dolphin/MVP/Models/List/UI.ListModel.cls",
+    "Core/Object Arts/Dolphin/MVP/Presenters/List/UI.ListControlView.cls",
+    "Core/Object Arts/Dolphin/MVP/Views/Common Controls/UI.IconicListAbstract.cls",
+    "Core/Object Arts/Dolphin/MVP/Views/Common Controls/UI.ListView.cls",
+    "Core/Object Arts/Dolphin/MVP/Views/Common Controls/UI.TreeView.cls",
 
     # ── DD10: the EVENT family ─────────────────────────────────────────────
     # Once Dolphin's own `buildMessageMap` is installed as the routed set, its
@@ -233,6 +261,15 @@ REFERENCES = [
     "Core/Object Arts/Dolphin/MVP/Type Converters",
     "Core/Object Arts/Dolphin/MVP/Presenters/Number",
     "Core/Object Arts/Dolphin/MVP/Presenters/Text",
+    # DD11: the common-controls tree, for its POOLS above all. `OS.ListViewConstants`
+    # and the `Dolphin Common Controls.pax` live here, and the ListView/TreeView
+    # code writes LVIF_TEXT, TVS_HASBUTTONS and ~200 others as BARE NAMES. An
+    # unfolded one is not a refusal — it is a runtime nil, and the first thing
+    # it reaches is a `bitOr:`, which is how `TreeView>>defaultWindowStyle`
+    # failed with "the method '|' was called on null".
+    "Core/Object Arts/Dolphin/MVP/Views/Common Controls",
+    "Core/Object Arts/Dolphin/MVP/Presenters/List",
+    "Core/Object Arts/Dolphin/MVP/Models/List",
 ]
 
 

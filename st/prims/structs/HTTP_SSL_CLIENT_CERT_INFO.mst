@@ -7,6 +7,13 @@ ExternalMemory subclass: HTTP_SSL_CLIENT_CERT_INFO [
     byteSize [ ^32 ]
     HTTP_SSL_CLIENT_CERT_INFO class >> new [ ^self new: 32 ]
 
+    HTTP_SSL_CLIENT_CERT_INFO class >> _OffsetOf_CertFlags [ ^0 ]
+    HTTP_SSL_CLIENT_CERT_INFO class >> _OffsetOf_CertEncodedSize [ ^4 ]
+    HTTP_SSL_CLIENT_CERT_INFO class >> _OffsetOf_pCertEncoded [ ^8 ]
+    HTTP_SSL_CLIENT_CERT_INFO class >> _OffsetOf_Token [ ^16 ]
+    HTTP_SSL_CLIENT_CERT_INFO class >> _OffsetOf_CertDeniedByMapper [ ^24 ]
+    HTTP_SSL_CLIENT_CERT_INFO class >> _HTTP_SSL_CLIENT_CERT_INFO_Size [ ^32 ]
+
     certFlags [ ^self uint32At: 1 ]
     certFlags: v [ ^self uint32At: 1 put: v ]
     certEncodedSize [ ^self uint32At: 5 ]

@@ -7,6 +7,10 @@ ExternalMemory subclass: IP_INTERFACE_INFO [
     byteSize [ ^12 ]
     IP_INTERFACE_INFO class >> new [ ^self new: 12 ]
 
+    IP_INTERFACE_INFO class >> _OffsetOf_NumAdapters [ ^0 ]
+    IP_INTERFACE_INFO class >> _OffsetOf_Adapter [ ^4 ]
+    IP_INTERFACE_INFO class >> _IP_INTERFACE_INFO_Size [ ^12 ]
+
     numAdapters [ ^self int32At: 1 ]
     numAdapters: v [ ^self uint32At: 1 put: v ]
     "adapter: Windows.Win32.NetworkManagement.IpHelper.IP_ADAPTER_INDEX_MAP[] at 4 — no accessor (width unknown); use byteAt: directly"

@@ -7,6 +7,9 @@ ExternalMemory subclass: HRESULT [
     byteSize [ ^4 ]
     HRESULT class >> new [ ^self new: 4 ]
 
+    HRESULT class >> _OffsetOf_Value [ ^0 ]
+    HRESULT class >> _HRESULT_Size [ ^4 ]
+
     value [ ^self int32At: 1 ]
     value: v [ ^self uint32At: 1 put: v ]
 ]

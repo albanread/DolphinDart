@@ -7,6 +7,12 @@ ExternalMemory subclass: DECIMAL [
     byteSize [ ^56 ]
     DECIMAL class >> new [ ^self new: 56 ]
 
+    DECIMAL class >> _OffsetOf_wReserved [ ^0 ]
+    DECIMAL class >> _OffsetOf_Anonymous1 [ ^8 ]
+    DECIMAL class >> _OffsetOf_Hi32 [ ^40 ]
+    DECIMAL class >> _OffsetOf_Anonymous2 [ ^48 ]
+    DECIMAL class >> _DECIMAL_Size [ ^56 ]
+
     wReserved [ ^self uint16At: 1 ]
     "anonymous1: _Anonymous1_e__Union at 8 — no accessor (width unknown); use byteAt: directly"
     hi32 [ ^self uint32At: 41 ]

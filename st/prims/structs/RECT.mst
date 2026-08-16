@@ -7,6 +7,12 @@ ExternalMemory subclass: RECT [
     byteSize [ ^16 ]
     RECT class >> new [ ^self new: 16 ]
 
+    RECT class >> _OffsetOf_left [ ^0 ]
+    RECT class >> _OffsetOf_top [ ^4 ]
+    RECT class >> _OffsetOf_right [ ^8 ]
+    RECT class >> _OffsetOf_bottom [ ^12 ]
+    RECT class >> _RECT_Size [ ^16 ]
+
     left [ ^self int32At: 1 ]
     left: v [ ^self uint32At: 1 put: v ]
     top [ ^self int32At: 5 ]

@@ -7,6 +7,10 @@ ExternalMemory subclass: MIB_UDPTABLE [
     byteSize [ ^12 ]
     MIB_UDPTABLE class >> new [ ^self new: 12 ]
 
+    MIB_UDPTABLE class >> _OffsetOf_dwNumEntries [ ^0 ]
+    MIB_UDPTABLE class >> _OffsetOf_table [ ^4 ]
+    MIB_UDPTABLE class >> _MIB_UDPTABLE_Size [ ^12 ]
+
     dwNumEntries [ ^self uint32At: 1 ]
     dwNumEntries: v [ ^self uint32At: 1 put: v ]
     "table: Windows.Win32.NetworkManagement.IpHelper.MIB_UDPROW[] at 4 — no accessor (width unknown); use byteAt: directly"

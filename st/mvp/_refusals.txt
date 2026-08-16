@@ -95,8 +95,13 @@ C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Graphics\Graphics.Image.cls:190:
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Graphics\Graphics.Image.cls:283: [cascade] cascade on a receiver this rewriter cannot bound — splitting it could change evaluation
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Graphics\Graphics.Image.cls:318: [hashhash] `##(self)` folded to a runtime block
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Graphics\Graphics.Image.cls:397: [cascade] cascade on a receiver this rewriter cannot bound — splitting it could change evaluation
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Graphics\Graphics.ImageList.cls:139: [cascade] cascade on a receiver this rewriter cannot bound — splitting it could change evaluation
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Graphics\Graphics.ImageList.cls:359: [hashhash] `##(self)` folded to a runtime block
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Graphics\Graphics.ImageList.cls:371: [cascade] cascade on a receiver this rewriter cannot bound — splitting it could change evaluation
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Graphics\Graphics.ImageManager.cls:152: [cascade] cascade on a receiver this rewriter cannot bound — splitting it could change evaluation
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Graphics\OS.SystemMetrics.cls:316: [hashhash] `##(#('Policy' 'intl' 'Environment' 'ImmersiveColorSet') asSet)` folded to a runtime block
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Graphics\OS.SystemMetrics.cls:392: [hashhash] `##(48 @ 48)` folded to a runtime block
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Models\List\UI.ListModel.cls:440: [cascade] cascade on a receiver this rewriter cannot bound — splitting it could change evaluation
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Models\Value\UI.ValueAdaptor.cls:59: [hashhash] `##(self)` folded to a runtime block
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Models\Value\UI.ValueAdaptor.cls:64: [cascade] cascade on a receiver this rewriter cannot bound — splitting it could change evaluation
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Models\Value\UI.ValueAspectAdaptor.cls:138: [cascade] cascade on a receiver this rewriter cannot bound — splitting it could change evaluation
@@ -105,6 +110,7 @@ C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Models\Value\UI.ValueHolder.cls:
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Models\Value\UI.ValueHolder.cls:47: [cascade] cascade on a receiver this rewriter cannot bound — splitting it could change evaluation
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Models\Value\UI.ValueModel.cls:132: [cascade] cascade on a receiver this rewriter cannot bound — splitting it could change evaluation
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Models\Value\UI.ValueModel.cls:140: [hashhash] `##(self)` folded to a runtime block
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Presenters\List\UI.ListControlView.cls:690: [hashhash] `##(self)` folded to a runtime block
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Presenters\Text\UI.TextEdit.cls:57: [pragma] unhandled pragma <commandQuery: #isTextModified>
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Presenters\Text\UI.TextEdit.cls:224: [pragma] unhandled pragma <commandQuery: #canCut>
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Presenters\Text\UI.TextEdit.cls:230: [pragma] unhandled pragma <commandQuery: #queryEditDelete:>
@@ -133,6 +139,46 @@ C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Presenters\Text\UI.TextPresenter
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Presenters\Text\UI.TextPresenter.cls:159: [binding-literal] `#{...}` variable-binding literal has no house equivalent
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Presenters\Text\UI.TextPresenter.cls:169: [binding-literal] `#{...}` variable-binding literal has no house equivalent
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Type Converters\UI.TypeConverter.cls:121: [hashhash] `##(self)` folded to a runtime block
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Common Controls\UI.IconicListAbstract.cls:50: [binding-literal] `#{...}` variable-binding literal has no house equivalent
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Common Controls\UI.IconicListAbstract.cls:87: [hashhash] `##(IdentityDictionary withAll: {
+								#noIcons -> #(#beNoIco)` folded to a runtime block
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Common Controls\UI.IconicListAbstract.cls:157: [hashhash] `##(200 @ 350)` folded to a runtime block
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Common Controls\UI.IconicListAbstract.cls:302: [pragma] unhandled pragma <commandQuery: #queryExtraLargeIconMode:>
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Common Controls\UI.IconicListAbstract.cls:433: [pragma] unhandled pragma <commandQuery: #queryLargeIconMode:>
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Common Controls\UI.IconicListAbstract.cls:439: [pragma] unhandled pragma <commandQuery: #queryMediumIconMode:>
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Common Controls\UI.IconicListAbstract.cls:445: [pragma] unhandled pragma <commandQuery: #queryMediumSmallIconMode:>
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Common Controls\UI.IconicListAbstract.cls:776: [pragma] unhandled pragma <commandQuery: #queryRenameIt:>
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Common Controls\UI.IconicListAbstract.cls:806: [pragma] unhandled pragma <commandQuery: #querySmallIconMode:>
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Common Controls\UI.IconicListAbstract.cls:833: [pragma] unhandled pragma <commandQuery: #queryThumbnailsMode:>
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Common Controls\UI.IconicListAbstract.cls:839: [pragma] unhandled pragma <commandQuery: #queryTileIconMode:>
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Common Controls\UI.IconicListAbstract.cls:864: [pragma] unhandled pragma <menuPopulator: #buildViewsPopup:>
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Common Controls\UI.IconicListAbstract.cls:1008: [cascade] cascade on a receiver this rewriter cannot bound — splitting it could change evaluation
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Common Controls\UI.IconicListAbstract.cls:1026: [cascade] cascade on a receiver this rewriter cannot bound — splitting it could change evaluation
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Common Controls\UI.ListView.cls:472: [hashhash] `##(32 | 16|1024)` folded to a runtime block
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Common Controls\UI.ListView.cls:478: [hashhash] `##(64 @ 64)` folded to a runtime block
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Common Controls\UI.ListView.cls:483: [hashhash] `##(0 | 64 | 8 | 4| 
+			4096	"This style is necessary for virtua)` folded to a runtime block
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Common Controls\UI.ListView.cls:586: [hashhash] `##((61440 lowBit - 1) negated)` folded to a runtime block
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Common Controls\UI.ListView.cls:595: [cascade] cascade on a receiver this rewriter cannot bound — splitting it could change evaluation
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Common Controls\UI.ListView.cls:1050: [pragma] unhandled pragma <commandQuery: #queryListMode:>
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Common Controls\UI.ListView.cls:1659: [hashhash] `##((Array new: -100 - -187 + 1 withAll: #nmDummy:)
+		at: -100 -)` folded to a runtime block
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Common Controls\UI.ListView.cls:1734: [qq] `??` with an unbounded left operand
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Common Controls\UI.ListView.cls:1976: [pragma] unhandled pragma <commandQuery: #queryReportMode:>
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Common Controls\UI.ListView.cls:2091: [cascade] cascade on a receiver this rewriter cannot bound — splitting it could change evaluation
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Common Controls\UI.ListView.cls:2611: [hashhash] `##(self)` folded to a runtime block
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Common Controls\UI.ListView.cls:2674: [cascade] cascade on a receiver this rewriter cannot bound — splitting it could change evaluation
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Common Controls\UI.TreeView.cls:298: [cascade] cascade on a receiver this rewriter cannot bound — splitting it could change evaluation
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Common Controls\UI.TreeView.cls:310: [cascade] cascade on a receiver this rewriter cannot bound — splitting it could change evaluation
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Common Controls\UI.TreeView.cls:570: [hashhash] `##(NMHDR byteSize)` folded to a runtime block
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Common Controls\UI.TreeView.cls:620: [hashhash] `##((Array new: -400 - -460 + 1 withAll: #nmDummy:)
+		at: -400 -)` folded to a runtime block
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Common Controls\UI.TreeView.cls:912: [cascade] cascade on a receiver this rewriter cannot bound — splitting it could change evaluation
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Common Controls\UI.TreeView.cls:1372: [hashhash] `##(self)` folded to a runtime block
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Common Controls\UI.TreeView.cls:1380: [cascade] cascade on a receiver this rewriter cannot bound — splitting it could change evaluation
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Common Controls\UI.TreeView.cls:1396: [cascade] cascade on a receiver this rewriter cannot bound — splitting it could change evaluation
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Common Controls\UI.TreeView.cls:1396: [hashhash] `##({ TreeViewDynamicUpdateMode. TreeViewStaticUpdateMode. TreeV)` folded to a runtime block
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Common Controls\UI.TreeView.cls:1396: [hashhash] `##(self indexOfInstVar: 'tvFlags')` folded to a runtime block
 loose:2633: [hashhash] `##(self defaultIcon)` folded to a runtime block
 Core.Error: [orphan-loose-methods] 1 loose method(s) filed onto 'Core.Error', which was not translated
 Core.MessageSend: [orphan-loose-methods] 1 loose method(s) filed onto 'Core.MessageSend', which was not translated

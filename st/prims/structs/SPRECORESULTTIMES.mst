@@ -7,6 +7,12 @@ ExternalMemory subclass: SPRECORESULTTIMES [
     byteSize [ ^32 ]
     SPRECORESULTTIMES class >> new [ ^self new: 32 ]
 
+    SPRECORESULTTIMES class >> _OffsetOf_ftStreamTime [ ^0 ]
+    SPRECORESULTTIMES class >> _OffsetOf_ullLength [ ^8 ]
+    SPRECORESULTTIMES class >> _OffsetOf_dwTickCount [ ^16 ]
+    SPRECORESULTTIMES class >> _OffsetOf_ullStart [ ^24 ]
+    SPRECORESULTTIMES class >> _SPRECORESULTTIMES_Size [ ^32 ]
+
     ftStreamTime [ ^FILETIME viewOn: self at: 0 size: 8 ]
     ullLength [ ^self intptrAt: 9 ]
     dwTickCount [ ^self uint32At: 17 ]

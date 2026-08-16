@@ -7,6 +7,11 @@ ExternalMemory subclass: SPEVENTSOURCEINFO [
     byteSize [ ^24 ]
     SPEVENTSOURCEINFO class >> new [ ^self new: 24 ]
 
+    SPEVENTSOURCEINFO class >> _OffsetOf_ullEventInterest [ ^0 ]
+    SPEVENTSOURCEINFO class >> _OffsetOf_ullQueuedInterest [ ^8 ]
+    SPEVENTSOURCEINFO class >> _OffsetOf_ulCount [ ^16 ]
+    SPEVENTSOURCEINFO class >> _SPEVENTSOURCEINFO_Size [ ^24 ]
+
     ullEventInterest [ ^self intptrAt: 1 ]
     ullQueuedInterest [ ^self intptrAt: 9 ]
     ulCount [ ^self uint32At: 17 ]

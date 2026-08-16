@@ -7,6 +7,14 @@ ExternalMemory subclass: WINDOWPLACEMENT [
     byteSize [ ^44 ]
     WINDOWPLACEMENT class >> new [ ^self new: 44 ]
 
+    WINDOWPLACEMENT class >> _OffsetOf_length [ ^0 ]
+    WINDOWPLACEMENT class >> _OffsetOf_flags [ ^4 ]
+    WINDOWPLACEMENT class >> _OffsetOf_showCmd [ ^8 ]
+    WINDOWPLACEMENT class >> _OffsetOf_ptMinPosition [ ^12 ]
+    WINDOWPLACEMENT class >> _OffsetOf_ptMaxPosition [ ^20 ]
+    WINDOWPLACEMENT class >> _OffsetOf_rcNormalPosition [ ^28 ]
+    WINDOWPLACEMENT class >> _WINDOWPLACEMENT_Size [ ^44 ]
+
     length [ ^self uint32At: 1 ]
     length: v [ ^self uint32At: 1 put: v ]
     "flags: Windows.Win32.UI.WindowsAndMessaging.WINDOWPLACEMENT_FLAGS at 4 — no accessor (width unknown); use byteAt: directly"

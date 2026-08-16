@@ -7,6 +7,10 @@ ExternalMemory subclass: SOCKADDR [
     byteSize [ ^10 ]
     SOCKADDR class >> new [ ^self new: 10 ]
 
+    SOCKADDR class >> _OffsetOf_sa_family [ ^0 ]
+    SOCKADDR class >> _OffsetOf_sa_data [ ^2 ]
+    SOCKADDR class >> _SOCKADDR_Size [ ^10 ]
+
     "sa_family: Windows.Win32.Networking.WinSock.ADDRESS_FAMILY at 0 — no accessor (width unknown); use byteAt: directly"
     "sa_data: Windows.Win32.Foundation.CHAR[] at 2 — no accessor (width unknown); use byteAt: directly"
 ]

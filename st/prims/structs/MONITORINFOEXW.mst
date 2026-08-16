@@ -7,6 +7,10 @@ ExternalMemory subclass: MONITORINFOEXW [
     byteSize [ ^48 ]
     MONITORINFOEXW class >> new [ ^self new: 48 ]
 
+    MONITORINFOEXW class >> _OffsetOf_monitorInfo [ ^0 ]
+    MONITORINFOEXW class >> _OffsetOf_szDevice [ ^40 ]
+    MONITORINFOEXW class >> _MONITORINFOEXW_Size [ ^48 ]
+
     monitorInfo [ ^MONITORINFO viewOn: self at: 0 size: 40 ]
     "szDevice: char[] at 40 — no accessor (width unknown); use byteAt: directly"
 ]

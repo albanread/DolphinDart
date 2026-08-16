@@ -7,6 +7,11 @@ ExternalMemory subclass: HTTP_RESPONSE_V2 [
     byteSize [ ^568 ]
     HTTP_RESPONSE_V2 class >> new [ ^self new: 568 ]
 
+    HTTP_RESPONSE_V2 class >> _OffsetOf_Base [ ^0 ]
+    HTTP_RESPONSE_V2 class >> _OffsetOf_ResponseInfoCount [ ^552 ]
+    HTTP_RESPONSE_V2 class >> _OffsetOf_pResponseInfo [ ^560 ]
+    HTTP_RESPONSE_V2 class >> _HTTP_RESPONSE_V2_Size [ ^568 ]
+
     base [ ^HTTP_RESPONSE_V1 viewOn: self at: 0 size: 552 ]
     responseInfoCount [ ^self uint16At: 553 ]
     "pResponseInfo: Windows.Win32.Networking.HttpServer.HTTP_RESPONSE_INFO* at 560 — no accessor (width unknown); use byteAt: directly"

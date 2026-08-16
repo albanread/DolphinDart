@@ -7,6 +7,12 @@ ExternalMemory subclass: DISPPARAMS [
     byteSize [ ^24 ]
     DISPPARAMS class >> new [ ^self new: 24 ]
 
+    DISPPARAMS class >> _OffsetOf_rgvarg [ ^0 ]
+    DISPPARAMS class >> _OffsetOf_rgdispidNamedArgs [ ^8 ]
+    DISPPARAMS class >> _OffsetOf_cArgs [ ^16 ]
+    DISPPARAMS class >> _OffsetOf_cNamedArgs [ ^20 ]
+    DISPPARAMS class >> _DISPPARAMS_Size [ ^24 ]
+
     "rgvarg: Windows.Win32.System.Variant.VARIANT* at 0 — no accessor (width unknown); use byteAt: directly"
     "rgdispidNamedArgs: i32* at 8 — no accessor (width unknown); use byteAt: directly"
     cArgs [ ^self uint32At: 17 ]

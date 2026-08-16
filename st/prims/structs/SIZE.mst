@@ -7,6 +7,10 @@ ExternalMemory subclass: SIZE [
     byteSize [ ^8 ]
     SIZE class >> new [ ^self new: 8 ]
 
+    SIZE class >> _OffsetOf_cx [ ^0 ]
+    SIZE class >> _OffsetOf_cy [ ^4 ]
+    SIZE class >> _SIZE_Size [ ^8 ]
+
     cx [ ^self int32At: 1 ]
     cx: v [ ^self uint32At: 1 put: v ]
     cy [ ^self int32At: 5 ]

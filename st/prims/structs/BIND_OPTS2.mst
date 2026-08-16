@@ -7,6 +7,13 @@ ExternalMemory subclass: BIND_OPTS2 [
     byteSize [ ^40 ]
     BIND_OPTS2 class >> new [ ^self new: 40 ]
 
+    BIND_OPTS2 class >> _OffsetOf_Base [ ^0 ]
+    BIND_OPTS2 class >> _OffsetOf_dwTrackFlags [ ^16 ]
+    BIND_OPTS2 class >> _OffsetOf_dwClassContext [ ^20 ]
+    BIND_OPTS2 class >> _OffsetOf_locale [ ^24 ]
+    BIND_OPTS2 class >> _OffsetOf_pServerInfo [ ^32 ]
+    BIND_OPTS2 class >> _BIND_OPTS2_Size [ ^40 ]
+
     base [ ^BIND_OPTS viewOn: self at: 0 size: 16 ]
     dwTrackFlags [ ^self uint32At: 17 ]
     dwTrackFlags: v [ ^self uint32At: 17 put: v ]

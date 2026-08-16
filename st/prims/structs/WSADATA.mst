@@ -7,6 +7,15 @@ ExternalMemory subclass: WSADATA [
     byteSize [ ^408 ]
     WSADATA class >> new [ ^self new: 408 ]
 
+    WSADATA class >> _OffsetOf_wVersion [ ^0 ]
+    WSADATA class >> _OffsetOf_wHighVersion [ ^2 ]
+    WSADATA class >> _OffsetOf_szDescription [ ^4 ]
+    WSADATA class >> _OffsetOf_szSystemStatus [ ^261 ]
+    WSADATA class >> _OffsetOf_iMaxSockets [ ^390 ]
+    WSADATA class >> _OffsetOf_iMaxUdpDg [ ^392 ]
+    WSADATA class >> _OffsetOf_lpVendorInfo [ ^400 ]
+    WSADATA class >> _WSADATA_Size [ ^408 ]
+
     wVersion [ ^self uint16At: 1 ]
     wHighVersion [ ^self uint16At: 3 ]
     "szDescription: Windows.Win32.Foundation.CHAR[] at 4 — no accessor (width unknown); use byteAt: directly"

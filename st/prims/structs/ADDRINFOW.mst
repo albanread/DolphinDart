@@ -7,6 +7,16 @@ ExternalMemory subclass: ADDRINFOW [
     byteSize [ ^48 ]
     ADDRINFOW class >> new [ ^self new: 48 ]
 
+    ADDRINFOW class >> _OffsetOf_ai_flags [ ^0 ]
+    ADDRINFOW class >> _OffsetOf_ai_family [ ^4 ]
+    ADDRINFOW class >> _OffsetOf_ai_socktype [ ^8 ]
+    ADDRINFOW class >> _OffsetOf_ai_protocol [ ^12 ]
+    ADDRINFOW class >> _OffsetOf_ai_addrlen [ ^16 ]
+    ADDRINFOW class >> _OffsetOf_ai_canonname [ ^24 ]
+    ADDRINFOW class >> _OffsetOf_ai_addr [ ^32 ]
+    ADDRINFOW class >> _OffsetOf_ai_next [ ^40 ]
+    ADDRINFOW class >> _ADDRINFOW_Size [ ^48 ]
+
     ai_flags [ ^self int32At: 1 ]
     ai_flags: v [ ^self uint32At: 1 put: v ]
     ai_family [ ^self int32At: 5 ]

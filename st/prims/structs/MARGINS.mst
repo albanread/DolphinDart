@@ -7,6 +7,12 @@ ExternalMemory subclass: MARGINS [
     byteSize [ ^16 ]
     MARGINS class >> new [ ^self new: 16 ]
 
+    MARGINS class >> _OffsetOf_cxLeftWidth [ ^0 ]
+    MARGINS class >> _OffsetOf_cxRightWidth [ ^4 ]
+    MARGINS class >> _OffsetOf_cyTopHeight [ ^8 ]
+    MARGINS class >> _OffsetOf_cyBottomHeight [ ^12 ]
+    MARGINS class >> _MARGINS_Size [ ^16 ]
+
     cxLeftWidth [ ^self int32At: 1 ]
     cxLeftWidth: v [ ^self uint32At: 1 put: v ]
     cxRightWidth [ ^self int32At: 5 ]

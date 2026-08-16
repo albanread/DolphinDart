@@ -7,6 +7,14 @@ ExternalMemory subclass: PAINTSTRUCT [
     byteSize [ ^44 ]
     PAINTSTRUCT class >> new [ ^self new: 44 ]
 
+    PAINTSTRUCT class >> _OffsetOf_hdc [ ^0 ]
+    PAINTSTRUCT class >> _OffsetOf_fErase [ ^8 ]
+    PAINTSTRUCT class >> _OffsetOf_rcPaint [ ^12 ]
+    PAINTSTRUCT class >> _OffsetOf_fRestore [ ^28 ]
+    PAINTSTRUCT class >> _OffsetOf_fIncUpdate [ ^32 ]
+    PAINTSTRUCT class >> _OffsetOf_rgbReserved [ ^36 ]
+    PAINTSTRUCT class >> _PAINTSTRUCT_Size [ ^44 ]
+
     hdc [ ^self intptrAt: 1 ]
     fErase [ ^self int32At: 9 ]
     fErase: v [ ^self uint32At: 9 put: v ]

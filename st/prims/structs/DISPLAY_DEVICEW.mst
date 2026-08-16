@@ -7,6 +7,14 @@ ExternalMemory subclass: DISPLAY_DEVICEW [
     byteSize [ ^592 ]
     DISPLAY_DEVICEW class >> new [ ^self new: 592 ]
 
+    DISPLAY_DEVICEW class >> _OffsetOf_cb [ ^0 ]
+    DISPLAY_DEVICEW class >> _OffsetOf_DeviceName [ ^4 ]
+    DISPLAY_DEVICEW class >> _OffsetOf_DeviceString [ ^68 ]
+    DISPLAY_DEVICEW class >> _OffsetOf_StateFlags [ ^324 ]
+    DISPLAY_DEVICEW class >> _OffsetOf_DeviceID [ ^328 ]
+    DISPLAY_DEVICEW class >> _OffsetOf_DeviceKey [ ^584 ]
+    DISPLAY_DEVICEW class >> _DISPLAY_DEVICEW_Size [ ^592 ]
+
     cb [ ^self uint32At: 1 ]
     cb: v [ ^self uint32At: 1 put: v ]
     "deviceName: char[] at 4 — no accessor (width unknown); use byteAt: directly"

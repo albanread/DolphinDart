@@ -7,6 +7,20 @@ ExternalMemory subclass: MENUITEMINFOW [
     byteSize [ ^80 ]
     MENUITEMINFOW class >> new [ ^self new: 80 ]
 
+    MENUITEMINFOW class >> _OffsetOf_cbSize [ ^0 ]
+    MENUITEMINFOW class >> _OffsetOf_fMask [ ^4 ]
+    MENUITEMINFOW class >> _OffsetOf_fType [ ^8 ]
+    MENUITEMINFOW class >> _OffsetOf_fState [ ^12 ]
+    MENUITEMINFOW class >> _OffsetOf_wID [ ^16 ]
+    MENUITEMINFOW class >> _OffsetOf_hSubMenu [ ^24 ]
+    MENUITEMINFOW class >> _OffsetOf_hbmpChecked [ ^32 ]
+    MENUITEMINFOW class >> _OffsetOf_hbmpUnchecked [ ^40 ]
+    MENUITEMINFOW class >> _OffsetOf_dwItemData [ ^48 ]
+    MENUITEMINFOW class >> _OffsetOf_dwTypeData [ ^56 ]
+    MENUITEMINFOW class >> _OffsetOf_cch [ ^64 ]
+    MENUITEMINFOW class >> _OffsetOf_hbmpItem [ ^72 ]
+    MENUITEMINFOW class >> _MENUITEMINFOW_Size [ ^80 ]
+
     cbSize [ ^self uint32At: 1 ]
     cbSize: v [ ^self uint32At: 1 put: v ]
     "fMask: Windows.Win32.UI.WindowsAndMessaging.MENU_ITEM_MASK at 4 — no accessor (width unknown); use byteAt: directly"

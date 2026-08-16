@@ -7,6 +7,14 @@ ExternalMemory subclass: VARDESC [
     byteSize [ ^60 ]
     VARDESC class >> new [ ^self new: 60 ]
 
+    VARDESC class >> _OffsetOf_memid [ ^0 ]
+    VARDESC class >> _OffsetOf_lpstrSchema [ ^8 ]
+    VARDESC class >> _OffsetOf_Anonymous [ ^16 ]
+    VARDESC class >> _OffsetOf_elemdescVar [ ^24 ]
+    VARDESC class >> _OffsetOf_wVarFlags [ ^48 ]
+    VARDESC class >> _OffsetOf_varkind [ ^52 ]
+    VARDESC class >> _VARDESC_Size [ ^60 ]
+
     memid [ ^self int32At: 1 ]
     memid: v [ ^self uint32At: 1 put: v ]
     lpstrSchema [ ^self intptrAt: 9 ]

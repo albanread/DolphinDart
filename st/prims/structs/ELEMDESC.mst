@@ -7,6 +7,10 @@ ExternalMemory subclass: ELEMDESC [
     byteSize [ ^24 ]
     ELEMDESC class >> new [ ^self new: 24 ]
 
+    ELEMDESC class >> _OffsetOf_tdesc [ ^0 ]
+    ELEMDESC class >> _OffsetOf_Anonymous [ ^16 ]
+    ELEMDESC class >> _ELEMDESC_Size [ ^24 ]
+
     tdesc [ ^TYPEDESC viewOn: self at: 0 size: 16 ]
     "anonymous: _Anonymous_e__Union at 16 — no accessor (width unknown); use byteAt: directly"
 ]

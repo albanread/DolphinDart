@@ -7,6 +7,10 @@ ExternalMemory subclass: MIB_IPNETTABLE [
     byteSize [ ^16 ]
     MIB_IPNETTABLE class >> new [ ^self new: 16 ]
 
+    MIB_IPNETTABLE class >> _OffsetOf_dwNumEntries [ ^0 ]
+    MIB_IPNETTABLE class >> _OffsetOf_table [ ^8 ]
+    MIB_IPNETTABLE class >> _MIB_IPNETTABLE_Size [ ^16 ]
+
     dwNumEntries [ ^self uint32At: 1 ]
     dwNumEntries: v [ ^self uint32At: 1 put: v ]
     "table: Windows.Win32.NetworkManagement.IpHelper.MIB_IPNETROW_LH[] at 8 — no accessor (width unknown); use byteAt: directly"

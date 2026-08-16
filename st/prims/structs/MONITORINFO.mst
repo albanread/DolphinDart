@@ -7,6 +7,12 @@ ExternalMemory subclass: MONITORINFO [
     byteSize [ ^40 ]
     MONITORINFO class >> new [ ^self new: 40 ]
 
+    MONITORINFO class >> _OffsetOf_cbSize [ ^0 ]
+    MONITORINFO class >> _OffsetOf_rcMonitor [ ^4 ]
+    MONITORINFO class >> _OffsetOf_rcWork [ ^20 ]
+    MONITORINFO class >> _OffsetOf_dwFlags [ ^36 ]
+    MONITORINFO class >> _MONITORINFO_Size [ ^40 ]
+
     cbSize [ ^self uint32At: 1 ]
     cbSize: v [ ^self uint32At: 1 put: v ]
     rcMonitor [ ^RECT viewOn: self at: 4 size: 16 ]

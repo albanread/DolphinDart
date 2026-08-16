@@ -7,6 +7,12 @@ ExternalMemory subclass: COSERVERINFO [
     byteSize [ ^32 ]
     COSERVERINFO class >> new [ ^self new: 32 ]
 
+    COSERVERINFO class >> _OffsetOf_dwReserved1 [ ^0 ]
+    COSERVERINFO class >> _OffsetOf_pwszName [ ^8 ]
+    COSERVERINFO class >> _OffsetOf_pAuthInfo [ ^16 ]
+    COSERVERINFO class >> _OffsetOf_dwReserved2 [ ^24 ]
+    COSERVERINFO class >> _COSERVERINFO_Size [ ^32 ]
+
     dwReserved1 [ ^self uint32At: 1 ]
     dwReserved1: v [ ^self uint32At: 1 put: v ]
     pwszName [ ^self intptrAt: 9 ]

@@ -7,6 +7,13 @@ ExternalMemory subclass: FLASHWINFO [
     byteSize [ ^32 ]
     FLASHWINFO class >> new [ ^self new: 32 ]
 
+    FLASHWINFO class >> _OffsetOf_cbSize [ ^0 ]
+    FLASHWINFO class >> _OffsetOf_hwnd [ ^8 ]
+    FLASHWINFO class >> _OffsetOf_dwFlags [ ^16 ]
+    FLASHWINFO class >> _OffsetOf_uCount [ ^20 ]
+    FLASHWINFO class >> _OffsetOf_dwTimeout [ ^24 ]
+    FLASHWINFO class >> _FLASHWINFO_Size [ ^32 ]
+
     cbSize [ ^self uint32At: 1 ]
     cbSize: v [ ^self uint32At: 1 put: v ]
     hwnd [ ^self intptrAt: 9 ]

@@ -7,6 +7,10 @@ ExternalMemory subclass: CADWORD [
     byteSize [ ^16 ]
     CADWORD class >> new [ ^self new: 16 ]
 
+    CADWORD class >> _OffsetOf_cElems [ ^0 ]
+    CADWORD class >> _OffsetOf_pElems [ ^8 ]
+    CADWORD class >> _CADWORD_Size [ ^16 ]
+
     cElems [ ^self uint32At: 1 ]
     cElems: v [ ^self uint32At: 1 put: v ]
     "pElems: u32* at 8 — no accessor (width unknown); use byteAt: directly"

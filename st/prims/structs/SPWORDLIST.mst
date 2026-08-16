@@ -7,6 +7,11 @@ ExternalMemory subclass: SPWORDLIST [
     byteSize [ ^24 ]
     SPWORDLIST class >> new [ ^self new: 24 ]
 
+    SPWORDLIST class >> _OffsetOf_ulSize [ ^0 ]
+    SPWORDLIST class >> _OffsetOf_pvBuffer [ ^8 ]
+    SPWORDLIST class >> _OffsetOf_pFirstWord [ ^16 ]
+    SPWORDLIST class >> _SPWORDLIST_Size [ ^24 ]
+
     ulSize [ ^self uint32At: 1 ]
     ulSize: v [ ^self uint32At: 1 put: v ]
     "pvBuffer: u8* at 8 — no accessor (width unknown); use byteAt: directly"

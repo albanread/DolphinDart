@@ -7,6 +7,11 @@ ExternalMemory subclass: LICINFO [
     byteSize [ ^12 ]
     LICINFO class >> new [ ^self new: 12 ]
 
+    LICINFO class >> _OffsetOf_cbLicInfo [ ^0 ]
+    LICINFO class >> _OffsetOf_fRuntimeKeyAvail [ ^4 ]
+    LICINFO class >> _OffsetOf_fLicVerified [ ^8 ]
+    LICINFO class >> _LICINFO_Size [ ^12 ]
+
     cbLicInfo [ ^self int32At: 1 ]
     cbLicInfo: v [ ^self uint32At: 1 put: v ]
     fRuntimeKeyAvail [ ^self int32At: 5 ]

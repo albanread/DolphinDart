@@ -7,6 +7,12 @@ ExternalMemory subclass: SPPROPERTYINFO [
     byteSize [ ^32 ]
     SPPROPERTYINFO class >> new [ ^self new: 32 ]
 
+    SPPROPERTYINFO class >> _OffsetOf_pszName [ ^0 ]
+    SPPROPERTYINFO class >> _OffsetOf_ulId [ ^8 ]
+    SPPROPERTYINFO class >> _OffsetOf_pszValue [ ^16 ]
+    SPPROPERTYINFO class >> _OffsetOf_vValue [ ^24 ]
+    SPPROPERTYINFO class >> _SPPROPERTYINFO_Size [ ^32 ]
+
     pszName [ ^self intptrAt: 1 ]
     ulId [ ^self uint32At: 9 ]
     ulId: v [ ^self uint32At: 9 put: v ]

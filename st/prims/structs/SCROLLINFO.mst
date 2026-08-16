@@ -7,6 +7,15 @@ ExternalMemory subclass: SCROLLINFO [
     byteSize [ ^28 ]
     SCROLLINFO class >> new [ ^self new: 28 ]
 
+    SCROLLINFO class >> _OffsetOf_cbSize [ ^0 ]
+    SCROLLINFO class >> _OffsetOf_fMask [ ^4 ]
+    SCROLLINFO class >> _OffsetOf_nMin [ ^8 ]
+    SCROLLINFO class >> _OffsetOf_nMax [ ^12 ]
+    SCROLLINFO class >> _OffsetOf_nPage [ ^16 ]
+    SCROLLINFO class >> _OffsetOf_nPos [ ^20 ]
+    SCROLLINFO class >> _OffsetOf_nTrackPos [ ^24 ]
+    SCROLLINFO class >> _SCROLLINFO_Size [ ^28 ]
+
     cbSize [ ^self uint32At: 1 ]
     cbSize: v [ ^self uint32At: 1 put: v ]
     "fMask: Windows.Win32.UI.WindowsAndMessaging.SCROLLINFO_MASK at 4 — no accessor (width unknown); use byteAt: directly"

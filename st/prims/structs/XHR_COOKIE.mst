@@ -7,6 +7,14 @@ ExternalMemory subclass: XHR_COOKIE [
     byteSize [ ^48 ]
     XHR_COOKIE class >> new [ ^self new: 48 ]
 
+    XHR_COOKIE class >> _OffsetOf_pwszUrl [ ^0 ]
+    XHR_COOKIE class >> _OffsetOf_pwszName [ ^8 ]
+    XHR_COOKIE class >> _OffsetOf_pwszValue [ ^16 ]
+    XHR_COOKIE class >> _OffsetOf_pwszP3PPolicy [ ^24 ]
+    XHR_COOKIE class >> _OffsetOf_ftExpires [ ^32 ]
+    XHR_COOKIE class >> _OffsetOf_dwFlags [ ^40 ]
+    XHR_COOKIE class >> _XHR_COOKIE_Size [ ^48 ]
+
     pwszUrl [ ^self intptrAt: 1 ]
     pwszName [ ^self intptrAt: 9 ]
     pwszValue [ ^self intptrAt: 17 ]

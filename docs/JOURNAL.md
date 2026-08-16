@@ -199,3 +199,66 @@ translated but the erase path wants a Canvas built from a DC, which is the
 next piece — so a view's `backcolor` is still not honoured when erasing.
 `Cursor` likewise: Dolphin's own is translated but the compat one still
 shadows it, and that swap needs the same care the font swap did.
+
+## DD11 — common controls: translated and loading; the gate is WIP
+
+`UI.ListControlView`, `UI.IconicListAbstract`, `UI.ListView`, `UI.TreeView`,
+`UI.ListModel`, `Graphics.ImageList`, `ImageManager`, `IconImageManager` all
+translate and load. 21/22 — everything green except `st_controls`, which is
+the new gate and not yet passing.
+
+**`InitCommonControlsEx` is in the door**, on the class-registration path
+(`EnsureTopClass`), which is the DD11 brief's named trap. The first control
+CREATED decides whether the whole comctl32 wave works, and a lazily-hit call
+can land on the wrong thread or after the fact. Without it `CreateWindowExW`
+for `SysListView32` fails with ERROR_CANNOT_FIND_WND_CLASS — a plain creation
+failure with nothing in it to say a registration step was missed.
+
+### Two translator defects, both of which took a class file down at load
+
+**A qualified constant that could not be folded was left as `Owner.NAME`,
+which is a SYNTAX ERROR.** `UI.IconicListAbstract` reads
+`NMCUSTOMDRAW._OffsetOf_dwDrawStage`, and those constants live in a struct
+`.cls` this pipeline does not parse — the structs come from winkb. It now
+rewrites to the SEND `Owner NAME`, the same choice and reasoning as the
+class-variable rewrite: a doesNotUnderstand at the call is loud and locatable
+where a parse error is neither. `genstructs` emits `_OffsetOf_<field>`
+class-side for every generated struct so these resolve, ZERO-BASED to match
+Dolphin (the accessors add 1 for this dialect's indexing; emitting the
+1-based number would be off by one everywhere, silently).
+
+**That fix immediately over-fired.** `External.FunctionDescriptor` matches the
+same pattern and is a NAMESPACED CLASS NAME, not a constant — rewriting it to
+`External FunctionDescriptor` made `Menu class >> initialize` send to a nil
+`External`, and `st_dolphinview` caught it on the next sweep. The
+discriminator is the one this file already documented: a constant starts with
+`_` or is SHOUT_CASE; a class name is CamelCase.
+
+### The pools, again
+
+`TreeView>>defaultWindowStyle` failed with *"the method `|` was called on
+null"* — an unfolded `TVS_*` constant reaching a `bitOr:`. `OS.TreeViewConstants`
+and `OS.ListViewConstants` live in `MVP/Views/Common Controls`, which was not
+in REFERENCES. **This is the fourth time an unfolded pool constant has cost a
+debugging session**, and it always presents the same way: a nil inside an
+arithmetic or bitwise send, never a refusal.
+
+### OPEN — a VM assertion, and it blocks the gate
+
+```
+assembler_arm64.cc: 377: error: expected: object.IsOld()
+  dart::Assembler::CanLoadFromObjectPool
+  dart::Assembler::LoadObjectHelper
+  dart::CompileFunctionHelper / DRT_CompileFunction
+```
+
+Compiling something in the newly-translated control wave embeds a NEW-SPACE
+object in the generated code's object pool, which the ARM64 assembler asserts
+against. Same family as the DD9 `Field::IsOriginal` crash that needed the
+field cloned under background compilation — an object that must be old-space
+to be referenced from code.
+
+**This is the next thing.** It is a VM-level fix, not a translation one, and
+it wants a fresh session rather than the tail of a long one: the honest next
+step is to find which literal is being embedded (the object pool entry names
+it) rather than guess at the wave.

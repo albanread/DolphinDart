@@ -7,5 +7,8 @@ ExternalMemory subclass: HTTP_LOG_DATA [
     byteSize [ ^8 ]
     HTTP_LOG_DATA class >> new [ ^self new: 8 ]
 
+    HTTP_LOG_DATA class >> _OffsetOf_Type [ ^0 ]
+    HTTP_LOG_DATA class >> _HTTP_LOG_DATA_Size [ ^8 ]
+
     "type: Windows.Win32.Networking.HttpServer.HTTP_LOG_DATA_TYPE at 0 — no accessor (width unknown); use byteAt: directly"
 ]

@@ -7,6 +7,11 @@ ExternalMemory subclass: CATEGORYINFO [
     byteSize [ ^20 ]
     CATEGORYINFO class >> new [ ^self new: 20 ]
 
+    CATEGORYINFO class >> _OffsetOf_catid [ ^0 ]
+    CATEGORYINFO class >> _OffsetOf_lcid [ ^8 ]
+    CATEGORYINFO class >> _OffsetOf_szDescription [ ^12 ]
+    CATEGORYINFO class >> _CATEGORYINFO_Size [ ^20 ]
+
     "catid: System.Guid at 0 — no accessor (width unknown); use byteAt: directly"
     lcid [ ^self uint32At: 9 ]
     lcid: v [ ^self uint32At: 9 put: v ]

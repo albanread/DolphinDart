@@ -7,6 +7,20 @@ ExternalMemory subclass: FUNCDESC [
     byteSize [ ^80 ]
     FUNCDESC class >> new [ ^self new: 80 ]
 
+    FUNCDESC class >> _OffsetOf_memid [ ^0 ]
+    FUNCDESC class >> _OffsetOf_lprgscode [ ^8 ]
+    FUNCDESC class >> _OffsetOf_lprgelemdescParam [ ^16 ]
+    FUNCDESC class >> _OffsetOf_funckind [ ^24 ]
+    FUNCDESC class >> _OffsetOf_invkind [ ^28 ]
+    FUNCDESC class >> _OffsetOf_callconv [ ^32 ]
+    FUNCDESC class >> _OffsetOf_cParams [ ^36 ]
+    FUNCDESC class >> _OffsetOf_cParamsOpt [ ^38 ]
+    FUNCDESC class >> _OffsetOf_oVft [ ^40 ]
+    FUNCDESC class >> _OffsetOf_cScodes [ ^42 ]
+    FUNCDESC class >> _OffsetOf_elemdescFunc [ ^48 ]
+    FUNCDESC class >> _OffsetOf_wFuncFlags [ ^72 ]
+    FUNCDESC class >> _FUNCDESC_Size [ ^80 ]
+
     memid [ ^self int32At: 1 ]
     memid: v [ ^self uint32At: 1 put: v ]
     "lprgscode: i32* at 8 — no accessor (width unknown); use byteAt: directly"

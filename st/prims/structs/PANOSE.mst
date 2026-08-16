@@ -7,6 +7,18 @@ ExternalMemory subclass: PANOSE [
     byteSize [ ^17 ]
     PANOSE class >> new [ ^self new: 17 ]
 
+    PANOSE class >> _OffsetOf_bFamilyType [ ^0 ]
+    PANOSE class >> _OffsetOf_bSerifStyle [ ^1 ]
+    PANOSE class >> _OffsetOf_bWeight [ ^2 ]
+    PANOSE class >> _OffsetOf_bProportion [ ^3 ]
+    PANOSE class >> _OffsetOf_bContrast [ ^4 ]
+    PANOSE class >> _OffsetOf_bStrokeVariation [ ^5 ]
+    PANOSE class >> _OffsetOf_bArmStyle [ ^6 ]
+    PANOSE class >> _OffsetOf_bLetterform [ ^7 ]
+    PANOSE class >> _OffsetOf_bMidline [ ^8 ]
+    PANOSE class >> _OffsetOf_bXHeight [ ^9 ]
+    PANOSE class >> _PANOSE_Size [ ^17 ]
+
     "bFamilyType: Windows.Win32.Graphics.Gdi.PAN_FAMILY_TYPE at 0 — no accessor (width unknown); use byteAt: directly"
     "bSerifStyle: Windows.Win32.Graphics.Gdi.PAN_SERIF_STYLE at 1 — no accessor (width unknown); use byteAt: directly"
     "bWeight: Windows.Win32.Graphics.Gdi.PAN_WEIGHT at 2 — no accessor (width unknown); use byteAt: directly"

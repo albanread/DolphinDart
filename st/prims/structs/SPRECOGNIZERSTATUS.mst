@@ -7,6 +7,16 @@ ExternalMemory subclass: SPRECOGNIZERSTATUS [
     byteSize [ ^120 ]
     SPRECOGNIZERSTATUS class >> new [ ^self new: 120 ]
 
+    SPRECOGNIZERSTATUS class >> _OffsetOf_AudioStatus [ ^0 ]
+    SPRECOGNIZERSTATUS class >> _OffsetOf_ullRecognitionStreamPos [ ^40 ]
+    SPRECOGNIZERSTATUS class >> _OffsetOf_ulStreamNumber [ ^48 ]
+    SPRECOGNIZERSTATUS class >> _OffsetOf_ulNumActive [ ^52 ]
+    SPRECOGNIZERSTATUS class >> _OffsetOf_clsidEngine [ ^56 ]
+    SPRECOGNIZERSTATUS class >> _OffsetOf_cLangIDs [ ^64 ]
+    SPRECOGNIZERSTATUS class >> _OffsetOf_aLangID [ ^68 ]
+    SPRECOGNIZERSTATUS class >> _OffsetOf_ullRecognitionStreamTime [ ^112 ]
+    SPRECOGNIZERSTATUS class >> _SPRECOGNIZERSTATUS_Size [ ^120 ]
+
     audioStatus [ ^SPAUDIOSTATUS viewOn: self at: 0 size: 40 ]
     ullRecognitionStreamPos [ ^self intptrAt: 41 ]
     ulStreamNumber [ ^self uint32At: 49 ]

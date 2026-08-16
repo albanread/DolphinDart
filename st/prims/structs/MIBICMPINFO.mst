@@ -7,6 +7,10 @@ ExternalMemory subclass: MIBICMPINFO [
     byteSize [ ^104 ]
     MIBICMPINFO class >> new [ ^self new: 104 ]
 
+    MIBICMPINFO class >> _OffsetOf_icmpInStats [ ^0 ]
+    MIBICMPINFO class >> _OffsetOf_icmpOutStats [ ^52 ]
+    MIBICMPINFO class >> _MIBICMPINFO_Size [ ^104 ]
+
     icmpInStats [ ^MIBICMPSTATS viewOn: self at: 0 size: 52 ]
     icmpOutStats [ ^MIBICMPSTATS viewOn: self at: 52 size: 52 ]
 ]

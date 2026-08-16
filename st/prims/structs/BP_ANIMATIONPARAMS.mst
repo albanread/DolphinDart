@@ -7,6 +7,12 @@ ExternalMemory subclass: BP_ANIMATIONPARAMS [
     byteSize [ ^16 ]
     BP_ANIMATIONPARAMS class >> new [ ^self new: 16 ]
 
+    BP_ANIMATIONPARAMS class >> _OffsetOf_cbSize [ ^0 ]
+    BP_ANIMATIONPARAMS class >> _OffsetOf_dwFlags [ ^4 ]
+    BP_ANIMATIONPARAMS class >> _OffsetOf_style [ ^8 ]
+    BP_ANIMATIONPARAMS class >> _OffsetOf_dwDuration [ ^12 ]
+    BP_ANIMATIONPARAMS class >> _BP_ANIMATIONPARAMS_Size [ ^16 ]
+
     cbSize [ ^self uint32At: 1 ]
     cbSize: v [ ^self uint32At: 1 put: v ]
     dwFlags [ ^self uint32At: 5 ]

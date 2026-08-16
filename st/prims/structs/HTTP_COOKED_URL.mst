@@ -7,6 +7,16 @@ ExternalMemory subclass: HTTP_COOKED_URL [
     byteSize [ ^40 ]
     HTTP_COOKED_URL class >> new [ ^self new: 40 ]
 
+    HTTP_COOKED_URL class >> _OffsetOf_FullUrlLength [ ^0 ]
+    HTTP_COOKED_URL class >> _OffsetOf_HostLength [ ^2 ]
+    HTTP_COOKED_URL class >> _OffsetOf_AbsPathLength [ ^4 ]
+    HTTP_COOKED_URL class >> _OffsetOf_QueryStringLength [ ^6 ]
+    HTTP_COOKED_URL class >> _OffsetOf_pFullUrl [ ^8 ]
+    HTTP_COOKED_URL class >> _OffsetOf_pHost [ ^16 ]
+    HTTP_COOKED_URL class >> _OffsetOf_pAbsPath [ ^24 ]
+    HTTP_COOKED_URL class >> _OffsetOf_pQueryString [ ^32 ]
+    HTTP_COOKED_URL class >> _HTTP_COOKED_URL_Size [ ^40 ]
+
     fullUrlLength [ ^self uint16At: 1 ]
     hostLength [ ^self uint16At: 3 ]
     absPathLength [ ^self uint16At: 5 ]

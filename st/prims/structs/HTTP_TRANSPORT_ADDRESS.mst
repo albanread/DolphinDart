@@ -7,6 +7,10 @@ ExternalMemory subclass: HTTP_TRANSPORT_ADDRESS [
     byteSize [ ^16 ]
     HTTP_TRANSPORT_ADDRESS class >> new [ ^self new: 16 ]
 
+    HTTP_TRANSPORT_ADDRESS class >> _OffsetOf_pRemoteAddress [ ^0 ]
+    HTTP_TRANSPORT_ADDRESS class >> _OffsetOf_pLocalAddress [ ^8 ]
+    HTTP_TRANSPORT_ADDRESS class >> _HTTP_TRANSPORT_ADDRESS_Size [ ^16 ]
+
     "pRemoteAddress: Windows.Win32.Networking.WinSock.SOCKADDR* at 0 — no accessor (width unknown); use byteAt: directly"
     "pLocalAddress: Windows.Win32.Networking.WinSock.SOCKADDR* at 8 — no accessor (width unknown); use byteAt: directly"
 ]

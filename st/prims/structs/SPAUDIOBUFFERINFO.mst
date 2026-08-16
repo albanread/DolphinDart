@@ -7,6 +7,11 @@ ExternalMemory subclass: SPAUDIOBUFFERINFO [
     byteSize [ ^12 ]
     SPAUDIOBUFFERINFO class >> new [ ^self new: 12 ]
 
+    SPAUDIOBUFFERINFO class >> _OffsetOf_ulMsMinNotification [ ^0 ]
+    SPAUDIOBUFFERINFO class >> _OffsetOf_ulMsBufferSize [ ^4 ]
+    SPAUDIOBUFFERINFO class >> _OffsetOf_ulMsEventBias [ ^8 ]
+    SPAUDIOBUFFERINFO class >> _SPAUDIOBUFFERINFO_Size [ ^12 ]
+
     ulMsMinNotification [ ^self uint32At: 1 ]
     ulMsMinNotification: v [ ^self uint32At: 1 put: v ]
     ulMsBufferSize [ ^self uint32At: 5 ]

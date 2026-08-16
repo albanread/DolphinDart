@@ -7,6 +7,15 @@ ExternalMemory subclass: TIME_ZONE_INFORMATION [
     byteSize [ ^172 ]
     TIME_ZONE_INFORMATION class >> new [ ^self new: 172 ]
 
+    TIME_ZONE_INFORMATION class >> _OffsetOf_Bias [ ^0 ]
+    TIME_ZONE_INFORMATION class >> _OffsetOf_StandardName [ ^4 ]
+    TIME_ZONE_INFORMATION class >> _OffsetOf_StandardDate [ ^68 ]
+    TIME_ZONE_INFORMATION class >> _OffsetOf_StandardBias [ ^84 ]
+    TIME_ZONE_INFORMATION class >> _OffsetOf_DaylightName [ ^88 ]
+    TIME_ZONE_INFORMATION class >> _OffsetOf_DaylightDate [ ^152 ]
+    TIME_ZONE_INFORMATION class >> _OffsetOf_DaylightBias [ ^168 ]
+    TIME_ZONE_INFORMATION class >> _TIME_ZONE_INFORMATION_Size [ ^172 ]
+
     bias [ ^self int32At: 1 ]
     bias: v [ ^self uint32At: 1 put: v ]
     "standardName: char[] at 4 — no accessor (width unknown); use byteAt: directly"

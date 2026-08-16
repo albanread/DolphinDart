@@ -7,6 +7,9 @@ ExternalMemory subclass: SPBINARYGRAMMAR [
     byteSize [ ^4 ]
     SPBINARYGRAMMAR class >> new [ ^self new: 4 ]
 
+    SPBINARYGRAMMAR class >> _OffsetOf_ulTotalSerializedSize [ ^0 ]
+    SPBINARYGRAMMAR class >> _SPBINARYGRAMMAR_Size [ ^4 ]
+
     ulTotalSerializedSize [ ^self uint32At: 1 ]
     ulTotalSerializedSize: v [ ^self uint32At: 1 put: v ]
 ]

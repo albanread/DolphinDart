@@ -7,6 +7,10 @@ ExternalMemory subclass: BITMAPINFO [
     byteSize [ ^48 ]
     BITMAPINFO class >> new [ ^self new: 48 ]
 
+    BITMAPINFO class >> _OffsetOf_bmiHeader [ ^0 ]
+    BITMAPINFO class >> _OffsetOf_bmiColors [ ^40 ]
+    BITMAPINFO class >> _BITMAPINFO_Size [ ^48 ]
+
     bmiHeader [ ^BITMAPINFOHEADER viewOn: self at: 0 size: 40 ]
     "bmiColors: Windows.Win32.Graphics.Gdi.RGBQUAD[] at 40 — no accessor (width unknown); use byteAt: directly"
 ]

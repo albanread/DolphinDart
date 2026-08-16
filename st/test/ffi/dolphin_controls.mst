@@ -1,0 +1,60 @@
+"dolphin_controls.mst — Dolphin's OWN comctl32 controls (DolphinDart DD11).
+
+ A shell owning a real `SysTreeView32` and a real `SysListView32`, both
+ created by Dolphin's `View>>create` and subclassed by its own
+ `ControlView>>subclassWindow` — the same substrate `UI.TextEdit` uses, which
+ is the point: an EDIT control and a ListView differ only in which class
+ comctl registered, not in how Dolphin gets into their message stream.
+
+ THE PREREQUISITE IS IN THE DOOR, not here. `InitCommonControlsEx` runs on
+ the class-registration path (`EnsureTopClass`), because the first control
+ CREATED decides whether the whole wave works and a lazily-hit call can land
+ on the wrong thread. Without it CreateWindowExW for SysListView32 fails with
+ ERROR_CANNOT_FIND_WND_CLASS — a plain creation failure with nothing to say
+ that a registration step was missed.
+
+ The gate asks WINDOWS for each control's class name rather than trusting the
+ Smalltalk class: a control that quietly fell back to the door's own window
+ class would satisfy every other assertion."
+ShellView subclass: ControlsShell [
+    | tree list |
+
+    tree [ ^tree ]
+    list [ ^list ]
+
+    ControlsShell class >> routeDolphinMessages [ ^UiSession routeMessagesFrom: View ]
+
+    build [
+        tree := self makeControl: TreeView.
+        list := self makeControl: ListView.
+        self layoutManager: (BorderLayout new
+            west: tree;
+            center: list;
+            yourself).
+        ^self
+    ]
+
+    "Same three sends as every other sub-view in this port. `addSubView:` is
+     what realizes it — and for a common control that is also where the
+     subclassing happens, through `ControlView>>basicCreateWindow:`."
+    makeControl: aViewClass [
+        | v |
+        v := aViewClass new.
+        v parentView: self.
+        v preferredExtent: 180 @ 200.
+        v usePreferredExtent: true.
+        self addSubView: v.
+        ^v
+    ]
+
+    "Windows' answer, not ours."
+    classNameOf: aView [ ^User32 getClassName: aView handle ]
+
+    "Did Dolphin's own subclassing run on a COMMON control? `oldWndProc` is
+     comctl's procedure, saved by `ControlView>>subclassWindow`; the procedure
+     now installed should be the door's trampoline."
+    isSubclassed: aView [
+        ^aView oldWndProc notNil
+            and: [ (User32 getWindowLongPtr: aView handle nIndex: -4) = VM getWndProc ]
+    ]
+]

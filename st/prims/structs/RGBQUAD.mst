@@ -7,6 +7,12 @@ ExternalMemory subclass: RGBQUAD [
     byteSize [ ^4 ]
     RGBQUAD class >> new [ ^self new: 4 ]
 
+    RGBQUAD class >> _OffsetOf_rgbBlue [ ^0 ]
+    RGBQUAD class >> _OffsetOf_rgbGreen [ ^1 ]
+    RGBQUAD class >> _OffsetOf_rgbRed [ ^2 ]
+    RGBQUAD class >> _OffsetOf_rgbReserved [ ^3 ]
+    RGBQUAD class >> _RGBQUAD_Size [ ^4 ]
+
     rgbBlue [ ^self byteAt: 1 ]
     rgbGreen [ ^self byteAt: 2 ]
     rgbRed [ ^self byteAt: 3 ]

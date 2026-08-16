@@ -7,6 +7,9 @@ ExternalMemory subclass: SPSERIALIZEDRESULT [
     byteSize [ ^4 ]
     SPSERIALIZEDRESULT class >> new [ ^self new: 4 ]
 
+    SPSERIALIZEDRESULT class >> _OffsetOf_ulSerializedSize [ ^0 ]
+    SPSERIALIZEDRESULT class >> _SPSERIALIZEDRESULT_Size [ ^4 ]
+
     ulSerializedSize [ ^self uint32At: 1 ]
     ulSerializedSize: v [ ^self uint32At: 1 put: v ]
 ]

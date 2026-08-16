@@ -7,6 +7,9 @@ ExternalMemory subclass: COLORREF [
     byteSize [ ^4 ]
     COLORREF class >> new [ ^self new: 4 ]
 
+    COLORREF class >> _OffsetOf_Value [ ^0 ]
+    COLORREF class >> _COLORREF_Size [ ^4 ]
+
     value [ ^self uint32At: 1 ]
     value: v [ ^self uint32At: 1 put: v ]
 ]

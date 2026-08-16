@@ -7,6 +7,12 @@ ExternalMemory subclass: PALETTEENTRY [
     byteSize [ ^4 ]
     PALETTEENTRY class >> new [ ^self new: 4 ]
 
+    PALETTEENTRY class >> _OffsetOf_peRed [ ^0 ]
+    PALETTEENTRY class >> _OffsetOf_peGreen [ ^1 ]
+    PALETTEENTRY class >> _OffsetOf_peBlue [ ^2 ]
+    PALETTEENTRY class >> _OffsetOf_peFlags [ ^3 ]
+    PALETTEENTRY class >> _PALETTEENTRY_Size [ ^4 ]
+
     peRed [ ^self byteAt: 1 ]
     peGreen [ ^self byteAt: 2 ]
     peBlue [ ^self byteAt: 3 ]

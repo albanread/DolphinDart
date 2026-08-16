@@ -7,6 +7,10 @@ ExternalMemory subclass: IDLDESC [
     byteSize [ ^16 ]
     IDLDESC class >> new [ ^self new: 16 ]
 
+    IDLDESC class >> _OffsetOf_dwReserved [ ^0 ]
+    IDLDESC class >> _OffsetOf_wIDLFlags [ ^8 ]
+    IDLDESC class >> _IDLDESC_Size [ ^16 ]
+
     dwReserved [ ^self intptrAt: 1 ]
     "wIDLFlags: Windows.Win32.System.Com.IDLFLAGS at 8 — no accessor (width unknown); use byteAt: directly"
 ]
