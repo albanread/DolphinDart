@@ -2216,4 +2216,19 @@ IconicListAbstract subclass: ListView [
         "Private - Answer the name of the Windows window class to use when realizing the receiver."
         ^'SysListView32'
     ]
+    ListView class >> initializeClassConstants [
+        "Private - Assign the `classConstants:` entries whose values are expressions. GENERATED: Dolphin holds these in its image, so no source assigns them and every read was a nil."
+        LvModes := (IdentityDictionary withAll: {
+        								#extraLargeIcons -> 16r0.
+        								#largeIcons -> 16r0.
+        								#list -> 16r3.
+        								#report -> 16r1.
+        								#smallIcons -> 16r2.
+        								#thumbnails -> 16r0.
+        								#tileIcons -> 16r0
+        							}).
+        ^self
+    ]
 ]
+
+ListView initializeClassConstants.

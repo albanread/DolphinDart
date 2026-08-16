@@ -13,7 +13,8 @@ ExternalMemory subclass: SPRECOCONTEXTSTATUS [
     SPRECOCONTEXTSTATUS class >> _OffsetOf_dwReserved2 [ ^520 ]
     SPRECOCONTEXTSTATUS class >> _SPRECOCONTEXTSTATUS_Size [ ^524 ]
 
-    "eInterference: Windows.Win32.Media.Speech.SPINTERFERENCE at 0 — no accessor (width unknown); use byteAt: directly"
+    eInterference [ ^self uint32At: 1 ]
+    eInterference: v [ ^self uint32At: 1 put: v ]
     "szRequestTypeOfUI: char[] at 4 — no accessor (width unknown); use byteAt: directly"
     dwReserved1 [ ^self uint32At: 517 ]
     dwReserved1: v [ ^self uint32At: 517 put: v ]

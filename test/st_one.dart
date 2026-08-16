@@ -1,16 +1,32 @@
-// Boot the world, then run ONE BenchmarkDashboard selector N times — for
-// isolating a single workload under VM tracing (deopt / compile).
-//   dart.exe [--trace_deoptimization] st_one.dart <world-dir> <benchSel> <N>
 import 'dart:cocoa';
 import 'dart:io';
-
-main(List<String> args) {
-  var dir = args[0], sel = args[1];
-  var n = args.length > 2 ? int.parse(args[2]) : 30;
-  var files = new Directory(dir).listSync()
-      .map((e) => e.path).where((p) => p.endsWith('.mst')).toList()..sort();
-  for (var p in files) { stRun(new File(p).readAsStringSync()); }
-  stderr.writeln('booted; running $sel x$n');
-  for (var i = 0; i < n; i++) { stRun("BenchmarkDashboard $sel."); }
-  stderr.writeln('done $sel');
+List<String> mstIn(String d) => new Directory(d)
+    .listSync().map((e) => e.path).where((p) => p.endsWith('.mst')).toList()..sort();
+int _seq = 0;
+String ev(String expr) {
+  var cls = 'QQ' + (_seq++).toString();
+  var r = stRun('Object subclass: ' + cls + ' [ ' + cls + ' class >> v [ ' +
+      '^[ (' + expr + ') printString ] on: Error do: [ :e | ' +
+      "'RAISED: ', e class name, ': ', e messageText ] ] ]");
+  if (r.toString().startsWith('ERR')) return 'NOCOMPILE: ' + r.toString();
+  try { return stClassSend0(stClassNamed(cls), 'v').toString(); }
+  catch (e) { return 'THREW: ' + e.toString(); }
+}
+main(List<String> a) {
+  for (var g in a) { for (var d in g.split(';')) {
+    d = d.trim(); if (d.isEmpty) continue;
+    var files = d.endsWith('.mst') ? [d] : mstIn(d);
+    for (var f in files) {
+      var r = stRun(new File(f).readAsStringSync());
+      if (r.toString().startsWith('ERR')) print('LOAD FAIL ' + f + ': ' + r.toString());
+    } } }
+  stRun(new File('st/test/ffi/dolphin_controls.mst').readAsStringSync());
+  print('  initViewClasses -> ' + ev('DolphinBoot initializeViewClasses'));
+  print('  NextId after init  -> ' + ev('View classVarNextId'));
+  stRun('UiSession startUp.');
+  stRun('CShell := ControlsShell new.'); stRun('CShell create.');
+  stRun('Object subclass: Raw [ Raw class >> go [ ^CShell build ] ]');
+  try { stClassSend0(stClassNamed('Raw'), 'go'); print('BUILD OK'); }
+  catch (e, st) { print('RAW THREW: ' + e.toString()); print(st.toString()); }
+  exit(0);
 }

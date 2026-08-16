@@ -21,13 +21,16 @@ ExternalMemory subclass: STATSTG [
     STATSTG class >> _STATSTG_Size [ ^72 ]
 
     pwcsName [ ^self intptrAt: 1 ]
+    pwcsName: v [ ^self intptrAt: 1 put: v ]
     type [ ^self uint32At: 9 ]
     type: v [ ^self uint32At: 9 put: v ]
     cbSize [ ^self intptrAt: 17 ]
+    cbSize: v [ ^self intptrAt: 17 put: v ]
     mtime [ ^FILETIME viewOn: self at: 24 size: 8 ]
     ctime [ ^FILETIME viewOn: self at: 32 size: 8 ]
     atime [ ^FILETIME viewOn: self at: 40 size: 8 ]
-    "grfMode: Windows.Win32.System.Com.STGM at 48 — no accessor (width unknown); use byteAt: directly"
+    grfMode [ ^self uint32At: 49 ]
+    grfMode: v [ ^self uint32At: 49 put: v ]
     grfLocksSupported [ ^self uint32At: 53 ]
     grfLocksSupported: v [ ^self uint32At: 53 put: v ]
     "clsid: System.Guid at 56 — no accessor (width unknown); use byteAt: directly"

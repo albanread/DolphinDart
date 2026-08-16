@@ -2,6 +2,7 @@
  winkb (Win32Metadata), not computed here. Do not hand-edit."
 
 ExternalMemory subclass: STGMEDIUM [
+    | value |
     STGMEDIUM class >> sizeInBytes [ ^32 ]
     STGMEDIUM class >> byteSize [ ^32 ]
     byteSize [ ^32 ]

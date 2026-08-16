@@ -2,6 +2,7 @@
  winkb (Win32Metadata), not computed here. Do not hand-edit."
 
 ExternalMemory subclass: FONTDESC [
+    | name |
     FONTDESC class >> sizeInBytes [ ^64 ]
     FONTDESC class >> byteSize [ ^64 ]
     byteSize [ ^64 ]
@@ -20,13 +21,16 @@ ExternalMemory subclass: FONTDESC [
     cbSizeofstruct [ ^self uint32At: 1 ]
     cbSizeofstruct: v [ ^self uint32At: 1 put: v ]
     lpstrName [ ^self intptrAt: 9 ]
+    lpstrName: v [ ^self intptrAt: 9 put: v ]
     cySize [ ^CY viewOn: self at: 16 size: 8 ]
     sWeight [ ^self int16At: 49 ]
+    sWeight: v [ ^self int16At: 49 put: v ]
     sCharset [ ^self int16At: 51 ]
+    sCharset: v [ ^self int16At: 51 put: v ]
     fItalic [ ^self int32At: 53 ]
-    fItalic: v [ ^self uint32At: 53 put: v ]
+    fItalic: v [ ^self int32At: 53 put: v ]
     fUnderline [ ^self int32At: 57 ]
-    fUnderline: v [ ^self uint32At: 57 put: v ]
+    fUnderline: v [ ^self int32At: 57 put: v ]
     fStrikethrough [ ^self int32At: 61 ]
-    fStrikethrough: v [ ^self uint32At: 61 put: v ]
+    fStrikethrough: v [ ^self int32At: 61 put: v ]
 ]

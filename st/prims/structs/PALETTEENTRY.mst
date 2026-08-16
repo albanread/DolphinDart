@@ -14,7 +14,11 @@ ExternalMemory subclass: PALETTEENTRY [
     PALETTEENTRY class >> _PALETTEENTRY_Size [ ^4 ]
 
     peRed [ ^self byteAt: 1 ]
+    peRed: v [ ^self byteAt: 1 put: v ]
     peGreen [ ^self byteAt: 2 ]
+    peGreen: v [ ^self byteAt: 2 put: v ]
     peBlue [ ^self byteAt: 3 ]
+    peBlue: v [ ^self byteAt: 3 put: v ]
     peFlags [ ^self byteAt: 4 ]
+    peFlags: v [ ^self byteAt: 4 put: v ]
 ]

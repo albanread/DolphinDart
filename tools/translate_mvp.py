@@ -142,6 +142,23 @@ TARGETS = [
     "Core/Object Arts/Dolphin/MVP/Graphics/Graphics.Icon.cls",
     "Core/Object Arts/Dolphin/MVP/Graphics/Graphics.Cursor.cls",
     "Core/Object Arts/Dolphin/MVP/Graphics/Graphics.Canvas.cls",
+
+    # THE IMAGE INITIALIZERS. An `Image` in Dolphin does not hold its own
+    # construction recipe — it delegates to an <imageInitializer>, and every
+    # class-side constructor builds one: `Icon class >> fromSystemId:` is
+    # `^self initializer: (IconFromSystemInitializer identifier: anInteger)`.
+    # So `Cursor wait`, `Icon question` and every stock image were sends of
+    # `identifier:` to nil, which is how it reached the DD11 gate — the
+    # ListView's `applyImageLists` asks for a system cursor.
+    #
+    # `ImageInitializer` is the abstract parent; the three below are the ones
+    # the stock-image constructors reach. The bitmap and file/resource
+    # initializers are NOT taken: nothing constructed in this port loads an
+    # image from a file or a resource, and each drags in the DIB and stream
+    # machinery behind it.
+    "Core/Object Arts/Dolphin/MVP/Graphics/Graphics.ImageInitializer.cls",
+    "Core/Object Arts/Dolphin/MVP/Graphics/Graphics.IconFromSystemInitializer.cls",
+    "Core/Object Arts/Dolphin/MVP/Graphics/Graphics.ImageFromHandleInitializer.cls",
     # `IconicListAbstract` — the shared parent of ListView, TreeView and
     # TabView — holds the image-list plumbing, so no common control can be
     # constructed without this one.
@@ -170,6 +187,53 @@ TARGETS = [
     "Core/Object Arts/Dolphin/MVP/Views/Common Controls/UI.IconicListAbstract.cls",
     "Core/Object Arts/Dolphin/MVP/Views/Common Controls/UI.ListView.cls",
     "Core/Object Arts/Dolphin/MVP/Views/Common Controls/UI.TreeView.cls",
+
+    # The TREE model, for the same reason `ListModel` is here and by the same
+    # mechanism: `TreeView class >> defaultModel` is `^TreeModel new`, and
+    # `defaultModel` runs from `initialize`, so an untranslated `TreeModel` is
+    # not a missing feature — `TreeView new` cannot complete. It reached the
+    # gate as "the method 'new' was called on null" with nothing naming the
+    # class, because an unbound global IS nil here.
+    #
+    # `TreeModelAbstract` carries the protocol and `TreeNode` is the storage
+    # `TreeModel` allocates per element, so the three come together or not at
+    # all. `VirtualTreeModel` and the Folder pair are deliberately NOT taken:
+    # nothing in the DD11 gate constructs them, and the folder models drag in
+    # the shell-namespace file classes.
+    "Core/Object Arts/Dolphin/MVP/Models/Tree/UI.TreeModelAbstract.cls",
+    "Core/Object Arts/Dolphin/MVP/Models/Tree/UI.TreeNode.cls",
+    "Core/Object Arts/Dolphin/MVP/Models/Tree/UI.TreeModel.cls",
+
+    # The UPDATE MODES. `IconicListAbstract` does not talk to its control
+    # directly — it delegates every add/remove/refresh to a strategy object,
+    # and `initialize` installs one immediately:
+    # `updateMode := TreeViewDynamicUpdateMode forIconicList: self`. So this
+    # is not an optional performance knob, it is on the construction path;
+    # untranslated it reached the gate as "the method 'forIconicList_' was
+    # called on null".
+    #
+    # The WHOLE family is taken, not just the two defaults. `TreeView` keeps
+    # a class-variable `UpdateModes` mapping #dynamic/#lazy/#static/#virtual
+    # to these classes, and a missing entry does not fail at load — it fails
+    # later as a nil, at whatever `updateMode` is first sent.
+    # `ListView>>initialize` builds its first column immediately —
+    # `columns := OrderedCollection with: (self columnClass text: 'Column 1')`
+    # — so the column class is on the construction path too, and untranslated
+    # it read as `text:` sent to nil with the string 'Column 1' in the error.
+    "Core/Object Arts/Dolphin/MVP/Views/Common Controls/UI.ListViewColumn.cls",
+    # Its Win32 counterpart, REOPENED onto the generated struct (see --reopen
+    # in the cli invocation below).
+    "Core/Object Arts/Dolphin/MVP/Views/Common Controls/OS.LVCOLUMNW.cls",
+
+    "Core/Object Arts/Dolphin/MVP/Views/Common Controls/UI.IconicListUpdateMode.cls",
+    "Core/Object Arts/Dolphin/MVP/Views/Common Controls/UI.ListViewUpdateMode.cls",
+    "Core/Object Arts/Dolphin/MVP/Views/Common Controls/UI.ListViewStaticUpdateMode.cls",
+    "Core/Object Arts/Dolphin/MVP/Views/Common Controls/UI.ListViewVirtualUpdateMode.cls",
+    "Core/Object Arts/Dolphin/MVP/Views/Common Controls/UI.TreeViewUpdateMode.cls",
+    "Core/Object Arts/Dolphin/MVP/Views/Common Controls/UI.TreeViewDynamicUpdateMode.cls",
+    "Core/Object Arts/Dolphin/MVP/Views/Common Controls/UI.TreeViewLazyUpdateMode.cls",
+    "Core/Object Arts/Dolphin/MVP/Views/Common Controls/UI.TreeViewStaticUpdateMode.cls",
+    "Core/Object Arts/Dolphin/MVP/Views/Common Controls/UI.TreeViewVirtualUpdateMode.cls",
 
     # ── DD10: the EVENT family ─────────────────────────────────────────────
     # Once Dolphin's own `buildMessageMap` is installed as the routed set, its
@@ -270,6 +334,7 @@ REFERENCES = [
     "Core/Object Arts/Dolphin/MVP/Views/Common Controls",
     "Core/Object Arts/Dolphin/MVP/Presenters/List",
     "Core/Object Arts/Dolphin/MVP/Models/List",
+    "Core/Object Arts/Dolphin/MVP/Models/Tree",
 ]
 
 
@@ -318,7 +383,15 @@ def main(argv):
            # `aString setTextInto: self`, and the String sends `plainText:`
            # back. `UI.RichText` is the other half, which is the whole point
            # of the dispatch — the view does not have to know which it got.
-           "--loose", "Core.String"]
+           "--loose", "Core.String",
+           # REOPENED, not defined: `genstructs` builds `LVCOLUMNW` from
+           # winkb with typed accessors at real offsets, and the `.cls` adds
+           # the Smalltalk on top — `LVCOLUMNW class >> fromColumn:` is what
+           # `UI.ListView>>insertColumn:atIndex:` fills before SendMessage.
+           # Defining it here instead would load after genstructs and drop the
+           # layout. The generated class lands in `st/prims/structs`, so the
+           # reopen is moved to the late layer alongside the UserLibrary one.
+           "--reopen", "OS.LVCOLUMNW"]
     for r in refs:
         cmd += ["--reference", r]
     cmd += targets
@@ -344,6 +417,21 @@ def main(argv):
             fh.write(body)
         os.remove(loose)
         print("translate_mvp: loose UserLibrary methods -> %s" % late)
+
+    # Same relocation, same reason, for every `--reopen` class: it reopens
+    # something `st/prims/structs` defines, so it must load after that layer.
+    for f in sorted(os.listdir(args.out)):
+        if not (f.startswith("91_") and f.endswith("_reopen.mst")):
+            continue
+        late_dir = os.path.join(REPO, "st", "mvp_compat")
+        os.makedirs(late_dir, exist_ok=True)
+        late = os.path.join(late_dir, "04_" + f[3:])
+        with open(os.path.join(args.out, f), encoding="utf-8") as fh:
+            body = fh.read()
+        with open(late, "w", encoding="utf-8", newline="\n") as fh:
+            fh.write(body)
+        os.remove(os.path.join(args.out, f))
+        print("translate_mvp: struct reopen -> %s" % late)
     return 0
 
 

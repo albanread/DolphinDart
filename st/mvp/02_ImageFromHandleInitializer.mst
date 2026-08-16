@@ -1,0 +1,27 @@
+ImageInitializer subclass: ImageFromHandleInitializer [
+    | handle |
+
+    createImage: anImage extent: aPoint [
+        	^handle
+    ]
+    extent: aPoint [
+        "Ignore the request. We have an extent dictated by the image supplied as a handle."
+    ]
+    handle: anExternalhandle [
+        	handle := anExternalhandle.
+        	^self
+    ]
+    image: anIcon valueWithHandle: aMonadicValuable extent: aPoint [
+        	^aMonadicValuable value: handle
+    ]
+    isPersistent [
+        	^false
+    ]
+    printImage: anImage on: aWriteStream [
+        "Private - Print a representation of the <Image> initialized by the receiver onto the <puttableStream> argument in the form a developer might want to see."
+        aWriteStream basicPrint: anImage. aWriteStream nextPut: $(. aWriteStream print: handle. aWriteStream nextPut: $)
+    ]
+    ImageFromHandleInitializer class >> handle: anExternalhandle [
+        | _casc1 | _casc1 := self basicNew. _casc1 instVarAt: 1 put: anExternalhandle. ^_casc1 yourself
+    ]
+]

@@ -189,8 +189,48 @@ Object subclass: DolphinBoot [
            `SystemMetrics>>getIconTitleFont` falls back to `Font system` when
            SystemParametersInfoForDpi declines — so an uninitialized Font made
            the fallback a nil."
-          AbstractFont. Font } do: [ :each |
+          AbstractFont. Font.
+          "The COMMON CONTROLS (DD11). Two different class-side initializers,
+           both on the construction path:
+
+           `TreeView class >> initialize` builds `UpdateModes`, the
+           class-variable mapping #dynamic/#lazy/#static/#virtual to the
+           strategy classes — and `TreeView>>updateMode:` looks up in it on
+           every instance. Uninitialized it is nil, so `TreeView new` died at
+           `UpdateModes at: #dynamic` with `at:` sent to nil; the symbol in the
+           error was the only clue which class variable was missing.
+
+           `ListView class >> initialize` and the shared
+           `IconicListAbstract class >> initialize` register their comctl
+           init flags with `CommCtrlLibrary addInitFlag:`. Those flags are read
+           by the door's `InitCommonControlsEx` call, so skipping them does not
+           fail here — it fails at CreateWindowExW, as a control class Windows
+           has not been told to register."
+          IconicListAbstract. ListControlView. ListView. TreeView } do: [ :each |
             [ each initialize ] on: Error do: [ :e | failed add: each name ] ].
+
+        "AND `onStartup`, which is a SECOND initializer Dolphin runs at image
+         start and which this port had never sent at all. It is not a
+         duplicate of `initialize`: `initialize` sets what is known when the
+         class is defined, `onStartup` sets what depends on the machine the
+         image is running on. `ListView class >> onStartup` is exactly that —
+
+             SelectionStateMask := NtDll isWine ifTrue: [...] ifFalse: [...]
+
+         — so the mask every selection change writes into an LVITEMW was nil,
+         and creating a ListView died writing nil into `stateMask`.
+
+         Dolphin drives this from `View class >> onStartup`, which walks
+         `allSubclassesDo:` and sends `onStartup` to each class that DEFINES
+         one. That guard matters and this port has no `includesSelector:`, so
+         the list is explicit here instead — sending it to a class that only
+         inherits `onStartup` would re-run an ancestor's, which is how a
+         once-per-image action becomes once-per-subclass.
+
+         RETIREMENT: when `Behavior>>includesSelector:` exists, this becomes
+         `View onStartup` and the list goes away."
+        { ListView } do: [ :each |
+            [ each onStartup ] on: Error do: [ :e | failed add: each name, ' onStartup' ] ].
         ^failed asArray
     ]
 ]

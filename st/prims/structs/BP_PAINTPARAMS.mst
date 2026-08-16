@@ -2,6 +2,7 @@
  winkb (Win32Metadata), not computed here. Do not hand-edit."
 
 ExternalMemory subclass: BP_PAINTPARAMS [
+    | blendFunction |
     BP_PAINTPARAMS class >> sizeInBytes [ ^24 ]
     BP_PAINTPARAMS class >> byteSize [ ^24 ]
     byteSize [ ^24 ]
@@ -15,7 +16,8 @@ ExternalMemory subclass: BP_PAINTPARAMS [
 
     cbSize [ ^self uint32At: 1 ]
     cbSize: v [ ^self uint32At: 1 put: v ]
-    "dwFlags: Windows.Win32.UI.Controls.BP_PAINTPARAMS_FLAGS at 4 — no accessor (width unknown); use byteAt: directly"
+    dwFlags [ ^self uint32At: 5 ]
+    dwFlags: v [ ^self uint32At: 5 put: v ]
     "prcExclude: Windows.Win32.Foundation.RECT* at 8 — no accessor (width unknown); use byteAt: directly"
     "pBlendFunction: Windows.Win32.Graphics.Gdi.BLENDFUNCTION* at 16 — no accessor (width unknown); use byteAt: directly"
 ]

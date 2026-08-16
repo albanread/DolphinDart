@@ -796,7 +796,8 @@ def _house_pattern(m: Method, cls_name: str) -> str:
 
 def emit_loose(cls_name: str, cd, methods, renames, pool_table,
                classvar_owners=None, constant_chains=None,
-               inherited_imports=None, force_class_side=True) -> EmitResult:
+               inherited_imports=None, force_class_side=True,
+               reopen_super="Object") -> EmitResult:
     """Emit LOOSE methods as a reopen of an already-existing class.
 
     The class itself is not translated — `OS.UserLibrary` is GENERATED from
@@ -816,8 +817,51 @@ def emit_loose(cls_name: str, cd, methods, renames, pool_table,
         " The class itself is generated from Dolphin's FFI pragmas (genprims), so",
         " this is the layer Dolphin puts ON TOP of the raw API calls. Never",
         ' hand-edit: fix the translator and re-run."',
-        f"Object subclass: {cls_name} [",
+        # The SUPERCLASS on a reopen is the one the generated class already
+        # has, not `Object`. A `.mst` class header re-states the parent, so
+        # naming the wrong one here would silently RE-PARENT the class —
+        # `LVCOLUMNW` would lose `ExternalMemory` and with it every accessor
+        # genstructs emitted, which is the same shape of loss the `.pax` guard
+        # in cli.py records for `OS.MENUITEMINFOW`.
+        f"{reopen_super} subclass: {cls_name} [",
     ]
+    # NO IVAR LIST HERE, deliberately. A reopen states only methods: in this
+    # dialect a class header carrying an instance-variable list REDEFINES the
+    # class, and declaring `| text |` on the `OS.LVCOLUMNW` reopen dropped
+    # `sizeInBytes` and every generated accessor with it — `newBuffer` then
+    # allocated nothing and the first field write was `nil byteAt:put:`.
+    #
+    # The struct's own ivars are emitted by `genstructs` onto the class it
+    # generates (DECLARED_IVARS), which is the only place they can go.
+    #
+    # CLASS VARIABLES are different: they are not part of the instance shape,
+    # so declaring them here adds without redefining. A reopened struct needs
+    # them for the same reason a translated class does — an expression-valued
+    # `classConstants:` entry has no source that assigns it, and
+    # `OS.LVCOLUMNW`'s `AlignmentMap` is read by `setColumn:` on the ListView
+    # creation path.
+    _expr_constants = []
+    if not force_class_side and cd is not None:
+        _expr_constants = [
+            (nm, raw) for nm, raw in pools.class_constant_entries(cd.class_constants)
+            if pools.parse_literal(raw) is None
+        ]
+    if _expr_constants:
+        lines.append("    <classVars: %s>"
+                     % " ".join(nm for nm, _ in _expr_constants))
+        lines.append("")
+        methods = list(methods) + [Method(
+            selector="initializeClassConstants",
+            arg_names=[],
+            pattern="initializeClassConstants",
+            comment="Private - Assign the `classConstants:` entries whose values "
+                    "are expressions. GENERATED: Dolphin holds these in its image, "
+                    "so no source assigns them and every read was a nil.",
+            body="\n".join("%s := %s." % (nm, raw) for nm, raw in _expr_constants)
+                 + "\n^self",
+            class_side=True,
+            line=0,
+        )]
     for m in methods:
         where = f"loose:{m.line}"
         body = m.body
@@ -837,12 +881,40 @@ def emit_loose(cls_name: str, cd, methods, renames, pool_table,
         # one it merely inherits. Without the chain, `GWL_STYLE` in
         # `getWindowStyle:` stayed a bare name and became a runtime nil.
         imports = list(cd.imports) if cd else []
+        # THE STRUCT'S OWN `_OffsetOf_*` CONSTANTS ARE NOT FOLDED — they are
+        # rewritten to a send to the generated class, and this is the one place
+        # in the translator where the corpus's own value is the WRONG one.
+        #
+        # Dolphin's `.cls` carries a layout baked for 32-bit:
+        # `OS.LVCOLUMNW` declares `_OffsetOf_pszText -> 16rC` (12) and
+        # `_LVCOLUMNW_Size -> 16r2C` (44). On a 64-bit target the pointer is
+        # 8-aligned, so the field is at 16 and the struct is 56 bytes — which
+        # is what genstructs emits, from winkb, per target. Folding the
+        # corpus's constant wrote the caption pointer into `cx` and the
+        # process died in comctl32 with an access violation, not a Smalltalk
+        # error.
+        #
+        # So the name resolves at RUNTIME, to the class-side accessor
+        # genstructs emits alongside the offsets it actually used. A qualified
+        # send rather than `self class ...` because these methods appear on
+        # both sides.
+        if not force_class_side:
+            body = re.sub(r"(?<![\w.])(_OffsetOf_\w+|_\w+_Size)(?![\w:])",
+                          cls_name + r" \1", body)
         for p in (inherited_imports or []):
             if p not in imports:
                 imports.append(p)
         body, r = rewrite_pool_constants(
             body, where, imports, pool_table, set(m.arg_names))
         refusals.extend(r)
+        # `bytes` is `External.Structure`'s instance variable — the byte object
+        # the fields live in — and every accessor Dolphin writes goes through
+        # it. This port's structs ARE the memory, so `ExternalMemory>>bytes`
+        # answers self; but a bare lowercase name compiles as a VARIABLE here,
+        # not a unary send, so it read as an unbound global. Rewritten to the
+        # send, which is the same value with a name the builder can resolve.
+        if not force_class_side:
+            body = re.sub(r"(?<![\w.])bytes(?![\w:])", "self bytes", body)
         body = rewrite_selectors(body)
         body, r = rewrite_cascades(body, where); refusals.extend(r)
         body = rewrite_add_class_constant(body)
@@ -878,6 +950,15 @@ def emit_loose(cls_name: str, cd, methods, renames, pool_table,
         lines.append(_indent(body.strip("\n")))
         lines.append("    ]")
     lines.append("]")
+
+    # Call the synthetic initializer, same as `emit_class` — a file-in loader
+    # never sends a class-side `initialize`, so an initializer nobody calls is
+    # the same nil it was written to fix.
+    if any(ln.strip().startswith(f"{cls_name} class >> initializeClassConstants")
+           for ln in lines):
+        lines.append("")
+        lines.append(f"{cls_name} initializeClassConstants.")
+
     return EmitResult("\n".join(lines) + "\n", refusals)
 
 
@@ -940,6 +1021,45 @@ def emit_class(pf: ParsedFile, renames: Dict[str, str],
     # class's own — the User32 binding is 177 such methods on `OS.UserLibrary`.
     all_methods = list(pf.methods if classdef is None or classdef is pf.classdef else [])
     all_methods.extend(extra_methods or [])
+
+    # EXPRESSION-VALUED CLASS CONSTANTS get a synthetic initializer.
+    #
+    # A `classConstants:` entry whose value is a literal is folded at every use
+    # site and the declaration is then decorative. One whose value is an
+    # EXPRESSION cannot be folded, so its uses read the bare name at runtime —
+    # and nothing was assigning it. Dolphin does not need an assignment because
+    # the value lives in its image; a file-in port does.
+    #
+    # The initializer is built as an ordinary `Method` and appended to
+    # `all_methods` rather than formatted here, so it goes through the SAME
+    # pipeline as every hand-written method: pool folding, `##()`, cascade
+    # rewriting, `flatten_refs` for the namespaced class names inside it. A
+    # value like `IdentityDictionary withAll: { #dynamic ->
+    # TreeViewDynamicUpdateMode ... }` needs all of that, and a second
+    # formatting path would have to reimplement it and drift.
+    #
+    # It is CALLED by `emit_file`, which appends `<Name> initializeClassConstants.`
+    # as a top-level statement after the class body — the class-side
+    # `initialize` is not called by a file-in loader, which is a trap this port
+    # has now paid for twice.
+    _expr_constants = [
+        (nm, raw) for nm, raw in pools.class_constant_entries(cd.class_constants)
+        if pools.parse_literal(raw) is None
+    ]
+    if _expr_constants:
+        _body = "\n".join("%s := %s." % (nm, raw) for nm, raw in _expr_constants)
+        all_methods.append(Method(
+            selector="initializeClassConstants",
+            arg_names=[],
+            pattern="initializeClassConstants",
+            comment="Private - Assign the `classConstants:` entries whose values are "
+                    "expressions. GENERATED: Dolphin holds these in its image, so no "
+                    "source assigns them and every read was a nil.",
+            body=_body + "\n^self",
+            class_side=True,
+            line=0,
+        ))
+
     shadowed = set(cd.ivars) | set(cd.cvars) | set(cd.civars)
 
     # A class's OWN `classConstants:` is an implicit pool for its own methods.
@@ -1030,4 +1150,25 @@ def emit_class(pf: ParsedFile, renames: Dict[str, str],
             continue
         # a `break` above landed here: the method was refused, emit nothing
     lines.append("]")
+
+    # CALL the synthetic initializer, as a top-level statement after the class
+    # body. A file-in loader never calls a class-side `initialize`, so an
+    # initializer nobody sends is the same nil it was written to fix.
+    #
+    # Guarded on the method having actually survived the pipeline: a value
+    # holding a `#{...}` binding literal is refused like any other, and a call
+    # to a method that was not emitted would turn a silent nil into a load
+    # failure for the whole file.
+    #
+    # This runs at the class's own position in the load order, which is
+    # dependency order by construction (the `NN_` prefix is inheritance depth).
+    # `UI.TreeView`'s table names the update-mode classes, and those sort
+    # earlier because they are shallower. A constant naming a class DEEPER than
+    # its owner would read as nil here — no such case exists in the corpus, and
+    # it would show up as a nil value in the table rather than at load.
+    if any(ln.strip().startswith(f"{name} class >> initializeClassConstants")
+           for ln in lines):
+        lines.append("")
+        lines.append(f"{name} initializeClassConstants.")
+
     return EmitResult("\n".join(lines) + "\n", refusals, notes)

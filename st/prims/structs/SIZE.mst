@@ -12,7 +12,7 @@ ExternalMemory subclass: SIZE [
     SIZE class >> _SIZE_Size [ ^8 ]
 
     cx [ ^self int32At: 1 ]
-    cx: v [ ^self uint32At: 1 put: v ]
+    cx: v [ ^self int32At: 1 put: v ]
     cy [ ^self int32At: 5 ]
-    cy: v [ ^self uint32At: 5 put: v ]
+    cy: v [ ^self int32At: 5 put: v ]
 ]

@@ -18,8 +18,12 @@ ExternalMemory subclass: TLIBATTR [
     "guid: System.Guid at 0 — no accessor (width unknown); use byteAt: directly"
     lcid [ ^self uint32At: 9 ]
     lcid: v [ ^self uint32At: 9 put: v ]
-    "syskind: Windows.Win32.System.Com.SYSKIND at 12 — no accessor (width unknown); use byteAt: directly"
+    syskind [ ^self uint32At: 13 ]
+    syskind: v [ ^self uint32At: 13 put: v ]
     wMajorVerNum [ ^self uint16At: 17 ]
+    wMajorVerNum: v [ ^self uint16At: 17 put: v ]
     wMinorVerNum [ ^self uint16At: 19 ]
+    wMinorVerNum: v [ ^self uint16At: 19 put: v ]
     wLibFlags [ ^self uint16At: 21 ]
+    wLibFlags: v [ ^self uint16At: 21 put: v ]
 ]

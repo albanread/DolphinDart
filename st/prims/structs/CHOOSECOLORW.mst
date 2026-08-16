@@ -21,11 +21,16 @@ ExternalMemory subclass: CHOOSECOLORW [
     lStructSize [ ^self uint32At: 1 ]
     lStructSize: v [ ^self uint32At: 1 put: v ]
     hwndOwner [ ^self intptrAt: 9 ]
+    hwndOwner: v [ ^self intptrAt: 9 put: v ]
     hInstance [ ^self intptrAt: 17 ]
+    hInstance: v [ ^self intptrAt: 17 put: v ]
     rgbResult [ ^COLORREF viewOn: self at: 24 size: 4 ]
     "lpCustColors: Windows.Win32.Foundation.COLORREF* at 32 — no accessor (width unknown); use byteAt: directly"
-    "flags: Windows.Win32.UI.Controls.Dialogs.CHOOSECOLOR_FLAGS at 40 — no accessor (width unknown); use byteAt: directly"
+    flags [ ^self uint32At: 41 ]
+    flags: v [ ^self uint32At: 41 put: v ]
     lCustData [ ^self intptrAt: 49 ]
+    lCustData: v [ ^self intptrAt: 49 put: v ]
     "lpfnHook: Windows.Win32.UI.Controls.Dialogs.LPCCHOOKPROC at 56 — no accessor (width unknown); use byteAt: directly"
     lpTemplateName [ ^self intptrAt: 65 ]
+    lpTemplateName: v [ ^self intptrAt: 65 put: v ]
 ]

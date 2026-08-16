@@ -14,5 +14,6 @@ ExternalMemory subclass: HTTP_REQUEST_V2 [
 
     base [ ^HTTP_REQUEST_V1 viewOn: self at: 0 size: 848 ]
     requestInfoCount [ ^self uint16At: 849 ]
+    requestInfoCount: v [ ^self uint16At: 849 put: v ]
     "pRequestInfo: Windows.Win32.Networking.HttpServer.HTTP_REQUEST_INFO* at 856 — no accessor (width unknown); use byteAt: directly"
 ]

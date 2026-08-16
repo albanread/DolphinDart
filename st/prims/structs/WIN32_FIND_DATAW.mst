@@ -2,6 +2,7 @@
  winkb (Win32Metadata), not computed here. Do not hand-edit."
 
 ExternalMemory subclass: WIN32_FIND_DATAW [
+    | directory |
     WIN32_FIND_DATAW class >> sizeInBytes [ ^572 ]
     WIN32_FIND_DATAW class >> byteSize [ ^572 ]
     byteSize [ ^572 ]

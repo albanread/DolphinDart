@@ -27,14 +27,28 @@ Object subclass: SearchPolicy [
     SearchPolicy class >> identity [ ^IdentitySearchPolicy new ]
     compare: a with: b [ ^self subclassResponsibility ]
     hashOf: anObject [ ^self subclassResponsibility ]
+
+    "A policy is also a FACTORY for collections that obey it. Dolphin's model
+     classes never send `Dictionary new` — they send `searchPolicy
+     newLookupTable`, so the collection and the comparison it will use are
+     chosen together and cannot disagree. `TreeModel>>initialize` is one
+     (`objectNodeMap := searchPolicy newLookupTable`) and
+     `TreeView>>initialize` another, so a policy without this is not a missing
+     convenience: `TreeView new` cannot complete."
+    newLookupTable [ ^self subclassResponsibility ]
+    newSet [ ^self subclassResponsibility ]
 ]
 SearchPolicy subclass: EqualitySearchPolicy [
     compare: a with: b [ ^a = b ]
     hashOf: anObject [ ^anObject hash ]
+    newLookupTable [ ^LookupTable new ]
+    newSet [ ^Set new ]
 ]
 SearchPolicy subclass: IdentitySearchPolicy [
     compare: a with: b [ ^a == b ]
     hashOf: anObject [ ^anObject identityHash ]
+    newLookupTable [ ^IdentityDictionary new ]
+    newSet [ ^IdentitySet new ]
 ]
 
 "── DeafObject: swallows everything ─────────────────────────────────────
@@ -152,12 +166,43 @@ nil subclass: Object [
      was not part of it, and the send fell through to Dart's null."
     free [ ^self ]
 
+    "THE NILADIC VALUABLE PROTOCOL — `Object>>value ^self` in Dolphin's
+     Core.Object — is NOT here, and must not be. `value` is a universal helper
+     (see the naming rule at the top of this file): the builder rewrites it at
+     the call site to `stValue0`, so a method of that name is never reached by
+     a normal send and, worse, makes `stValue0`'s own slow path resolve back
+     into itself. Written here it took out every MVP gate with an access
+     violation on a blown stack.
+
+     It lives in `_stValue0Slow` (port-win/dart_st/cocoa.dart) instead, which
+     is the single point every niladic-valuable send funnels through — so both
+     ST objects and Dart primitives get Dolphin's semantics. It is what makes
+     `at: k ifAbsent: 0` legal, and the corpus takes that freedom:
+     `UI.View>>getNoRedrawCount` is `^self propertyAt: #_noRedrawCount
+     ifAbsent: 0`."
+
     propertyAt: aKey [ ^(PropertyRegistry propertiesOf: self) at: aKey ifAbsent: [ nil ] ]
     propertyAt: aKey ifAbsent: aBlock [
         ^(PropertyRegistry propertiesOf: self) at: aKey ifAbsent: aBlock
     ]
     propertyAt: aKey put: aValue [
         ^(PropertyRegistry propertiesOf: self) at: aKey put: aValue
+    ]
+
+    "REMOVAL completes the protocol. Dolphin's property bag is the storage for
+     transient per-object state, and the pattern is always set-then-remove:
+     `View>>noRedrawDo:` sets `#_noRedrawCount` on entry and removes it when
+     the count returns to zero, so a view that never removes leaks a property
+     per redraw suppression. Every list and tree control goes through it on
+     creation, via `refreshContents`."
+    removePropertyAt: aKey [
+        ^(PropertyRegistry propertiesOf: self) removeKey: aKey
+    ]
+    removePropertyAt: aKey ifAbsent: aBlock [
+        ^(PropertyRegistry propertiesOf: self) removeKey: aKey ifAbsent: aBlock
+    ]
+    hasProperty: aKey [
+        ^(PropertyRegistry propertiesOf: self) includesKey: aKey
     ]
 
     "Dolphin's `expandMacros` fills %1..%9 from an argument array. The corpus

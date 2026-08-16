@@ -17,10 +17,15 @@ ExternalMemory subclass: WSADATA [
     WSADATA class >> _WSADATA_Size [ ^408 ]
 
     wVersion [ ^self uint16At: 1 ]
+    wVersion: v [ ^self uint16At: 1 put: v ]
     wHighVersion [ ^self uint16At: 3 ]
+    wHighVersion: v [ ^self uint16At: 3 put: v ]
     "szDescription: Windows.Win32.Foundation.CHAR[] at 4 — no accessor (width unknown); use byteAt: directly"
     "szSystemStatus: Windows.Win32.Foundation.CHAR[] at 261 — no accessor (width unknown); use byteAt: directly"
     iMaxSockets [ ^self uint16At: 391 ]
+    iMaxSockets: v [ ^self uint16At: 391 put: v ]
     iMaxUdpDg [ ^self uint16At: 393 ]
+    iMaxUdpDg: v [ ^self uint16At: 393 put: v ]
     lpVendorInfo [ ^self intptrAt: 401 ]
+    lpVendorInfo: v [ ^self intptrAt: 401 put: v ]
 ]

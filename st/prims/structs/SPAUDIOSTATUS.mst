@@ -17,12 +17,15 @@ ExternalMemory subclass: SPAUDIOSTATUS [
     SPAUDIOSTATUS class >> _SPAUDIOSTATUS_Size [ ^40 ]
 
     cbFreeBuffSpace [ ^self int32At: 1 ]
-    cbFreeBuffSpace: v [ ^self uint32At: 1 put: v ]
+    cbFreeBuffSpace: v [ ^self int32At: 1 put: v ]
     cbNonBlockingIO [ ^self uint32At: 5 ]
     cbNonBlockingIO: v [ ^self uint32At: 5 put: v ]
-    "state: Windows.Win32.Media.Speech.SPAUDIOSTATE at 8 — no accessor (width unknown); use byteAt: directly"
+    state [ ^self uint32At: 9 ]
+    state: v [ ^self uint32At: 9 put: v ]
     curSeekPos [ ^self intptrAt: 17 ]
+    curSeekPos: v [ ^self intptrAt: 17 put: v ]
     curDevicePos [ ^self intptrAt: 25 ]
+    curDevicePos: v [ ^self intptrAt: 25 put: v ]
     dwAudioLevel [ ^self uint32At: 33 ]
     dwAudioLevel: v [ ^self uint32At: 33 put: v ]
     dwReserved2 [ ^self uint32At: 37 ]

@@ -2,6 +2,7 @@
  winkb (Win32Metadata), not computed here. Do not hand-edit."
 
 ExternalMemory subclass: TASKDIALOGCONFIG [
+    | windowTitle mainInstruction content footer verificationText expandedInformation collapsedControlText expandedControlText buttons buttonLabels radioButtons radioButtonLabels |
     TASKDIALOGCONFIG class >> sizeInBytes [ ^224 ]
     TASKDIALOGCONFIG class >> byteSize [ ^224 ]
     byteSize [ ^224 ]
@@ -36,31 +37,44 @@ ExternalMemory subclass: TASKDIALOGCONFIG [
     cbSize [ ^self uint32At: 1 ]
     cbSize: v [ ^self uint32At: 1 put: v ]
     hwndParent [ ^self intptrAt: 9 ]
+    hwndParent: v [ ^self intptrAt: 9 put: v ]
     hInstance [ ^self intptrAt: 17 ]
-    "dwFlags: Windows.Win32.UI.Controls.TASKDIALOG_FLAGS at 24 — no accessor (width unknown); use byteAt: directly"
-    "dwCommonButtons: Windows.Win32.UI.Controls.TASKDIALOG_COMMON_BUTTON_FLAGS at 28 — no accessor (width unknown); use byteAt: directly"
+    hInstance: v [ ^self intptrAt: 17 put: v ]
+    dwFlags [ ^self uint32At: 25 ]
+    dwFlags: v [ ^self uint32At: 25 put: v ]
+    dwCommonButtons [ ^self uint32At: 29 ]
+    dwCommonButtons: v [ ^self uint32At: 29 put: v ]
     pszWindowTitle [ ^self intptrAt: 33 ]
+    pszWindowTitle: v [ ^self intptrAt: 33 put: v ]
     "anonymous1: _Anonymous1_e__Union at 40 — no accessor (width unknown); use byteAt: directly"
     pszMainInstruction [ ^self intptrAt: 73 ]
+    pszMainInstruction: v [ ^self intptrAt: 73 put: v ]
     pszContent [ ^self intptrAt: 81 ]
+    pszContent: v [ ^self intptrAt: 81 put: v ]
     cButtons [ ^self uint32At: 89 ]
     cButtons: v [ ^self uint32At: 89 put: v ]
     "pButtons: Windows.Win32.UI.Controls.TASKDIALOG_BUTTON* at 96 — no accessor (width unknown); use byteAt: directly"
     nDefaultButton [ ^self int32At: 105 ]
-    nDefaultButton: v [ ^self uint32At: 105 put: v ]
+    nDefaultButton: v [ ^self int32At: 105 put: v ]
     cRadioButtons [ ^self uint32At: 109 ]
     cRadioButtons: v [ ^self uint32At: 109 put: v ]
     "pRadioButtons: Windows.Win32.UI.Controls.TASKDIALOG_BUTTON* at 112 — no accessor (width unknown); use byteAt: directly"
     nDefaultRadioButton [ ^self int32At: 121 ]
-    nDefaultRadioButton: v [ ^self uint32At: 121 put: v ]
+    nDefaultRadioButton: v [ ^self int32At: 121 put: v ]
     pszVerificationText [ ^self intptrAt: 129 ]
+    pszVerificationText: v [ ^self intptrAt: 129 put: v ]
     pszExpandedInformation [ ^self intptrAt: 137 ]
+    pszExpandedInformation: v [ ^self intptrAt: 137 put: v ]
     pszExpandedControlText [ ^self intptrAt: 145 ]
+    pszExpandedControlText: v [ ^self intptrAt: 145 put: v ]
     pszCollapsedControlText [ ^self intptrAt: 153 ]
+    pszCollapsedControlText: v [ ^self intptrAt: 153 put: v ]
     "anonymous2: _Anonymous2_e__Union at 160 — no accessor (width unknown); use byteAt: directly"
     pszFooter [ ^self intptrAt: 193 ]
+    pszFooter: v [ ^self intptrAt: 193 put: v ]
     "pfCallback: Windows.Win32.UI.Controls.PFTASKDIALOGCALLBACK at 200 — no accessor (width unknown); use byteAt: directly"
     lpCallbackData [ ^self intptrAt: 209 ]
+    lpCallbackData: v [ ^self intptrAt: 209 put: v ]
     cxWidth [ ^self uint32At: 217 ]
     cxWidth: v [ ^self uint32At: 217 put: v ]
 ]

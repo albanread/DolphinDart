@@ -2,13 +2,14 @@
  winkb (Win32Metadata), not computed here. Do not hand-edit."
 
 ExternalMemory subclass: HTTP_LOG_DATA [
-    HTTP_LOG_DATA class >> sizeInBytes [ ^8 ]
-    HTTP_LOG_DATA class >> byteSize [ ^8 ]
-    byteSize [ ^8 ]
-    HTTP_LOG_DATA class >> new [ ^self new: 8 ]
+    HTTP_LOG_DATA class >> sizeInBytes [ ^4 ]
+    HTTP_LOG_DATA class >> byteSize [ ^4 ]
+    byteSize [ ^4 ]
+    HTTP_LOG_DATA class >> new [ ^self new: 4 ]
 
     HTTP_LOG_DATA class >> _OffsetOf_Type [ ^0 ]
-    HTTP_LOG_DATA class >> _HTTP_LOG_DATA_Size [ ^8 ]
+    HTTP_LOG_DATA class >> _HTTP_LOG_DATA_Size [ ^4 ]
 
-    "type: Windows.Win32.Networking.HttpServer.HTTP_LOG_DATA_TYPE at 0 — no accessor (width unknown); use byteAt: directly"
+    type [ ^self uint32At: 1 ]
+    type: v [ ^self uint32At: 1 put: v ]
 ]

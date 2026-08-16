@@ -2,10 +2,10 @@
  winkb (Win32Metadata), not computed here. Do not hand-edit."
 
 ExternalMemory subclass: PANOSE [
-    PANOSE class >> sizeInBytes [ ^17 ]
-    PANOSE class >> byteSize [ ^17 ]
-    byteSize [ ^17 ]
-    PANOSE class >> new [ ^self new: 17 ]
+    PANOSE class >> sizeInBytes [ ^10 ]
+    PANOSE class >> byteSize [ ^10 ]
+    byteSize [ ^10 ]
+    PANOSE class >> new [ ^self new: 10 ]
 
     PANOSE class >> _OffsetOf_bFamilyType [ ^0 ]
     PANOSE class >> _OffsetOf_bSerifStyle [ ^1 ]
@@ -17,16 +17,26 @@ ExternalMemory subclass: PANOSE [
     PANOSE class >> _OffsetOf_bLetterform [ ^7 ]
     PANOSE class >> _OffsetOf_bMidline [ ^8 ]
     PANOSE class >> _OffsetOf_bXHeight [ ^9 ]
-    PANOSE class >> _PANOSE_Size [ ^17 ]
+    PANOSE class >> _PANOSE_Size [ ^10 ]
 
-    "bFamilyType: Windows.Win32.Graphics.Gdi.PAN_FAMILY_TYPE at 0 — no accessor (width unknown); use byteAt: directly"
-    "bSerifStyle: Windows.Win32.Graphics.Gdi.PAN_SERIF_STYLE at 1 — no accessor (width unknown); use byteAt: directly"
-    "bWeight: Windows.Win32.Graphics.Gdi.PAN_WEIGHT at 2 — no accessor (width unknown); use byteAt: directly"
-    "bProportion: Windows.Win32.Graphics.Gdi.PAN_PROPORTION at 3 — no accessor (width unknown); use byteAt: directly"
-    "bContrast: Windows.Win32.Graphics.Gdi.PAN_CONTRAST at 4 — no accessor (width unknown); use byteAt: directly"
-    "bStrokeVariation: Windows.Win32.Graphics.Gdi.PAN_STROKE_VARIATION at 5 — no accessor (width unknown); use byteAt: directly"
-    "bArmStyle: Windows.Win32.Graphics.Gdi.PAN_ARM_STYLE at 6 — no accessor (width unknown); use byteAt: directly"
-    "bLetterform: Windows.Win32.Graphics.Gdi.PAN_LETT_FORM at 7 — no accessor (width unknown); use byteAt: directly"
-    "bMidline: Windows.Win32.Graphics.Gdi.PAN_MIDLINE at 8 — no accessor (width unknown); use byteAt: directly"
-    "bXHeight: Windows.Win32.Graphics.Gdi.PAN_XHEIGHT at 9 — no accessor (width unknown); use byteAt: directly"
+    bFamilyType [ ^self byteAt: 1 ]
+    bFamilyType: v [ ^self byteAt: 1 put: v ]
+    bSerifStyle [ ^self byteAt: 2 ]
+    bSerifStyle: v [ ^self byteAt: 2 put: v ]
+    bWeight [ ^self byteAt: 3 ]
+    bWeight: v [ ^self byteAt: 3 put: v ]
+    bProportion [ ^self byteAt: 4 ]
+    bProportion: v [ ^self byteAt: 4 put: v ]
+    bContrast [ ^self byteAt: 5 ]
+    bContrast: v [ ^self byteAt: 5 put: v ]
+    bStrokeVariation [ ^self byteAt: 6 ]
+    bStrokeVariation: v [ ^self byteAt: 6 put: v ]
+    bArmStyle [ ^self byteAt: 7 ]
+    bArmStyle: v [ ^self byteAt: 7 put: v ]
+    bLetterform [ ^self byteAt: 8 ]
+    bLetterform: v [ ^self byteAt: 8 put: v ]
+    bMidline [ ^self byteAt: 9 ]
+    bMidline: v [ ^self byteAt: 9 put: v ]
+    bXHeight [ ^self byteAt: 10 ]
+    bXHeight: v [ ^self byteAt: 10 put: v ]
 ]

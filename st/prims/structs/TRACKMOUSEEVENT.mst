@@ -15,8 +15,10 @@ ExternalMemory subclass: TRACKMOUSEEVENT [
 
     cbSize [ ^self uint32At: 1 ]
     cbSize: v [ ^self uint32At: 1 put: v ]
-    "dwFlags: Windows.Win32.UI.Input.KeyboardAndMouse.TRACKMOUSEEVENT_FLAGS at 4 — no accessor (width unknown); use byteAt: directly"
+    dwFlags [ ^self uint32At: 5 ]
+    dwFlags: v [ ^self uint32At: 5 put: v ]
     hwndTrack [ ^self intptrAt: 9 ]
+    hwndTrack: v [ ^self intptrAt: 9 put: v ]
     dwHoverTime [ ^self uint32At: 17 ]
     dwHoverTime: v [ ^self uint32At: 17 put: v ]
 ]

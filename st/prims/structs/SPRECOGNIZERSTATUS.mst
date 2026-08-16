@@ -19,6 +19,7 @@ ExternalMemory subclass: SPRECOGNIZERSTATUS [
 
     audioStatus [ ^SPAUDIOSTATUS viewOn: self at: 0 size: 40 ]
     ullRecognitionStreamPos [ ^self intptrAt: 41 ]
+    ullRecognitionStreamPos: v [ ^self intptrAt: 41 put: v ]
     ulStreamNumber [ ^self uint32At: 49 ]
     ulStreamNumber: v [ ^self uint32At: 49 put: v ]
     ulNumActive [ ^self uint32At: 53 ]
@@ -28,4 +29,5 @@ ExternalMemory subclass: SPRECOGNIZERSTATUS [
     cLangIDs: v [ ^self uint32At: 65 put: v ]
     "aLangID: u16[] at 68 — no accessor (width unknown); use byteAt: directly"
     ullRecognitionStreamTime [ ^self intptrAt: 113 ]
+    ullRecognitionStreamTime: v [ ^self intptrAt: 113 put: v ]
 ]

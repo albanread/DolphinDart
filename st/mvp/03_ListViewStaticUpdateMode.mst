@@ -1,0 +1,109 @@
+ListViewUpdateMode subclass: ListViewStaticUpdateMode [
+    addOrUpdate: msgInteger items: aSequenceableCollection afterIndex: indexInteger [
+        "Private - Add/update row and column items for specified sequence of objects to the ListView,
+        	starting at the specified row index."
+        | lvItem primaryImageSupplier primaryTextSupplier isMultiColumn colImageBlock handle |
+        	primaryImageSupplier := primaryTextSupplier := view.
+        	colImageBlock := [:eachRow :eachCol | nil].
+        	(isMultiColumn := view isReportMode)
+        		ifTrue: 
+        			[primaryTextSupplier := ((view allColumns lookup: 1) ifNil: [ view ]) .
+        			view hasColumnImages
+        				ifTrue: 
+        					[colImageBlock := [:eachRow :eachCol | eachCol imageFromRow: eachRow].
+        					primaryImageSupplier := primaryTextSupplier]].
+        	lvItem := LVITEMW newBuffer.
+        	handle := view handle.
+        	aSequenceableCollection keysAndValuesDo: 
+        			[:i :each |
+        			"Note that row:text:imageIndex:indent: sets the mask, so would clear the LVIF_STATE flag if previously set"
+        			lvItem
+        				row: i + indexInteger
+        				text: (primaryTextSupplier textFromRow: each)
+        				imageIndex: (primaryImageSupplier imageFromRow: each)
+        				indent: (view indentFromRow: each).
+        			(view stateImageFromRow: each) ifNotNil: [:state | lvItem stateImageIndex: state].
+        			User32
+        				sendMessage: handle
+        				msg: msgInteger
+        				wParam: 0
+        				lpParam: lvItem].
+        	isMultiColumn ifFalse: [^self].
+        	view allColumns from: 2
+        		keysAndValuesDo: 
+        			[:j :eachCol |
+        			lvItem column: j.
+        			aSequenceableCollection keysAndValuesDo: 
+        					[:i :eachRow |
+        					lvItem
+        						row: i + indexInteger
+        						text: (eachCol textFromRow: eachRow)
+        						imageIndex: (colImageBlock value: eachRow value: eachCol)
+        						indent: 0.
+        					User32
+        						sendMessage: handle
+        						msg: 4172
+        						wParam: 0
+        						lpParam: lvItem]]
+    ]
+    applyCallbackMask [
+        "We want the control to store all data"
+    ]
+    insertItems: aSequenceableCollection at: anInteger [
+        	self
+        		addOrUpdate: 4173
+        		items: aSequenceableCollection
+        		afterIndex: anInteger - 1
+    ]
+    isVirtual [
+        	^false
+    ]
+    name [
+        	^#static
+    ]
+    refreshAllItems [
+        	view withOldWndProc: 
+        			[view noRedrawDo: 
+        					[view lvmDeleteAllItems.
+        					self insertItems: view list at: 1]]
+    ]
+    updateAllItems [
+        	self
+        		addOrUpdate: 4172
+        		items: view list
+        		afterIndex: 0
+    ]
+    updateIndentOf: anObject at: anInteger [
+        	view lvmSetItem: (LVITEMW newBuffer
+        				iItem: anInteger - 1;
+        				indent: (view indentFromRow: anObject);
+        				yourself)
+    ]
+    updateItem: anObject at: anInteger [
+        "Re-render the specified item, which is at the specified <integer> index in the list."
+        self
+        		addOrUpdate: 4172
+        		items: { anObject }
+        		afterIndex: anInteger - 1
+    ]
+    updateStateImageOf: anObject at: anInteger [
+        	view lvmSetItem: anInteger - 1
+        		state: (LVITEMW newBuffer
+        				iItem: anInteger - 1;
+        				stateImageIndex: (view stateImageFromRow: anObject);
+        				yourself)
+    ]
+    updateStateImages [
+        "Update the 'state' images for all items in the list."
+        | lvItem | 
+        	lvItem := LVITEMW newBuffer
+        				mask: 8;
+        				yourself.
+        	view list keysAndValuesDo: 
+        			[:index :each |
+        			lvItem
+        				iItem: index - 1;
+        				iStateImage: (view stateImageFromRow: each).
+        			view lvmSetItem: index - 1 state: lvItem]
+    ]
+]

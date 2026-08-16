@@ -970,4 +970,11 @@ Object subclass: Canvas [
         	finalized (or explicitly freed) with a call to DeleteDC()."
         ^self withDC: hDC ownedBy: self
     ]
+    Canvas class >> initializeClassConstants [
+        "Private - Assign the `classConstants:` entries whose values are expressions. GENERATED: Dolphin holds these in its image, so no source assigns them and every read was a nil."
+        DrawTextAlignments := (IdentityDictionary withAll: { #center -> 16r1. #left -> 16r0. #right -> 16r2 }).
+        ^self
+    ]
 ]
+
+Canvas initializeClassConstants.

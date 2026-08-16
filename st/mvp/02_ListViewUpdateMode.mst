@@ -1,0 +1,27 @@
+IconicListUpdateMode subclass: ListViewUpdateMode [
+    applyCallbackMask [
+        	self subclassResponsibility
+    ]
+    insertItem: anObject atIndex: anInteger [
+        	self insertItems: { anObject } at: anInteger
+    ]
+    insertItems: aSequenceableCollection at: anInteger [
+        	self subclassResponsibility
+    ]
+    refreshAllItems [
+        	self subclassResponsibility
+    ]
+    updateIndentOf: anObject at: anInteger [
+        	self subclassResponsibility
+    ]
+    updateStateImageOf: anObject at: anInteger [
+        	self subclassResponsibility
+    ]
+    updateStateImages [
+        	self subclassResponsibility
+    ]
+    ListViewUpdateMode class >> icon [
+        "Answers an Icon that can be used to represent this class"
+        ^ListView icon
+    ]
+]

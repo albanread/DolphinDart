@@ -1,0 +1,16 @@
+"`TreeViewLazyUpdateMode` is a partially-dynamic `TreeViewUpdateMode` policy that asks the `TreeView` to request text, icon, etc, for items the first time it needs them. In this mode the control is not given any of the data initially, but will store it progressively as the tree is expanded and displayed. This mode is a compromise between the fully-dynamic `TreeViewDynamicUpdateMode` and fully-static `TreeViewStaticUpdateMode`. It cases where where calculating the text, icons, etc, for items is expensive, this mode may be the best choice as it avoids the upfront cost of populating the entire tree, yet only incurs the cost of calculating the data once until the tree is refreshed."
+
+TreeViewVirtualUpdateMode subclass: TreeViewLazyUpdateMode [
+    name [
+        	^#lazy
+    ]
+    updateAllItems [
+        	view updateAllItems
+    ]
+    viewStoresItemData [
+        "Answer whether the view stores text and icon data in this update mode."
+        "This mode is initially virtual, but we want to ask the tree to store the data it is given when it first requests it."
+
+        	^true
+    ]
+]

@@ -49,7 +49,13 @@ _SCALARS = {
 _PTR_WIDTH = 8
 
 
-def field_accessor(type_name: str, structs: Dict[str, int]) -> Tuple[Optional[str], int]:
+_ENUM_ACCESSOR = {8: ("byteAt", 1), 16: ("uint16At", 2),
+                  32: ("uint32At", 4), 64: ("intptrAt", 8)}
+
+
+def field_accessor(type_name: str, structs: Dict[str, int],
+                   enums: Optional[Dict[str, int]] = None
+                   ) -> Tuple[Optional[str], int]:
     """(accessor-or-None, width). None accessor => emit a view or skip."""
     t = type_name.rsplit(".", 1)[-1]
     if type_name in _SCALARS:
@@ -62,24 +68,114 @@ def field_accessor(type_name: str, structs: Dict[str, int]) -> Tuple[Optional[st
         return "intptrAt", _PTR_WIDTH
     if t in structs:                       # a nested struct: a view, not a copy
         return None, structs[t]
+    # AN ENUM-TYPED FIELD is an integer of the enum's own width, and winkb
+    # records that width — `LIST_VIEW_ITEM_STATE_FLAGS` is `kind='enum'`,
+    # `size_bits=32`. Not following the type left every such field with no
+    # accessor at all: `LVITEMW>>stateMask:` and `MENUINFO>>dwStyle:` among
+    # them, which is why `03_struct_accessors.mst` exists and hand-supplies
+    # two of them. Unsigned, because a Win32 flags enum is a bit set.
+    if enums and t in enums and enums[t] in _ENUM_ACCESSOR:
+        return _ENUM_ACCESSOR[enums[t]]
     return None, 0                         # unknown: reported, never guessed
 
 
+# Any `<Super>\n subclass: #'<Namespace.Name>'` header, with the instance
+# variables that follow it. The SUPERCLASS is captured because struct-ness is
+# INHERITED and the chain is often more than one link: `OS.LVITEMW` is a
+# subclass of `OS.CCITEM`, which is the `External.Structure` — matching only
+# the direct children found `LVCOLUMNW` and missed `LVITEMW`, and the ListView
+# needs both (one per column, one to clear the selection).
+CLASS_DECL = re.compile(
+    r"^\s*([\w.]+)\s*\n\s*subclass:\s*#'([\w.]+)'"
+    r"(?:\s*\n\s*instanceVariableNames:\s*'([^']*)')?",
+    re.M)
+
+# The root of struct-ness: `External.Structure`, `OS.ExternalStructure`, and
+# anything else the corpus spells with a `Structure` suffix.
+STRUCT_ROOT = re.compile(r"(?:^|\.)\w*Structure$")
+
+# Instance variables the corpus declares on a struct class it also defines
+# methods for. Filled by `corpus_struct_names`, read by the emitter.
+DECLARED_IVARS: Dict[str, List[str]] = {}
+
+
 def corpus_struct_names(root: str) -> collections.Counter:
-    """Struct names the corpus passes by pointer, e.g. `RECTL*` -> RECTL."""
+    """Struct names the corpus needs, by two independent rules.
+
+    RULE 1 — passed by pointer to an external call, e.g. `RECTL*` -> RECTL.
+    This was the only rule, and it misses an entire category.
+
+    RULE 2 — DECLARED by the corpus as an `External.Structure` subclass and
+    named from some OTHER file. A struct reaches Windows two ways in Dolphin,
+    and only one of them is an FFI pragma: the common controls are driven by
+    `SendMessage`, so `UI.ListView>>insertColumn:atIndex:` builds an
+    `LVCOLUMNW` and passes its ADDRESS as an LPARAM. No pragma ever names the
+    type, so rule 1 could not see it and `LVCOLUMNW fromColumn:` was a send to
+    nil — the ListView half of the DD11 gate, while the TreeView half passed.
+
+    The second condition (named elsewhere) is what keeps this from emitting
+    every struct class in the corpus: a declaration nothing references is a
+    struct this port has no caller for.
+    """
     names = collections.Counter()
+    supers: Dict[str, str] = {}       # class base name -> superclass, qualified
+    decl_path: Dict[str, str] = {}    # class base name -> file that declares it
+    sources: List[Tuple[str, str]] = []
+
     for dp, dn, fn in os.walk(root):
         if set(dp.replace("\\", "/").split("/")) & {"Tests", "Deprecated", "Gdiplus"}:
             continue
         for f in fn:
             if not f.endswith((".cls", ".pax")):
                 continue
-            src = strip_code(open(os.path.join(dp, f), encoding="utf-8",
-                                  errors="replace").read())
+            path = os.path.join(dp, f)
+            raw = open(path, encoding="utf-8", errors="replace").read()
+            src = strip_code(raw)
+            sources.append((path, src))
             for body in PRAGMA.findall(src):
                 for tok in body.split()[2:]:
                     if tok.endswith("*") and tok[:1].isupper():
                         names[tok[:-1]] += 1
+            # RAW, not stripped: the class name lives in a SYMBOL literal
+            # (`subclass: #'OS.LVCOLUMNW'`) and `strip_code` blanks literals,
+            # so the stripped text has the superclass and nothing after it.
+            # The reference scan below still uses the stripped text, so a name
+            # that appears only in a comment does not count as a caller.
+            for m in CLASS_DECL.finditer(raw):
+                base = m.group(2).rsplit(".", 1)[-1]
+                supers.setdefault(base, m.group(1))
+                decl_path.setdefault(base, path)
+                # The class's OWN instance variables have to be part of the
+                # GENERATED class, not added later by the `--reopen` that
+                # brings its methods: in this dialect a class header that
+                # states an ivar list REDEFINES the class, so a reopen
+                # declaring `| text |` silently dropped `sizeInBytes` and
+                # every accessor, and `newBuffer` then allocated nothing.
+                # `OS.LVCOLUMNW`'s `text` is a real field — it holds the UTF-16
+                # buffer alive while the struct points at it.
+                if m.group(3):
+                    DECLARED_IVARS.setdefault(base, m.group(3).split())
+
+    def is_struct(base: str, seen=None) -> bool:
+        """Does this class's ancestry reach an `External.Structure`?"""
+        seen = seen or set()
+        if base in seen:
+            return False
+        sup = supers.get(base)
+        if sup is None:
+            return False
+        if STRUCT_ROOT.search(sup):
+            return True
+        return is_struct(sup.rsplit(".", 1)[-1], seen | {base})
+
+    for base, path_of_decl in decl_path.items():
+        if base in names or not is_struct(base):
+            continue
+        word = re.compile(r"\b%s\b" % re.escape(base))
+        for path, src in sources:
+            if path != path_of_decl and word.search(src):
+                names[base] += 1
+                break
     return names
 
 
@@ -96,6 +192,12 @@ def main(argv: List[str]) -> int:
         return 2
     import sqlite3
     db = sqlite3.connect(args.winkb)
+    # ENUM WIDTHS, once. A struct field typed as a Win32 enum is an integer of
+    # the enum's size, and winkb records it; see `field_accessor`.
+    enum_bits: Dict[str, int] = {
+        n: b for n, b in db.execute(
+            "select type_name, size_bits from types where kind='enum' "
+            "and size_bits is not null")}
 
     wanted = corpus_struct_names(args.corpus)
     # Dolphin spells several structs with the GDI `L` suffix (RECTL/POINTL/SIZEL)
@@ -137,7 +239,7 @@ def main(argv: List[str]) -> int:
         name = pending.pop()
         for _, _, ftype, _ in fields.get(name, []):
             t = ftype.rsplit(".", 1)[-1]
-            acc, _w = field_accessor(ftype, {})
+            acc, _w = field_accessor(ftype, {}, enum_bits)
             if acc is not None or t in fields or t in winkb_to_corpus:
                 continue
             if load(t):
@@ -148,7 +250,7 @@ def main(argv: List[str]) -> int:
     # assuming one pass is enough (PAINTSTRUCT contains a RECT; MSG ends with a
     # POINT, and getting that wrong made MSG 44 bytes instead of 48).
     def width_of(ftype: str) -> int:
-        acc, w = field_accessor(ftype, {})
+        acc, w = field_accessor(ftype, {}, enum_bits)
         if acc is not None:
             return w
         t = ftype.rsplit(".", 1)[-1]
@@ -159,7 +261,7 @@ def main(argv: List[str]) -> int:
         """The struct's alignment: the widest scalar it contains, capped at 8."""
         a = 1
         for _, _, ftype, _ in rows:
-            acc, w = field_accessor(ftype, {})
+            acc, w = field_accessor(ftype, {}, enum_bits)
             if acc is not None:
                 a = max(a, min(w, 8))
             else:
@@ -224,6 +326,11 @@ def main(argv: List[str]) -> int:
                  f"    byteSize [ ^{sizes[name]} ]",
                  f"    {name} class >> new [ ^self new: {sizes[name]} ]",
                  ""]
+        # The corpus's OWN instance variables for this struct, if it declares
+        # any. They belong on the generated class because a `--reopen` cannot
+        # add them without redefining the class — see DECLARED_IVARS above.
+        if DECLARED_IVARS.get(name):
+            lines.insert(4, f"    | {' '.join(DECLARED_IVARS[name])} |")
         # THE `_OffsetOf_` FAMILY, class-side.
         #
         # Dolphin's own code reads a field offset through its owning struct
@@ -245,7 +352,7 @@ def main(argv: List[str]) -> int:
         lines.append(f"    {name} class >> _{name}_Size [ ^{sizes[name]} ]")
         lines.append("")
         for ordinal, fname, ftype, off in rows:
-            acc, width = field_accessor(ftype, sizes)
+            acc, width = field_accessor(ftype, sizes, enum_bits)
             sel = fname[0].lower() + fname[1:]
             nested = winkb_to_corpus.get(ftype.rsplit(".", 1)[-1])
             if acc is None and nested and nested in sizes:
@@ -260,8 +367,20 @@ def main(argv: List[str]) -> int:
                              f"(width unknown); use byteAt: directly\"")
             else:
                 lines.append(f"    {sel} [ ^self {acc}: {off + 1} ]")
-                if acc in ("int32At", "uint32At"):
-                    lines.append(f"    {sel}: v [ ^self uint32At: {off + 1} put: v ]")
+                # A SETTER FOR EVERY WIDTH, through the accessor's own `put:`
+                # form. This used to be 32-bit-only, which left a getter with
+                # no setter on every pointer and every 8/16-bit field —
+                # `MENUITEMINFOW>>dwTypeData:`, the field a menu item's text
+                # pointer goes in, was one, and it had to be hand-written in
+                # `st/mvp_compat/03_struct_accessors.mst` to make menus work
+                # at all. A struct you can read and not write is half a
+                # binding.
+                #
+                # The put form matches the get form now that `int32At:put:`
+                # and `int16At:put:` exist; before, the 32-bit setter went
+                # through `uint32At:put:` regardless of signedness, which
+                # happens to write the same bytes but reads as a mismatch.
+                lines.append(f"    {sel}: v [ ^self {acc}: {off + 1} put: v ]")
         lines.append("]")
         with open(os.path.join(args.out, name + ".mst"), "w",
                   encoding="utf-8", newline="\n") as fh:

@@ -12,7 +12,7 @@ ExternalMemory subclass: POINT [
     POINT class >> _POINT_Size [ ^8 ]
 
     x [ ^self int32At: 1 ]
-    x: v [ ^self uint32At: 1 put: v ]
+    x: v [ ^self int32At: 1 put: v ]
     y [ ^self int32At: 5 ]
-    y: v [ ^self uint32At: 5 put: v ]
+    y: v [ ^self int32At: 5 put: v ]
 ]

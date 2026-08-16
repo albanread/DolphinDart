@@ -64,32 +64,59 @@ Object subclass: Point [
         other isPoint ifFalse: [ ^false ].
         ^x = other x and: [ y = other y ]
     ]
-    < other <Point> ^ <Boolean> [
-        ^x < other x and: [ y < other y ]
+    "The comparisons coerce for the same reason the arithmetic does; Dolphin
+     writes `aPoint > 0` to mean both coordinates positive."
+    < other <Object> ^ <Boolean> [
+        | p | p := other asPoint.
+        ^x < p x and: [ y < p y ]
     ]
-    <= other <Point> ^ <Boolean> [
-        ^x <= other x and: [ y <= other y ]
+    <= other <Object> ^ <Boolean> [
+        | p | p := other asPoint.
+        ^x <= p x and: [ y <= p y ]
     ]
-    > other <Point> ^ <Boolean> [
-        ^x > other x and: [ y > other y ]
+    > other <Object> ^ <Boolean> [
+        | p | p := other asPoint.
+        ^x > p x and: [ y > p y ]
     ]
-    >= other <Point> ^ <Boolean> [
-        ^x >= other x and: [ y >= other y ]
+    >= other <Object> ^ <Boolean> [
+        | p | p := other asPoint.
+        ^x >= p x and: [ y >= p y ]
     ]
-    + other <Point> ^ <Point> [
-        ^Point x: x + other x y: y + other y
+    "ARITHMETIC COERCES ITS OPERAND with `asPoint`, which is the ANSI
+     contract and Dolphin's: `aPoint * 2` scales both coordinates, exactly as
+     `aPoint * (2@2)` does. Written to assume a Point argument, every one of
+     these raised `Class 'int' has no instance method 'x'` on a scalar — and
+     the scalar spelling is the one the corpus uses. It reached DD11 through
+     `IconicListAbstract>>scaledImageExtent`:
+
+         ^Icon standardSizeFor: (self imageExtent * self dpi // 96)
+
+     where `self dpi` is an Integer, so the whole DPI-scaling of every icon in
+     every list and tree control failed. It fails on a 96-dpi display too;
+     nothing about it is high-DPI-specific."
+    + other <Object> ^ <Point> [
+        | p | p := other asPoint.
+        ^Point x: x + p x y: y + p y
     ]
-    - other <Point> ^ <Point> [
-        ^Point x: x - other x y: y - other y
+    - other <Object> ^ <Point> [
+        | p | p := other asPoint.
+        ^Point x: x - p x y: y - p y
     ]
-    * other <Point> ^ <Point> [
-        ^Point x: x * other x y: y * other y
+    * other <Object> ^ <Point> [
+        | p | p := other asPoint.
+        ^Point x: x * p x y: y * p y
     ]
-    / other <Point> ^ <Point> [
-        ^Point x: x / other x y: y / other y
+    / other <Object> ^ <Point> [
+        | p | p := other asPoint.
+        ^Point x: x / p x y: y / p y
     ]
-    // other <Point> ^ <Point> [
-        ^Point x: x // other x y: y // other y
+    // other <Object> ^ <Point> [
+        | p | p := other asPoint.
+        ^Point x: x // p x y: y // p y
+    ]
+    \\ other <Object> ^ <Point> [
+        | p | p := other asPoint.
+        ^Point x: x \\ p x y: y \\ p y
     ]
     abs ^ <Point> [
         ^Point x: x abs y: y abs
@@ -109,11 +136,25 @@ Object subclass: Point [
     truncateTo: grid <Number> ^ <Point> [
         ^Point x: (x truncateTo: grid) y: (y truncateTo: grid)
     ]
-    max: other <Point> ^ <Point> [
-        ^Point x: (x max: other x) y: (y max: other y)
+    max: other <Object> ^ <Point> [
+        | p | p := other asPoint.
+        ^Point x: (x max: p x) y: (y max: p y)
     ]
-    min: other <Point> ^ <Point> [
-        ^Point x: (x min: other x) y: (y min: other y)
+    min: other <Object> ^ <Point> [
+        | p | p := other asPoint.
+        ^Point x: (x min: p x) y: (y min: p y)
+    ]
+    "Dolphin's `ArithmeticValue>>strictlyPositive`, `^self > self class zero`,
+     which for a Point means BOTH coordinates positive — the guard every
+     bitmap-sized thing uses before allocating: `ImageList class >> extent:`
+     refuses a non-positive extent, and `Icon>>isStandardSize` tests one. It
+     reaches Point rather than Number because the corpus sends it to extents,
+     and it works because Point's comparisons coerce (see above)."
+    strictlyPositive ^ <Boolean> [
+        ^self > 0
+    ]
+    positive ^ <Boolean> [
+        ^self >= 0
     ]
     relativeTo: p <Point> ^ <Point> [
         ^self - p
@@ -131,6 +172,18 @@ Object subclass: Point [
 Magnitude subclass: Number [
     @ aNumber <Number> ^ <Point> [
         ^Point x: self y: aNumber
+    ]
+    "The other half of Point's coercion: a scalar IS the square point. Without
+     it every `aPoint * anInteger` in the corpus raised."
+    asPoint ^ <Point> [
+        ^Point x: self y: self
+    ]
+    "The scalar spellings of the same two tests Point answers above."
+    strictlyPositive ^ <Boolean> [
+        ^self > 0
+    ]
+    positive ^ <Boolean> [
+        ^self >= 0
     ]
     truncateTo: grid <Number> ^ <Number> [
         ^(self / grid) truncated * grid

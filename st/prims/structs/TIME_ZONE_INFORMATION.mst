@@ -2,6 +2,7 @@
  winkb (Win32Metadata), not computed here. Do not hand-edit."
 
 ExternalMemory subclass: TIME_ZONE_INFORMATION [
+    | zoneId offset |
     TIME_ZONE_INFORMATION class >> sizeInBytes [ ^172 ]
     TIME_ZONE_INFORMATION class >> byteSize [ ^172 ]
     byteSize [ ^172 ]
@@ -17,13 +18,13 @@ ExternalMemory subclass: TIME_ZONE_INFORMATION [
     TIME_ZONE_INFORMATION class >> _TIME_ZONE_INFORMATION_Size [ ^172 ]
 
     bias [ ^self int32At: 1 ]
-    bias: v [ ^self uint32At: 1 put: v ]
+    bias: v [ ^self int32At: 1 put: v ]
     "standardName: char[] at 4 — no accessor (width unknown); use byteAt: directly"
     standardDate [ ^SYSTEMTIME viewOn: self at: 68 size: 16 ]
     standardBias [ ^self int32At: 85 ]
-    standardBias: v [ ^self uint32At: 85 put: v ]
+    standardBias: v [ ^self int32At: 85 put: v ]
     "daylightName: char[] at 88 — no accessor (width unknown); use byteAt: directly"
     daylightDate [ ^SYSTEMTIME viewOn: self at: 152 size: 16 ]
     daylightBias [ ^self int32At: 169 ]
-    daylightBias: v [ ^self uint32At: 169 put: v ]
+    daylightBias: v [ ^self int32At: 169 put: v ]
 ]

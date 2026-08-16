@@ -16,9 +16,13 @@ ExternalMemory subclass: XHR_COOKIE [
     XHR_COOKIE class >> _XHR_COOKIE_Size [ ^48 ]
 
     pwszUrl [ ^self intptrAt: 1 ]
+    pwszUrl: v [ ^self intptrAt: 1 put: v ]
     pwszName [ ^self intptrAt: 9 ]
+    pwszName: v [ ^self intptrAt: 9 put: v ]
     pwszValue [ ^self intptrAt: 17 ]
+    pwszValue: v [ ^self intptrAt: 17 put: v ]
     pwszP3PPolicy [ ^self intptrAt: 25 ]
+    pwszP3PPolicy: v [ ^self intptrAt: 25 put: v ]
     ftExpires [ ^FILETIME viewOn: self at: 32 size: 8 ]
     dwFlags [ ^self uint32At: 41 ]
     dwFlags: v [ ^self uint32At: 41 put: v ]

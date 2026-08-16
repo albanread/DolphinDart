@@ -14,6 +14,7 @@ ExternalMemory subclass: DECIMAL [
     DECIMAL class >> _DECIMAL_Size [ ^56 ]
 
     wReserved [ ^self uint16At: 1 ]
+    wReserved: v [ ^self uint16At: 1 put: v ]
     "anonymous1: _Anonymous1_e__Union at 8 — no accessor (width unknown); use byteAt: directly"
     hi32 [ ^self uint32At: 41 ]
     hi32: v [ ^self uint32At: 41 put: v ]

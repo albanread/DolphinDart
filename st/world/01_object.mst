@@ -95,13 +95,79 @@ nil subclass: Object [
  receives a message it does not understand, the VM hands its
  doesNotUnderstand: handler an instance of me. Ask me for the selector
  (a Symbol) and the arguments (an Array) to inspect or report the
- failed send."
+ failed send.
+
+ I am ALSO a valuable, and that is not a second feature bolted on — it is
+ why Dolphin's MVP layer can parameterise itself without blocks.
+ `View class >> defaultGetTextBlock` answers `Message selector:
+ #displayString`, and `IconicListAbstract` later sends `getTextBlock value:
+ anObject`; a Message answering `value:` by performing its selector is what
+ makes the two fit. Constructed-but-not-valuable was the state that made
+ `ListView new` fail with `Message class has no method 'selector:'`.
+
+ The instance variables are DECLARED here rather than reached by
+ `instVarAt: 1`/`2` as before: the accessors happened to work because the
+ slots existed, but nothing could construct me, so every send of
+ `Message selector:` in the translated corpus went to a class with no
+ constructor."
 
 Object subclass: Message [
+    | selector args |
+
+    Message class >> selector: aSymbol [
+        ^self selector: aSymbol arguments: #()
+    ]
+    Message class >> selector: aSymbol argument: anObject [
+        ^self selector: aSymbol arguments: (Array with: anObject)
+    ]
+    Message class >> selector: aSymbol arguments: anArray [
+        ^self new setSelector: aSymbol arguments: anArray; yourself
+    ]
+
     selector ^ <Symbol> [
-        ^self instVarAt: 1
+        ^selector
     ]
     arguments ^ <Array> [
-        ^self instVarAt: 2
+        ^args
+    ]
+    arguments: anArray [
+        args := anArray
+    ]
+    argument [
+        ^args first
+    ]
+    argumentCount [
+        ^args size
+    ]
+
+    "Named `setSelector:arguments:` and not `selector:arguments:` because the
+     VM's doesNotUnderstand: reification calls this spelling to populate the
+     instance it hands the handler."
+    setSelector: aSymbol arguments: anArray [
+        selector := aSymbol.
+        args := anArray
+    ]
+
+    "── the valuable protocol ──────────────────────────────────────────────"
+    value: anObject [
+        ^anObject perform: selector withArguments: args
+    ]
+    value: aReceiver value: anArgument [
+        ^aReceiver perform: selector with: anArgument
+    ]
+    value: aReceiver value: arg1 value: arg2 [
+        ^aReceiver perform: selector with: arg1 with: arg2
+    ]
+
+    = aMessage [
+        ^self class == aMessage class
+            and: [ selector == aMessage selector
+                and: [ args = aMessage arguments ] ]
+    ]
+    hash [ ^selector hash ]
+
+    printOn: aStream [
+        aStream nextPutAll: self class name; nextPutAll: ' selector: '.
+        selector printOn: aStream
     ]
 ]

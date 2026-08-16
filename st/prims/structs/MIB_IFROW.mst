@@ -47,7 +47,8 @@ ExternalMemory subclass: MIB_IFROW [
     "bPhysAddr: u8[] at 532 — no accessor (width unknown); use byteAt: directly"
     dwAdminStatus [ ^self uint32At: 541 ]
     dwAdminStatus: v [ ^self uint32At: 541 put: v ]
-    "dwOperStatus: Windows.Win32.NetworkManagement.IpHelper.INTERNAL_IF_OPER_STATUS at 544 — no accessor (width unknown); use byteAt: directly"
+    dwOperStatus [ ^self uint32At: 545 ]
+    dwOperStatus: v [ ^self uint32At: 545 put: v ]
     dwLastChange [ ^self uint32At: 549 ]
     dwLastChange: v [ ^self uint32At: 549 put: v ]
     dwInOctets [ ^self uint32At: 553 ]

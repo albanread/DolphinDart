@@ -2,6 +2,7 @@
  winkb (Win32Metadata), not computed here. Do not hand-edit."
 
 ExternalMemory subclass: LOGBRUSH [
+    | hatch |
     LOGBRUSH class >> sizeInBytes [ ^16 ]
     LOGBRUSH class >> byteSize [ ^16 ]
     byteSize [ ^16 ]
@@ -12,7 +13,9 @@ ExternalMemory subclass: LOGBRUSH [
     LOGBRUSH class >> _OffsetOf_lbHatch [ ^8 ]
     LOGBRUSH class >> _LOGBRUSH_Size [ ^16 ]
 
-    "lbStyle: Windows.Win32.Graphics.Gdi.BRUSH_STYLE at 0 — no accessor (width unknown); use byteAt: directly"
+    lbStyle [ ^self uint32At: 1 ]
+    lbStyle: v [ ^self uint32At: 1 put: v ]
     lbColor [ ^COLORREF viewOn: self at: 4 size: 4 ]
     lbHatch [ ^self intptrAt: 9 ]
+    lbHatch: v [ ^self intptrAt: 9 put: v ]
 ]

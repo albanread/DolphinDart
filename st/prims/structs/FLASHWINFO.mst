@@ -17,7 +17,9 @@ ExternalMemory subclass: FLASHWINFO [
     cbSize [ ^self uint32At: 1 ]
     cbSize: v [ ^self uint32At: 1 put: v ]
     hwnd [ ^self intptrAt: 9 ]
-    "dwFlags: Windows.Win32.UI.WindowsAndMessaging.FLASHWINFO_FLAGS at 16 — no accessor (width unknown); use byteAt: directly"
+    hwnd: v [ ^self intptrAt: 9 put: v ]
+    dwFlags [ ^self uint32At: 17 ]
+    dwFlags: v [ ^self uint32At: 17 put: v ]
     uCount [ ^self uint32At: 21 ]
     uCount: v [ ^self uint32At: 21 put: v ]
     dwTimeout [ ^self uint32At: 25 ]

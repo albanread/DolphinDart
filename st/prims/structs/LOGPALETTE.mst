@@ -13,6 +13,8 @@ ExternalMemory subclass: LOGPALETTE [
     LOGPALETTE class >> _LOGPALETTE_Size [ ^12 ]
 
     palVersion [ ^self uint16At: 1 ]
+    palVersion: v [ ^self uint16At: 1 put: v ]
     palNumEntries [ ^self uint16At: 3 ]
+    palNumEntries: v [ ^self uint16At: 3 put: v ]
     "palPalEntry: Windows.Win32.Graphics.Gdi.PALETTEENTRY[] at 4 — no accessor (width unknown); use byteAt: directly"
 ]

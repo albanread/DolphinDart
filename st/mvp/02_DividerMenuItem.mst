@@ -130,4 +130,11 @@ MenuItem subclass: DividerMenuItem [
         "Private - Uninitialize the receiver as it is about to be removed from the system."
         BarBreak := Break := Separator := nil
     ]
+    DividerMenuItem class >> initializeClassConstants [
+        "Private - Assign the `classConstants:` entries whose values are expressions. GENERATED: Dolphin holds these in its image, so no source assigns them and every read was a nil."
+        DividerLookup := (IdentityDictionary withAll: { 16r20 -> #barBreak. 16r40 -> #break. 16r800 -> #separator }).
+        ^self
+    ]
 ]
+
+DividerMenuItem initializeClassConstants.

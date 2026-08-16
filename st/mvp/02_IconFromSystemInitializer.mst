@@ -1,0 +1,52 @@
+ImageInitializer subclass: IconFromSystemInitializer [
+    | extent identifier |
+
+    = anObject [
+        "Answer whether the receiver and anObject are equivalent. Two Images loaded by identifier are equal if they are of the same species, and have the same id and are from the same resource modules."
+        ^self == anObject or: [self species == anObject species and: [identifier = anObject identifier]]
+    ]
+    createImage: anImage extent: aPoint [
+        "Private - Attempts to load the icon resource specified by the receiver. Answers the loaded handle or nil if the load failed."
+        ^anImage loadFromSystem: identifier extent: aPoint
+    ]
+    extent [
+        	^extent
+    ]
+    extent: aPoint [
+        	extent := aPoint
+    ]
+    flags [
+        	^32770
+    ]
+    hash [
+        "Answer the <integer> hash value for the receiver."
+        ^identifier hash
+    ]
+    identifier [
+        	^identifier
+    ]
+    identifier: anInteger [
+        	identifier := anInteger
+    ]
+    isSelfEvaluatingImage: anImage [
+        "Private - Answer whether the `Image` argument is self-evaluating when initialized by the receiver."
+        ^true
+    ]
+    printImage: anIcon on: aWriteStream [
+        "Private - Print a representation of the <Image> initialized by the receiver onto the <puttableStream> argument in the form a developer might want to see."
+        aWriteStream print: anIcon class. aWriteStream space.
+        	(anIcon class systemNames lookup: self identifier)
+        		ifNil: 
+        			[aWriteStream
+        				display: #fromSystemId:;
+        				space;
+        				print: identifier]
+        		ifNotNil: [:name | aWriteStream nextPutAll: name]
+    ]
+    IconFromSystemInitializer class >> extent: aPoint identifier: anInteger [
+        | _casc1 | _casc1 := self basicNew. _casc1 instVarAt: 1 put: aPoint. _casc1 instVarAt: 2 put: anInteger. ^_casc1 yourself
+    ]
+    IconFromSystemInitializer class >> identifier: anInteger [
+        | _casc1 | _casc1 := self new. _casc1 identifier: anInteger. ^_casc1 yourself
+    ]
+]

@@ -14,7 +14,10 @@ ExternalMemory subclass: OVERLAPPED [
     OVERLAPPED class >> _OVERLAPPED_Size [ ^32 ]
 
     internal [ ^self intptrAt: 1 ]
+    internal: v [ ^self intptrAt: 1 put: v ]
     internalHigh [ ^self intptrAt: 9 ]
+    internalHigh: v [ ^self intptrAt: 9 put: v ]
     "anonymous: _Anonymous_e__Union at 16 — no accessor (width unknown); use byteAt: directly"
     hEvent [ ^self intptrAt: 25 ]
+    hEvent: v [ ^self intptrAt: 25 put: v ]
 ]

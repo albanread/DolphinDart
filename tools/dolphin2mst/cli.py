@@ -131,6 +131,11 @@ def main(argv: List[str]) -> int:
                          "though the class itself is not translated "
                          "(OS.UserLibrary: Dolphin's convenience layer over "
                          "the generated prims)")
+    ap.add_argument("--reopen", action="append", default=[],
+                    help="translate this class's OWN methods as a reopen "
+                         "rather than a definition, because this project "
+                         "GENERATES the class (OS.LVCOLUMNW: genstructs "
+                         "builds the layout, the .cls carries the methods)")
     ap.add_argument("inputs", nargs="+")
     args = ap.parse_args(argv)
 
@@ -208,6 +213,7 @@ def main(argv: List[str]) -> int:
                    for cd in (pf.classdefs or ([pf.classdef] if pf.classdef else []))}
 
     # Loose methods, keyed by the class they are filed onto.
+    reopen_targets = set(args.reopen or [])
     loose: Dict[str, List[parse.Method]] = collections.defaultdict(list)
     for pf in parsed.values():
         for target, ms in pf.loose.items():
@@ -243,6 +249,41 @@ def main(argv: List[str]) -> int:
                 continue          # folded into constants; never emitted as a class
             extra = loose.pop(cd.name, [])
             adopted += len(extra)
+            # REOPEN, not define. `OS.LVCOLUMNW` is a class this project
+            # GENERATES — genstructs builds it from winkb with typed accessors
+            # at real offsets — but its `.cls` also carries ordinary Smalltalk
+            # methods that nothing else can supply: `LVCOLUMNW class >>
+            # fromColumn:` is how `UI.ListView` fills a column structure
+            # before SendMessage, and without it the ListView cannot be
+            # created at all.
+            #
+            # Emitting it as a DEFINITION would redefine the class after
+            # genstructs and drop the layout, which is the failure the `.pax`
+            # guard above records for `OS.MENUITEMINFOW`. So the same
+            # `emit_loose` path the `OS.UserLibrary` convenience layer uses is
+            # taken, with the class's own methods instead of loose ones.
+            if cd.name in reopen_targets:
+                own = list(pf.methods) if cd is pf.classdef else []
+                # `ExternalMemory` because that is what genstructs gives
+                # every struct it emits; the `.cls` says `External.Structure`,
+                # which is Dolphin's name for the same role and does not exist
+                # here.
+                res = emit.emit_loose(
+                    emit.flatten_name(cd.name, renames), cd, own + extra,
+                    renames, pool_table, classvar_owners, constant_chains,
+                    inherited_pool_chain(by_name_all, cd.name),
+                    force_class_side=False, reopen_super="ExternalMemory")
+                refusals.extend(res.refusals)
+                notes.extend(res.notes)
+                nm = emit.flatten_name(cd.name, renames)
+                fname = f"91_{nm}_reopen.mst"
+                with open(os.path.join(args.out, fname), "w",
+                          encoding="utf-8", newline="\n") as fh:
+                    fh.write(res.text)
+                written += 1
+                per_file.append((nm + " (reopen)", len(own) + len(extra),
+                                 len(res.refusals)))
+                continue
             res = emit.emit_class(pf, renames, ivars, pool_table, extra, cd,
                                   inherited_pool_chain(by_name_all, cd.name),
                                   classvar_owners, constant_chains)

@@ -1,0 +1,42 @@
+Object subclass: IconicListUpdateMode [
+    | view |
+
+    isVirtual [
+        "Answer whether the update mode is 'virtual', where the control does not store the display details, but instead requests them every time they are required for painting."
+        ^self subclassResponsibility
+    ]
+    name [
+        "Answer the name of this tree view update mode, one of:
+        		#dynamic	- display details re-requested by callback on every paint
+        		#lazy		- display details initially requested by callback on first paint only
+        		#static		- Items fully populated with display details when first added
+        	The display details referred to are the label text, icons, (in a tree) whether or not the node has children, and (in a list) the row indent."
+        ^self subclassResponsibility
+    ]
+    setView: aTreeView [
+        	view := aTreeView.
+        	^self
+    ]
+    updateAllItems [
+        "Re-display all items in the view to reflect any changes in the underlying data."
+        self subclassResponsibility
+    ]
+    updateItem: anObject at: hItem [
+        "Update the text, image, and children flag of the specified element of the tree."
+        self subclassResponsibility
+    ]
+    view [
+        	^view
+    ]
+    viewStoresItemData [
+        "Answer whether the view stores text and icon data in this update mode."
+        ^self isVirtual not
+    ]
+    IconicListUpdateMode class >> forIconicList: anIconicListAbstract [
+        | _casc1 | _casc1 := self new. _casc1 setView: anIconicListAbstract. ^_casc1 yourself
+    ]
+    IconicListUpdateMode class >> icon [
+        "Answers an Icon that can be used to represent this class"
+        ^IconicListAbstract icon
+    ]
+]

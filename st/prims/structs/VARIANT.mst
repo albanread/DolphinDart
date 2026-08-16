@@ -2,6 +2,7 @@
  winkb (Win32Metadata), not computed here. Do not hand-edit."
 
 ExternalMemory subclass: VARIANT [
+    | data |
     VARIANT class >> sizeInBytes [ ^8 ]
     VARIANT class >> byteSize [ ^8 ]
     byteSize [ ^8 ]

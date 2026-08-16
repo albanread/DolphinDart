@@ -262,3 +262,131 @@ to be referenced from code.
 it wants a fresh session rather than the tail of a long one: the honest next
 step is to find which literal is being embedded (the object pool entry names
 it) rather than guess at the wave.
+
+---
+
+## DD11 — `st_controls` GREEN. 22/22.
+
+A real `SysTreeView32` and a real `SysListView32`, created by Dolphin's own
+`View>>create`, subclassed by its own `ControlView>>subclassWindow`, with
+Windows asked for each class name rather than the Smalltalk class trusted.
+
+Twelve distinct defects between the last entry and this one. They are worth
+listing because only one of them was in the control wave.
+
+### 1. The VM assertion — a Dart 1.24 bug, and the same function proves it
+
+`assembler_arm64.cc:377 expected: object.IsOld()`. A diagnostic in the flow
+graph builder's `Constant()` named the object immediately: `Type: class
+'TreeView'`, with `canonical?=1 canonIsOld=0 sameAsCanon=1`. So the class's
+own canonical type was new-space.
+
+A second diagnostic, at the store (`Class::set_canonical_type`), named the
+creator: `Object.runtimeType` → `Instance::GetType(Heap::kNew)` →
+`Type::Canonicalize`. And `Type::Canonicalize` has TWO paths. The general one
+promotes before installing:
+
+```cpp
+if (this->IsNew()) { type ^= Object::Clone(*this, Heap::kOld); }
+else               { type ^= this->raw(); }
+ASSERT(type.IsOld());
+```
+
+The FAST path — non-generic, non-closure, non-typedef, i.e. every Smalltalk
+class in this port — stored `*this` with no promotion. So printing an object
+before any code embedded its type poisoned the class permanently, and the
+failure surfaced arbitrarily later inside the assembler with only compiler
+frames on the stack.
+
+Fixed by applying the same promotion in the fast path, and
+`Class::set_canonical_type` now `ASSERT(value.IsOld())` so any future
+violation fails at the store rather than in the ARM64 assembler.
+
+### 2. `classConstants:` values were being dropped — nine classes, not three
+
+`TreeView>>updateMode:` died with `at:` sent to nil. `UpdateModes` was
+DECLARED as a class variable and never assigned. So were `LvModes` and
+`ViewModes`, and each was briefly a hand-written table in `mvp_compat`.
+
+They were all wrong. The values ARE in the corpus:
+
+```
+classConstants: {
+    'UpdateModes' -> (IdentityDictionary withAll: {
+            #dynamic -> TreeViewDynamicUpdateMode. ... })
+}
+```
+
+`pools._ENTRY` stops a value at the first `.`, newline or `}` — right for the
+scalars it was written for, and it silently truncated every multi-line one.
+`pools.class_constant_entries` now walks the brace group properly, and
+`emit_class` emits an `initializeClassConstants` per class, CALLED as a
+top-level statement at the class's own place in the load order (a file-in
+loader never sends a class-side `initialize` — the second time this port has
+paid for that). Nine classes got one, not the three being chased.
+
+### 3. Dolphin's struct `.cls` offsets are 32-BIT
+
+The most dangerous find. `OS.LVCOLUMNW.cls` declares `_OffsetOf_pszText ->
+16rC` (12) and `_LVCOLUMNW_Size -> 16r2C` (44). On a 64-bit target the pointer
+is 8-aligned: the field is at 16 and the struct is 56 bytes, which is what
+`genstructs` emits from winkb.
+
+Folding the corpus's own constant wrote a caption pointer into `cx` and the
+process died in comctl32 with an access violation — no Smalltalk error at all.
+The `--reopen` path now rewrites `_OffsetOf_*` to a send to the generated
+class rather than folding, so the offset that is used is always the one the
+accessors were built from. **This is the one place in the translator where
+the corpus's own value is the wrong one.**
+
+### 4-12, shorter
+
+* **`Message` had no constructors.** `View class >> defaultGetTextBlock` is
+  `^Message selector: #displayString` — a Message used as a monadic valuable.
+  Ours was a two-accessor DNU payload. Now Dolphin's real one, including
+  `value:`; the VM's DNU reification pointed at a phantom `STMessage` that no
+  layer defined, so the one path it existed for always threw.
+* **`Object>>value ^self`** — Dolphin defines it, which is what makes
+  `at: k ifAbsent: 0` legal, and `View>>getNoRedrawCount` is exactly that.
+  It CANNOT be written in Smalltalk here: `value` is a universal helper the
+  builder rewrites at the call site, and defining it took out every MVP gate
+  with an access violation on a blown stack. It lives in `_stValue0Slow`.
+  Neither `_stHasMethod` nor `stRespondsTo` can gate it — `Character>>value`
+  is in `_stCharProtocol`, reached through the VM's object-NSM hook — so the
+  send is attempted and the miss caught on the message naming `value`.
+* **`Point` arithmetic did not coerce.** `(16@16) * 144` raised `int has no
+  method 'x'`. Dolphin's contract is `asPoint` on the operand;
+  `scaledImageExtent` is `imageExtent * self dpi // 96`, so DPI-scaling every
+  icon in every list and tree was broken — on a 96-dpi display too.
+* **`genstructs` discovery missed a whole category.** It took struct names
+  from `X*` FFI-pragma arguments; the common controls are driven by
+  `SendMessage`, so no pragma ever names `LVCOLUMNW`. Now also: DECLARED as an
+  `External.Structure` subclass (transitively — `LVITEMW` descends from
+  `CCITEM`) and referenced from another file.
+* **`--reopen`**, new: translate a `.cls`'s own methods onto a class this
+  project GENERATES. `genstructs` builds the layout, the `.cls` carries
+  `fromColumn:`. An ivar list in a reopen REDEFINES the class in this dialect
+  (it dropped `sizeInBytes` and `newBuffer` then allocated nothing), so the
+  struct's own ivars are emitted by `genstructs` instead.
+* **Enum-typed struct fields now get accessors.** winkb records `size_bits`
+  for an enum exactly as for a struct. This RETIRES the LOOSE_ENDS entry and
+  the eight hand-written accessors in `03_struct_accessors.mst`.
+* **Setters for every width.** The generator emitted one only for 32-bit
+  fields, so every pointer field had a getter and no setter —
+  `MENUITEMINFOW>>dwTypeData:` among them, hand-written to make menus work.
+* **`SearchPolicy>>newLookupTable`**, **`removePropertyAt:ifAbsent:`**,
+  **`Point>>strictlyPositive`**, **`int32At:put:`/`int16At:put:`/`int8At:put:`**,
+  **`ExternalMemory>>bytes`/`yourAddress`** — plain gaps, each on the
+  construction path.
+* **`onStartup` was never sent.** A second initializer Dolphin runs at image
+  start, for what depends on the machine rather than the class.
+  `ListView class >> onStartup` sets `SelectionStateMask`, so creating a
+  ListView wrote nil into an LVITEMW. Sent explicitly for `ListView` in
+  `initializeViewClasses`; retires when `includesSelector:` exists.
+
+### Still open
+
+`View>>onEraseRequired:` answers nil; `basicNew:` answers the class rather
+than raising; `<commandQuery:>` pragmas dropped (14 sites); and the VISIBLE
+SHELL — a real message loop, keyboard reaching a control, a menu clicked by a
+person. That last one is still the honest gap and is not closed by any gate.

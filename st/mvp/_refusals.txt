@@ -102,6 +102,14 @@ C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Graphics\Graphics.ImageManager.c
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Graphics\OS.SystemMetrics.cls:316: [hashhash] `##(#('Policy' 'intl' 'Environment' 'ImmersiveColorSet') asSet)` folded to a runtime block
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Graphics\OS.SystemMetrics.cls:392: [hashhash] `##(48 @ 48)` folded to a runtime block
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Models\List\UI.ListModel.cls:440: [cascade] cascade on a receiver this rewriter cannot bound — splitting it could change evaluation
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Models\Tree\UI.TreeModel.cls:291: [cascade] cascade on a receiver this rewriter cannot bound — splitting it could change evaluation
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Models\Tree\UI.TreeModelAbstract.cls:76: [cascade] cascade on a receiver this rewriter cannot bound — splitting it could change evaluation
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Models\Tree\UI.TreeModelAbstract.cls:94: [cascade] cascade on a receiver this rewriter cannot bound — splitting it could change evaluation
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Models\Tree\UI.TreeModelAbstract.cls:102: [cascade] cascade on a receiver this rewriter cannot bound — splitting it could change evaluation
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Models\Tree\UI.TreeModelAbstract.cls:110: [cascade] cascade on a receiver this rewriter cannot bound — splitting it could change evaluation
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Models\Tree\UI.TreeModelAbstract.cls:430: [cascade] cascade on a receiver this rewriter cannot bound — splitting it could change evaluation
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Models\Tree\UI.TreeModelAbstract.cls:500: [hashhash] `##(self)` folded to a runtime block
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Models\Tree\UI.TreeModelAbstract.cls:510: [cascade] cascade on a receiver this rewriter cannot bound — splitting it could change evaluation
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Models\Value\UI.ValueAdaptor.cls:59: [hashhash] `##(self)` folded to a runtime block
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Models\Value\UI.ValueAdaptor.cls:64: [cascade] cascade on a receiver this rewriter cannot bound — splitting it could change evaluation
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Models\Value\UI.ValueAspectAdaptor.cls:138: [cascade] cascade on a receiver this rewriter cannot bound — splitting it could change evaluation
@@ -168,6 +176,12 @@ C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Common Controls\UI.ListVie
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Common Controls\UI.ListView.cls:2091: [cascade] cascade on a receiver this rewriter cannot bound — splitting it could change evaluation
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Common Controls\UI.ListView.cls:2611: [hashhash] `##(self)` folded to a runtime block
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Common Controls\UI.ListView.cls:2674: [cascade] cascade on a receiver this rewriter cannot bound — splitting it could change evaluation
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Common Controls\UI.ListViewColumn.cls:135: [hashhash] `##(Message selector: #<=)` folded to a runtime block
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Common Controls\UI.ListViewColumn.cls:326: [qq] `??` with a non-primary right operand
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Common Controls\UI.ListViewColumn.cls:472: [hashhash] `##(self)` folded to a runtime block
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Common Controls\UI.ListViewColumn.cls:512: [cascade] cascade on a receiver this rewriter cannot bound — splitting it could change evaluation
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Common Controls\UI.ListViewColumn.cls:519: [cascade] cascade on a receiver this rewriter cannot bound — splitting it could change evaluation
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Common Controls\UI.ListViewStaticUpdateMode.cls:115: [cascade] cascade on a receiver this rewriter cannot bound — splitting it could change evaluation
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Common Controls\UI.TreeView.cls:298: [cascade] cascade on a receiver this rewriter cannot bound — splitting it could change evaluation
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Common Controls\UI.TreeView.cls:310: [cascade] cascade on a receiver this rewriter cannot bound — splitting it could change evaluation
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Common Controls\UI.TreeView.cls:570: [hashhash] `##(NMHDR byteSize)` folded to a runtime block
@@ -179,6 +193,8 @@ C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Common Controls\UI.TreeVie
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Common Controls\UI.TreeView.cls:1396: [cascade] cascade on a receiver this rewriter cannot bound — splitting it could change evaluation
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Common Controls\UI.TreeView.cls:1396: [hashhash] `##({ TreeViewDynamicUpdateMode. TreeViewStaticUpdateMode. TreeV)` folded to a runtime block
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Common Controls\UI.TreeView.cls:1396: [hashhash] `##(self indexOfInstVar: 'tvFlags')` folded to a runtime block
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Common Controls\UI.TreeViewStaticUpdateMode.cls:19: [qq] `??` with a non-primary right operand
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Common Controls\UI.TreeViewStaticUpdateMode.cls:46: [cascade] cascade on a receiver this rewriter cannot bound — splitting it could change evaluation
 loose:2633: [hashhash] `##(self defaultIcon)` folded to a runtime block
 Core.Error: [orphan-loose-methods] 1 loose method(s) filed onto 'Core.Error', which was not translated
 Core.MessageSend: [orphan-loose-methods] 1 loose method(s) filed onto 'Core.MessageSend', which was not translated

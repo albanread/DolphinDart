@@ -1,0 +1,19 @@
+"`TreeViewVirtualUpdateMode` is the abstract class of policy objects that implement the virtual `TreeView` update modes. In these modes the items are added to the tree without any data, and the view then sends callback notifications to request the text, icons, etc, when required. Whether or not it is asked to store this data once requested depends on the concrete update mode subclass."
+
+TreeViewUpdateMode subclass: TreeViewVirtualUpdateMode [
+    addItems: aCollection inHandle: parentHandle afterHandle: siblingHandle [
+        	| tvis |
+        	tvis := TVINSERTSTRUCTW hParent: parentHandle hInsertAfter: siblingHandle.
+        	"Add items with subclassing removed so don't receive TVM_INSERTITEMs"
+        	view withOldWndProc: [aCollection do: [:each | view tvmInsertItem: each tvis: tvis]]
+    ]
+    isVirtual [
+        	^true
+    ]
+    updateItem: anObject at: anExternalHandle [
+        "Update the text, image, and children flag of the specified element of the tree."
+        "Instruct the tree to send notification callbacks to fetch the item text, icon, etc"
+
+        	view tvmSetItem: (TVITEMEXW callbacksForItem: anExternalHandle)
+    ]
+]

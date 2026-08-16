@@ -2,6 +2,7 @@
  winkb (Win32Metadata), not computed here. Do not hand-edit."
 
 ExternalMemory subclass: SAFEARRAY [
+    | data start recordInfo |
     SAFEARRAY class >> sizeInBytes [ ^32 ]
     SAFEARRAY class >> byteSize [ ^32 ]
     byteSize [ ^32 ]
@@ -16,7 +17,9 @@ ExternalMemory subclass: SAFEARRAY [
     SAFEARRAY class >> _SAFEARRAY_Size [ ^32 ]
 
     cDims [ ^self uint16At: 1 ]
-    "fFeatures: Windows.Win32.System.Com.ADVANCED_FEATURE_FLAGS at 2 — no accessor (width unknown); use byteAt: directly"
+    cDims: v [ ^self uint16At: 1 put: v ]
+    fFeatures [ ^self uint16At: 3 ]
+    fFeatures: v [ ^self uint16At: 3 put: v ]
     cbElements [ ^self uint32At: 5 ]
     cbElements: v [ ^self uint32At: 5 put: v ]
     cLocks [ ^self uint32At: 9 ]

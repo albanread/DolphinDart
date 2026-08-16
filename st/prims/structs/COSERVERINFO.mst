@@ -2,6 +2,7 @@
  winkb (Win32Metadata), not computed here. Do not hand-edit."
 
 ExternalMemory subclass: COSERVERINFO [
+    | hostName |
     COSERVERINFO class >> sizeInBytes [ ^32 ]
     COSERVERINFO class >> byteSize [ ^32 ]
     byteSize [ ^32 ]
@@ -16,6 +17,7 @@ ExternalMemory subclass: COSERVERINFO [
     dwReserved1 [ ^self uint32At: 1 ]
     dwReserved1: v [ ^self uint32At: 1 put: v ]
     pwszName [ ^self intptrAt: 9 ]
+    pwszName: v [ ^self intptrAt: 9 put: v ]
     "pAuthInfo: Windows.Win32.System.Com.COAUTHINFO* at 16 — no accessor (width unknown); use byteAt: directly"
     dwReserved2 [ ^self uint32At: 25 ]
     dwReserved2: v [ ^self uint32At: 25 put: v ]

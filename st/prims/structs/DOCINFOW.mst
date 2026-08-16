@@ -2,6 +2,7 @@
  winkb (Win32Metadata), not computed here. Do not hand-edit."
 
 ExternalMemory subclass: DOCINFOW [
+    | docName |
     DOCINFOW class >> sizeInBytes [ ^40 ]
     DOCINFOW class >> byteSize [ ^40 ]
     byteSize [ ^40 ]
@@ -15,10 +16,13 @@ ExternalMemory subclass: DOCINFOW [
     DOCINFOW class >> _DOCINFOW_Size [ ^40 ]
 
     cbSize [ ^self int32At: 1 ]
-    cbSize: v [ ^self uint32At: 1 put: v ]
+    cbSize: v [ ^self int32At: 1 put: v ]
     lpszDocName [ ^self intptrAt: 9 ]
+    lpszDocName: v [ ^self intptrAt: 9 put: v ]
     lpszOutput [ ^self intptrAt: 17 ]
+    lpszOutput: v [ ^self intptrAt: 17 put: v ]
     lpszDatatype [ ^self intptrAt: 25 ]
+    lpszDatatype: v [ ^self intptrAt: 25 put: v ]
     fwType [ ^self uint32At: 33 ]
     fwType: v [ ^self uint32At: 33 put: v ]
 ]

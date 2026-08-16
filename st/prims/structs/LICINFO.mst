@@ -13,9 +13,9 @@ ExternalMemory subclass: LICINFO [
     LICINFO class >> _LICINFO_Size [ ^12 ]
 
     cbLicInfo [ ^self int32At: 1 ]
-    cbLicInfo: v [ ^self uint32At: 1 put: v ]
+    cbLicInfo: v [ ^self int32At: 1 put: v ]
     fRuntimeKeyAvail [ ^self int32At: 5 ]
-    fRuntimeKeyAvail: v [ ^self uint32At: 5 put: v ]
+    fRuntimeKeyAvail: v [ ^self int32At: 5 put: v ]
     fLicVerified [ ^self int32At: 9 ]
-    fLicVerified: v [ ^self uint32At: 9 put: v ]
+    fLicVerified: v [ ^self int32At: 9 put: v ]
 ]

@@ -2,10 +2,11 @@
  winkb (Win32Metadata), not computed here. Do not hand-edit."
 
 ExternalMemory subclass: FUNCDESC [
-    FUNCDESC class >> sizeInBytes [ ^80 ]
-    FUNCDESC class >> byteSize [ ^80 ]
-    byteSize [ ^80 ]
-    FUNCDESC class >> new [ ^self new: 80 ]
+    | names arguments outputIndices retvalIndex methodName |
+    FUNCDESC class >> sizeInBytes [ ^76 ]
+    FUNCDESC class >> byteSize [ ^76 ]
+    byteSize [ ^76 ]
+    FUNCDESC class >> new [ ^self new: 76 ]
 
     FUNCDESC class >> _OffsetOf_memid [ ^0 ]
     FUNCDESC class >> _OffsetOf_lprgscode [ ^8 ]
@@ -19,19 +20,27 @@ ExternalMemory subclass: FUNCDESC [
     FUNCDESC class >> _OffsetOf_cScodes [ ^42 ]
     FUNCDESC class >> _OffsetOf_elemdescFunc [ ^48 ]
     FUNCDESC class >> _OffsetOf_wFuncFlags [ ^72 ]
-    FUNCDESC class >> _FUNCDESC_Size [ ^80 ]
+    FUNCDESC class >> _FUNCDESC_Size [ ^76 ]
 
     memid [ ^self int32At: 1 ]
-    memid: v [ ^self uint32At: 1 put: v ]
+    memid: v [ ^self int32At: 1 put: v ]
     "lprgscode: i32* at 8 — no accessor (width unknown); use byteAt: directly"
     "lprgelemdescParam: Windows.Win32.System.Com.ELEMDESC* at 16 — no accessor (width unknown); use byteAt: directly"
-    "funckind: Windows.Win32.System.Com.FUNCKIND at 24 — no accessor (width unknown); use byteAt: directly"
-    "invkind: Windows.Win32.System.Com.INVOKEKIND at 28 — no accessor (width unknown); use byteAt: directly"
-    "callconv: Windows.Win32.System.Com.CALLCONV at 32 — no accessor (width unknown); use byteAt: directly"
+    funckind [ ^self uint32At: 25 ]
+    funckind: v [ ^self uint32At: 25 put: v ]
+    invkind [ ^self uint32At: 29 ]
+    invkind: v [ ^self uint32At: 29 put: v ]
+    callconv [ ^self uint32At: 33 ]
+    callconv: v [ ^self uint32At: 33 put: v ]
     cParams [ ^self int16At: 37 ]
+    cParams: v [ ^self int16At: 37 put: v ]
     cParamsOpt [ ^self int16At: 39 ]
+    cParamsOpt: v [ ^self int16At: 39 put: v ]
     oVft [ ^self int16At: 41 ]
+    oVft: v [ ^self int16At: 41 put: v ]
     cScodes [ ^self int16At: 43 ]
+    cScodes: v [ ^self int16At: 43 put: v ]
     elemdescFunc [ ^ELEMDESC viewOn: self at: 48 size: 24 ]
-    "wFuncFlags: Windows.Win32.System.Com.FUNCFLAGS at 72 — no accessor (width unknown); use byteAt: directly"
+    wFuncFlags [ ^self uint16At: 73 ]
+    wFuncFlags: v [ ^self uint16At: 73 put: v ]
 ]

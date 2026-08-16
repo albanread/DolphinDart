@@ -14,8 +14,10 @@ ExternalMemory subclass: SPPROPERTYINFO [
     SPPROPERTYINFO class >> _SPPROPERTYINFO_Size [ ^32 ]
 
     pszName [ ^self intptrAt: 1 ]
+    pszName: v [ ^self intptrAt: 1 put: v ]
     ulId [ ^self uint32At: 9 ]
     ulId: v [ ^self uint32At: 9 put: v ]
     pszValue [ ^self intptrAt: 17 ]
+    pszValue: v [ ^self intptrAt: 17 put: v ]
     vValue [ ^VARIANT viewOn: self at: 24 size: 8 ]
 ]

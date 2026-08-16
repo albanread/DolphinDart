@@ -32,8 +32,13 @@ ExternalMemory subclass: OSVERSIONINFOEXW [
     dwPlatformId: v [ ^self uint32At: 17 put: v ]
     "szCSDVersion: char[] at 20 — no accessor (width unknown); use byteAt: directly"
     wServicePackMajor [ ^self uint16At: 277 ]
+    wServicePackMajor: v [ ^self uint16At: 277 put: v ]
     wServicePackMinor [ ^self uint16At: 279 ]
+    wServicePackMinor: v [ ^self uint16At: 279 put: v ]
     wSuiteMask [ ^self uint16At: 281 ]
+    wSuiteMask: v [ ^self uint16At: 281 put: v ]
     wProductType [ ^self byteAt: 283 ]
+    wProductType: v [ ^self byteAt: 283 put: v ]
     wReserved [ ^self byteAt: 284 ]
+    wReserved: v [ ^self byteAt: 284 put: v ]
 ]

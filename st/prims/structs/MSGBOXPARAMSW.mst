@@ -2,6 +2,7 @@
  winkb (Win32Metadata), not computed here. Do not hand-edit."
 
 ExternalMemory subclass: MSGBOXPARAMSW [
+    | text caption |
     MSGBOXPARAMSW class >> sizeInBytes [ ^80 ]
     MSGBOXPARAMSW class >> byteSize [ ^80 ]
     byteSize [ ^80 ]
@@ -22,12 +23,19 @@ ExternalMemory subclass: MSGBOXPARAMSW [
     cbSize [ ^self uint32At: 1 ]
     cbSize: v [ ^self uint32At: 1 put: v ]
     hwndOwner [ ^self intptrAt: 9 ]
+    hwndOwner: v [ ^self intptrAt: 9 put: v ]
     hInstance [ ^self intptrAt: 17 ]
+    hInstance: v [ ^self intptrAt: 17 put: v ]
     lpszText [ ^self intptrAt: 25 ]
+    lpszText: v [ ^self intptrAt: 25 put: v ]
     lpszCaption [ ^self intptrAt: 33 ]
-    "dwStyle: Windows.Win32.UI.WindowsAndMessaging.MESSAGEBOX_STYLE at 40 — no accessor (width unknown); use byteAt: directly"
+    lpszCaption: v [ ^self intptrAt: 33 put: v ]
+    dwStyle [ ^self uint32At: 41 ]
+    dwStyle: v [ ^self uint32At: 41 put: v ]
     lpszIcon [ ^self intptrAt: 49 ]
+    lpszIcon: v [ ^self intptrAt: 49 put: v ]
     dwContextHelpId [ ^self intptrAt: 57 ]
+    dwContextHelpId: v [ ^self intptrAt: 57 put: v ]
     "lpfnMsgBoxCallback: Windows.Win32.UI.WindowsAndMessaging.MSGBOXCALLBACK at 64 — no accessor (width unknown); use byteAt: directly"
     dwLanguageId [ ^self uint32At: 73 ]
     dwLanguageId: v [ ^self uint32At: 73 put: v ]

@@ -1,0 +1,69 @@
+"03_commctrl.mst — what the COMMON CONTROLS wave needs that no file provides.
+
+ Two gaps, both invisible at load and both fatal at construction, which is
+ why they are here rather than filed as future work.
+
+ Loaded from `st/mvp_compat`, after `st/mvp`, because both reopen classes the
+ translated wave defines."
+
+"── CommCtrlLibrary: the init-flag ledger ──────────────────────────────
+ Dolphin's control classes each declare, in their class-side `initialize`,
+ which comctl32 class family they need:
+
+     TreeView class >> initialize  ^CommCtrlLibrary addInitFlag: ICC_TREEVIEW_CLASSES
+
+ and Dolphin's `CommCtrlLibrary class >> open` ORs the accumulated flags into
+ one `INITCOMMONCONTROLSEX` before the first control is created. The protocol
+ was never generated — `genprims.py` emits the external calls, and these are
+ plain Smalltalk — so every one of those `initialize` methods raised
+ `CommCtrlLibrary class has no method 'addInitFlag:'`. The boot helper
+ contains such errors, so the visible symptom was four class variables
+ silently left nil.
+
+ STAND-IN, and a narrow one: this port does NOT call InitCommonControlsEx
+ from here. The door does it, in `EnsureCommonControls()` on the
+ class-registration path, with a fixed superset (ICC_WIN95_CLASSES and
+ friends) — because the call must happen on the UI thread before the first
+ control is created, and the door is the only code that knows when that is.
+ So the ledger below RECORDS what Dolphin asked for and `open`/`openDefault`
+ answer that the library is already up.
+
+ RETIREMENT: when the door learns to ask Smalltalk for its flags rather than
+ hard-coding a superset, `open` here becomes the real call and `initFlags`
+ its argument. Until then the divergence is: a control family Dolphin did NOT
+ ask for is initialized anyway. That is wasteful, never wrong — and it is
+ recorded in docs/LOOSE_ENDS.md rather than left to be rediscovered."
+CommCtrlLibrary extend [
+    <classVars: InitFlags>
+
+    CommCtrlLibrary class >> initFlags [ ^InitFlags ifNil: [ 0 ] ]
+    CommCtrlLibrary class >> initFlags: anInteger [ InitFlags := anInteger ]
+
+    CommCtrlLibrary class >> addInitFlag: anInteger [
+        "Record that a control family is required. Answers the accumulated set."
+        InitFlags := self initFlags bitOr: anInteger.
+        ^InitFlags
+    ]
+
+    CommCtrlLibrary class >> removeInitFlag: anInteger [
+        "The mirror, sent from `uninitialize` when a control class is unloaded."
+        InitFlags := self initFlags bitAnd: anInteger bitInvert.
+        ^InitFlags
+    ]
+
+    "`ControlView>>basicCreateWindow:` sends this before CreateWindowExW.
+     True because the door already ran InitCommonControlsEx; see above."
+    CommCtrlLibrary class >> open [ ^true ]
+    CommCtrlLibrary class >> openDefault [ ^self open ]
+    CommCtrlLibrary class >> isOpen [ ^true ]
+]
+
+"NOTHING ELSE BELONGS HERE. `TreeView`'s `UpdateModes`, `ListView`'s
+ `LvModes` and `IconicListAbstract`'s `ViewModes` were all nil on the
+ construction path too, and each was briefly a hand-written table in this
+ file. They are not, now: all three are `classConstants:` entries whose values
+ ARE in the corpus, as multi-line expressions that the translator's entry
+ regex truncated. `pools.class_constant_entries` reads them properly and
+ `emit_class` emits a `initializeClassConstants` per class, called at the
+ class's own place in the load order — which fixed nine classes, not three.
+ See docs/JOURNAL.md."

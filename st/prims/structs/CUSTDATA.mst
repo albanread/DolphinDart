@@ -2,6 +2,7 @@
  winkb (Win32Metadata), not computed here. Do not hand-edit."
 
 ExternalMemory subclass: CUSTDATA [
+    | associations table |
     CUSTDATA class >> sizeInBytes [ ^16 ]
     CUSTDATA class >> byteSize [ ^16 ]
     byteSize [ ^16 ]

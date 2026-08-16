@@ -225,7 +225,10 @@ void _stEnsureHooks() {
     // ObjcRef passthrough and ObjcMainProxy are built on.
     if (_stHasMethod(r, 'doesNotUnderstand:')) {
       var stSel = sel.endsWith('_') ? sel.replaceAll('_', ':') : sel;
-      var msg = stNew('STMessage');
+      // `Message`, not `STMessage`: the latter was never defined in any
+      // layer, so this path threw on construction for every receiver that
+      // actually implements doesNotUnderstand: — the one case it exists for.
+      var msg = stNew('Message');
       stSend(msg, 'setSelector:arguments:', [stSel, args]);
       return _stSendTry(r, 'doesNotUnderstand:', [msg]);
     }
@@ -838,7 +841,44 @@ stNotEquals(a, b) => stEquals(a, b) == true ? false : true;
 /// these helpers, restoring per-site monomorphic ICs); anything else — e.g. a
 /// DeltaBlue Variable with its own `value` method — goes to ST dispatch.
 stValue0(r) { if (r is Function) return r(); return _stValue0Slow(r); }
-_stValue0Slow(r) => r.value();
+// `Object>>value ^self` — Dolphin's Core.Object defines it, so EVERY object is
+// a niladic valuable and `at: k ifAbsent: 0` is legal code, not a mistake.
+// `UI.View>>getNoRedrawCount` is exactly that (`^self propertyAt:
+// #_noRedrawCount ifAbsent: 0`) and it sits under `noRedrawDo:`, so every
+// control that refreshes its contents on creation went through it.
+//
+// ST receivers reach the `Object` extension holder's `value` through their own
+// noSuchMethod, but Dart primitives have no such hook — `0.value()` is a plain
+// NoSuchMethodError — so they are answered here.
+_stValue0Slow(r) {
+  if (r == null || r is num || r is bool || r is String) return r;
+  // The ST half of the same rule. It CANNOT be written as `Object>>value
+  // [ ^self ]` in the compat kernel: `value` is one of the universal helpers
+  // the builder rewrites at the call site, so defining it made every ST
+  // receiver's `value` resolve back through this helper and the whole MVP
+  // suite died with an access violation on a blown stack. Answering here is
+  // both the correct semantics and the only place that terminates.
+  //
+  // NO STATIC PROBE WORKS HERE. `_stHasMethod` sees the receiver's own class
+  // chain; `stRespondsTo` adds the extension holders; neither sees
+  // `_stCharProtocol`, which is where `Character>>value` — the code-point
+  // accessor — actually lives, reached through the VM's object-NSM hook. Both
+  // probes answered "no" for a Character and this helper then returned the
+  // Character itself, so `Utf16Buffer class >> fromString:` went on to send
+  // `bitAnd: 255` to it, for every character of every window title.
+  //
+  // So the send is ATTEMPTED and the miss is caught, which is the only test
+  // that consults every dispatch path. The guard on the message keeps this
+  // from swallowing a `value` implementation's own internal miss — that would
+  // turn a real error into a plausible wrong answer, which is worse than the
+  // bug this fixes.
+  try {
+    return r.value();
+  } on NoSuchMethodError catch (e) {
+    if (!e.toString().contains("'value'")) rethrow;
+    return r;
+  }
+}
 stValue1(r, a) { if (r is Function) return r(a); return _stValue1Slow(r, a); }
 _stValue1Slow(r, a) => r.value_(a);
 stValue2(r, a, b) { if (r is Function) return r(a, b); return _stValue2Slow(r, a, b); }

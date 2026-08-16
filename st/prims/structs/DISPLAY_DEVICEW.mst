@@ -19,7 +19,8 @@ ExternalMemory subclass: DISPLAY_DEVICEW [
     cb: v [ ^self uint32At: 1 put: v ]
     "deviceName: char[] at 4 — no accessor (width unknown); use byteAt: directly"
     "deviceString: char[] at 68 — no accessor (width unknown); use byteAt: directly"
-    "stateFlags: Windows.Win32.Graphics.Gdi.DISPLAY_DEVICE_STATE_FLAGS at 324 — no accessor (width unknown); use byteAt: directly"
+    stateFlags [ ^self uint32At: 325 ]
+    stateFlags: v [ ^self uint32At: 325 put: v ]
     "deviceID: char[] at 328 — no accessor (width unknown); use byteAt: directly"
     "deviceKey: char[] at 584 — no accessor (width unknown); use byteAt: directly"
 ]

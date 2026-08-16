@@ -1132,4 +1132,15 @@ IconicListAbstract subclass: TreeView [
         "Private - Answer the name of the Windows window class to use when realizing the receiver."
         ^'SysTreeView32'
     ]
+    TreeView class >> initializeClassConstants [
+        "Private - Assign the `classConstants:` entries whose values are expressions. GENERATED: Dolphin holds these in its image, so no source assigns them and every read was a nil."
+        UpdateModes := (IdentityDictionary withAll: {
+        								#dynamic -> TreeViewDynamicUpdateMode.
+        								#lazy -> TreeViewLazyUpdateMode.
+        								#static -> TreeViewStaticUpdateMode
+        							}).
+        ^self
+    ]
 ]
+
+TreeView initializeClassConstants.

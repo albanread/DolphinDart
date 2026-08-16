@@ -127,6 +127,10 @@ Object subclass: ExternalMemory [
     setAddress: p size: n owned: aBool [ address := p. size := n. owned := aBool ]
     isView [ ^owned ~~ true ]
     address [ ^address ]
+    "Dolphin's spelling of the same thing — 'the address of the receiver's
+     contents'. `OS.LVCOLUMNW>>pszText:` writes `anUtf16String yourAddress`
+     into the struct, which is how a column's caption reaches the control."
+    yourAddress [ ^address ]
     size [ ^size ]
     isNull [ ^address isNil or: [ address = 0 ] ]
 
@@ -151,13 +155,27 @@ Object subclass: ExternalMemory [
     uint32AtOffset: i [ ^self uint32At: i + 1 ]
     uint32AtOffset: i put: v [ ^self uint32At: i + 1 put: v ]
     int32AtOffset: i [ ^self int32At: i + 1 ]
+    int32AtOffset: i put: v [ ^self int32At: i + 1 put: v ]
     uint16AtOffset: i [ ^self uint16At: i + 1 ]
     uint16AtOffset: i put: v [ ^self uint16At: i + 1 put: v ]
     int16AtOffset: i [ ^self int16At: i + 1 ]
     intptrAtOffset: i [ ^self intptrAt: i + 1 ]
     intptrAtOffset: i put: v [ ^self intptrAt: i + 1 put: v ]
+    "Dolphin capitalises the P in this one and not in `intptrAtOffset:`; both
+     spellings are in the corpus, so both are here. `OS.LVCOLUMNW>>pszText:`
+     writes through the capital-P form."
+    intPtrAtOffset: i [ ^self intptrAt: i + 1 ]
+    intPtrAtOffset: i put: v [ ^self intptrAt: i + 1 put: v ]
     uintPtrAtOffset: i [ ^self intptrAt: i + 1 ]
     uintPtrAtOffset: i put: v [ ^self intptrAt: i + 1 put: v ]
+
+    "`bytes` is Dolphin's ExternalStructure ivar: the byte object the struct's
+     fields live in. Its accessors are all written `bytes uint32AtOffset: ...`
+     rather than `self ...`, so translating one of Dolphin's own struct
+     classes verbatim needs the name to resolve. Here the struct IS the
+     memory, so it answers itself — the same identity `default` answers on the
+     library facades."
+    bytes [ ^self ]
 
     byteAt: i [ ^Win32 peek: address + i - 1 ]
     byteAt: i put: v [ ^Win32 poke: address + i - 1 put: v ]
@@ -181,10 +199,24 @@ Object subclass: ExternalMemory [
         0 to: 3 do: [ :k | self byteAt: i + k put: (x bitAnd: 255). x := x bitShift: -8 ].
         ^v
     ]
+    "Signed WRITE is the same four bytes as the unsigned one — two's
+     complement is what the bit pattern already is — but the SELECTOR has to
+     exist, because Dolphin's struct accessors are typed and write through the
+     signed spelling wherever the field is signed. `OS.LVCOLUMNW>>cx:` is one,
+     so a ListView column could not be given a width."
+    int32At: i put: v [
+        ^self uint32At: i put: (v < 0 ifTrue: [ v + 4294967296 ] ifFalse: [ v ])
+    ]
+    int16At: i put: v [
+        ^self uint16At: i put: (v < 0 ifTrue: [ v + 65536 ] ifFalse: [ v ])
+    ]
     int8At: i [
         | v |
         v := self byteAt: i.
         ^v > 127 ifTrue: [ v - 256 ] ifFalse: [ v ]
+    ]
+    int8At: i put: v [
+        ^self byteAt: i put: (v < 0 ifTrue: [ v + 256 ] ifFalse: [ v ])
     ]
     uint16At: i [
         ^(self byteAt: i) bitOr: ((self byteAt: i + 1) bitShift: 8)

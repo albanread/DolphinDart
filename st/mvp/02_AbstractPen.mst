@@ -55,4 +55,11 @@ GraphicsTool subclass: AbstractPen [
         "Answer the stock white pen."
         ^StockPen fromId: 6
     ]
+    AbstractPen class >> initializeClassConstants [
+        "Private - Assign the `classConstants:` entries whose values are expressions. GENERATED: Dolphin holds these in its image, so no source assigns them and every read was a nil."
+        LineJoinNames := #('LineJoinMiter' 'LineJoinBevel' 'LineJoinRound' 'LineJoinMiterClipped').
+        ^self
+    ]
 ]
+
+AbstractPen initializeClassConstants.

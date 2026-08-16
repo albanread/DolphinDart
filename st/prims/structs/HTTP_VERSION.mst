@@ -12,5 +12,7 @@ ExternalMemory subclass: HTTP_VERSION [
     HTTP_VERSION class >> _HTTP_VERSION_Size [ ^4 ]
 
     majorVersion [ ^self uint16At: 1 ]
+    majorVersion: v [ ^self uint16At: 1 put: v ]
     minorVersion [ ^self uint16At: 3 ]
+    minorVersion: v [ ^self uint16At: 3 put: v ]
 ]

@@ -81,11 +81,86 @@ def parse_literal(text: str) -> Optional[str]:
 def parse_class_constants(class_constants: str) -> Dict[str, str]:
     """Extract `{'NAME' -> literal. ...}` into a name→house-literal table."""
     table: Dict[str, str] = {}
-    for name, raw in _ENTRY.findall(class_constants or ""):
+    for name, raw in class_constant_entries(class_constants):
         lit = parse_literal(raw)
         if lit is not None:
             table[name] = lit
     return table
+
+
+def class_constant_entries(class_constants: str):
+    """Every `'NAME' -> value` entry, with the value RAW and whole.
+
+    `_ENTRY` cannot do this. It stops the value at the first `.`, newline or
+    `}`, which is right for the scalar entries it was written for and wrong for
+    every entry whose value is a multi-line expression:
+
+        'UpdateModes'
+            -> (IdentityDictionary withAll: {
+                            #dynamic -> TreeViewDynamicUpdateMode.
+                            #lazy -> TreeViewLazyUpdateMode.
+                            #static -> TreeViewStaticUpdateMode
+                        })
+
+    Those matched as an empty or truncated value, so the name was declared as a
+    class variable and NOTHING ever assigned it. That is not a translation gap
+    that shows up at load — it is a nil that surfaces at the first read, which
+    for `UI.TreeView` was `UpdateModes at: #dynamic` inside `initialize`, i.e.
+    `TreeView new` could not complete; and for `UI.IconicListAbstract` it was
+    `ViewModes at: self viewMode` during window creation. Three classes on the
+    common-controls path were affected (`UpdateModes`, `LvModes`, `ViewModes`)
+    and each presented only as `at:` sent to nil.
+
+    So this walks the brace group instead of matching it, tracking nesting of
+    `(`, `[`, `{` and skipping over `'...'` strings (with `''` escapes) and
+    `#'...'` symbols, and splits on TOP-LEVEL periods only.
+    """
+    text = (class_constants or "").strip()
+    if text.startswith("{"):
+        text = text[1:]
+    if text.endswith("}"):
+        text = text[:-1]
+
+    entries = []
+    depth = 0
+    i = 0
+    start = 0
+    n = len(text)
+    while i < n:
+        c = text[i]
+        if c == "'":
+            i += 1
+            while i < n:
+                if text[i] == "'":
+                    if i + 1 < n and text[i + 1] == "'":
+                        i += 2
+                        continue
+                    break
+                i += 1
+        elif c in "([{":
+            depth += 1
+        elif c in ")]}":
+            depth -= 1
+        elif c == "." and depth == 0:
+            entries.append(text[start:i])
+            start = i + 1
+        i += 1
+    entries.append(text[start:])
+
+    out = []
+    for chunk in entries:
+        chunk = chunk.strip()
+        if not chunk.startswith("'"):
+            continue
+        end = chunk.index("'", 1)
+        while end + 1 < len(chunk) and chunk[end + 1] == "'":
+            end = chunk.index("'", end + 2)
+        name = chunk[1:end]
+        rest = chunk[end + 1:].lstrip()
+        if not rest.startswith("->"):
+            continue
+        out.append((name, rest[2:].strip()))
+    return out
 
 
 def class_constant_names(class_constants: str) -> list:
@@ -100,7 +175,7 @@ def class_constant_names(class_constants: str) -> list:
     and its code reads the bare name at runtime. Dropping them left
     `AlignmentMap` as an unbound global, which is a runtime nil.
     """
-    return [name for name, _ in _ENTRY.findall(class_constants or "")]
+    return [name for name, _ in class_constant_entries(class_constants)]
 
 
 class PoolTable:

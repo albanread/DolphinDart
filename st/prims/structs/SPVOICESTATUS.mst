@@ -38,9 +38,11 @@ ExternalMemory subclass: SPVOICESTATUS [
     ulInputSentLen [ ^self uint32At: 29 ]
     ulInputSentLen: v [ ^self uint32At: 29 put: v ]
     lBookmarkId [ ^self int32At: 33 ]
-    lBookmarkId: v [ ^self uint32At: 33 put: v ]
+    lBookmarkId: v [ ^self int32At: 33 put: v ]
     phonemeId [ ^self uint16At: 37 ]
-    "visemeId: Windows.Win32.Media.Speech.SPVISEMES at 40 — no accessor (width unknown); use byteAt: directly"
+    phonemeId: v [ ^self uint16At: 37 put: v ]
+    visemeId [ ^self uint32At: 41 ]
+    visemeId: v [ ^self uint32At: 41 put: v ]
     dwReserved1 [ ^self uint32At: 45 ]
     dwReserved1: v [ ^self uint32At: 45 put: v ]
     dwReserved2 [ ^self uint32At: 49 ]

@@ -18,5 +18,7 @@ ExternalMemory subclass: CRYPTPROTECT_PROMPTSTRUCT [
     dwPromptFlags [ ^self uint32At: 5 ]
     dwPromptFlags: v [ ^self uint32At: 5 put: v ]
     hwndApp [ ^self intptrAt: 9 ]
+    hwndApp: v [ ^self intptrAt: 9 put: v ]
     szPrompt [ ^self intptrAt: 17 ]
+    szPrompt: v [ ^self intptrAt: 17 put: v ]
 ]

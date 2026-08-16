@@ -751,4 +751,20 @@ ListControlView subclass: IconicListAbstract [
     IconicListAbstract class >> viewModes [
         	^ViewModes
     ]
+    IconicListAbstract class >> initializeClassConstants [
+        "Private - Assign the `classConstants:` entries whose values are expressions. GENERATED: Dolphin holds these in its image, so no source assigns them and every read was a nil."
+        ViewModes := (IdentityDictionary withAll: {
+        								#extraLargeIcons -> (16r100 @ 16r100).
+        								#largeIcons -> (16r20 @ 16r20).
+        								#mediumIcons -> (16r18 @ 16r18).
+        								#mediumSmallIcons -> (16r14 @ 16r14).
+        								#noIcons -> (16r0 @ 16r0).
+        								#smallIcons -> (16r10 @ 16r10).
+        								#thumbnails -> (16r40 @ 16r40).
+        								#tileIcons -> (16r30 @ 16r30)
+        							}).
+        ^self
+    ]
 ]
+
+IconicListAbstract initializeClassConstants.

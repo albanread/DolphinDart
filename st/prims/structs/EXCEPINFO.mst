@@ -19,7 +19,9 @@ ExternalMemory subclass: EXCEPINFO [
     EXCEPINFO class >> _EXCEPINFO_Size [ ^60 ]
 
     wCode [ ^self uint16At: 1 ]
+    wCode: v [ ^self uint16At: 1 put: v ]
     wReserved [ ^self uint16At: 3 ]
+    wReserved: v [ ^self uint16At: 3 put: v ]
     bstrSource [ ^BSTR viewOn: self at: 8 size: 8 ]
     bstrDescription [ ^BSTR viewOn: self at: 16 size: 8 ]
     bstrHelpFile [ ^BSTR viewOn: self at: 24 size: 8 ]
@@ -28,5 +30,5 @@ ExternalMemory subclass: EXCEPINFO [
     "pvReserved: void* at 40 — no accessor (width unknown); use byteAt: directly"
     "pfnDeferredFillIn: Windows.Win32.System.Com.LPEXCEPFINO_DEFERRED_FILLIN at 48 — no accessor (width unknown); use byteAt: directly"
     scode [ ^self int32At: 57 ]
-    scode: v [ ^self uint32At: 57 put: v ]
+    scode: v [ ^self int32At: 57 put: v ]
 ]

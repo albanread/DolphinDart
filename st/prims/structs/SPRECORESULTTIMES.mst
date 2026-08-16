@@ -15,7 +15,9 @@ ExternalMemory subclass: SPRECORESULTTIMES [
 
     ftStreamTime [ ^FILETIME viewOn: self at: 0 size: 8 ]
     ullLength [ ^self intptrAt: 9 ]
+    ullLength: v [ ^self intptrAt: 9 put: v ]
     dwTickCount [ ^self uint32At: 17 ]
     dwTickCount: v [ ^self uint32At: 17 put: v ]
     ullStart [ ^self intptrAt: 25 ]
+    ullStart: v [ ^self intptrAt: 25 put: v ]
 ]

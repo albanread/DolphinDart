@@ -1,40 +1,39 @@
-"03_struct_accessors.mst — fields the struct generator could not size.
+"03_struct_accessors.mst — Dolphin's SMALLTALK protocol over two generated
+ structs.
 
- `tools/dolphin2mst/genstructs.py` reads field offsets from winkb
- (Win32Metadata) and emits a typed accessor per field. Where it cannot
- determine a field's WIDTH it emits a comment instead:
+ IT NO LONGER SUPPLIES FIELD ACCESSORS. It used to: `genstructs` could not
+ size a field whose winkb type is a Win32 ENUM (`MENUINFO_MASK`,
+ `MENUITEMINFOW_STATE`), emitted a comment instead of an accessor, and
+ `UI.Menu>>applyFlags` fell in the hole. The eight accessors that filled it
+ were hand-checked against their neighbours and recorded in
+ docs/LOOSE_ENDS.md with a named retirement: resolve an enum-typed field to
+ its underlying integer type.
 
-     fMask: Windows.Win32.UI.WindowsAndMessaging.MENUINFO_MASK at 4 — no
-     accessor (width unknown); use byteAt: directly
+ THAT RETIREMENT HAS HAPPENED. winkb records `size_bits` for an enum just as
+ it does for a struct — `LIST_VIEW_ITEM_STATE_FLAGS` is 32 — and
+ `field_accessor` now follows it, so all eight are generated, at the same
+ offsets the hand-written ones used. They are deleted rather than left as
+ duplicates, because a second definition of a generated accessor is a silent
+ override waiting for the generator to change.
 
- That is the right refusal — guessing a width silently writes the wrong number
- of bytes and corrupts the neighbouring field — but it leaves a hole, and
- `UI.Menu>>applyFlags` falls in it: `struct style: flags` on a MENUINFO whose
- `dwStyle` has no accessor.
+ WHAT REMAINS is the layer that was never the generator's to emit: Dolphin's
+ own Smalltalk over the layout, from `OS.MENUINFO.cls` and
+ `OS.MENUITEMINFOW.cls`. It is transcribed rather than translated because
+ those `.cls` files also carry a `defineFields` template, and emitting either
+ as a class would REPLACE the generated layout with one that has no offsets at
+ all — the same shape as the `.pax` incident that overwrote this very struct
+ in DD10.
 
- THE MISSING WIDTHS ARE ENUM TYPES. `MENUINFO_MASK` and `MENUINFO_STYLE` are
- Win32 enums, and a Win32 enum in a struct is a DWORD — 32 bits — unless it
- declares otherwise. winkb records the enum's name but the generator does not
- follow it to its underlying type.
+ (The `--reopen` path added for `OS.LVCOLUMNW` in DD11 is the general answer
+ to that, and these two are its next candidates. Not converted in the same
+ change that introduced it: both are on the menu path, which is green, and
+ the DD11 gate needed the ListView.)
 
- GENERATOR FIX, recorded in docs/LOOSE_ENDS.md: resolve an enum-typed field to
- its underlying integer type and emit the accessor. Until then the accessors
- live here, HAND-CHECKED against the offsets the generator did emit — the
- fields on either side pin them exactly:
-
-     cbSize   uint32 at 1   (offset 0)
-     fMask    ?      at 5   (offset 4)   <- supplied here
-     dwStyle  ?      at 9   (offset 8)   <- supplied here
-     cyMax    uint32 at 13  (offset 12)
-
- A wrong width here would show up immediately as a corrupted `cyMax`, which is
- why the neighbours are quoted: they are the check."
+ IMAGES ARE NOT SUPPORTED and that is why the image branch is absent rather
+ than stubbed: `setImage:metrics:` needs work beyond the graphics wave. A menu
+ item with an image gets its text and id and no bitmap, which is a visible
+ difference, not a silent one."
 ExternalMemory subclass: MENUINFO [
-    fMask [ ^self uint32At: 5 ]
-    fMask: v [ ^self uint32At: 5 put: v ]
-    dwStyle [ ^self uint32At: 9 ]
-    dwStyle: v [ ^self uint32At: 9 put: v ]
-
     "Dolphin's own spellings. `Menu>>applyFlags` writes `struct style: flags`,
      and `Menu>>queryStyle` reads it back."
     style [ ^self dwStyle ]
@@ -71,15 +70,6 @@ ExternalMemory subclass: MENUINFO [
  with an image will get its text and id and no bitmap, which is a visible
  difference, not a silent one."
 ExternalMemory subclass: MENUITEMINFOW [
-    fMask [ ^self uint32At: 5 ]
-    fMask: v [ ^self uint32At: 5 put: v ]
-    fType [ ^self uint32At: 9 ]
-    fType: v [ ^self uint32At: 9 put: v ]
-    fState [ ^self uint32At: 13 ]
-    fState: v [ ^self uint32At: 13 put: v ]
-    hSubMenu: v [ ^self intptrAt: 25 put: v ]
-    dwTypeData: v [ ^self intptrAt: 57 put: v ]
-
     "Dolphin's `basicText:`. The buffer must OUTLIVE the SetMenuItemInfo call
      that reads through the pointer, which it does because the caller holds
      this struct until the send returns — the same lifetime rule the create

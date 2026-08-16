@@ -396,6 +396,29 @@ class StGraphBuilder {
   // --- primitives (guide §2, §5.D) ---
   Fragment Constant(const Object& value) {
     ASSERT(value.IsNotTemporaryScopedHandle());
+    // EVERY CONSTANT EMBEDDED IN CODE MUST BE OLD-SPACE.
+    //
+    // `Assembler::CanLoadFromObjectPool` asserts `object.IsOld()`, because a
+    // new-space object can be moved by a scavenge while generated code still
+    // holds its address in the object pool. When that assertion fires it does
+    // so inside the ARM64 assembler with no clue which Smalltalk literal was
+    // responsible — the stack is all compiler frames.
+    //
+    // Reporting it HERE names the object at the moment it is embedded, which
+    // is the only place its identity is still known. Non-Smis only: a Smi is
+    // not a heap object and `IsOld` does not apply.
+    //
+    // KEPT after the DD11 fix rather than deleted. It caught a real VM defect
+    // — `Type::Canonicalize`'s fast path installed a new-space canonical type,
+    // so `Object.runtimeType` on a Smalltalk instance poisoned its class (see
+    // port-win/st-tree.patch) — and it named the object in one run where the
+    // raw assertion had given nothing. The invariant is VM-wide and the check
+    // is one predicate on a path that already allocates.
+    if (!value.IsSmi() && !value.IsNull() && !value.IsOld()) {
+      OS::PrintErr("[st] NEW-SPACE CONSTANT embedded: class=%s value=%s\n",
+                   Class::Handle(zone_, value.clazz()).ToCString(),
+                   value.ToCString());
+    }
     ConstantInstr* constant = new (zone_) ConstantInstr(value);
     Push(constant);
     return Fragment(constant);

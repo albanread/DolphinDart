@@ -14,7 +14,8 @@ relocation.
 **The rule this file exists to enforce:** a stand-in is allowed, a stand-in
 without a named retirement is not. Every entry below says what kills it.
 
-Status as of DD10 (21/21 gates green, adapter family retired).
+Status as of DD11 (22/22 gates green; `st_controls` runs a real
+`SysTreeView32` and `SysListView32` on Dolphin's own classes).
 
 ---
 
@@ -272,21 +273,69 @@ raise would turn any remaining instance of this shape loud, and is worth doing
 — carefully, since something may be depending on the current answer by
 accident.
 
-### 3.11 genstructs cannot size ENUM-typed fields
-`tools/dolphin2mst/genstructs.py` emits a comment instead of an accessor when
-it cannot determine a field's width, which is the right refusal — guessing
+### 3.11 genstructs cannot size ENUM-typed fields — ~~OPEN~~ **RETIRED (DD11)**
+`tools/dolphin2mst/genstructs.py` emitted a comment instead of an accessor when
+it could not determine a field's width, which was the right refusal — guessing
 silently writes the wrong number of bytes and corrupts the neighbour. But the
-fields it refuses are Win32 ENUMS (`MENUINFO_MASK`, `MENU_ITEM_TYPE`,
+fields it refused were Win32 ENUMS (`MENUINFO_MASK`, `MENU_ITEM_TYPE`,
 `MENU_ITEM_STATE`, …), and a Win32 enum in a struct is a DWORD.
 
-Five accessors are supplied by hand in
-`st/mvp_compat/03_struct_accessors.mst`, offsets pinned against the
-neighbours the generator DID emit.
+The named fix was "follow an enum-typed field to its underlying integer type
+in winkb". **Done.** winkb records `size_bits` on an enum exactly as on a
+struct (`LIST_VIEW_ITEM_STATE_FLAGS` is `kind='enum', size_bits=32`), and
+`field_accessor` now takes an enum table and answers the matching unsigned
+accessor. The eight hand-written accessors in
+`st/mvp_compat/03_struct_accessors.mst` are deleted — the generator emits them
+at the same offsets, and a second definition of a generated accessor is a
+silent override waiting for the generator to change.
 
-**Fix:** follow an enum-typed field to its underlying integer type in winkb
-and emit the accessor. Until then every new struct with an enum field needs
-the same hand-patch, and the failure mode is a doesNotUnderstand at the first
-call, which is at least loud.
+Found because `LVITEMW>>stateMask:` was missing and `ListView` cannot be
+created without it. Two other gaps came out of the same file and are also
+closed: the generator emitted a setter only for 32-bit fields (so every
+pointer field had a getter and no setter — `MENUITEMINFOW>>dwTypeData:` was
+hand-written for exactly that), and `ExternalMemory` had no `int32At:put:`,
+`int16At:put:` or `int8At:put:` at all.
+
+What REMAINS in `03_struct_accessors.mst` is Dolphin's own Smalltalk over the
+layout (`MENUINFO>>style:`, `MENUITEMINFOW>>commandMenuItem:metrics:`), which
+was never the generator's to emit. Its retirement is the `--reopen` path added
+for `OS.LVCOLUMNW` in DD11 — see 3.14.
+
+### 3.14 Dolphin's struct `.cls` field offsets are 32-BIT
+`OS.LVCOLUMNW.cls` declares `_OffsetOf_pszText -> 16rC` (12) and
+`_LVCOLUMNW_Size -> 16r2C` (44). Those are the 32-bit layout. On this port's
+targets the pointer is 8-aligned, so the field is at 16 and the struct is 56
+bytes — which is what `genstructs` emits, from winkb, per target.
+
+This is **the one place in the translator where the corpus's own value is the
+wrong one**, and it is not a refusal: folding `_OffsetOf_pszText` to 12 wrote a
+caption pointer into `cx` and the process died inside comctl32 with an access
+violation, with no Smalltalk error anywhere.
+
+`emit_loose`'s reopen path therefore rewrites a bare `_OffsetOf_*` or
+`_<NAME>_Size` to a send to the generated class rather than folding it, so the
+offset used is always the one the accessors were built from.
+
+**Standing obligation:** any future `--reopen` of a struct `.cls` inherits
+this. Do not "fix" it by adding the class's own constants to the fold imports.
+
+### 3.15 `onStartup` is sent from an explicit list
+Dolphin runs two class-side initializers at image start: `initialize` for what
+is known when the class is defined, and `onStartup` for what depends on the
+machine. This port never sent the second at all, and
+`ListView class >> onStartup` is the one that sets `SelectionStateMask` — so
+creating a ListView wrote nil into an LVITEMW's `stateMask`.
+
+Dolphin drives it from `View class >> onStartup`, which walks
+`allSubclassesDo:` and sends `onStartup` only to classes that DEFINE one. That
+guard matters — sending to a class that merely inherits it re-runs an
+ancestor's once-per-image action once per subclass — and this port has no
+`Behavior>>includesSelector:`, so `DolphinBoot class >> initializeViewClasses`
+names `ListView` explicitly instead.
+
+**Retirement:** implement `includesSelector:`, then replace the list with
+`View onStartup`. Until then, a translated class with its own `onStartup` will
+be silently skipped, which is the same class of failure this entry records.
 
 ### 3.12 A class-side `self` send binds to the DEFINING class
 Recorded twice now, and it caused a Win32 failure the second time.
@@ -450,3 +499,41 @@ Recorded so they are not re-investigated:
   Object; both bodies are equivalent. Noise, not a defect.
 - **Windows answers `'Edit'`, not `'EDIT'`.** Window class names are
   case-insensitive; `st_textedit` compares case-folded.
+
+### 3.16 `CommCtrlLibrary` records init flags but does not act on them
+Dolphin's control classes each declare which comctl32 family they need —
+`TreeView class >> initialize` is `CommCtrlLibrary addInitFlag:
+ICC_TREEVIEW_CLASSES` — and Dolphin's `CommCtrlLibrary class >> open` ORs the
+accumulated flags into one `INITCOMMONCONTROLSEX`.
+
+This port keeps the ledger (`st/mvp_compat/03_commctrl.mst`) but does NOT make
+the call. The door does, in `EnsureCommonControls()` on the class-registration
+path, with a fixed superset — because the call must happen on the UI thread
+before the first control is created, and the door is the only code that knows
+when that is.
+
+**The divergence:** a control family Dolphin did not ask for is initialized
+anyway. Wasteful, never wrong.
+
+**Retirement:** have the door ask Smalltalk for `CommCtrlLibrary initFlags`
+instead of hard-coding the superset; `open` here then becomes the real call.
+
+### 3.17 `Object>>value` lives in Dart, not Smalltalk
+Dolphin's `Core.Object>>value ^self` is what makes `at: k ifAbsent: 0` legal,
+and the corpus takes that freedom (`View>>getNoRedrawCount`).
+
+It **cannot** be written in the compat kernel. `value` is one of the universal
+helpers the IL builder rewrites at the call site, so defining it made every ST
+receiver's `value` resolve back into `stValue0`'s own slow path — the whole MVP
+suite died with an access violation on a blown stack.
+
+It lives in `_stValue0Slow` (`port-win/dart_st/cocoa.dart`), which is the
+single point every niladic-valuable send funnels through. Note that no static
+probe can gate it: `_stHasMethod` sees only the receiver's own class chain,
+`stRespondsTo` adds the extension holders, and neither sees
+`_stCharProtocol` — where `Character>>value`, the code-point accessor,
+actually lives. So the send is attempted and the miss caught on the message
+naming `value`.
+
+**This is a permanent placement, not a stand-in** — recorded here because the
+obvious "cleanup" is to move it into Smalltalk, and that breaks everything.

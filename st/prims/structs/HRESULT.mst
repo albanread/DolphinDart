@@ -11,5 +11,5 @@ ExternalMemory subclass: HRESULT [
     HRESULT class >> _HRESULT_Size [ ^4 ]
 
     value [ ^self int32At: 1 ]
-    value: v [ ^self uint32At: 1 put: v ]
+    value: v [ ^self int32At: 1 put: v ]
 ]

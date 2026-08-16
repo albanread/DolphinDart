@@ -18,15 +18,17 @@ ExternalMemory subclass: ADDRINFOW [
     ADDRINFOW class >> _ADDRINFOW_Size [ ^48 ]
 
     ai_flags [ ^self int32At: 1 ]
-    ai_flags: v [ ^self uint32At: 1 put: v ]
+    ai_flags: v [ ^self int32At: 1 put: v ]
     ai_family [ ^self int32At: 5 ]
-    ai_family: v [ ^self uint32At: 5 put: v ]
+    ai_family: v [ ^self int32At: 5 put: v ]
     ai_socktype [ ^self int32At: 9 ]
-    ai_socktype: v [ ^self uint32At: 9 put: v ]
+    ai_socktype: v [ ^self int32At: 9 put: v ]
     ai_protocol [ ^self int32At: 13 ]
-    ai_protocol: v [ ^self uint32At: 13 put: v ]
+    ai_protocol: v [ ^self int32At: 13 put: v ]
     ai_addrlen [ ^self intptrAt: 17 ]
+    ai_addrlen: v [ ^self intptrAt: 17 put: v ]
     ai_canonname [ ^self intptrAt: 25 ]
+    ai_canonname: v [ ^self intptrAt: 25 put: v ]
     "ai_addr: Windows.Win32.Networking.WinSock.SOCKADDR* at 32 — no accessor (width unknown); use byteAt: directly"
     "ai_next: Windows.Win32.Networking.WinSock.ADDRINFOW* at 40 — no accessor (width unknown); use byteAt: directly"
 ]

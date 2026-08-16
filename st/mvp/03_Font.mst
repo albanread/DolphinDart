@@ -172,4 +172,11 @@ AbstractFont subclass: Font [
         "Answers an instance of the receiver with aHandle assumed to have been created for the specified DPI. The handle is owned by the instance and will therefore be freed by it."
         ^self basicNew setOwnedHandle: aHandle dpi: anInteger
     ]
+    Font class >> initializeClassConstants [
+        "Private - Assign the `classConstants:` entries whose values are expressions. GENERATED: Dolphin holds these in its image, so no source assigns them and every read was a nil."
+        Qualities := #(#default #draft #proof #nonantialiased #antialiased #cleartype #cleartypeNatural).
+        ^self
+    ]
 ]
+
+Font initializeClassConstants.

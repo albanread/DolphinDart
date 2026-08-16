@@ -18,12 +18,16 @@ ExternalMemory subclass: MENUINFO [
 
     cbSize [ ^self uint32At: 1 ]
     cbSize: v [ ^self uint32At: 1 put: v ]
-    "fMask: Windows.Win32.UI.WindowsAndMessaging.MENUINFO_MASK at 4 — no accessor (width unknown); use byteAt: directly"
-    "dwStyle: Windows.Win32.UI.WindowsAndMessaging.MENUINFO_STYLE at 8 — no accessor (width unknown); use byteAt: directly"
+    fMask [ ^self uint32At: 5 ]
+    fMask: v [ ^self uint32At: 5 put: v ]
+    dwStyle [ ^self uint32At: 9 ]
+    dwStyle: v [ ^self uint32At: 9 put: v ]
     cyMax [ ^self uint32At: 13 ]
     cyMax: v [ ^self uint32At: 13 put: v ]
     hbrBack [ ^self intptrAt: 17 ]
+    hbrBack: v [ ^self intptrAt: 17 put: v ]
     dwContextHelpID [ ^self uint32At: 25 ]
     dwContextHelpID: v [ ^self uint32At: 25 put: v ]
     dwMenuData [ ^self intptrAt: 33 ]
+    dwMenuData: v [ ^self intptrAt: 33 put: v ]
 ]

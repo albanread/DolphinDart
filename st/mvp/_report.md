@@ -1,23 +1,23 @@
 # dolphin2mst run report
 
-- inputs: **82** source files (`.cls` + `.pax`)
-- shared-pool constants available: **7872** from **207** pools
+- inputs: **99** source files (`.cls` + `.pax`)
+- shared-pool constants available: **7851** from **206** pools
 - loose methods adopted from `.pax`: **1**
-- parsed: **82**  (unbalanced/skipped: 0)
-- emitted: **83** `.mst`
-- methods: **3917**
-- refusals: **175**
+- parsed: **99**  (unbalanced/skipped: 0)
+- emitted: **100** `.mst`
+- methods: **4205**
+- refusals: **191**
 
 ## Refusals by rewrite class
 
 | Rewrite | Count |
 |---|--:|
-| `hashhash` | 81 |
-| `cascade` | 43 |
+| `hashhash` | 84 |
+| `cascade` | 54 |
 | `pragma` | 25 |
 | `binding-literal` | 15 |
 | `orphan-loose-methods` | 10 |
-| `qq` | 1 |
+| `qq` | 3 |
 
 ## Per class
 
@@ -54,19 +54,28 @@
 | `Font` | 26 | 0 |
 | `GraphicsTool` | 32 | 2 |
 | `Icon` | 62 | 2 |
+| `IconFromSystemInitializer` | 12 | 0 |
 | `IconImageManager` | 10 | 0 |
 | `IconicListAbstract` | 112 | 14 |
+| `IconicListUpdateMode` | 9 | 0 |
 | `Image` | 59 | 5 |
+| `ImageFromHandleInitializer` | 7 | 0 |
+| `ImageInitializer` | 19 | 0 |
 | `ImageList` | 39 | 3 |
 | `ImageManager` | 28 | 1 |
 | `IntegerToText` | 1 | 0 |
 | `KeyEvent` | 9 | 0 |
+| `LVCOLUMNW (reopen)` | 35 | 0 |
 | `LayoutContext` | 16 | 0 |
 | `LayoutManager` | 11 | 0 |
 | `LayoutPlacement` | 11 | 0 |
 | `ListControlView` | 81 | 1 |
 | `ListModel` | 52 | 1 |
 | `ListView` | 274 | 12 |
+| `ListViewColumn` | 59 | 5 |
+| `ListViewStaticUpdateMode` | 11 | 1 |
+| `ListViewUpdateMode` | 8 | 0 |
+| `ListViewVirtualUpdateMode` | 11 | 0 |
 | `Menu` | 101 | 2 |
 | `MenuBar` | 7 | 1 |
 | `MenuItem` | 35 | 0 |
@@ -94,7 +103,15 @@
 | `SystemMetrics` | 77 | 2 |
 | `TextEdit` | 179 | 21 |
 | `TextPresenter` | 20 | 5 |
+| `TreeModel` | 31 | 1 |
+| `TreeModelAbstract` | 57 | 7 |
+| `TreeNode` | 14 | 0 |
 | `TreeView` | 142 | 10 |
+| `TreeViewDynamicUpdateMode` | 2 | 0 |
+| `TreeViewLazyUpdateMode` | 3 | 0 |
+| `TreeViewStaticUpdateMode` | 5 | 2 |
+| `TreeViewUpdateMode` | 2 | 0 |
+| `TreeViewVirtualUpdateMode` | 3 | 0 |
 | `TypeConverter` | 13 | 1 |
 | `UserLibrary (loose)` | 177 | 0 |
 | `ValueAdaptor` | 6 | 2 |

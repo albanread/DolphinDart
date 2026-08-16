@@ -2,6 +2,7 @@
  winkb (Win32Metadata), not computed here. Do not hand-edit."
 
 ExternalMemory subclass: DISPPARAMS [
+    | args vargs dispids |
     DISPPARAMS class >> sizeInBytes [ ^24 ]
     DISPPARAMS class >> byteSize [ ^24 ]
     byteSize [ ^24 ]

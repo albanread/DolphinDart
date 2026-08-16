@@ -26,16 +26,21 @@ ExternalMemory subclass: PAGESETUPDLGW [
     lStructSize [ ^self uint32At: 1 ]
     lStructSize: v [ ^self uint32At: 1 put: v ]
     hwndOwner [ ^self intptrAt: 9 ]
+    hwndOwner: v [ ^self intptrAt: 9 put: v ]
     hDevMode [ ^HGLOBAL viewOn: self at: 16 size: 8 ]
     hDevNames [ ^HGLOBAL viewOn: self at: 24 size: 8 ]
-    "flags: Windows.Win32.UI.Controls.Dialogs.PAGESETUPDLG_FLAGS at 32 — no accessor (width unknown); use byteAt: directly"
+    flags [ ^self uint32At: 33 ]
+    flags: v [ ^self uint32At: 33 put: v ]
     ptPaperSize [ ^POINT viewOn: self at: 36 size: 8 ]
     rtMinMargin [ ^RECT viewOn: self at: 44 size: 16 ]
     rtMargin [ ^RECT viewOn: self at: 60 size: 16 ]
     hInstance [ ^self intptrAt: 81 ]
+    hInstance: v [ ^self intptrAt: 81 put: v ]
     lCustData [ ^self intptrAt: 89 ]
+    lCustData: v [ ^self intptrAt: 89 put: v ]
     "lpfnPageSetupHook: Windows.Win32.UI.Controls.Dialogs.LPPAGESETUPHOOK at 96 — no accessor (width unknown); use byteAt: directly"
     "lpfnPagePaintHook: Windows.Win32.UI.Controls.Dialogs.LPPAGEPAINTHOOK at 104 — no accessor (width unknown); use byteAt: directly"
     lpPageSetupTemplateName [ ^self intptrAt: 113 ]
+    lpPageSetupTemplateName: v [ ^self intptrAt: 113 put: v ]
     hPageSetupTemplate [ ^HGLOBAL viewOn: self at: 120 size: 8 ]
 ]

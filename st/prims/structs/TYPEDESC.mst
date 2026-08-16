@@ -2,15 +2,17 @@
  winkb (Win32Metadata), not computed here. Do not hand-edit."
 
 ExternalMemory subclass: TYPEDESC [
-    TYPEDESC class >> sizeInBytes [ ^16 ]
-    TYPEDESC class >> byteSize [ ^16 ]
-    byteSize [ ^16 ]
-    TYPEDESC class >> new [ ^self new: 16 ]
+    | owner classDesc typeInfo |
+    TYPEDESC class >> sizeInBytes [ ^10 ]
+    TYPEDESC class >> byteSize [ ^10 ]
+    byteSize [ ^10 ]
+    TYPEDESC class >> new [ ^self new: 10 ]
 
     TYPEDESC class >> _OffsetOf_Anonymous [ ^0 ]
     TYPEDESC class >> _OffsetOf_vt [ ^8 ]
-    TYPEDESC class >> _TYPEDESC_Size [ ^16 ]
+    TYPEDESC class >> _TYPEDESC_Size [ ^10 ]
 
     "anonymous: _Anonymous_e__Union at 0 — no accessor (width unknown); use byteAt: directly"
-    "vt: Windows.Win32.System.Variant.VARENUM at 8 — no accessor (width unknown); use byteAt: directly"
+    vt [ ^self uint16At: 9 ]
+    vt: v [ ^self uint16At: 9 put: v ]
 ]

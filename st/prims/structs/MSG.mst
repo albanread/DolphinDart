@@ -16,10 +16,13 @@ ExternalMemory subclass: MSG [
     MSG class >> _MSG_Size [ ^48 ]
 
     hwnd [ ^self intptrAt: 1 ]
+    hwnd: v [ ^self intptrAt: 1 put: v ]
     message [ ^self uint32At: 9 ]
     message: v [ ^self uint32At: 9 put: v ]
     wParam [ ^self intptrAt: 17 ]
+    wParam: v [ ^self intptrAt: 17 put: v ]
     lParam [ ^self intptrAt: 25 ]
+    lParam: v [ ^self intptrAt: 25 put: v ]
     time [ ^self uint32At: 33 ]
     time: v [ ^self uint32At: 33 put: v ]
     pt [ ^POINT viewOn: self at: 36 size: 8 ]

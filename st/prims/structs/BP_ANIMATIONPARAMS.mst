@@ -17,7 +17,8 @@ ExternalMemory subclass: BP_ANIMATIONPARAMS [
     cbSize: v [ ^self uint32At: 1 put: v ]
     dwFlags [ ^self uint32At: 5 ]
     dwFlags: v [ ^self uint32At: 5 put: v ]
-    "style: Windows.Win32.UI.Controls.BP_ANIMATIONSTYLE at 8 — no accessor (width unknown); use byteAt: directly"
+    style [ ^self uint32At: 9 ]
+    style: v [ ^self uint32At: 9 put: v ]
     dwDuration [ ^self uint32At: 13 ]
     dwDuration: v [ ^self uint32At: 13 put: v ]
 ]

@@ -1,0 +1,15 @@
+"`TreeViewUpdateMode` is the abstract class of policy objects that implement the various `TreeView` update modes. These what item data (text, icons, etc) that the tree views stores, and what it requests when required. 
+
+## Instance Variables:
+  `view`		`TreeView` for which the update mode is providing item update policy."
+
+IconicListUpdateMode subclass: TreeViewUpdateMode [
+    addItems: aCollection inHandle: parentHandle afterHandle: siblingHandle [
+        	self subclassResponsibility
+
+    ]
+    TreeViewUpdateMode class >> icon [
+        "Answers an Icon that can be used to represent this class"
+        ^TreeView icon
+    ]
+]

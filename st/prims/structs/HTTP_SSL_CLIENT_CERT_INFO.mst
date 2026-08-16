@@ -20,6 +20,7 @@ ExternalMemory subclass: HTTP_SSL_CLIENT_CERT_INFO [
     certEncodedSize: v [ ^self uint32At: 5 put: v ]
     "pCertEncoded: u8* at 8 — no accessor (width unknown); use byteAt: directly"
     token [ ^self intptrAt: 17 ]
+    token: v [ ^self intptrAt: 17 put: v ]
     certDeniedByMapper [ ^self int32At: 25 ]
-    certDeniedByMapper: v [ ^self uint32At: 25 put: v ]
+    certDeniedByMapper: v [ ^self int32At: 25 put: v ]
 ]

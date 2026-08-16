@@ -17,7 +17,8 @@ ExternalMemory subclass: WINDOWPLACEMENT [
 
     length [ ^self uint32At: 1 ]
     length: v [ ^self uint32At: 1 put: v ]
-    "flags: Windows.Win32.UI.WindowsAndMessaging.WINDOWPLACEMENT_FLAGS at 4 — no accessor (width unknown); use byteAt: directly"
+    flags [ ^self uint32At: 5 ]
+    flags: v [ ^self uint32At: 5 put: v ]
     showCmd [ ^self uint32At: 9 ]
     showCmd: v [ ^self uint32At: 9 put: v ]
     ptMinPosition [ ^POINT viewOn: self at: 12 size: 8 ]

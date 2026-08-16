@@ -38,18 +38,29 @@ ExternalMemory subclass: DEVMODEW [
 
     "dmDeviceName: char[] at 0 — no accessor (width unknown); use byteAt: directly"
     dmSpecVersion [ ^self uint16At: 65 ]
+    dmSpecVersion: v [ ^self uint16At: 65 put: v ]
     dmDriverVersion [ ^self uint16At: 67 ]
+    dmDriverVersion: v [ ^self uint16At: 67 put: v ]
     dmSize [ ^self uint16At: 69 ]
+    dmSize: v [ ^self uint16At: 69 put: v ]
     dmDriverExtra [ ^self uint16At: 71 ]
-    "dmFields: Windows.Win32.Graphics.Gdi.DEVMODE_FIELD_FLAGS at 72 — no accessor (width unknown); use byteAt: directly"
+    dmDriverExtra: v [ ^self uint16At: 71 put: v ]
+    dmFields [ ^self uint32At: 73 ]
+    dmFields: v [ ^self uint32At: 73 put: v ]
     "anonymous1: _Anonymous1_e__Union at 80 — no accessor (width unknown); use byteAt: directly"
-    "dmColor: Windows.Win32.Graphics.Gdi.DEVMODE_COLOR at 112 — no accessor (width unknown); use byteAt: directly"
-    "dmDuplex: Windows.Win32.Graphics.Gdi.DEVMODE_DUPLEX at 114 — no accessor (width unknown); use byteAt: directly"
+    dmColor [ ^self uint16At: 113 ]
+    dmColor: v [ ^self uint16At: 113 put: v ]
+    dmDuplex [ ^self uint16At: 115 ]
+    dmDuplex: v [ ^self uint16At: 115 put: v ]
     dmYResolution [ ^self int16At: 117 ]
-    "dmTTOption: Windows.Win32.Graphics.Gdi.DEVMODE_TRUETYPE_OPTION at 118 — no accessor (width unknown); use byteAt: directly"
-    "dmCollate: Windows.Win32.Graphics.Gdi.DEVMODE_COLLATE at 120 — no accessor (width unknown); use byteAt: directly"
+    dmYResolution: v [ ^self int16At: 117 put: v ]
+    dmTTOption [ ^self uint16At: 119 ]
+    dmTTOption: v [ ^self uint16At: 119 put: v ]
+    dmCollate [ ^self uint16At: 121 ]
+    dmCollate: v [ ^self uint16At: 121 put: v ]
     "dmFormName: char[] at 122 — no accessor (width unknown); use byteAt: directly"
     dmLogPixels [ ^self uint16At: 187 ]
+    dmLogPixels: v [ ^self uint16At: 187 put: v ]
     dmBitsPerPel [ ^self uint32At: 189 ]
     dmBitsPerPel: v [ ^self uint32At: 189 put: v ]
     dmPelsWidth [ ^self uint32At: 193 ]

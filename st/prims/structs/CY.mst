@@ -13,4 +13,5 @@ ExternalMemory subclass: CY [
 
     "anonymous: _Anonymous_e__Struct at 0 — no accessor (width unknown); use byteAt: directly"
     int64 [ ^self intptrAt: 1 ]
+    int64: v [ ^self intptrAt: 1 put: v ]
 ]

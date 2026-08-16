@@ -16,5 +16,5 @@ ExternalMemory subclass: SECURITY_ATTRIBUTES [
     nLength: v [ ^self uint32At: 1 put: v ]
     "lpSecurityDescriptor: void* at 8 — no accessor (width unknown); use byteAt: directly"
     bInheritHandle [ ^self int32At: 17 ]
-    bInheritHandle: v [ ^self uint32At: 17 put: v ]
+    bInheritHandle: v [ ^self int32At: 17 put: v ]
 ]

@@ -15,8 +15,10 @@ ExternalMemory subclass: HTTP_REQUEST_HEADERS [
     HTTP_REQUEST_HEADERS class >> _HTTP_REQUEST_HEADERS_Size [ ^40 ]
 
     unknownHeaderCount [ ^self uint16At: 1 ]
+    unknownHeaderCount: v [ ^self uint16At: 1 put: v ]
     "pUnknownHeaders: Windows.Win32.Networking.HttpServer.HTTP_UNKNOWN_HEADER* at 8 — no accessor (width unknown); use byteAt: directly"
     trailerCount [ ^self uint16At: 17 ]
+    trailerCount: v [ ^self uint16At: 17 put: v ]
     "pTrailers: Windows.Win32.Networking.HttpServer.HTTP_UNKNOWN_HEADER* at 24 — no accessor (width unknown); use byteAt: directly"
     "knownHeaders: Windows.Win32.Networking.HttpServer.HTTP_KNOWN_HEADER[] at 32 — no accessor (width unknown); use byteAt: directly"
 ]

@@ -1238,4 +1238,13 @@ ValueConvertingControlView subclass: TextEdit [
         "Private - Answer the name of the Windows window class to use when realizing the receiver."
         ^'EDIT'
     ]
+    TextEdit class >> initializeClassConstants [
+        "Private - Assign the `classConstants:` entries whose values are expressions. GENERATED: Dolphin holds these in its image, so no source assigns them and every read was a nil."
+        AlignmentMap := (IdentityDictionary withAll: { #center -> 16r1. #left -> 16r0. #right -> 16r2 }).
+        FormatMap := (IdentityDictionary
+        						withAll: { #lowercase -> 16r10. #mixed -> 16r0. #numeric -> 16r2000. #uppercase -> 16r8 }).
+        ^self
+    ]
 ]
+
+TextEdit initializeClassConstants.

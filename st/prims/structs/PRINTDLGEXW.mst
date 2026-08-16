@@ -2,6 +2,7 @@
  winkb (Win32Metadata), not computed here. Do not hand-edit."
 
 ExternalMemory subclass: PRINTDLGEXW [
+    | printRanges callback |
     PRINTDLGEXW class >> sizeInBytes [ ^136 ]
     PRINTDLGEXW class >> byteSize [ ^136 ]
     byteSize [ ^136 ]
@@ -33,10 +34,13 @@ ExternalMemory subclass: PRINTDLGEXW [
     lStructSize [ ^self uint32At: 1 ]
     lStructSize: v [ ^self uint32At: 1 put: v ]
     hwndOwner [ ^self intptrAt: 9 ]
+    hwndOwner: v [ ^self intptrAt: 9 put: v ]
     hDevMode [ ^HGLOBAL viewOn: self at: 16 size: 8 ]
     hDevNames [ ^HGLOBAL viewOn: self at: 24 size: 8 ]
     hDC [ ^self intptrAt: 33 ]
-    "flags: Windows.Win32.UI.Controls.Dialogs.PRINTDLGEX_FLAGS at 40 — no accessor (width unknown); use byteAt: directly"
+    hDC: v [ ^self intptrAt: 33 put: v ]
+    flags [ ^self uint32At: 41 ]
+    flags: v [ ^self uint32At: 41 put: v ]
     flags2 [ ^self uint32At: 45 ]
     flags2: v [ ^self uint32At: 45 put: v ]
     exclusionFlags [ ^self uint32At: 49 ]
@@ -53,7 +57,9 @@ ExternalMemory subclass: PRINTDLGEXW [
     nCopies [ ^self uint32At: 81 ]
     nCopies: v [ ^self uint32At: 81 put: v ]
     hInstance [ ^self intptrAt: 89 ]
+    hInstance: v [ ^self intptrAt: 89 put: v ]
     lpPrintTemplateName [ ^self intptrAt: 97 ]
+    lpPrintTemplateName: v [ ^self intptrAt: 97 put: v ]
     "lpCallback: Windows.Win32.System.Com.IUnknown at 104 — no accessor (width unknown); use byteAt: directly"
     nPropertyPages [ ^self uint32At: 113 ]
     nPropertyPages: v [ ^self uint32At: 113 put: v ]

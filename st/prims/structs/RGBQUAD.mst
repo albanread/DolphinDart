@@ -14,7 +14,11 @@ ExternalMemory subclass: RGBQUAD [
     RGBQUAD class >> _RGBQUAD_Size [ ^4 ]
 
     rgbBlue [ ^self byteAt: 1 ]
+    rgbBlue: v [ ^self byteAt: 1 put: v ]
     rgbGreen [ ^self byteAt: 2 ]
+    rgbGreen: v [ ^self byteAt: 2 put: v ]
     rgbRed [ ^self byteAt: 3 ]
+    rgbRed: v [ ^self byteAt: 3 put: v ]
     rgbReserved [ ^self byteAt: 4 ]
+    rgbReserved: v [ ^self byteAt: 4 put: v ]
 ]

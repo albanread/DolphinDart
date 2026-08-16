@@ -17,10 +17,13 @@ ExternalMemory subclass: PROPBAG2 [
 
     dwType [ ^self uint32At: 1 ]
     dwType: v [ ^self uint32At: 1 put: v ]
-    "vt: Windows.Win32.System.Variant.VARENUM at 4 — no accessor (width unknown); use byteAt: directly"
+    vt [ ^self uint16At: 5 ]
+    vt: v [ ^self uint16At: 5 put: v ]
     cfType [ ^self uint16At: 7 ]
+    cfType: v [ ^self uint16At: 7 put: v ]
     dwHint [ ^self uint32At: 9 ]
     dwHint: v [ ^self uint32At: 9 put: v ]
     pstrName [ ^self intptrAt: 17 ]
+    pstrName: v [ ^self intptrAt: 17 put: v ]
     "clsid: System.Guid at 24 — no accessor (width unknown); use byteAt: directly"
 ]

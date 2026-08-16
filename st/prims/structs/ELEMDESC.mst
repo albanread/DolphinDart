@@ -2,6 +2,7 @@
  winkb (Win32Metadata), not computed here. Do not hand-edit."
 
 ExternalMemory subclass: ELEMDESC [
+    | param index custData |
     ELEMDESC class >> sizeInBytes [ ^24 ]
     ELEMDESC class >> byteSize [ ^24 ]
     byteSize [ ^24 ]
@@ -11,6 +12,6 @@ ExternalMemory subclass: ELEMDESC [
     ELEMDESC class >> _OffsetOf_Anonymous [ ^16 ]
     ELEMDESC class >> _ELEMDESC_Size [ ^24 ]
 
-    tdesc [ ^TYPEDESC viewOn: self at: 0 size: 16 ]
+    tdesc [ ^TYPEDESC viewOn: self at: 0 size: 10 ]
     "anonymous: _Anonymous_e__Union at 16 — no accessor (width unknown); use byteAt: directly"
 ]

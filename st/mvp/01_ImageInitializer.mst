@@ -1,0 +1,69 @@
+Object subclass: ImageInitializer [
+    createImage: anImage [
+        	^self createImage: anImage extent: (self creationExtentFor: anImage)
+    ]
+    createImage: anImage extent: aPoint [
+        	^self subclassResponsibility
+    ]
+    creationExtentFor: anImage [
+        	^self extent ifNil: [anImage class defaultCreationExtent]
+    ]
+    extent [
+        "Answer the specified extent for images to be loaded/created by the receiver. If no extent is specified (e.g. in order to use some default), answer nil."
+        ^nil
+    ]
+    fileLocator [
+        	^nil
+    ]
+    flag: anInteger set: aBoolean [
+        "Ignored"
+    ]
+    flags [
+        	^2
+    ]
+    identifier [
+        	^nil
+    ]
+    image: anImage valueWithHandle: aMonadicValuable extent: aPoint [
+        "Private - Evaluate the <monadicValuable>, operation, with a handle for the receiver's image at the best possible rendering for the requested extent, although the image passed to the block may not be of that extent."
+        ^(self createImage: anImage extent: aPoint)
+        		ifNil: [anImage class default valueWithHandle: aMonadicValuable extent: aPoint]
+        		ifNotNil: [:handle | [aMonadicValuable value: handle] ensure: [anImage class freeHandle: handle]]
+    ]
+    isLoadMap3dColors [
+        	^self flags allMask: 4096
+    ]
+    isLoadMap3dColors: aBoolean [
+        	self flag: 4096 set: aBoolean
+    ]
+    isLoadShared [
+        "Answer true if the receiver requests that Windows load the image from its shared image cache."
+        ^self flags allMask: 32768
+    ]
+    isLoadShared: aBoolean [
+        "Set whether the receiver should request that Windows load the image from its shared image cache."
+        self flag: 32768 set: aBoolean
+    ]
+    isLoadTransparent [
+        	^self flags allMask: 32
+    ]
+    isLoadTransparent: aBoolean [
+        	self flag: 32 set: aBoolean
+    ]
+    isPersistent [
+        "Answer true if the receiver holds sufficient information such that it can recreate the <Image> it describes exactly as it was across Smalltalk image save/restore. This is generally true."
+        ^true
+    ]
+    isSelfEvaluatingImage: anImage [
+        "Private - Answer whether the `Image` argument is self-evaluating when initialized by the receiver."
+        ^anImage isPersistent
+    ]
+    printImage: anImage on: aWriteStream [
+        "Private - Print a representation of the <Image> initialized by the receiver onto the <puttableStream> argument in the form a developer might want to see."
+        anImage basicPrintOn: aWriteStream
+    ]
+    ImageInitializer class >> icon [
+        "Answers an Icon that can be used to represent this class"
+        ^Image icon
+    ]
+]

@@ -12,7 +12,10 @@ ExternalMemory subclass: ACCEL [
     ACCEL class >> _OffsetOf_cmd [ ^4 ]
     ACCEL class >> _ACCEL_Size [ ^6 ]
 
-    "fVirt: Windows.Win32.UI.WindowsAndMessaging.ACCEL_VIRT_FLAGS at 0 — no accessor (width unknown); use byteAt: directly"
+    fVirt [ ^self byteAt: 1 ]
+    fVirt: v [ ^self byteAt: 1 put: v ]
     key [ ^self uint16At: 3 ]
+    key: v [ ^self uint16At: 3 put: v ]
     cmd [ ^self uint16At: 5 ]
+    cmd: v [ ^self uint16At: 5 put: v ]
 ]
