@@ -238,6 +238,41 @@ raise would turn any remaining instance of this shape loud, and is worth doing
 — carefully, since something may be depending on the current answer by
 accident.
 
+### 3.11 genstructs cannot size ENUM-typed fields
+`tools/dolphin2mst/genstructs.py` emits a comment instead of an accessor when
+it cannot determine a field's width, which is the right refusal — guessing
+silently writes the wrong number of bytes and corrupts the neighbour. But the
+fields it refuses are Win32 ENUMS (`MENUINFO_MASK`, `MENU_ITEM_TYPE`,
+`MENU_ITEM_STATE`, …), and a Win32 enum in a struct is a DWORD.
+
+Five accessors are supplied by hand in
+`st/mvp_compat/03_struct_accessors.mst`, offsets pinned against the
+neighbours the generator DID emit.
+
+**Fix:** follow an enum-typed field to its underlying integer type in winkb
+and emit the accessor. Until then every new struct with an enum field needs
+the same hand-patch, and the failure mode is a doesNotUnderstand at the first
+call, which is at least loud.
+
+### 3.12 A class-side `self` send binds to the DEFINING class
+Recorded twice now, and it caused a Win32 failure the second time.
+
+`self foo` inside a class-side method resolves through class-side lookup from
+the DEFINING class, not the receiver's. So an inherited class method cannot
+call an override:
+
+  - `Object class >> bindingFor:` had to be defined on both sides because
+    `SystemMetrics class >> initialize` sends `self bindingFor:`.
+  - Adding `ExternalMemory class >> sizeInBytes [ ^0 ]` as a base default
+    made the inherited `newBuffer`'s `self sizeInBytes` answer 0 for EVERY
+    struct — `cbSize` was written as 0 and InsertMenuItem failed with
+    ERROR_INVALID_PARAMETER. A Win32 error a long way from a Smalltalk method
+    added for an unrelated reason.
+
+**Until this is understood or fixed, do not add a base-class default for
+anything an inherited class-side method calls on `self`.** The rule is in
+`00_external_memory.mst` at the site.
+
 ### 3.9 `nameOf:` is missing
 Sending `printString` to a `Presenter` raises `does not understand nameOf:`,
 from somewhere in its `printOn:`. Seen while probing; not chased. Harmless

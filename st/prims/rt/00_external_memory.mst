@@ -109,25 +109,20 @@ Object subclass: ExternalMemory [
         addr := (anAddressOrMemory isKindOf: ExternalMemory)
             ifTrue: [ anAddressOrMemory address ]
             ifFalse: [ anAddressOrMemory ].
-        ^self basicNew setAddress: addr size: self addressedSize owned: false
+        "SIZE 0 — the pointer came from Windows with no length, and that is
+         the honest record of it. The accessors do not bounds-check against
+         `size`, so nothing is lost.
+
+         An earlier version answered `self sizeInBytes` here and added an
+         `ExternalMemory class >> sizeInBytes [ ^0 ]` default for the base.
+         That DEFAULT SILENTLY BROKE `newBuffer`: a `self` send from an
+         inherited CLASS-side method binds to the defining class's own
+         class side, so `newBuffer`'s `self sizeInBytes` started answering 0
+         for every struct, `cbSize` was written as 0, and InsertMenuItem
+         failed with ERROR_INVALID_PARAMETER — a Win32 error a long way from
+         a Smalltalk method added for an unrelated reason."
+        ^self basicNew setAddress: addr size: 0 owned: false
     ]
-
-    "How many bytes `fromAddress:` should claim. A raw pointer from Windows
-     carries no length, so the base answers 0 — but a STRUCT class knows its
-     own size, and answering it makes a view onto that pointer printable and
-     bounds-checkable like any other. Every generated struct defines
-     `sizeInBytes`; only `ExternalMemory` itself does not."
-    ExternalMemory class >> addressedSize [ ^self sizeInBytes ]
-
-    "The base's own size: UNKNOWN, hence 0. Every generated struct overrides
-     it with its real byte count.
-
-     A plain default rather than a `respondsTo:` probe, because a `self` send
-     inside a CLASS-side method resolves through class-side lookup and does
-     NOT fall back to `Object`'s instance protocol — `respondsTo:` is not
-     reachable there. (The same asymmetry is recorded at
-     `Object class >> bindingFor:` in st/dolphin_compat/03_kernel.mst.)"
-    ExternalMemory class >> sizeInBytes [ ^0 ]
 
     setAddress: p size: n owned: aBool [ address := p. size := n. owned := aBool ]
     isView [ ^owned ~~ true ]

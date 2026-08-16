@@ -84,7 +84,7 @@ main(List<String> a) {
   must(num('MnShell handle') > 0, 'the shell created its window');
 
   // ── Dolphin builds the menu ─────────────────────────────────────────────
-  print('  .. buildMenu -> ' + ev('MnShell buildMenu printString'));
+  stRun('MnShell buildMenu.');
   expect('the shell has a MenuBar', '(MnShell bar isKindOf: MenuBar)', 'true');
   expect('  ...with two sub-menus', 'MnShell bar items size printString', "'2'");
 
