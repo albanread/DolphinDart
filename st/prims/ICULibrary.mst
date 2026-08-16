@@ -56,19 +56,19 @@ Object subclass: ICULibrary [
         ^self primU_getVersion: (FFICoerce pointer: versionArray)
     ]
     ICULibrary class >> u_hasBinaryProperty: aCharacter which: anIntege [
-        <primitive: FFI function: #u_hasBinaryProperty ret: #g args: #( g g )>
+        <primitive: FFI function: #u_hasBinaryProperty ret: #b args: #( g g )>
     ]
     ICULibrary class >> u_isalpha: aCharacter [
-        <primitive: FFI function: #u_isalpha ret: #g args: #( g )>
+        <primitive: FFI function: #u_isalpha ret: #b args: #( g )>
     ]
     ICULibrary class >> u_iscntrl: aCharacter [
-        <primitive: FFI function: #u_iscntrl ret: #g args: #( g )>
+        <primitive: FFI function: #u_iscntrl ret: #b args: #( g )>
     ]
     ICULibrary class >> u_isgraph: aCharacter [
-        <primitive: FFI function: #u_isgraph ret: #g args: #( g )>
+        <primitive: FFI function: #u_isgraph ret: #b args: #( g )>
     ]
     ICULibrary class >> u_ispunct: aCharacter [
-        <primitive: FFI function: #u_ispunct ret: #g args: #( g )>
+        <primitive: FFI function: #u_ispunct ret: #b args: #( g )>
     ]
     ICULibrary class >> primU_strFoldCase: destString destCapacity: capacityInteger src: srcString srcLength: lenInteger options: optionsInteger pErrorCode: anInt32 [
         <primitive: FFI function: #u_strFoldCase ret: #g args: #( g g g g g g )>

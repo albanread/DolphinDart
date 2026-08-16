@@ -54,7 +54,7 @@ Object subclass: VMLibrary [
             ensure: [ t0 isNil ifFalse: [ t0 free ]. t1 isNil ifFalse: [ t1 free ]. ]
     ]
     VMLibrary class >> handleFromInteger: anInteger [
-        <primitive: FFI function: #AnswerIntPtr ret: #g args: #( g )>
+        <primitive: FFI function: #AnswerIntPtr ret: #h args: #( g )>
     ]
     VMLibrary class >> primHashBytes: aByteObject count: anInteger [
         <primitive: FFI function: #HashBytes ret: #g args: #( g g )>
@@ -69,7 +69,7 @@ Object subclass: VMLibrary [
         <primitive: FFI function: #AnswerDWORD ret: #g args: #( g )>
     ]
     VMLibrary class >> isUserBreakRequested [
-        <primitive: FFI function: #IsUserBreakRequested ret: #g args: #(  )>
+        <primitive: FFI function: #IsUserBreakRequested ret: #b args: #(  )>
     ]
     VMLibrary class >> largeSignedFromUnsigned: anInteger [
         <primitive: FFI function: #AnswerQWORD ret: #g args: #( g )>
@@ -90,7 +90,7 @@ Object subclass: VMLibrary [
         <primitive: FFI function: #AnswerQWORD ret: #g args: #( g g )>
     ]
     VMLibrary class >> primRegisterEventSource: aString [
-        <primitive: FFI function: #RegisterAsEventSource ret: #g args: #( g )>
+        <primitive: FFI function: #RegisterAsEventSource ret: #h args: #( g )>
     ]
     VMLibrary class >> registerEventSource: aString [
         | t0 |
@@ -99,13 +99,13 @@ Object subclass: VMLibrary [
             ensure: [ t0 isNil ifFalse: [ t0 free ]. ]
     ]
     VMLibrary class >> stderr [
-        <primitive: FFI function: #StdErr ret: #g args: #(  )>
+        <primitive: FFI function: #StdErr ret: #h args: #(  )>
     ]
     VMLibrary class >> stdin [
-        <primitive: FFI function: #StdIn ret: #g args: #(  )>
+        <primitive: FFI function: #StdIn ret: #h args: #(  )>
     ]
     VMLibrary class >> stdout [
-        <primitive: FFI function: #StdOut ret: #g args: #(  )>
+        <primitive: FFI function: #StdOut ret: #h args: #(  )>
     ]
     VMLibrary class >> unsignedFromSigned: anInteger [
         <primitive: FFI function: #AnswerDWORD ret: #g args: #( g )>

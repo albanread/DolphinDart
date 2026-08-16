@@ -130,8 +130,8 @@ main(List<String> a) {
   // BOOL — so 1 IS the success report, not a Smalltalk receiver. Asserted
   // rather than ignored: a raise inside destroy would otherwise look exactly
   // like a window that refused to close.
-  expect('View>>destroy succeeded', 'DV destroy printString', "'1'");
-  expect('ShellView>>destroy succeeded', 'SV destroy printString', "'1'");
+  expect('View>>destroy succeeded', 'DV destroy printString', "'true'");
+  expect('ShellView>>destroy succeeded', 'SV destroy printString', "'true'");
   stRun('UiSession pump.');
   must(stMvpIsWindow(h) == false, 'destroy took the View\'s window with it');
   must(stMvpIsWindow(sh) == false, '  ...and the ShellView\'s');

@@ -117,7 +117,13 @@ Object subclass: WinView [
         ^Rectangle origin: 0 @ 0 extent: aRectangle extent
     ]
 
-    hasVisibleStyle [ ^(User32 isWindowVisible: hwnd) ~= 0 ]
+    hasVisibleStyle [
+        "No `~= 0`: the floor's `#b` convention answers a real Boolean for a
+         `<stdcall: bool ...>` return, and `false ~= 0` is TRUE — so the old
+         numeric test would answer true for a hidden window as readily as a
+         visible one."
+        ^User32 isWindowVisible: hwnd
+    ]
 
     "The setter LayoutContext applies at the end of a layout pass.
 
@@ -156,5 +162,7 @@ Object subclass: WinView [
 
     setFocus [ ^User32 setFocus: hwnd ]
     hasFocus [ ^(User32 getFocus) = hwnd ]
-    isWindow [ ^(User32 isWindow: hwnd) ~= 0 ]
+    isWindow [ "a `#b` return — already a Boolean, see `hasVisibleStyle`"
+        ^User32 isWindow: hwnd
+    ]
 ]

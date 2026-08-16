@@ -8,7 +8,7 @@ Object subclass: Crypt32Library [
      generated methods."
     Crypt32Library class >> default [ ^self ]
     Crypt32Library class >> primCryptProtectData: pDataIn szDataDescr: szDataDescr pOptionalEntropy: pOptionalEntropy pvReserved: pvReserved pPromptStruct: pPromptStruct dwFlags: dwFlags pDataOut: pDataOut [
-        <primitive: FFI function: #CryptProtectData ret: #g args: #( g g g g g g g )>
+        <primitive: FFI function: #CryptProtectData ret: #b args: #( g g g g g g g )>
     ]
     Crypt32Library class >> cryptProtectData: pDataIn szDataDescr: szDataDescr pOptionalEntropy: pOptionalEntropy pvReserved: pvReserved pPromptStruct: pPromptStruct dwFlags: dwFlags pDataOut: pDataOut [
         | t1 |
@@ -17,19 +17,19 @@ Object subclass: Crypt32Library [
             ensure: [ t1 isNil ifFalse: [ t1 free ]. ]
     ]
     Crypt32Library class >> primCryptProtectMemory: pDataIn cbDataIn: cbDataIn dwFlags: dwFlags [
-        <primitive: FFI function: #CryptProtectMemory ret: #g args: #( g g g )>
+        <primitive: FFI function: #CryptProtectMemory ret: #b args: #( g g g )>
     ]
     Crypt32Library class >> cryptProtectMemory: pDataIn cbDataIn: cbDataIn dwFlags: dwFlags [
         ^self primCryptProtectMemory: (FFICoerce pointer: pDataIn) cbDataIn: (FFICoerce word: cbDataIn) dwFlags: (FFICoerce word: dwFlags)
     ]
     Crypt32Library class >> primCryptUnprotectData: pDataIn ppszDataDescr: ppszDataDescr pOptionalEntropy: pOptionalEntropy pvReserved: pvReserved pPromptStruct: pPromptStruct dwFlags: dwFlags pDataOut: pDataOut [
-        <primitive: FFI function: #CryptUnprotectData ret: #g args: #( g g g g g g g )>
+        <primitive: FFI function: #CryptUnprotectData ret: #b args: #( g g g g g g g )>
     ]
     Crypt32Library class >> cryptUnprotectData: pDataIn ppszDataDescr: ppszDataDescr pOptionalEntropy: pOptionalEntropy pvReserved: pvReserved pPromptStruct: pPromptStruct dwFlags: dwFlags pDataOut: pDataOut [
         ^self primCryptUnprotectData: (FFICoerce pointer: pDataIn) ppszDataDescr: (FFICoerce pointer: ppszDataDescr) pOptionalEntropy: (FFICoerce pointer: pOptionalEntropy) pvReserved: (FFICoerce pointer: pvReserved) pPromptStruct: (FFICoerce pointer: pPromptStruct) dwFlags: (FFICoerce word: dwFlags) pDataOut: (FFICoerce pointer: pDataOut)
     ]
     Crypt32Library class >> primCryptUnprotectMemory: pDataIn cbDataIn: cbDataIn dwFlags: dwFlags [
-        <primitive: FFI function: #CryptUnprotectMemory ret: #g args: #( g g g )>
+        <primitive: FFI function: #CryptUnprotectMemory ret: #b args: #( g g g )>
     ]
     Crypt32Library class >> cryptUnprotectMemory: pDataIn cbDataIn: cbDataIn dwFlags: dwFlags [
         ^self primCryptUnprotectMemory: (FFICoerce pointer: pDataIn) cbDataIn: (FFICoerce word: cbDataIn) dwFlags: (FFICoerce word: dwFlags)

@@ -8,7 +8,7 @@ Object subclass: HTMLHelpLibrary [
      generated methods."
     HTMLHelpLibrary class >> default [ ^self ]
     HTMLHelpLibrary class >> primHtmlHelp: hwndCaller pszFile: pszFile uCommand: uCommand dwData: dwData [
-        <primitive: FFI function: #HtmlHelpW ret: #g args: #( g g g g )>
+        <primitive: FFI function: #HtmlHelpW ret: #h args: #( g g g g )>
     ]
     HTMLHelpLibrary class >> htmlHelp: hwndCaller pszFile: pszFile uCommand: uCommand dwData: dwData [
         | t1 |

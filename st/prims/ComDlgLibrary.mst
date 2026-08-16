@@ -8,13 +8,13 @@ Object subclass: ComDlgLibrary [
      generated methods."
     ComDlgLibrary class >> default [ ^self ]
     ComDlgLibrary class >> primChooseColor: aWinCHOOSECOLOR [
-        <primitive: FFI function: #ChooseColorW ret: #g args: #( g )>
+        <primitive: FFI function: #ChooseColorW ret: #b args: #( g )>
     ]
     ComDlgLibrary class >> chooseColor: aWinCHOOSECOLOR [
         ^self primChooseColor: (FFICoerce pointer: aWinCHOOSECOLOR)
     ]
     ComDlgLibrary class >> primChooseFont: aWinCHOOSEFONT [
-        <primitive: FFI function: #ChooseFontW ret: #g args: #( g )>
+        <primitive: FFI function: #ChooseFontW ret: #b args: #( g )>
     ]
     ComDlgLibrary class >> chooseFont: aWinCHOOSEFONT [
         ^self primChooseFont: (FFICoerce pointer: aWinCHOOSEFONT)
@@ -23,7 +23,7 @@ Object subclass: ComDlgLibrary [
         <primitive: FFI function: #CommDlgExtendedError ret: #g args: #(  )>
     ]
     ComDlgLibrary class >> primFindText: aWinFINDREPLACE [
-        <primitive: FFI function: #FindTextW ret: #g args: #( g )>
+        <primitive: FFI function: #FindTextW ret: #h args: #( g )>
     ]
     ComDlgLibrary class >> findText: aWinFINDREPLACE [
         ^self primFindText: (FFICoerce pointer: aWinFINDREPLACE)
@@ -39,19 +39,19 @@ Object subclass: ComDlgLibrary [
             ensure: [ t0 isNil ifFalse: [ t0 free ]. t1 isNil ifFalse: [ t1 free ]. ]
     ]
     ComDlgLibrary class >> primGetOpenFileName: aWinOPENFILENAME [
-        <primitive: FFI function: #GetOpenFileNameW ret: #g args: #( g )>
+        <primitive: FFI function: #GetOpenFileNameW ret: #b args: #( g )>
     ]
     ComDlgLibrary class >> getOpenFileName: aWinOPENFILENAME [
         ^self primGetOpenFileName: (FFICoerce pointer: aWinOPENFILENAME)
     ]
     ComDlgLibrary class >> primGetSaveFileName: aWinOPENFILENAME [
-        <primitive: FFI function: #GetSaveFileNameW ret: #g args: #( g )>
+        <primitive: FFI function: #GetSaveFileNameW ret: #b args: #( g )>
     ]
     ComDlgLibrary class >> getSaveFileName: aWinOPENFILENAME [
         ^self primGetSaveFileName: (FFICoerce pointer: aWinOPENFILENAME)
     ]
     ComDlgLibrary class >> primPageSetupDlg: lppsd [
-        <primitive: FFI function: #PageSetupDlgW ret: #g args: #( g )>
+        <primitive: FFI function: #PageSetupDlgW ret: #b args: #( g )>
     ]
     ComDlgLibrary class >> pageSetupDlg: lppsd [
         ^self primPageSetupDlg: (FFICoerce pointer: lppsd)
@@ -63,7 +63,7 @@ Object subclass: ComDlgLibrary [
         ^self primPrintDlgEx: (FFICoerce pointer: lppd)
     ]
     ComDlgLibrary class >> primReplaceText: aWinFINDREPLACE [
-        <primitive: FFI function: #ReplaceTextW ret: #g args: #( g )>
+        <primitive: FFI function: #ReplaceTextW ret: #h args: #( g )>
     ]
     ComDlgLibrary class >> replaceText: aWinFINDREPLACE [
         ^self primReplaceText: (FFICoerce pointer: aWinFINDREPLACE)

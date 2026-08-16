@@ -19,7 +19,7 @@ Object subclass: ShlwapiLibrary [
             ensure: [ t0 isNil ifFalse: [ t0 free ]. t1 isNil ifFalse: [ t1 free ]. t2 isNil ifFalse: [ t2 free ]. ]
     ]
     ShlwapiLibrary class >> primPathCompactPathEx: pszOut pszSrc: pszSrc cchMax: cchMax dwFlags: dwFlags [
-        <primitive: FFI function: #PathCompactPathExW ret: #g args: #( g g g g )>
+        <primitive: FFI function: #PathCompactPathExW ret: #b args: #( g g g g )>
     ]
     ShlwapiLibrary class >> pathCompactPathEx: pszOut pszSrc: pszSrc cchMax: cchMax dwFlags: dwFlags [
         | t0 t1 |
@@ -29,7 +29,7 @@ Object subclass: ShlwapiLibrary [
             ensure: [ t0 isNil ifFalse: [ t0 free ]. t1 isNil ifFalse: [ t1 free ]. ]
     ]
     ShlwapiLibrary class >> primPathIsURL: pszPath [
-        <primitive: FFI function: #PathIsURLW ret: #g args: #( g )>
+        <primitive: FFI function: #PathIsURLW ret: #b args: #( g )>
     ]
     ShlwapiLibrary class >> pathIsURL: pszPath [
         | t0 |
@@ -38,7 +38,7 @@ Object subclass: ShlwapiLibrary [
             ensure: [ t0 isNil ifFalse: [ t0 free ]. ]
     ]
     ShlwapiLibrary class >> primPathRelativePathTo: pszPath pszFrom: pszFrom dwAttrFrom: dwAttrFrom pszTo: pszTo dwAttrTo: dwAttrTo [
-        <primitive: FFI function: #PathRelativePathToW ret: #g args: #( g g g g g )>
+        <primitive: FFI function: #PathRelativePathToW ret: #b args: #( g g g g g )>
     ]
     ShlwapiLibrary class >> pathRelativePathTo: pszPath pszFrom: pszFrom dwAttrFrom: dwAttrFrom pszTo: pszTo dwAttrTo: dwAttrTo [
         | t0 t1 t3 |

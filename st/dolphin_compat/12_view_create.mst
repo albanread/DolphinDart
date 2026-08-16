@@ -64,6 +64,22 @@ nil subclass: Object [
      right — and the buffer must outlive the call, which it does because the
      caller holds it until the send returns."
     asUtf16String [ ^Utf16Buffer fromString: self displayString ]
+
+    "Dolphin's `Object>>asParameter`, verbatim: 'answer the receiver in a form
+     suitable for passing to an external function primitive. The default is
+     self.' Classes that wrap a handle override it to answer the handle —
+     `DesktopView` does, in `st/mvp_compat/01_view_overrides.mst`.
+
+     Defined on OBJECT, not on the few classes seen sending it, because the
+     interesting receiver is NIL. `View>>getRect` is
+
+         ^User32 mapRectangle: self getWindowRect from: nil to: self parentView asParameter
+
+     — `from: nil` is Dolphin saying 'screen coordinates', and a top-level
+     view's `parentView` is nil too. Without an inherited definition those
+     are a doesNotUnderstand rather than the 0 the API wants, and the
+     marshalling floor already turns nil into 0 for a word argument."
+    asParameter [ ^self ]
 ]
 
 "── SessionManager / InputState: Dolphin's window registry ──────────────

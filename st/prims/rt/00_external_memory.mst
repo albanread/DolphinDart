@@ -44,6 +44,20 @@ Object subclass: ExternalMemory [
         ^self basicNew setAddress: p size: nBytes owned: true
     ]
 
+    "Dolphin's own struct-allocation selector: 'answer a new instance
+     containing its own buffer' (`ExternalStructure class >> newBuffer`,
+     `^self newFixed: self byteSize`). Its translated code says `RECTL
+     newBuffer`, never `RECTL new: 16` — `View>>getRect`, `Rectangle`,
+     `Menu`, PAINTSTRUCT and WINDOWPLACEMENT all allocate through it.
+
+     Defined HERE, on the shared superclass, rather than emitted into each of
+     the generated struct files: Dolphin defines it once on the struct
+     metaclass and inherits it, and every generated struct already overrides
+     `new` with its own `sizeInBytes`, so one inherited method answers
+     correctly for all of them. Adding it per-file would be the same method
+     copied N times, and a struct generated later would silently lack it."
+    ExternalMemory class >> newBuffer [ ^self new ]
+
     "A typed window onto memory someone else owns."
     ExternalMemory class >> viewOn: parent at: byteOffset size: n [
         ^self basicNew setAddress: parent address + byteOffset size: n owned: false

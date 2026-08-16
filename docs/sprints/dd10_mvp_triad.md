@@ -69,9 +69,26 @@
 > compat patch: the family is the point.
 >
 > **REMAINING for DD10, in retirement order:**
-> 1. The handle-return convention → `show` unhangs → child views under a
->    Dolphin shell → full `st_dolphinshell` gate → **retire `WinView`**
->    (delete it and `st_shell`; the successor gate covers the arrangement).
+> 1. ~~The handle-return convention → `show` unhangs → child views under a
+>    Dolphin shell → full `st_dolphinshell` gate.~~ **DONE.** It took TWO
+>    conventions, not one: `#h` (handle → nil for NULL, 124 returns) as
+>    predicted, and `#b` (BOOL → Boolean, 297 returns) which was not — with
+>    `isWindow:` answering the integer 1, `View>>isOpen` answered 1,
+>    `show`'s `ifFalse:` took the wrong branch and every `show` created
+>    ANOTHER window: three live windows per view. Plus five more silent-nil
+>    defects behind them (`newBuffer`, `marshal:`, `Object>>asParameter`,
+>    inherited pool imports for `.pax` loose methods, and
+>    `usePreferredExtent:` being separate from `preferredExtent:`). Gate
+>    `st_dolphinshell` is green on the full arrangement including a second
+>    resize; 21/21 gates pass. See `dd10_NOTES.md`.
+>
+>    **`WinView` is NOT yet deletable, and the brief was wrong to pair the
+>    two.** `WinControl` (and so `WinTextEdit`/`WinButton`/`WinLabel`) is a
+>    `WinView` SUBCLASS, and `text_probe`/`counter_app` build on those — so
+>    the adapter cannot go until item 2 retires the controls. What IS
+>    retirable now is the DD9 gate `st_shell` + `shell_probe.mst`, whose
+>    arrangement coverage `st_dolphinshell` now fully supersedes. Recorded
+>    rather than done, so the retirement happens in one piece with item 2.
 > 2. Control SUBCLASSING substrate (the known-hard piece, not started): a door
 >    trampoline for comctl WndProcs, then translate `UI.TextEdit` and drive
 >    `UI.TextPresenter` → **retire `TextField`/`WinTextEdit`**.

@@ -29,7 +29,7 @@ Object subclass: CRTLibrary [
         <primitive: FFI function: #_errno ret: #g args: #(  )>
     ]
     CRTLibrary class >> prim_fdopen: anInteger mode: aString [
-        <primitive: FFI function: #_fdopen ret: #g args: #( g g )>
+        <primitive: FFI function: #_fdopen ret: #h args: #( g g )>
     ]
     CRTLibrary class >> _fdopen: anInteger mode: aString [
         | t1 |
@@ -53,10 +53,10 @@ Object subclass: CRTLibrary [
         <primitive: FFI function: #_get_invalid_parameter_handler ret: #g args: #(  )>
     ]
     CRTLibrary class >> _get_osfhandle: anInteger [
-        <primitive: FFI function: #_get_osfhandle ret: #g args: #( g )>
+        <primitive: FFI function: #_get_osfhandle ret: #h args: #( g )>
     ]
     CRTLibrary class >> _isatty: anInteger [
-        <primitive: FFI function: #_isatty ret: #g args: #( g )>
+        <primitive: FFI function: #_isatty ret: #b args: #( g )>
     ]
     CRTLibrary class >> prim_makepath_s: path bufferSize: sizeInBytes drive: drive dir: dir fname: fname ext: ext [
         <primitive: FFI function: #_makepath_s ret: #g args: #( g g g g g g )>
@@ -113,7 +113,7 @@ Object subclass: CRTLibrary [
             ensure: [ t0 isNil ifFalse: [ t0 free ]. t1 isNil ifFalse: [ t1 free ]. ]
     ]
     CRTLibrary class >> prim_wfsopen: nameString mode: modeString shflag: shflagInteger [
-        <primitive: FFI function: #_wfsopen ret: #g args: #( g g g )>
+        <primitive: FFI function: #_wfsopen ret: #h args: #( g g g )>
     ]
     CRTLibrary class >> _wfsopen: nameString mode: modeString shflag: shflagInteger [
         | t0 t1 |
@@ -135,7 +135,7 @@ Object subclass: CRTLibrary [
         <primitive: FFI function: #fclose ret: #g args: #( g )>
     ]
     CRTLibrary class >> feof: stream [
-        <primitive: FFI function: #feof ret: #g args: #( g )>
+        <primitive: FFI function: #feof ret: #b args: #( g )>
     ]
     CRTLibrary class >> fflush: anExternalAddress [
         <primitive: FFI function: #fflush ret: #g args: #( g )>

@@ -135,7 +135,7 @@ Object subclass: WS2_32Library [
         <primitive: FFI function: #shutdown ret: #g args: #( g g )>
     ]
     WS2_32Library class >> socket: af type: type protocol: protocol [
-        <primitive: FFI function: #socket ret: #g args: #( g g g )>
+        <primitive: FFI function: #socket ret: #h args: #( g g g )>
     ]
     WS2_32Library class >> primWsaAddressToString: lpsaAddress dwAddressLength: dwAddressLength lpProtocolInfo: lpProtocolInfo lpszAddressString: lpszAddressString lpdwAddressStringLength: lpdwAddressStringLength [
         <primitive: FFI function: #WSAAddressToStringW ret: #g args: #( g g g g g )>

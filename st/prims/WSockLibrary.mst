@@ -150,37 +150,37 @@ Object subclass: WSockLibrary [
         <primitive: FFI function: #socket ret: #g args: #( g g g )>
     ]
     WSockLibrary class >> primWsaAsyncGetHostByAddr: p1 wMsg: p2 addr: p3 len: p4 type: p5 buf: p6 buflen: p7 [
-        <primitive: FFI function: #WSAAsyncGetHostByAddr ret: #g args: #( g g g g g g g )>
+        <primitive: FFI function: #WSAAsyncGetHostByAddr ret: #h args: #( g g g g g g g )>
     ]
     WSockLibrary class >> wsaAsyncGetHostByAddr: p1 wMsg: p2 addr: p3 len: p4 type: p5 buf: p6 buflen: p7 [
         ^self primWsaAsyncGetHostByAddr: (FFICoerce word: p1) wMsg: (FFICoerce word: p2) addr: (FFICoerce pointer: p3) len: (FFICoerce word: p4) type: (FFICoerce word: p5) buf: (FFICoerce pointer: p6) buflen: (FFICoerce word: p7)
     ]
     WSockLibrary class >> primWsaAsyncGetHostByName: p1 wMsg: p2 name: p3 buf: p4 buflen: p5 [
-        <primitive: FFI function: #WSAAsyncGetHostByName ret: #g args: #( g g g g g )>
+        <primitive: FFI function: #WSAAsyncGetHostByName ret: #h args: #( g g g g g )>
     ]
     WSockLibrary class >> wsaAsyncGetHostByName: p1 wMsg: p2 name: p3 buf: p4 buflen: p5 [
         ^self primWsaAsyncGetHostByName: (FFICoerce word: p1) wMsg: (FFICoerce word: p2) name: (FFICoerce pointer: p3) buf: (FFICoerce pointer: p4) buflen: (FFICoerce word: p5)
     ]
     WSockLibrary class >> primWsaAsyncGetProtoByName: p1 wMsg: p2 name: p3 buf: p4 buflen: p5 [
-        <primitive: FFI function: #WSAAsyncGetProtoByName ret: #g args: #( g g g g g )>
+        <primitive: FFI function: #WSAAsyncGetProtoByName ret: #h args: #( g g g g g )>
     ]
     WSockLibrary class >> wsaAsyncGetProtoByName: p1 wMsg: p2 name: p3 buf: p4 buflen: p5 [
         ^self primWsaAsyncGetProtoByName: (FFICoerce word: p1) wMsg: (FFICoerce word: p2) name: (FFICoerce pointer: p3) buf: (FFICoerce pointer: p4) buflen: (FFICoerce word: p5)
     ]
     WSockLibrary class >> primWsaAsyncGetProtoByNumber: p1 wMsg: p2 number: p3 buf: p4 buflen: p5 [
-        <primitive: FFI function: #WSAAsyncGetProtoByNumber ret: #g args: #( g g g g g )>
+        <primitive: FFI function: #WSAAsyncGetProtoByNumber ret: #h args: #( g g g g g )>
     ]
     WSockLibrary class >> wsaAsyncGetProtoByNumber: p1 wMsg: p2 number: p3 buf: p4 buflen: p5 [
         ^self primWsaAsyncGetProtoByNumber: (FFICoerce word: p1) wMsg: (FFICoerce word: p2) number: (FFICoerce word: p3) buf: (FFICoerce pointer: p4) buflen: (FFICoerce word: p5)
     ]
     WSockLibrary class >> primWsaAsyncGetServByName: p1 wMsg: p2 name: p3 proto: p4 buf: p5 buflen: p6 [
-        <primitive: FFI function: #WSAAsyncGetServByName ret: #g args: #( g g g g g g )>
+        <primitive: FFI function: #WSAAsyncGetServByName ret: #h args: #( g g g g g g )>
     ]
     WSockLibrary class >> wsaAsyncGetServByName: p1 wMsg: p2 name: p3 proto: p4 buf: p5 buflen: p6 [
         ^self primWsaAsyncGetServByName: (FFICoerce word: p1) wMsg: (FFICoerce word: p2) name: (FFICoerce pointer: p3) proto: (FFICoerce pointer: p4) buf: (FFICoerce pointer: p5) buflen: (FFICoerce word: p6)
     ]
     WSockLibrary class >> primWsaAsyncGetServByPort: p1 wMsg: p2 port: p3 proto: p4 buf: p5 buflen: p6 [
-        <primitive: FFI function: #WSAAsyncGetServByPort ret: #g args: #( g g g g g g )>
+        <primitive: FFI function: #WSAAsyncGetServByPort ret: #h args: #( g g g g g g )>
     ]
     WSockLibrary class >> wsaAsyncGetServByPort: p1 wMsg: p2 port: p3 proto: p4 buf: p5 buflen: p6 [
         ^self primWsaAsyncGetServByPort: (FFICoerce word: p1) wMsg: (FFICoerce word: p2) port: (FFICoerce word: p3) proto: (FFICoerce pointer: p4) buf: (FFICoerce pointer: p5) buflen: (FFICoerce word: p6)
@@ -201,7 +201,7 @@ Object subclass: WSockLibrary [
         <primitive: FFI function: #WSAGetLastError ret: #g args: #(  )>
     ]
     WSockLibrary class >> wsaIsBlocking [
-        <primitive: FFI function: #WSAIsBlocking ret: #g args: #(  )>
+        <primitive: FFI function: #WSAIsBlocking ret: #b args: #(  )>
     ]
     WSockLibrary class >> wsaSetLastError: p1 [
         <primitive: FFI function: #WSASetLastError ret: #v args: #( g )>

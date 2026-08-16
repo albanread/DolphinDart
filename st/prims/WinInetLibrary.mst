@@ -8,7 +8,7 @@ Object subclass: WinInetLibrary [
      generated methods."
     WinInetLibrary class >> default [ ^self ]
     WinInetLibrary class >> primInternetCheckConnection: url dwFlags: flags dwReserved: reserved [
-        <primitive: FFI function: #InternetCheckConnectionW ret: #g args: #( g g g )>
+        <primitive: FFI function: #InternetCheckConnectionW ret: #b args: #( g g g )>
     ]
     WinInetLibrary class >> internetCheckConnection: url dwFlags: flags dwReserved: reserved [
         | t0 |
@@ -17,13 +17,13 @@ Object subclass: WinInetLibrary [
             ensure: [ t0 isNil ifFalse: [ t0 free ]. ]
     ]
     WinInetLibrary class >> primInternetGetConnectedState: flagsBuf dwReserved: reserved [
-        <primitive: FFI function: #InternetGetConnectedState ret: #g args: #( g g )>
+        <primitive: FFI function: #InternetGetConnectedState ret: #b args: #( g g )>
     ]
     WinInetLibrary class >> internetGetConnectedState: flagsBuf dwReserved: reserved [
         ^self primInternetGetConnectedState: (FFICoerce pointer: flagsBuf) dwReserved: (FFICoerce word: reserved)
     ]
     WinInetLibrary class >> primInternetGoOnline: url hwndParent: parent dwReserved: reserved [
-        <primitive: FFI function: #InternetGoOnlineW ret: #g args: #( g g g )>
+        <primitive: FFI function: #InternetGoOnlineW ret: #b args: #( g g g )>
     ]
     WinInetLibrary class >> internetGoOnline: url hwndParent: parent dwReserved: reserved [
         | t0 |
@@ -32,7 +32,7 @@ Object subclass: WinInetLibrary [
             ensure: [ t0 isNil ifFalse: [ t0 free ]. ]
     ]
     WinInetLibrary class >> primInternetOpen: agent dwAccessType: access lpszProxyName: proxyName lpszProxyBypass: proxyBypass dwFlags: flags [
-        <primitive: FFI function: #InternetOpenW ret: #g args: #( g g g g g )>
+        <primitive: FFI function: #InternetOpenW ret: #h args: #( g g g g g )>
     ]
     WinInetLibrary class >> internetOpen: agent dwAccessType: access lpszProxyName: proxyName lpszProxyBypass: proxyBypass dwFlags: flags [
         | t0 t2 t3 |

@@ -25,9 +25,25 @@ class Chunk(NamedTuple):
 
 
 def read_source(path: str) -> str:
-    """Decode a Dolphin source file, BOM optional, to LF line endings."""
-    with open(path, "r", encoding="utf-8-sig", newline="") as f:
-        return f.read().replace("\r\n", "\n").replace("\r", "\n")
+    """Decode a Dolphin source file, BOM optional, to LF line endings.
+
+    UTF-8 first, then CP1252. The corpus is not uniformly UTF-8 — parts of it
+    predate that being the default, and a single stray 0xB4 (an acute accent
+    in CP1252) was enough to abort a whole `genprims` run with a decode error
+    pointing at a byte offset. CP1252 is the honest second guess for
+    Dolphin-era Windows sources, and it cannot itself fail: every byte maps.
+
+    Deliberately NOT `errors="replace"`. That would substitute U+FFFD into
+    source this project then translates — corruption with no diagnostic, which
+    is the failure mode the translator exists to avoid.
+    """
+    with open(path, "rb") as f:
+        raw = f.read()
+    try:
+        text = raw.decode("utf-8-sig")
+    except UnicodeDecodeError:
+        text = raw.decode("cp1252")
+    return text.replace("\r\n", "\n").replace("\r", "\n")
 
 
 def split_chunks(src: str) -> List[Chunk]:

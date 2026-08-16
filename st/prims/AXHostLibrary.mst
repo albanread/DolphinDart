@@ -8,6 +8,6 @@ Object subclass: AXHostLibrary [
      generated methods."
     AXHostLibrary class >> default [ ^self ]
     AXHostLibrary class >> axWinInit [
-        <primitive: FFI function: #AtlAxWinInit ret: #g args: #(  )>
+        <primitive: FFI function: #AtlAxWinInit ret: #b args: #(  )>
     ]
 ]

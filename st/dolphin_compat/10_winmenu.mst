@@ -169,7 +169,9 @@ Object subclass: WinAccelerators [
             i := i + 1 ].
         h := [ User32 createAcceleratorTable: mem address cEntries: n ]
             ensure: [ mem free ].
-        h = 0 ifTrue: [
+        "`isNil`, not `= 0` — CreateAcceleratorTable answers a HANDLE, and the
+         floor's `#h` convention makes NULL nil (DD10)."
+        h isNil ifTrue: [
             ^Win32Error new setCode: Win32 lastError; signalWithCode ].
         ^self basicNew setHandle: h
     ]

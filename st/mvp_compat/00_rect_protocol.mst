@@ -46,6 +46,14 @@ ExternalMemory subclass: RECT [
     "A Smalltalk Rectangle from the struct, for code that wants to compute
      with it rather than pass it to Windows."
     asRectangle [ ^Rectangle origin: self origin corner: self corner ]
+
+    "See the note on `RECTL class >> marshal:`. Both shapes get it, for the
+     same reason both get the rest of this protocol: the corpus uses whichever
+     one the API it is calling declares."
+    RECT class >> marshal: aRectangle [
+        self == aRectangle class ifTrue: [ ^aRectangle ].
+        ^self origin: aRectangle origin corner: aRectangle corner
+    ]
 ]
 
 ExternalMemory subclass: RECTL [
@@ -71,4 +79,47 @@ ExternalMemory subclass: RECTL [
     corner [ ^self right @ self bottom ]
     extent [ ^self width @ self height ]
     asRectangle [ ^Rectangle origin: self origin corner: self corner ]
+
+    "Dolphin's own coercion, verbatim in behaviour (`External.RECT class >>
+     marshal:`): answer the argument AS an instance of the receiver, and pass
+     it straight back when it is already one. `View>>rectangle:` is
+     `rect := RECTL marshal: aRectangle`, so every geometry setter in the view
+     layer arrives through here — including the ones BorderLayout drives."
+    RECTL class >> marshal: aRectangle [
+        self == aRectangle class ifTrue: [ ^aRectangle ].
+        ^self origin: aRectangle origin corner: aRectangle corner
+    ]
+]
+
+"Dolphin sends `POINTL marshal: aPoint` from the coordinate-mapping methods
+ (`mapPoint:`, `screenToClient:` and kin) for the same reason `RECTL` needs
+ it — a Smalltalk Point has to become eight bytes before Windows sees it."
+ExternalMemory subclass: POINTL [
+    POINTL class >> x: anX y: aY [
+        | p |
+        p := self new.
+        p x: anX.
+        p y: aY.
+        ^p
+    ]
+    POINTL class >> marshal: aPoint [
+        self == aPoint class ifTrue: [ ^aPoint ].
+        ^self x: aPoint x y: aPoint y
+    ]
+    asPoint [ ^self x @ self y ]
+]
+
+ExternalMemory subclass: POINT [
+    POINT class >> x: anX y: aY [
+        | p |
+        p := self new.
+        p x: anX.
+        p y: aY.
+        ^p
+    ]
+    POINT class >> marshal: aPoint [
+        self == aPoint class ifTrue: [ ^aPoint ].
+        ^self x: aPoint x y: aPoint y
+    ]
+    asPoint [ ^self x @ self y ]
 ]

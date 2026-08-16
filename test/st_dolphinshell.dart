@@ -98,32 +98,87 @@ main(List<String> a) {
       '(DShell isKindOf: ShellView)', 'true');
   expect('and it registered itself', 'UiSession windowCount', '1');
 
-  // ── STOPS HERE — root cause known (review, 2026-08-16 evening) ──────────
+  // ── show ─────────────────────────────────────────────────────────────────
   //
-  // `ShellView>>show` hangs in `View>>subViewsDo:`:
+  // This is the assertion the gate stopped at until the `#h` handle-return
+  // convention landed. `ShellView>>show` walks its children through
+  // `View>>subViewsDo:`:
   //
   //     child := User32 getWindow: handle uCmd: 5.
   //     [child isNil] whileFalse: [ ... getWindow: child uCmd: 2 ]
   //
-  // Dolphin's external-call machinery answers NIL for a NULL handle return;
-  // this port's generated prims answer 0 (every UserLibrary return is
-  // `ret: #g`). `0 isNil` is false, so the loop never terminates — and it
-  // only "worked" before `InputState>>lookupWindow:` existed because the
-  // first iteration raised inside the loop. (The earlier paint-spin guess in
-  // this comment was wrong; the paint path never calls lookupWindow:.)
+  // Windows ends that sibling chain with a NULL handle. Dolphin's own
+  // external-call machinery answers nil for one; the generated floor used to
+  // answer 0, and `0 isNil` is false, so the walk never terminated. The fix
+  // was a return TYPE in the floor (`ret: #h`, NULL -> nil) covering all 124
+  // handle returns rather than a patch at this call site — `show` is simply
+  // the first caller that happened to depend on it.
   //
-  // The fix is a FAMILY fix, not a patch: a `#h` handle-return convention in
-  // the floor (NULL -> nil), driven from winkb, which knows which returns
-  // are handles. Until it lands the gate stops here and says so — a gate
-  // that hangs is worse than one that reports where it stopped — and
-  // `st_shell.dart` keeps covering the full BorderLayout arrangement through
-  // the WinView adapter, which is exactly why that scaffolding is not
-  // deleted yet.
-  print('');
-  print('  -- stops here: ShellView>>show hangs; child views not yet covered --');
+  // Asserted as a real termination check, not just "it returned": `show` is
+  // exactly the call that used to spin forever, so the gate proves the walk
+  // ENDS by reaching the statement after it.
+  stRun('DShell show.');
+  must(true, 'show returned — the sub-view walk terminates');
+  expect('the shell is visible', 'DShell isWindowVisible', 'true');
+
+  // ── child views, arranged by Dolphin's own BorderLayout ─────────────────
+  //
+  // The DD9 arrangement with the `WinView` adapter removed: three real
+  // `UI.View`s created by Dolphin's `create`, parented and laid out
+  // north/centre/south. This is what retires the adapter — every method the
+  // layout reaches here is Dolphin's own.
+  stRun('DShell buildViews.');
+  // Counted through `subViewsDo:`, so it is the WALK being asserted, not the
+  // three ivars the probe already holds. Exactly three: a count above this is
+  // how the duplicate-window bug behind `#b` first showed itself.
+  expect('three sub-views, walked by Dolphin', 'DShell subViewCount', '3');
+  expect('and the registry agrees (shell + 3)', 'UiSession windowCount', '4');
+
+  stRun('DShell resizeTo: 400 by: 300.');
+  var cw = num('DShell clientWidth'), ch = num('DShell clientHeight');
+  must(cw > 0 && ch > 0, 'the shell has a client area (${cw}x$ch)');
+
+  expect('the arranger is Dolphin BorderLayout',
+      'DShell layoutManager class name', "'BorderLayout'");
+  var edge = num('DolphinShell edgeHeight');
+  var north = rectOf('northView'),
+      centre = rectOf('centreView'),
+      south = rectOf('southView');
+
+  // North is docked to the top at its preferred height, full width.
+  must(north[1] == 0, 'north is at the top (y=${north[1]})');
+  must(north[3] == edge, 'north takes its preferred height (${north[3]})');
+  must(north[2] == cw, 'north spans the client width (${north[2]} of $cw)');
+
+  // South is docked to the bottom: its lower edge meets the client bottom.
+  must(south[3] == edge, 'south takes its preferred height (${south[3]})');
+  must(south[1] + south[3] == ch,
+      'south is docked to the bottom (${south[1]}+${south[3]} of $ch)');
+
+  // The centre declares no preferred extent, so it takes exactly what the two
+  // docked edges leave — which is the whole point of the algorithm.
+  must(centre[1] == north[3],
+      'centre starts below north (${centre[1]} vs ${north[3]})');
+  must(centre[3] == ch - (2 * edge),
+      'centre takes the remainder (${centre[3]} of ${ch - 2 * edge})');
+  must(centre[2] == cw, 'centre spans the client width (${centre[2]})');
+
+  // Relayout on a NEW size: the arrangement has to track the container, not
+  // hold the numbers it was first given. A layout that computed once and
+  // cached would pass every assertion above and fail this one.
+  stRun('DShell resizeTo: 640 by: 480.');
+  var ch2 = num('DShell clientHeight'), cw2 = num('DShell clientWidth');
+  var centre2 = rectOf('centreView'), south2 = rectOf('southView');
+  must(cw2 > cw && ch2 > ch, 'the client area grew (${cw2}x$ch2)');
+  must(centre2[3] == ch2 - (2 * edge),
+      'centre re-took the remainder (${centre2[3]} of ${ch2 - 2 * edge})');
+  must(centre2[2] == cw2, 'centre re-spans the width (${centre2[2]})');
+  must(south2[1] + south2[3] == ch2,
+      'south re-docked to the new bottom (${south2[1]}+${south2[3]} of $ch2)');
+  must(num('DShell relayouts') == 2, 'two layout passes ran');
 
   // ── teardown ─────────────────────────────────────────────────────────────
-  expect('destroy succeeded', 'DShell destroy printString', "'1'");
+  expect('destroy succeeded', 'DShell destroy printString', "'true'");
   stRun('UiSession pump.');
   must(stMvpIsWindow(h) == false, 'the shell window is gone');
   stRun('UiSession shutDown.');

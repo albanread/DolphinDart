@@ -8,6 +8,7 @@ call whose argument was really a struct.
 
 Codes match the existing floor (`st_flow_graph_builder.cc` FFI pragma):
   'g' — a word: integer, handle, pointer, BOOL
+  'h' — a HANDLE return: the same word, but NULL answers nil (return only)
   'v' — void (return only)
 """
 from __future__ import annotations
@@ -99,8 +100,53 @@ def needs_wrapper(argtypes) -> bool:
     return any(coerce_kind(t) != "word" for t in argtypes)
 
 
+# HANDLE RETURNS. Dolphin declares these `handle` in its own pragmas — 129
+# returns across the corpus — and its external-call machinery answers NIL when
+# one comes back NULL. Its code depends on that: `View>>subViewsDo:` walks the
+# sibling chain with `[child isNil] whileFalse:`, and Windows ends the chain
+# with NULL. Answering 0 made the loop infinite and `ShellView>>show` hang.
+#
+# So a handle return gets its own code. Deliberately NARROW:
+#
+#   * only Dolphin's declared `handle` (plus the H-prefixed typedefs, which the
+#     corpus does not currently use as returns but genprims would accept);
+#   * NOT pointers. `lpvoid`/`void*` also use NULL for absence, but the
+#     marshalling runtime does address ARITHMETIC on them (ExternalMemory), and
+#     nil does not add. A pointer stays a word.
+#   * NOT every zero. `GetWindowLong` answering 0 is a legitimate empty style
+#     bitmask, not an absence — which is exactly why this is keyed off the
+#     declared TYPE rather than off the value.
+_HANDLE_RETURNS = {"handle"} | {
+    "HANDLE", "HWND", "HDC", "HMENU", "HICON", "HCURSOR", "HBRUSH", "HPEN",
+    "HFONT", "HBITMAP", "HRGN", "HINSTANCE", "HMODULE", "HGLOBAL", "HLOCAL",
+}
+
+
+# BOOL RETURNS — the same lesson as handles, found the same way, one layer up.
+#
+# Dolphin declares these `bool` (`<stdcall: bool IsWindow handle>`) and its
+# external-call machinery answers a real Boolean. Answering the integer 1
+# instead does not fail: it flows into Smalltalk control flow and quietly
+# takes the wrong branch. `View>>isOpen` is
+#
+#     ^handle notNil and: [User32 isWindow: handle]
+#
+# and `View>>show` is `self isOpen ifFalse: [self create]`. With an integer
+# answer, every `show` re-created a window that already existed — the shell
+# ended up with three windows per child view, all of them real, all leaked.
+#
+# NARROW, for the same reason `#h` is: only the types Dolphin itself declares
+# boolean. A `dword` that happens to hold 0 or 1 is a NUMBER, and the caller
+# is entitled to do arithmetic on it.
+_BOOL_RETURNS = {"bool", "bool8", "BOOL"}
+
+
 def ret_code(t: str) -> Tuple[Optional[str], str]:
     ty = t.strip()
     if ty == "void":
         return "v", ""
+    if ty in _HANDLE_RETURNS:
+        return "h", ""
+    if ty in _BOOL_RETURNS:
+        return "b", ""
     return arg_code(ty)

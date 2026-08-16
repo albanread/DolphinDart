@@ -525,3 +525,102 @@ HEADLESS-verified and a visible shell is a named acceptance item, and the
 tooling ledger — `translate_mvp.py` now cleans its output directory before
 emitting (the 93-stale-files incident), with a gate-sweep script and a shared
 `test/gate_util.dart` recommended but not yet built.
+
+## `#h` and `#b` — two return-type conventions, one disease
+
+`ShellView>>show` unhangs, child views arrange under a Dolphin shell, and
+`st_dolphinshell` is fully green: the DD9 arrangement running on real
+`UI.View`s with no adapter anywhere in it.
+
+Getting there cost SEVEN distinct defects. All seven were the same shape —
+something answered a plausible wrong value and nothing complained — and they
+were only reachable one behind another, so each fix exposed the next.
+
+### The two conventions
+
+**`#h` — a HANDLE return answers nil for NULL.** 124 returns across the floor,
+46 in `UserLibrary`. This was the predicted fix and it worked as predicted:
+`show` stopped hanging on the first run after it landed.
+
+**`#b` — a BOOL return answers a Boolean.** 297 returns, 113 in `UserLibrary`.
+This one was NOT predicted, and it was the more damaging of the two.
+`View>>isOpen` is `handle notNil and: [User32 isWindow: handle]` and
+`View>>show` is `self isOpen ifFalse: [self create]`. With `isWindow:`
+answering the integer 1, `isOpen` answered 1, `ifFalse:` took the wrong
+branch, and **every `show` created another window on top of the one already
+there**. Measured directly, per step of one `makeChild:`:
+
+```
+start=0  new=0  parentView=0  create=1  addSubView=2  show=3
+```
+
+Three live windows per view, all real, all leaked — and the same defect made
+teardown unverifiable, because the gate's "the window is gone" check was
+`isWindow:` too. Both conventions are keyed off the type Dolphin DECLARED
+(`<stdcall: bool IsWindow handle>`), never off the value: `GetWindowLong`
+answering 0 is a legitimate empty style mask, and a `dword` holding 1 is a
+number its caller may do arithmetic on.
+
+### The other five
+
+- **`ExternalMemory class >> newBuffer`** did not exist. Dolphin allocates
+  every struct through it (`RECTL newBuffer` in `getRect`, `Rectangle`,
+  `Menu`, PAINTSTRUCT, WINDOWPLACEMENT). Defined once on the shared
+  superclass, as Dolphin defines it once on the struct metaclass — the
+  generated per-struct `new` already carries the size.
+- **`RECT`/`RECTL`/`POINT`/`POINTL class >> marshal:`** did not exist.
+  `View>>rectangle:` is `RECTL marshal: aRectangle`, so every geometry setter
+  in the view layer goes through it.
+- **`Object>>asParameter`** did not exist. `View>>getRect` passes
+  `from: nil`, and a top-level view's `parentView` is nil as well, so the
+  interesting receiver is NIL — which is why the definition has to be on
+  Object rather than on the classes observed sending it.
+- **The `.pax` loose methods never got their INHERITED pool imports.**
+  `emit_loose` folded only `cd.imports`; `OS.UserLibrary` declares just
+  `#(#{OS.MessageBoxConstants private})` and its `getWindowStyle:` writes
+  `GWL_STYLE`, inherited. The name stayed bare, bare is nil, and nil reached
+  the floor as `FFI: non-integer argument` raised three layers away inside
+  Dolphin's layout code. The class path had taken `inherited_pool_chain(...)`
+  since the DD9 fix; the loose path simply was not passed it. **This is the
+  fourth time an inheritance chain has had to be walked** — ivar counts, class
+  constants, pool imports for classes, and now pool imports for loose methods.
+- **`preferredExtent:` does not imply `usePreferredExtent:`.** They are
+  separate (the flag is bit 256), and with the extent set but the flag clear
+  BorderLayout docked both edges at the 100x100 creation default. A perfectly
+  plausible arrangement that ignored what was asked for. That one is app code,
+  not substrate — the probe now sets both, as a Dolphin app author must.
+
+### What the gate asserts now
+
+`show` terminates; the shell is visible; **three** sub-views counted THROUGH
+`subViewsDo:` (the walk that used to spin, not the ivars — an ivar count would
+prove nothing) and the registry agreeing at four; north docked at its
+preferred height across the full width; south docked to the bottom; centre
+taking exactly the remainder; then a SECOND resize to different dimensions, so
+a layout that computed once and cached would pass everything before it and
+fail there. Teardown verified through `isWindow:`, which is now a Boolean.
+
+## Tooling: two more unrecorded invocations, both now recorded
+
+`tools/gen_prims.py` and `tools/gates.py`, for the same reason
+`translate_mvp.py` exists.
+
+Three failures in this one sitting came from invocations that lived only in a
+shell one-liner: `genprims --corpus` pointed at the dsfork ROOT instead of the
+Dolphin package root and **silently rewrote `UserLibrary` from 232 external
+methods down to 1**, straight over the good floor (caught only because 232→1
+is too big to miss — a subtler wrong root would have shipped); a gate run with
+no arguments died on `a[0]`; a gate run with relative paths died on the
+working directory. None were bugs in the thing under test.
+
+`gen_prims.py` pins the package root and refuses a root with no `Base/`.
+`gates.py` holds the layer list and per-gate arguments in one table, runs
+every gate from the repo root under a timeout — a gate that hangs is a
+RESULT — and records in the same table which gates are deliberately excluded
+and why.
+
+Also fixed: `chunks.read_source` now falls back to CP1252 when a corpus file
+is not UTF-8. One stray 0xB4 was aborting whole generator runs. Deliberately
+NOT `errors="replace"`, which would substitute U+FFFD into source this project
+then translates — corruption with no diagnostic, the exact failure mode all of
+the above is about.

@@ -8,7 +8,7 @@ Object subclass: WinMMLibrary [
      generated methods."
     WinMMLibrary class >> default [ ^self ]
     WinMMLibrary class >> primMciGetErrorString: code lpszErrorText: returnString cchErrorText: retsize [
-        <primitive: FFI function: #mciGetErrorStringW ret: #g args: #( g g g )>
+        <primitive: FFI function: #mciGetErrorStringW ret: #b args: #( g g g )>
     ]
     WinMMLibrary class >> mciGetErrorString: code lpszErrorText: returnString cchErrorText: retsize [
         | t1 |
@@ -27,7 +27,7 @@ Object subclass: WinMMLibrary [
             ensure: [ t0 isNil ifFalse: [ t0 free ]. t1 isNil ifFalse: [ t1 free ]. ]
     ]
     WinMMLibrary class >> primPlaySound: aString hmod: anExternalHandle fdwSound: anInteger [
-        <primitive: FFI function: #PlaySoundW ret: #g args: #( g g g )>
+        <primitive: FFI function: #PlaySoundW ret: #b args: #( g g g )>
     ]
     WinMMLibrary class >> playSound: aString hmod: anExternalHandle fdwSound: anInteger [
         ^self primPlaySound: (FFICoerce pointer: aString) hmod: (FFICoerce word: anExternalHandle) fdwSound: (FFICoerce word: anInteger)

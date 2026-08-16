@@ -8,7 +8,7 @@ Object subclass: ShellLibrary [
      generated methods."
     ShellLibrary class >> default [ ^self ]
     ShellLibrary class >> primSHBrowseForFolder: aWin32BROWSEINFO [
-        <primitive: FFI function: #SHBrowseForFolderW ret: #g args: #( g )>
+        <primitive: FFI function: #SHBrowseForFolderW ret: #h args: #( g )>
     ]
     ShellLibrary class >> SHBrowseForFolder: aWin32BROWSEINFO [
         ^self primSHBrowseForFolder: (FFICoerce pointer: aWin32BROWSEINFO)
@@ -32,7 +32,7 @@ Object subclass: ShellLibrary [
         ^self primSHGetMalloc: (FFICoerce pointer: ppMalloc)
     ]
     ShellLibrary class >> primSHGetPathFromIDList: pidl pszPath: pszPath [
-        <primitive: FFI function: #SHGetPathFromIDListW ret: #g args: #( g g )>
+        <primitive: FFI function: #SHGetPathFromIDListW ret: #b args: #( g g )>
     ]
     ShellLibrary class >> SHGetPathFromIDList: pidl pszPath: pszPath [
         | t1 |
@@ -56,13 +56,13 @@ Object subclass: ShellLibrary [
             ensure: [ t2 isNil ifFalse: [ t2 free ]. ]
     ]
     ShellLibrary class >> primDragQueryPoint: hDrop lppt: lppt [
-        <primitive: FFI function: #DragQueryPoint ret: #g args: #( g g )>
+        <primitive: FFI function: #DragQueryPoint ret: #b args: #( g g )>
     ]
     ShellLibrary class >> dragQueryPoint: hDrop lppt: lppt [
         ^self primDragQueryPoint: (FFICoerce word: hDrop) lppt: (FFICoerce pointer: lppt)
     ]
     ShellLibrary class >> primExtractAssociatedIcon: hInst lpIconPath: lpIconPath lpiIcon: lpiIcon [
-        <primitive: FFI function: #ExtractAssociatedIconW ret: #g args: #( g g g )>
+        <primitive: FFI function: #ExtractAssociatedIconW ret: #h args: #( g g g )>
     ]
     ShellLibrary class >> extractAssociatedIcon: hInst lpIconPath: lpIconPath lpiIcon: lpiIcon [
         | t1 |
@@ -71,7 +71,7 @@ Object subclass: ShellLibrary [
             ensure: [ t1 isNil ifFalse: [ t1 free ]. ]
     ]
     ShellLibrary class >> primFindExecutable: lpFile lpDirectory: directoryStringIn lpResult: buf [
-        <primitive: FFI function: #FindExecutableW ret: #g args: #( g g g )>
+        <primitive: FFI function: #FindExecutableW ret: #h args: #( g g g )>
     ]
     ShellLibrary class >> findExecutable: lpFile lpDirectory: directoryStringIn lpResult: buf [
         | t0 t1 t2 |
@@ -82,7 +82,7 @@ Object subclass: ShellLibrary [
             ensure: [ t0 isNil ifFalse: [ t0 free ]. t1 isNil ifFalse: [ t1 free ]. t2 isNil ifFalse: [ t2 free ]. ]
     ]
     ShellLibrary class >> isUserAnAdmin [
-        <primitive: FFI function: #IsUserAnAdmin ret: #g args: #(  )>
+        <primitive: FFI function: #IsUserAnAdmin ret: #b args: #(  )>
     ]
     ShellLibrary class >> primShGetKnownFolderPath: frid dwFlags: dwFlags hToken: hToken pszPath: pszPath [
         <primitive: FFI function: #SHGetKnownFolderPath ret: #g args: #( g g g g )>
@@ -97,7 +97,7 @@ Object subclass: ShellLibrary [
         ^self primShGetStockIconInfo: (FFICoerce word: siid) uFlags: (FFICoerce word: uFlags) psii: (FFICoerce pointer: psii)
     ]
     ShellLibrary class >> primShellExecute: hwnd lpOperation: opString lpFile: fileString lpParameters: parmString lpDirectory: dirString nShowCmd: anInteger [
-        <primitive: FFI function: #ShellExecuteW ret: #g args: #( g g g g g g )>
+        <primitive: FFI function: #ShellExecuteW ret: #h args: #( g g g g g g )>
     ]
     ShellLibrary class >> shellExecute: hwnd lpOperation: opString lpFile: fileString lpParameters: parmString lpDirectory: dirString nShowCmd: anInteger [
         | t1 t2 t3 t4 |

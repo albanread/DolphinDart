@@ -259,7 +259,7 @@ Object subclass: OLEAutLibrary [
             ensure: [ t0 isNil ifFalse: [ t0 free ]. ]
     ]
     OLEAutLibrary class >> primSystemTimeToVariantTime: lpSystemTime pvtime: pvtime [
-        <primitive: FFI function: #SystemTimeToVariantTime ret: #g args: #( g g )>
+        <primitive: FFI function: #SystemTimeToVariantTime ret: #b args: #( g g )>
     ]
     OLEAutLibrary class >> systemTimeToVariantTime: lpSystemTime pvtime: pvtime [
         ^self primSystemTimeToVariantTime: (FFICoerce pointer: lpSystemTime) pvtime: (FFICoerce pointer: pvtime)

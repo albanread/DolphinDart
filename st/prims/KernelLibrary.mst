@@ -26,16 +26,16 @@ Object subclass: KernelLibrary [
             ensure: [ t0 isNil ifFalse: [ t0 free ]. ]
     ]
     KernelLibrary class >> allocConsole [
-        <primitive: FFI function: #AllocConsole ret: #g args: #(  )>
+        <primitive: FFI function: #AllocConsole ret: #b args: #(  )>
     ]
     KernelLibrary class >> attachConsole: dwProcessId [
-        <primitive: FFI function: #AttachConsole ret: #g args: #( g )>
+        <primitive: FFI function: #AttachConsole ret: #b args: #( g )>
     ]
     KernelLibrary class >> beep: anInteger dwDuration: dwDuration [
-        <primitive: FFI function: #Beep ret: #g args: #( g g )>
+        <primitive: FFI function: #Beep ret: #b args: #( g g )>
     ]
     KernelLibrary class >> primBeginUpdateResource: fileNameString bDeleteExistingResources: aBoolean [
-        <primitive: FFI function: #BeginUpdateResourceW ret: #g args: #( g g )>
+        <primitive: FFI function: #BeginUpdateResourceW ret: #h args: #( g g )>
     ]
     KernelLibrary class >> beginUpdateResource: fileNameString bDeleteExistingResources: aBoolean [
         | t0 |
@@ -47,7 +47,7 @@ Object subclass: KernelLibrary [
         <primitive: FFI function: #CancelIo ret: #g args: #( g )>
     ]
     KernelLibrary class >> closeHandle: aHandle [
-        <primitive: FFI function: #CloseHandle ret: #g args: #( g )>
+        <primitive: FFI function: #CloseHandle ret: #b args: #( g )>
     ]
     KernelLibrary class >> primCompareString: locale dwCmpFlags: dwCmpFlags lpString1: lpString1 cchCount1: cchCount1 lpString2: lpString2 cchCount2: cchCount2 [
         <primitive: FFI function: #CompareStringW ret: #g args: #( g g g g g g )>
@@ -70,7 +70,7 @@ Object subclass: KernelLibrary [
             ensure: [ t0 isNil ifFalse: [ t0 free ]. t2 isNil ifFalse: [ t2 free ]. ]
     ]
     KernelLibrary class >> primCreateDirectory: path lpSecurityAttributes: aSECURITYATTRIBUTES [
-        <primitive: FFI function: #CreateDirectoryW ret: #g args: #( g g )>
+        <primitive: FFI function: #CreateDirectoryW ret: #b args: #( g g )>
     ]
     KernelLibrary class >> createDirectory: path lpSecurityAttributes: aSECURITYATTRIBUTES [
         | t0 |
@@ -79,7 +79,7 @@ Object subclass: KernelLibrary [
             ensure: [ t0 isNil ifFalse: [ t0 free ]. ]
     ]
     KernelLibrary class >> primCreateEvent: lpEventAttributes bManualReset: bManualReset bInitialState: bInitialState lpName: lpName [
-        <primitive: FFI function: #CreateEventW ret: #g args: #( g g g g )>
+        <primitive: FFI function: #CreateEventW ret: #h args: #( g g g g )>
     ]
     KernelLibrary class >> createEvent: lpEventAttributes bManualReset: bManualReset bInitialState: bInitialState lpName: lpName [
         | t3 |
@@ -88,7 +88,7 @@ Object subclass: KernelLibrary [
             ensure: [ t3 isNil ifFalse: [ t3 free ]. ]
     ]
     KernelLibrary class >> primCreateFile: aStringFileName dwDesiredAccess: anIntegerAccessMode dwSharedMode: anIntegerShareMode lpSecurityAttributes: aSECURITYATTRIBUTES dwCreationDistribution: anIntegerCreateMode dwFlagsAndAttributes: anIntegerAttributeFlag hTemplateFile: aHandle [
-        <primitive: FFI function: #CreateFileW ret: #g args: #( g g g g g g g )>
+        <primitive: FFI function: #CreateFileW ret: #h args: #( g g g g g g g )>
     ]
     KernelLibrary class >> createFile: aStringFileName dwDesiredAccess: anIntegerAccessMode dwSharedMode: anIntegerShareMode lpSecurityAttributes: aSECURITYATTRIBUTES dwCreationDistribution: anIntegerCreateMode dwFlagsAndAttributes: anIntegerAttributeFlag hTemplateFile: aHandle [
         | t0 |
@@ -97,7 +97,7 @@ Object subclass: KernelLibrary [
             ensure: [ t0 isNil ifFalse: [ t0 free ]. ]
     ]
     KernelLibrary class >> primCreateFileMapping: hFile lpAttributes: lpAttributes flProtect: flProtect dwMaximumSizeHigh: dwMaximumSizeHigh dwMaximumSizeLow: dwMaximumSizeLow lpName: lpName [
-        <primitive: FFI function: #CreateFileMappingW ret: #g args: #( g g g g g g )>
+        <primitive: FFI function: #CreateFileMappingW ret: #h args: #( g g g g g g )>
     ]
     KernelLibrary class >> createFileMapping: hFile lpAttributes: lpAttributes flProtect: flProtect dwMaximumSizeHigh: dwMaximumSizeHigh dwMaximumSizeLow: dwMaximumSizeLow lpName: lpName [
         | t5 |
@@ -109,7 +109,7 @@ Object subclass: KernelLibrary [
         <primitive: FFI function: #CreateIoCompletionPort ret: #g args: #( g g g g )>
     ]
     KernelLibrary class >> primCreateMutex: lpMutexAttributes bInitialOwner: bInitialOwner lpName: lpName [
-        <primitive: FFI function: #CreateMutexW ret: #g args: #( g g g )>
+        <primitive: FFI function: #CreateMutexW ret: #h args: #( g g g )>
     ]
     KernelLibrary class >> createMutex: lpMutexAttributes bInitialOwner: bInitialOwner lpName: lpName [
         | t2 |
@@ -121,7 +121,7 @@ Object subclass: KernelLibrary [
         <primitive: FFI function: #DebugBreak ret: #v args: #(  )>
     ]
     KernelLibrary class >> primDeleteFile: aStringFileName [
-        <primitive: FFI function: #DeleteFileW ret: #g args: #( g )>
+        <primitive: FFI function: #DeleteFileW ret: #b args: #( g )>
     ]
     KernelLibrary class >> deleteFile: aStringFileName [
         | t0 |
@@ -130,46 +130,46 @@ Object subclass: KernelLibrary [
             ensure: [ t0 isNil ifFalse: [ t0 free ]. ]
     ]
     KernelLibrary class >> primDeviceIoControl: hDevice dwIoControlCode: dwIoControlCode lpInBuffer: lpInBuffer nInBufferSize: nInBufferSize lpOutBuffer: lpOutBuffer nOutBufferSize: nOutBufferSize lpBytesReturned: lpBytesReturned lpoverlapped: lpoverlapped [
-        <primitive: FFI function: #DeviceIoControl ret: #g args: #( g g g g g g g g )>
+        <primitive: FFI function: #DeviceIoControl ret: #b args: #( g g g g g g g g )>
     ]
     KernelLibrary class >> deviceIoControl: hDevice dwIoControlCode: dwIoControlCode lpInBuffer: lpInBuffer nInBufferSize: nInBufferSize lpOutBuffer: lpOutBuffer nOutBufferSize: nOutBufferSize lpBytesReturned: lpBytesReturned lpoverlapped: lpoverlapped [
         ^self primDeviceIoControl: (FFICoerce word: hDevice) dwIoControlCode: (FFICoerce word: dwIoControlCode) lpInBuffer: (FFICoerce pointer: lpInBuffer) nInBufferSize: (FFICoerce word: nInBufferSize) lpOutBuffer: (FFICoerce pointer: lpOutBuffer) nOutBufferSize: (FFICoerce word: nOutBufferSize) lpBytesReturned: (FFICoerce pointer: lpBytesReturned) lpoverlapped: (FFICoerce pointer: lpoverlapped)
     ]
     KernelLibrary class >> primDuplicateHandle: sourceProcHandle hSourceHandle: sourceHandle hTargetProcessHandle: targetProcHandle lpTargetHandle: targetHandle dwDesiredAccess: accessFlagsInteger bInheritHandle: inheritBool dwOptions: optionsFlagInteger [
-        <primitive: FFI function: #DuplicateHandle ret: #g args: #( g g g g g g g )>
+        <primitive: FFI function: #DuplicateHandle ret: #b args: #( g g g g g g g )>
     ]
     KernelLibrary class >> duplicateHandle: sourceProcHandle hSourceHandle: sourceHandle hTargetProcessHandle: targetProcHandle lpTargetHandle: targetHandle dwDesiredAccess: accessFlagsInteger bInheritHandle: inheritBool dwOptions: optionsFlagInteger [
         ^self primDuplicateHandle: (FFICoerce word: sourceProcHandle) hSourceHandle: (FFICoerce word: sourceHandle) hTargetProcessHandle: (FFICoerce word: targetProcHandle) lpTargetHandle: (FFICoerce pointer: targetHandle) dwDesiredAccess: (FFICoerce word: accessFlagsInteger) bInheritHandle: (FFICoerce word: inheritBool) dwOptions: (FFICoerce word: optionsFlagInteger)
     ]
     KernelLibrary class >> endUpdateResource: hUpdate fDiscard: aBoolean [
-        <primitive: FFI function: #EndUpdateResourceW ret: #g args: #( g g )>
+        <primitive: FFI function: #EndUpdateResourceW ret: #b args: #( g g )>
     ]
     KernelLibrary class >> primEnumDateFormats: aCallbackThunk locale: locale dwFlags: dwFlags [
-        <primitive: FFI function: #EnumDateFormatsW ret: #g args: #( g g g )>
+        <primitive: FFI function: #EnumDateFormatsW ret: #b args: #( g g g )>
     ]
     KernelLibrary class >> enumDateFormats: aCallbackThunk locale: locale dwFlags: dwFlags [
         ^self primEnumDateFormats: (FFICoerce pointer: aCallbackThunk) locale: (FFICoerce word: locale) dwFlags: (FFICoerce word: dwFlags)
     ]
     KernelLibrary class >> primEnumSystemCodePages: aCallbackThunk dwFlags: dwFlags [
-        <primitive: FFI function: #EnumSystemCodePagesW ret: #g args: #( g g )>
+        <primitive: FFI function: #EnumSystemCodePagesW ret: #b args: #( g g )>
     ]
     KernelLibrary class >> enumSystemCodePages: aCallbackThunk dwFlags: dwFlags [
         ^self primEnumSystemCodePages: (FFICoerce pointer: aCallbackThunk) dwFlags: (FFICoerce word: dwFlags)
     ]
     KernelLibrary class >> primEnumSystemLocales: aCallbackThunk dwFlags: dwFlags [
-        <primitive: FFI function: #EnumSystemLocalesW ret: #g args: #( g g )>
+        <primitive: FFI function: #EnumSystemLocalesW ret: #b args: #( g g )>
     ]
     KernelLibrary class >> enumSystemLocales: aCallbackThunk dwFlags: dwFlags [
         ^self primEnumSystemLocales: (FFICoerce pointer: aCallbackThunk) dwFlags: (FFICoerce word: dwFlags)
     ]
     KernelLibrary class >> primEnumTimeFormats: aCallbackThunk locale: locale dwFlags: dwFlags [
-        <primitive: FFI function: #EnumTimeFormatsW ret: #g args: #( g g g )>
+        <primitive: FFI function: #EnumTimeFormatsW ret: #b args: #( g g g )>
     ]
     KernelLibrary class >> enumTimeFormats: aCallbackThunk locale: locale dwFlags: dwFlags [
         ^self primEnumTimeFormats: (FFICoerce pointer: aCallbackThunk) locale: (FFICoerce word: locale) dwFlags: (FFICoerce word: dwFlags)
     ]
     KernelLibrary class >> primEnumUILanguages: aCallbackThunk dwFlags: dwFlags lParam: lParam [
-        <primitive: FFI function: #EnumUILanguagesW ret: #g args: #( g g g )>
+        <primitive: FFI function: #EnumUILanguagesW ret: #b args: #( g g g )>
     ]
     KernelLibrary class >> enumUILanguages: aCallbackThunk dwFlags: dwFlags lParam: lParam [
         ^self primEnumUILanguages: (FFICoerce pointer: aCallbackThunk) dwFlags: (FFICoerce word: dwFlags) lParam: (FFICoerce word: lParam)
@@ -185,13 +185,13 @@ Object subclass: KernelLibrary [
             ensure: [ t0 isNil ifFalse: [ t0 free ]. t1 isNil ifFalse: [ t1 free ]. ]
     ]
     KernelLibrary class >> primFileTimeToLocalTime: lpFileTime lpLocalFileTime: lpLocalFileTime [
-        <primitive: FFI function: #FileTimeToLocalFileTime ret: #g args: #( g g )>
+        <primitive: FFI function: #FileTimeToLocalFileTime ret: #b args: #( g g )>
     ]
     KernelLibrary class >> fileTimeToLocalTime: lpFileTime lpLocalFileTime: lpLocalFileTime [
         ^self primFileTimeToLocalTime: (FFICoerce pointer: lpFileTime) lpLocalFileTime: (FFICoerce pointer: lpLocalFileTime)
     ]
     KernelLibrary class >> primFileTimeToSystemTime: lpFileTime lpSystemTime: lpSystemTime [
-        <primitive: FFI function: #FileTimeToSystemTime ret: #g args: #( g g )>
+        <primitive: FFI function: #FileTimeToSystemTime ret: #b args: #( g g )>
     ]
     KernelLibrary class >> fileTimeToSystemTime: lpFileTime lpSystemTime: lpSystemTime [
         ^self primFileTimeToSystemTime: (FFICoerce pointer: lpFileTime) lpSystemTime: (FFICoerce pointer: lpSystemTime)
@@ -203,10 +203,10 @@ Object subclass: KernelLibrary [
         ^self primFillMemory: (FFICoerce pointer: pvDest) length: (FFICoerce word: cBytes) fill: (FFICoerce word: byteValue)
     ]
     KernelLibrary class >> findClose: hFindFile [
-        <primitive: FFI function: #FindClose ret: #g args: #( g )>
+        <primitive: FFI function: #FindClose ret: #b args: #( g )>
     ]
     KernelLibrary class >> primFindFirstFile: lpFileName lpFindFileData: aWIN32_FIND_DATA [
-        <primitive: FFI function: #FindFirstFileW ret: #g args: #( g g )>
+        <primitive: FFI function: #FindFirstFileW ret: #h args: #( g g )>
     ]
     KernelLibrary class >> findFirstFile: lpFileName lpFindFileData: aWIN32_FIND_DATA [
         | t0 |
@@ -215,19 +215,19 @@ Object subclass: KernelLibrary [
             ensure: [ t0 isNil ifFalse: [ t0 free ]. ]
     ]
     KernelLibrary class >> primFindNextFile: hFindFile lpFindFileData: aWIN32_FIND_DATA [
-        <primitive: FFI function: #FindNextFileW ret: #g args: #( g g )>
+        <primitive: FFI function: #FindNextFileW ret: #b args: #( g g )>
     ]
     KernelLibrary class >> findNextFile: hFindFile lpFindFileData: aWIN32_FIND_DATA [
         ^self primFindNextFile: (FFICoerce word: hFindFile) lpFindFileData: (FFICoerce pointer: aWIN32_FIND_DATA)
     ]
     KernelLibrary class >> primFindResource: anInstanceHandle lpName: anIntegerId lpType: anIntegerType [
-        <primitive: FFI function: #FindResourceW ret: #g args: #( g g g )>
+        <primitive: FFI function: #FindResourceW ret: #h args: #( g g g )>
     ]
     KernelLibrary class >> findResource: anInstanceHandle lpName: anIntegerId lpType: anIntegerType [
         ^self primFindResource: (FFICoerce word: anInstanceHandle) lpName: (FFICoerce pointer: anIntegerId) lpType: (FFICoerce pointer: anIntegerType)
     ]
     KernelLibrary class >> flushFileBuffers: aHandle [
-        <primitive: FFI function: #FlushFileBuffers ret: #g args: #( g )>
+        <primitive: FFI function: #FlushFileBuffers ret: #b args: #( g )>
     ]
     KernelLibrary class >> primFlushViewOfFile: lpBaseAddress dwNumberOfBytesToFlush: dwNumberOfBytesToFlush [
         <primitive: FFI function: #FlushViewOfFile ret: #g args: #( g g )>
@@ -242,10 +242,10 @@ Object subclass: KernelLibrary [
         ^self primFormatMessage: (FFICoerce word: dwFlags) lpSource: (FFICoerce pointer: aStringOrHandleOrNil) dwMessageId: (FFICoerce word: dwMessageId) dwLanguageId: (FFICoerce word: dwLanguageId) lpBuffer: (FFICoerce pointer: aBufString) nSize: (FFICoerce word: nBufSize) arguments: (FFICoerce pointer: vaArgs)
     ]
     KernelLibrary class >> freeConsole [
-        <primitive: FFI function: #FreeConsole ret: #g args: #(  )>
+        <primitive: FFI function: #FreeConsole ret: #b args: #(  )>
     ]
     KernelLibrary class >> freeLibrary: hLibModule [
-        <primitive: FFI function: #FreeLibrary ret: #g args: #( g )>
+        <primitive: FFI function: #FreeLibrary ret: #b args: #( g )>
     ]
     KernelLibrary class >> getACP [
         <primitive: FFI function: #GetACP ret: #g args: #(  )>
@@ -260,7 +260,7 @@ Object subclass: KernelLibrary [
             ensure: [ t1 isNil ifFalse: [ t1 free ]. ]
     ]
     KernelLibrary class >> primGetCPInfoExW: codepage dwFlags: dwFlags lpCPInfoEx: lpCPInfoEx [
-        <primitive: FFI function: #GetCPInfoExW ret: #g args: #( g g g )>
+        <primitive: FFI function: #GetCPInfoExW ret: #b args: #( g g g )>
     ]
     KernelLibrary class >> getCPInfoExW: codepage dwFlags: dwFlags lpCPInfoEx: lpCPInfoEx [
         ^self primGetCPInfoExW: (FFICoerce word: codepage) dwFlags: (FFICoerce word: dwFlags) lpCPInfoEx: (FFICoerce pointer: lpCPInfoEx)
@@ -278,7 +278,7 @@ Object subclass: KernelLibrary [
         <primitive: FFI function: #GetCommandLineW ret: #g args: #(  )>
     ]
     KernelLibrary class >> primGetComputerName: buffer nSize: pBufSize [
-        <primitive: FFI function: #GetComputerNameW ret: #g args: #( g g )>
+        <primitive: FFI function: #GetComputerNameW ret: #b args: #( g g )>
     ]
     KernelLibrary class >> getComputerName: buffer nSize: pBufSize [
         | t0 |
@@ -287,7 +287,7 @@ Object subclass: KernelLibrary [
             ensure: [ t0 isNil ifFalse: [ t0 free ]. ]
     ]
     KernelLibrary class >> getConsoleWindow [
-        <primitive: FFI function: #GetConsoleWindow ret: #g args: #(  )>
+        <primitive: FFI function: #GetConsoleWindow ret: #h args: #(  )>
     ]
     KernelLibrary class >> primGetCurrentDirectory: nBufferLength lpBuffer: lpBuffer [
         <primitive: FFI function: #GetCurrentDirectoryW ret: #g args: #( g g )>
@@ -299,19 +299,19 @@ Object subclass: KernelLibrary [
             ensure: [ t1 isNil ifFalse: [ t1 free ]. ]
     ]
     KernelLibrary class >> getCurrentProcess [
-        <primitive: FFI function: #GetCurrentProcess ret: #g args: #(  )>
+        <primitive: FFI function: #GetCurrentProcess ret: #h args: #(  )>
     ]
     KernelLibrary class >> getCurrentProcessId [
         <primitive: FFI function: #GetCurrentProcessId ret: #g args: #(  )>
     ]
     KernelLibrary class >> getCurrentThread [
-        <primitive: FFI function: #GetCurrentThread ret: #g args: #(  )>
+        <primitive: FFI function: #GetCurrentThread ret: #h args: #(  )>
     ]
     KernelLibrary class >> getCurrentThreadId [
         <primitive: FFI function: #GetCurrentThreadId ret: #g args: #(  )>
     ]
     KernelLibrary class >> primGetDiskFreeSpace: lpRootPathName lpSectorsPerCluster: lpSectorsPerCluster lpBytesPerSector: lpBytesPerSector lpNumberOfFreeClusters: lpNumberOfFreeClusters lpTotalNumberOfClusters: lpTotalNumberOfClusters [
-        <primitive: FFI function: #GetDiskFreeSpaceW ret: #g args: #( g g g g g )>
+        <primitive: FFI function: #GetDiskFreeSpaceW ret: #b args: #( g g g g g )>
     ]
     KernelLibrary class >> getDiskFreeSpace: lpRootPathName lpSectorsPerCluster: lpSectorsPerCluster lpBytesPerSector: lpBytesPerSector lpNumberOfFreeClusters: lpNumberOfFreeClusters lpTotalNumberOfClusters: lpTotalNumberOfClusters [
         | t0 |
@@ -320,7 +320,7 @@ Object subclass: KernelLibrary [
             ensure: [ t0 isNil ifFalse: [ t0 free ]. ]
     ]
     KernelLibrary class >> primGetDiskFreeSpaceEx: lpDirectoryName lpFreeBytesAvailable: lpFreeBytesAvailable lpTotalNumberOfBytes: lpTotalNumberOfBytes lpTotalNumberOfFreeBytes: lpTotalNumberOfFreeBytes [
-        <primitive: FFI function: #GetDiskFreeSpaceExW ret: #g args: #( g g g g )>
+        <primitive: FFI function: #GetDiskFreeSpaceExW ret: #b args: #( g g g g )>
     ]
     KernelLibrary class >> getDiskFreeSpaceEx: lpDirectoryName lpFreeBytesAvailable: lpFreeBytesAvailable lpTotalNumberOfBytes: lpTotalNumberOfBytes lpTotalNumberOfFreeBytes: lpTotalNumberOfFreeBytes [
         | t0 |
@@ -348,7 +348,7 @@ Object subclass: KernelLibrary [
             ensure: [ t0 isNil ifFalse: [ t0 free ]. ]
     ]
     KernelLibrary class >> primGetFileAttributesEx: lpFileName fInfoLevelId: fInfoLevelId lpFileInformation: lpFileInformation [
-        <primitive: FFI function: #GetFileAttributesExW ret: #g args: #( g g g )>
+        <primitive: FFI function: #GetFileAttributesExW ret: #b args: #( g g g )>
     ]
     KernelLibrary class >> getFileAttributesEx: lpFileName fInfoLevelId: fInfoLevelId lpFileInformation: lpFileInformation [
         | t0 |
@@ -357,13 +357,13 @@ Object subclass: KernelLibrary [
             ensure: [ t0 isNil ifFalse: [ t0 free ]. ]
     ]
     KernelLibrary class >> primGetFileSizeEx: hfile lpFileSize: lpFileSize [
-        <primitive: FFI function: #GetFileSizeEx ret: #g args: #( g g )>
+        <primitive: FFI function: #GetFileSizeEx ret: #b args: #( g g )>
     ]
     KernelLibrary class >> getFileSizeEx: hfile lpFileSize: lpFileSize [
         ^self primGetFileSizeEx: (FFICoerce word: hfile) lpFileSize: (FFICoerce pointer: lpFileSize)
     ]
     KernelLibrary class >> primGetFileTime: hFile lpCreationTime: lpCreationTime lpLastAccessTime: lpLastAccessTime lpLastWriteTime: lpLastWriteTime [
-        <primitive: FFI function: #GetFileTime ret: #g args: #( g g g g )>
+        <primitive: FFI function: #GetFileTime ret: #b args: #( g g g g )>
     ]
     KernelLibrary class >> getFileTime: hFile lpCreationTime: lpCreationTime lpLastAccessTime: lpLastAccessTime lpLastWriteTime: lpLastWriteTime [
         ^self primGetFileTime: (FFICoerce word: hFile) lpCreationTime: (FFICoerce pointer: lpCreationTime) lpLastAccessTime: (FFICoerce pointer: lpLastAccessTime) lpLastWriteTime: (FFICoerce pointer: lpLastWriteTime)
@@ -424,7 +424,7 @@ Object subclass: KernelLibrary [
             ensure: [ t1 isNil ifFalse: [ t1 free ]. ]
     ]
     KernelLibrary class >> primGetModuleHandle: lpModuleName [
-        <primitive: FFI function: #GetModuleHandleW ret: #g args: #( g )>
+        <primitive: FFI function: #GetModuleHandleW ret: #h args: #( g )>
     ]
     KernelLibrary class >> getModuleHandle: lpModuleName [
         | t0 |
@@ -494,7 +494,7 @@ Object subclass: KernelLibrary [
             ensure: [ t0 isNil ifFalse: [ t0 free ]. t1 isNil ifFalse: [ t1 free ]. t2 isNil ifFalse: [ t2 free ]. t3 isNil ifFalse: [ t3 free ]. t5 isNil ifFalse: [ t5 free ]. ]
     ]
     KernelLibrary class >> primGetPrivateProfileStruct: lpszSection lpszKey: lpszKey lpStruct: lpStruct uSizeStruct: uSizeStruct szFile: szFile [
-        <primitive: FFI function: #GetPrivateProfileStructW ret: #g args: #( g g g g g )>
+        <primitive: FFI function: #GetPrivateProfileStructW ret: #b args: #( g g g g g )>
     ]
     KernelLibrary class >> getPrivateProfileStruct: lpszSection lpszKey: lpszKey lpStruct: lpStruct uSizeStruct: uSizeStruct szFile: szFile [
         | t0 t1 t4 |
@@ -517,7 +517,7 @@ Object subclass: KernelLibrary [
         ^self primGetProcAddressUIntPtr: (FFICoerce word: aHandle) lpProcName: (FFICoerce pointer: aString)
     ]
     KernelLibrary class >> getProcessHeap [
-        <primitive: FFI function: #GetProcessHeap ret: #g args: #(  )>
+        <primitive: FFI function: #GetProcessHeap ret: #h args: #(  )>
     ]
     KernelLibrary class >> primGetQueuedCompletionStatus: completionPort lpNumberOfBytesTransferred: lpNumberOfBytesTransferred lpCompletionKey: lpCompletionKey lpOverlapped: lpOverlapped dwMilliseconds: dwMilliseconds [
         <primitive: FFI function: #GetQueuedCompletionStatus ret: #g args: #( g g g g g )>
@@ -536,7 +536,7 @@ Object subclass: KernelLibrary [
             ensure: [ t0 isNil ifFalse: [ t0 free ]. t1 isNil ifFalse: [ t1 free ]. ]
     ]
     KernelLibrary class >> getStdHandle: nStdHandle [
-        <primitive: FFI function: #GetStdHandle ret: #g args: #( g )>
+        <primitive: FFI function: #GetStdHandle ret: #h args: #( g )>
     ]
     KernelLibrary class >> getSystemDefaultLCID [
         <primitive: FFI function: #GetSystemDefaultLCID ret: #g args: #(  )>
@@ -598,7 +598,7 @@ Object subclass: KernelLibrary [
             ensure: [ t1 isNil ifFalse: [ t1 free ]. ]
     ]
     KernelLibrary class >> primGetThreadTimes: hThread lpCreationTime: creationFILETIME lpExitTime: exitFILETIME lpKernelTime: kernelFILETIME lpUserTime: userFILETIME [
-        <primitive: FFI function: #GetThreadTimes ret: #g args: #( g g g g g )>
+        <primitive: FFI function: #GetThreadTimes ret: #b args: #( g g g g g )>
     ]
     KernelLibrary class >> getThreadTimes: hThread lpCreationTime: creationFILETIME lpExitTime: exitFILETIME lpKernelTime: kernelFILETIME lpUserTime: userFILETIME [
         ^self primGetThreadTimes: (FFICoerce word: hThread) lpCreationTime: (FFICoerce pointer: creationFILETIME) lpExitTime: (FFICoerce pointer: exitFILETIME) lpKernelTime: (FFICoerce pointer: kernelFILETIME) lpUserTime: (FFICoerce pointer: userFILETIME)
@@ -619,13 +619,13 @@ Object subclass: KernelLibrary [
         <primitive: FFI function: #GetUserDefaultLCID ret: #g args: #(  )>
     ]
     KernelLibrary class >> primGetVersionEx: lpVersionInformation [
-        <primitive: FFI function: #GetVersionExW ret: #g args: #( g )>
+        <primitive: FFI function: #GetVersionExW ret: #b args: #( g )>
     ]
     KernelLibrary class >> getVersionEx: lpVersionInformation [
         ^self primGetVersionEx: (FFICoerce pointer: lpVersionInformation)
     ]
     KernelLibrary class >> primGetVolumeInformation: lpRootPathName lpVolumeNameBuffer: lpVolumeNameBuffer nVolumeNameSize: nVolumeNameSize lpVolumeSerialNumber: lpVolumeSerialNumber lpMaximumComponentLength: lpMaximumComponentLength lpFileSystemFlags: lpFileSystemFlags lpFileSystemNameBuffer: lpFileSystemNameBuffer nFileSystemNameSize: nFileSystemNameSize [
-        <primitive: FFI function: #GetVolumeInformationW ret: #g args: #( g g g g g g g g )>
+        <primitive: FFI function: #GetVolumeInformationW ret: #b args: #( g g g g g g g g )>
     ]
     KernelLibrary class >> getVolumeInformation: lpRootPathName lpVolumeNameBuffer: lpVolumeNameBuffer nVolumeNameSize: nVolumeNameSize lpVolumeSerialNumber: lpVolumeSerialNumber lpMaximumComponentLength: lpMaximumComponentLength lpFileSystemFlags: lpFileSystemFlags lpFileSystemNameBuffer: lpFileSystemNameBuffer nFileSystemNameSize: nFileSystemNameSize [
         | t0 t1 t6 |
@@ -636,7 +636,7 @@ Object subclass: KernelLibrary [
             ensure: [ t0 isNil ifFalse: [ t0 free ]. t1 isNil ifFalse: [ t1 free ]. t6 isNil ifFalse: [ t6 free ]. ]
     ]
     KernelLibrary class >> globalAlloc: uFlags dwBytes: dwBytes [
-        <primitive: FFI function: #GlobalAlloc ret: #g args: #( g g )>
+        <primitive: FFI function: #GlobalAlloc ret: #h args: #( g g )>
     ]
     KernelLibrary class >> globalFree: hGlobal [
         <primitive: FFI function: #GlobalFree ret: #v args: #( g )>
@@ -645,7 +645,7 @@ Object subclass: KernelLibrary [
         <primitive: FFI function: #GlobalLock ret: #g args: #( g )>
     ]
     KernelLibrary class >> globalUnlock: hGlobal [
-        <primitive: FFI function: #GlobalUnlock ret: #g args: #( g )>
+        <primitive: FFI function: #GlobalUnlock ret: #b args: #( g )>
     ]
     KernelLibrary class >> heapAlloc: aHandle dwFlags: flagsInteger dwBytes: byteSizeInteger [
         <primitive: FFI function: #HeapAlloc ret: #g args: #( g g g )>
@@ -654,7 +654,7 @@ Object subclass: KernelLibrary [
         <primitive: FFI function: #HeapCompact ret: #g args: #( g g )>
     ]
     KernelLibrary class >> primHeapFree: aHandle dwFlags: flagsInteger lpMem: byteSizeInteger [
-        <primitive: FFI function: #HeapFree ret: #g args: #( g g g )>
+        <primitive: FFI function: #HeapFree ret: #b args: #( g g g )>
     ]
     KernelLibrary class >> heapFree: aHandle dwFlags: flagsInteger lpMem: byteSizeInteger [
         ^self primHeapFree: (FFICoerce word: aHandle) dwFlags: (FFICoerce word: flagsInteger) lpMem: (FFICoerce pointer: byteSizeInteger)
@@ -672,16 +672,16 @@ Object subclass: KernelLibrary [
         ^self primHeapSize: (FFICoerce word: aHandle) dwFlags: (FFICoerce word: flagsInteger) lpMem: (FFICoerce pointer: anAddress)
     ]
     KernelLibrary class >> primHeapValidate: aHandle dwFlags: anInteger lpMem: anAddress [
-        <primitive: FFI function: #HeapValidate ret: #g args: #( g g g )>
+        <primitive: FFI function: #HeapValidate ret: #b args: #( g g g )>
     ]
     KernelLibrary class >> heapValidate: aHandle dwFlags: anInteger lpMem: anAddress [
         ^self primHeapValidate: (FFICoerce word: aHandle) dwFlags: (FFICoerce word: anInteger) lpMem: (FFICoerce pointer: anAddress)
     ]
     KernelLibrary class >> isValidLocale: locale dwFlags: dwFlags [
-        <primitive: FFI function: #IsValidLocale ret: #g args: #( g g )>
+        <primitive: FFI function: #IsValidLocale ret: #b args: #( g g )>
     ]
     KernelLibrary class >> primIsWow64Process: hProcess wow64Process: wow64Process [
-        <primitive: FFI function: #IsWow64Process ret: #g args: #( g g )>
+        <primitive: FFI function: #IsWow64Process ret: #b args: #( g g )>
     ]
     KernelLibrary class >> isWow64Process: hProcess wow64Process: wow64Process [
         ^self primIsWow64Process: (FFICoerce word: hProcess) wow64Process: (FFICoerce pointer: wow64Process)
@@ -696,7 +696,7 @@ Object subclass: KernelLibrary [
             ensure: [ t2 isNil ifFalse: [ t2 free ]. ]
     ]
     KernelLibrary class >> primLoadLibraryEx: lpLibFileName hFile: hFile dwFlags: dwFlags [
-        <primitive: FFI function: #LoadLibraryExW ret: #g args: #( g g g )>
+        <primitive: FFI function: #LoadLibraryExW ret: #h args: #( g g g )>
     ]
     KernelLibrary class >> loadLibraryEx: lpLibFileName hFile: hFile dwFlags: dwFlags [
         | t0 |
@@ -705,16 +705,16 @@ Object subclass: KernelLibrary [
             ensure: [ t0 isNil ifFalse: [ t0 free ]. ]
     ]
     KernelLibrary class >> loadResource: anInstanceHandle hResInfo: aResourceHandle [
-        <primitive: FFI function: #LoadResource ret: #g args: #( g g )>
+        <primitive: FFI function: #LoadResource ret: #h args: #( g g )>
     ]
     KernelLibrary class >> primLocalFileTimeToFileTime: lpLocalFileTime lpFileTime: lpFileTime [
-        <primitive: FFI function: #LocalFileTimeToFileTime ret: #g args: #( g g )>
+        <primitive: FFI function: #LocalFileTimeToFileTime ret: #b args: #( g g )>
     ]
     KernelLibrary class >> localFileTimeToFileTime: lpLocalFileTime lpFileTime: lpFileTime [
         ^self primLocalFileTimeToFileTime: (FFICoerce pointer: lpLocalFileTime) lpFileTime: (FFICoerce pointer: lpFileTime)
     ]
     KernelLibrary class >> localFree: hMem [
-        <primitive: FFI function: #LocalFree ret: #g args: #( g )>
+        <primitive: FFI function: #LocalFree ret: #h args: #( g )>
     ]
     KernelLibrary class >> primLocaleNameToLCID: lpName dwFlags: dwFlags [
         <primitive: FFI function: #LocaleNameToLCID ret: #g args: #( g g )>
@@ -729,7 +729,7 @@ Object subclass: KernelLibrary [
         <primitive: FFI function: #LockResource ret: #g args: #( g )>
     ]
     KernelLibrary class >> primMoveFile: aStringOldFileName lpNewFileName: aStringnewFileName [
-        <primitive: FFI function: #MoveFileW ret: #g args: #( g g )>
+        <primitive: FFI function: #MoveFileW ret: #b args: #( g g )>
     ]
     KernelLibrary class >> moveFile: aStringOldFileName lpNewFileName: aStringnewFileName [
         | t0 t1 |
@@ -739,7 +739,7 @@ Object subclass: KernelLibrary [
             ensure: [ t0 isNil ifFalse: [ t0 free ]. t1 isNil ifFalse: [ t1 free ]. ]
     ]
     KernelLibrary class >> primMoveFileEx: aStringOldFileName lpNewFileName: aStringnewFileName dwFlags: flags [
-        <primitive: FFI function: #MoveFileExW ret: #g args: #( g g g )>
+        <primitive: FFI function: #MoveFileExW ret: #b args: #( g g g )>
     ]
     KernelLibrary class >> moveFileEx: aStringOldFileName lpNewFileName: aStringnewFileName dwFlags: flags [
         | t0 t1 |
@@ -755,7 +755,7 @@ Object subclass: KernelLibrary [
         ^self primMultiByteToWideChar: (FFICoerce word: intCP) dwFlags: (FFICoerce word: intFlags) lpMultiByteStr: (FFICoerce pointer: aStringIn) cchMultiByte: (FFICoerce word: intLenIn) lpWideCharStr: (FFICoerce pointer: aUtf16StringOut) cchWideChar: (FFICoerce word: intLenOut)
     ]
     KernelLibrary class >> primOpenFileMapping: dwDesiredAccess bInheritHandle: bInheritHandle lpName: lpName [
-        <primitive: FFI function: #OpenFileMappingW ret: #g args: #( g g g )>
+        <primitive: FFI function: #OpenFileMappingW ret: #h args: #( g g g )>
     ]
     KernelLibrary class >> openFileMapping: dwDesiredAccess bInheritHandle: bInheritHandle lpName: lpName [
         | t2 |
@@ -782,22 +782,22 @@ Object subclass: KernelLibrary [
         ^self primPostQueuedCompletionStatus: (FFICoerce word: completionPort) dwNumberOfBytesTransferred: (FFICoerce word: dwNumberOfBytesTransferred) dwCompletionKey: (FFICoerce word: dwCompletionKey) lpOverlapped: (FFICoerce pointer: lpOverlapped)
     ]
     KernelLibrary class >> pulseEvent: hEvent [
-        <primitive: FFI function: #PulseEvent ret: #g args: #( g )>
+        <primitive: FFI function: #PulseEvent ret: #b args: #( g )>
     ]
     KernelLibrary class >> primQueryPerformanceCounter: aLargeInteger [
-        <primitive: FFI function: #QueryPerformanceCounter ret: #g args: #( g )>
+        <primitive: FFI function: #QueryPerformanceCounter ret: #b args: #( g )>
     ]
     KernelLibrary class >> queryPerformanceCounter: aLargeInteger [
         ^self primQueryPerformanceCounter: (FFICoerce pointer: aLargeInteger)
     ]
     KernelLibrary class >> primQueryPerformanceFrequency: aLargeInteger [
-        <primitive: FFI function: #QueryPerformanceFrequency ret: #g args: #( g )>
+        <primitive: FFI function: #QueryPerformanceFrequency ret: #b args: #( g )>
     ]
     KernelLibrary class >> queryPerformanceFrequency: aLargeInteger [
         ^self primQueryPerformanceFrequency: (FFICoerce pointer: aLargeInteger)
     ]
     KernelLibrary class >> primQueryThreadCycleTime: anExternalHandle cycleTime: aULARGE_INTEGER [
-        <primitive: FFI function: #QueryThreadCycleTime ret: #g args: #( g g )>
+        <primitive: FFI function: #QueryThreadCycleTime ret: #b args: #( g g )>
     ]
     KernelLibrary class >> queryThreadCycleTime: anExternalHandle cycleTime: aULARGE_INTEGER [
         ^self primQueryThreadCycleTime: (FFICoerce word: anExternalHandle) cycleTime: (FFICoerce pointer: aULARGE_INTEGER)
@@ -815,16 +815,16 @@ Object subclass: KernelLibrary [
         ^self primReadDirectoryChangesW: (FFICoerce word: hDirectory) lpBuffer: (FFICoerce pointer: lpBuffer) nBufferLength: (FFICoerce word: nBufferLength) bWatchSubtree: (FFICoerce word: bWatchSubtree) dwNotifyFilter: (FFICoerce word: dwNotifyFilter) lpBytesReturned: (FFICoerce pointer: lpBytesReturned) lpOverlapped: (FFICoerce pointer: lpOverlapped) lpCompletionRoutine: (FFICoerce pointer: lpCompletionRoutine)
     ]
     KernelLibrary class >> primReadFile: aHandle lpBuffer: anAddress nNumberOfBytesToRead: anIntegerBytesToRead lpNumberOfBytesRead: anAddressBytesRead lpOverlapped: anOVERLAPPED [
-        <primitive: FFI function: #ReadFile ret: #g args: #( g g g g g )>
+        <primitive: FFI function: #ReadFile ret: #b args: #( g g g g g )>
     ]
     KernelLibrary class >> readFile: aHandle lpBuffer: anAddress nNumberOfBytesToRead: anIntegerBytesToRead lpNumberOfBytesRead: anAddressBytesRead lpOverlapped: anOVERLAPPED [
         ^self primReadFile: (FFICoerce word: aHandle) lpBuffer: (FFICoerce pointer: anAddress) nNumberOfBytesToRead: (FFICoerce word: anIntegerBytesToRead) lpNumberOfBytesRead: (FFICoerce pointer: anAddressBytesRead) lpOverlapped: (FFICoerce pointer: anOVERLAPPED)
     ]
     KernelLibrary class >> releaseMutex: hMutex [
-        <primitive: FFI function: #ReleaseMutex ret: #g args: #( g )>
+        <primitive: FFI function: #ReleaseMutex ret: #b args: #( g )>
     ]
     KernelLibrary class >> primRemoveDirectory: aStringFileName [
-        <primitive: FFI function: #RemoveDirectoryW ret: #g args: #( g )>
+        <primitive: FFI function: #RemoveDirectoryW ret: #b args: #( g )>
     ]
     KernelLibrary class >> removeDirectory: aStringFileName [
         | t0 |
@@ -833,25 +833,25 @@ Object subclass: KernelLibrary [
             ensure: [ t0 isNil ifFalse: [ t0 free ]. ]
     ]
     KernelLibrary class >> removeDllDirectory: cookie [
-        <primitive: FFI function: #RemoveDllDirectory ret: #g args: #( g )>
+        <primitive: FFI function: #RemoveDllDirectory ret: #b args: #( g )>
     ]
     KernelLibrary class >> resetEvent: hEvent [
-        <primitive: FFI function: #ResetEvent ret: #g args: #( g )>
+        <primitive: FFI function: #ResetEvent ret: #b args: #( g )>
     ]
     KernelLibrary class >> setConsoleCP: wCodePageID [
-        <primitive: FFI function: #SetConsoleCP ret: #g args: #( g )>
+        <primitive: FFI function: #SetConsoleCP ret: #b args: #( g )>
     ]
     KernelLibrary class >> primSetConsoleCtrlHandler: pHandlerRoutine add: aBoolean [
-        <primitive: FFI function: #SetConsoleCtrlHandler ret: #g args: #( g g )>
+        <primitive: FFI function: #SetConsoleCtrlHandler ret: #b args: #( g g )>
     ]
     KernelLibrary class >> setConsoleCtrlHandler: pHandlerRoutine add: aBoolean [
         ^self primSetConsoleCtrlHandler: (FFICoerce pointer: pHandlerRoutine) add: (FFICoerce word: aBoolean)
     ]
     KernelLibrary class >> setConsoleOutputCP: wCodePageID [
-        <primitive: FFI function: #SetConsoleOutputCP ret: #g args: #( g )>
+        <primitive: FFI function: #SetConsoleOutputCP ret: #b args: #( g )>
     ]
     KernelLibrary class >> primSetConsoleTitle: lpConsoleTitle [
-        <primitive: FFI function: #SetConsoleTitleW ret: #g args: #( g )>
+        <primitive: FFI function: #SetConsoleTitleW ret: #b args: #( g )>
     ]
     KernelLibrary class >> setConsoleTitle: lpConsoleTitle [
         | t0 |
@@ -860,7 +860,7 @@ Object subclass: KernelLibrary [
             ensure: [ t0 isNil ifFalse: [ t0 free ]. ]
     ]
     KernelLibrary class >> primSetCurrentDirectory: lpPathName [
-        <primitive: FFI function: #SetCurrentDirectoryW ret: #g args: #( g )>
+        <primitive: FFI function: #SetCurrentDirectoryW ret: #b args: #( g )>
     ]
     KernelLibrary class >> setCurrentDirectory: lpPathName [
         | t0 |
@@ -869,10 +869,10 @@ Object subclass: KernelLibrary [
             ensure: [ t0 isNil ifFalse: [ t0 free ]. ]
     ]
     KernelLibrary class >> setEndOfFile: anExternalHandle [
-        <primitive: FFI function: #SetEndOfFile ret: #g args: #( g )>
+        <primitive: FFI function: #SetEndOfFile ret: #b args: #( g )>
     ]
     KernelLibrary class >> primSetEnvironmentVariable: lpName lpValue: lpValue [
-        <primitive: FFI function: #SetEnvironmentVariableW ret: #g args: #( g g )>
+        <primitive: FFI function: #SetEnvironmentVariableW ret: #b args: #( g g )>
     ]
     KernelLibrary class >> setEnvironmentVariable: lpName lpValue: lpValue [
         | t0 t1 |
@@ -882,10 +882,10 @@ Object subclass: KernelLibrary [
             ensure: [ t0 isNil ifFalse: [ t0 free ]. t1 isNil ifFalse: [ t1 free ]. ]
     ]
     KernelLibrary class >> setEvent: hEvent [
-        <primitive: FFI function: #SetEvent ret: #g args: #( g )>
+        <primitive: FFI function: #SetEvent ret: #b args: #( g )>
     ]
     KernelLibrary class >> primSetFileAttributes: aFileName value: attributes [
-        <primitive: FFI function: #SetFileAttributesW ret: #g args: #( g g )>
+        <primitive: FFI function: #SetFileAttributesW ret: #b args: #( g g )>
     ]
     KernelLibrary class >> setFileAttributes: aFileName value: attributes [
         | t0 |
@@ -894,7 +894,7 @@ Object subclass: KernelLibrary [
             ensure: [ t0 isNil ifFalse: [ t0 free ]. ]
     ]
     KernelLibrary class >> primSetFilePointerEx: hfile liDistanceToMove: liDistanceToMove lpNewFilePointer: lpNewFilePointer dwMoveMethod: dwMoveMethod [
-        <primitive: FFI function: #SetFilePointerEx ret: #g args: #( g g g g )>
+        <primitive: FFI function: #SetFilePointerEx ret: #b args: #( g g g g )>
     ]
     KernelLibrary class >> setFilePointerEx: hfile liDistanceToMove: liDistanceToMove lpNewFilePointer: lpNewFilePointer dwMoveMethod: dwMoveMethod [
         ^self primSetFilePointerEx: (FFICoerce word: hfile) liDistanceToMove: (FFICoerce word: liDistanceToMove) lpNewFilePointer: (FFICoerce pointer: lpNewFilePointer) dwMoveMethod: (FFICoerce word: dwMoveMethod)
@@ -903,10 +903,10 @@ Object subclass: KernelLibrary [
         <primitive: FFI function: #SetLastError ret: #v args: #( g )>
     ]
     KernelLibrary class >> setStdHandle: nStdHandle hHandle: aHandle [
-        <primitive: FFI function: #SetStdHandle ret: #g args: #( g g )>
+        <primitive: FFI function: #SetStdHandle ret: #b args: #( g g )>
     ]
     KernelLibrary class >> primSetVolumeLabel: lpRootPathName lpVolumeName: lpVolumeName [
-        <primitive: FFI function: #SetVolumeLabelW ret: #g args: #( g g )>
+        <primitive: FFI function: #SetVolumeLabelW ret: #b args: #( g g )>
     ]
     KernelLibrary class >> setVolumeLabel: lpRootPathName lpVolumeName: lpVolumeName [
         | t0 t1 |
@@ -922,22 +922,22 @@ Object subclass: KernelLibrary [
         <primitive: FFI function: #SleepEx ret: #v args: #( g g )>
     ]
     KernelLibrary class >> primSystemTimeToFileTime: lpSystemTime lpFileTime: lpFileTime [
-        <primitive: FFI function: #SystemTimeToFileTime ret: #g args: #( g g )>
+        <primitive: FFI function: #SystemTimeToFileTime ret: #b args: #( g g )>
     ]
     KernelLibrary class >> systemTimeToFileTime: lpSystemTime lpFileTime: lpFileTime [
         ^self primSystemTimeToFileTime: (FFICoerce pointer: lpSystemTime) lpFileTime: (FFICoerce pointer: lpFileTime)
     ]
     KernelLibrary class >> terminateProcess: aProcessHandle exitCode: anUnsignedInteger [
-        <primitive: FFI function: #TerminateProcess ret: #g args: #( g g )>
+        <primitive: FFI function: #TerminateProcess ret: #b args: #( g g )>
     ]
     KernelLibrary class >> primUnmapViewOfFile: lpBaseAddress [
-        <primitive: FFI function: #UnmapViewOfFile ret: #g args: #( g )>
+        <primitive: FFI function: #UnmapViewOfFile ret: #b args: #( g )>
     ]
     KernelLibrary class >> unmapViewOfFile: lpBaseAddress [
         ^self primUnmapViewOfFile: (FFICoerce pointer: lpBaseAddress)
     ]
     KernelLibrary class >> primUpdateResource: hUpdate lpType: resTypeString lpName: resName wLanguage: langId lpData: pData cbData: dataSize [
-        <primitive: FFI function: #UpdateResourceW ret: #g args: #( g g g g g g )>
+        <primitive: FFI function: #UpdateResourceW ret: #b args: #( g g g g g g )>
     ]
     KernelLibrary class >> updateResource: hUpdate lpType: resTypeString lpName: resName wLanguage: langId lpData: pData cbData: dataSize [
         ^self primUpdateResource: (FFICoerce word: hUpdate) lpType: (FFICoerce pointer: resTypeString) lpName: (FFICoerce pointer: resName) wLanguage: (FFICoerce word: langId) lpData: (FFICoerce pointer: pData) cbData: (FFICoerce word: dataSize)
@@ -946,7 +946,7 @@ Object subclass: KernelLibrary [
         <primitive: FFI function: #VerSetConditionMask ret: #g args: #( g g g )>
     ]
     KernelLibrary class >> primVerifyVersionInfo: lpVersionInformation dwTypeMask: dwTypeMask dwlConditionMask: dwlConditionMask [
-        <primitive: FFI function: #VerifyVersionInfoW ret: #g args: #( g g g )>
+        <primitive: FFI function: #VerifyVersionInfoW ret: #b args: #( g g g )>
     ]
     KernelLibrary class >> verifyVersionInfo: lpVersionInformation dwTypeMask: dwTypeMask dwlConditionMask: dwlConditionMask [
         ^self primVerifyVersionInfo: (FFICoerce pointer: lpVersionInformation) dwTypeMask: (FFICoerce word: dwTypeMask) dwlConditionMask: (FFICoerce word: dwlConditionMask)
@@ -958,13 +958,13 @@ Object subclass: KernelLibrary [
         ^self primVirtualAlloc: (FFICoerce pointer: lpAddress) dwSize: (FFICoerce word: dwSize) flAllocationType: (FFICoerce word: flAllocationType) flProtect: (FFICoerce word: flProtect)
     ]
     KernelLibrary class >> primVirtualFree: lpAddress dwSize: dwSize dwFreeType: dwFreeType [
-        <primitive: FFI function: #VirtualFree ret: #g args: #( g g g )>
+        <primitive: FFI function: #VirtualFree ret: #b args: #( g g g )>
     ]
     KernelLibrary class >> virtualFree: lpAddress dwSize: dwSize dwFreeType: dwFreeType [
         ^self primVirtualFree: (FFICoerce pointer: lpAddress) dwSize: (FFICoerce word: dwSize) dwFreeType: (FFICoerce word: dwFreeType)
     ]
     KernelLibrary class >> primVirtualProtect: lpAddress dwSize: dwSize flNewProtect: flNewProtect lpflOldProtect: lpflOldProtect [
-        <primitive: FFI function: #VirtualProtect ret: #g args: #( g g g g )>
+        <primitive: FFI function: #VirtualProtect ret: #b args: #( g g g g )>
     ]
     KernelLibrary class >> virtualProtect: lpAddress dwSize: dwSize flNewProtect: flNewProtect lpflOldProtect: lpflOldProtect [
         ^self primVirtualProtect: (FFICoerce pointer: lpAddress) dwSize: (FFICoerce word: dwSize) flNewProtect: (FFICoerce word: flNewProtect) lpflOldProtect: (FFICoerce pointer: lpflOldProtect)
@@ -976,13 +976,13 @@ Object subclass: KernelLibrary [
         ^self primVirtualQuery: (FFICoerce pointer: lpAddress) lpBuffer: (FFICoerce pointer: lpBuffer) dwLength: (FFICoerce word: dwLength)
     ]
     KernelLibrary class >> primWriteFile: aHandle lpBuffer: anAddress nNumberOfBytesToWrite: anIntegerBytesToWrite lpNumberOfBytesWritten: anAddressBytesWritten lpOverlapped: anOVERLAPPED [
-        <primitive: FFI function: #WriteFile ret: #g args: #( g g g g g )>
+        <primitive: FFI function: #WriteFile ret: #b args: #( g g g g g )>
     ]
     KernelLibrary class >> writeFile: aHandle lpBuffer: anAddress nNumberOfBytesToWrite: anIntegerBytesToWrite lpNumberOfBytesWritten: anAddressBytesWritten lpOverlapped: anOVERLAPPED [
         ^self primWriteFile: (FFICoerce word: aHandle) lpBuffer: (FFICoerce pointer: anAddress) nNumberOfBytesToWrite: (FFICoerce word: anIntegerBytesToWrite) lpNumberOfBytesWritten: (FFICoerce pointer: anAddressBytesWritten) lpOverlapped: (FFICoerce pointer: anOVERLAPPED)
     ]
     KernelLibrary class >> primWritePrivateProfileSection: lpAppName lpString: lpString lpFileName: lpFileName [
-        <primitive: FFI function: #WritePrivateProfileSectionW ret: #g args: #( g g g )>
+        <primitive: FFI function: #WritePrivateProfileSectionW ret: #b args: #( g g g )>
     ]
     KernelLibrary class >> writePrivateProfileSection: lpAppName lpString: lpString lpFileName: lpFileName [
         | t0 t1 t2 |
@@ -993,7 +993,7 @@ Object subclass: KernelLibrary [
             ensure: [ t0 isNil ifFalse: [ t0 free ]. t1 isNil ifFalse: [ t1 free ]. t2 isNil ifFalse: [ t2 free ]. ]
     ]
     KernelLibrary class >> primWritePrivateProfileString: lpAppName lpKeyName: lpKeyName lpString: lpString lpFileName: lpFileName [
-        <primitive: FFI function: #WritePrivateProfileStringW ret: #g args: #( g g g g )>
+        <primitive: FFI function: #WritePrivateProfileStringW ret: #b args: #( g g g g )>
     ]
     KernelLibrary class >> writePrivateProfileString: lpAppName lpKeyName: lpKeyName lpString: lpString lpFileName: lpFileName [
         | t0 t1 t2 t3 |
@@ -1005,7 +1005,7 @@ Object subclass: KernelLibrary [
             ensure: [ t0 isNil ifFalse: [ t0 free ]. t1 isNil ifFalse: [ t1 free ]. t2 isNil ifFalse: [ t2 free ]. t3 isNil ifFalse: [ t3 free ]. ]
     ]
     KernelLibrary class >> primWritePrivateProfileStruct: lpszSection lpszKey: lpszKey lpStruct: lpStruct uSizeStruct: uSizeStruct szFile: szFile [
-        <primitive: FFI function: #WritePrivateProfileStructW ret: #g args: #( g g g g g )>
+        <primitive: FFI function: #WritePrivateProfileStructW ret: #b args: #( g g g g g )>
     ]
     KernelLibrary class >> writePrivateProfileStruct: lpszSection lpszKey: lpszKey lpStruct: lpStruct uSizeStruct: uSizeStruct szFile: szFile [
         | t0 t1 t4 |

@@ -300,8 +300,17 @@ def main(argv: List[str]) -> int:
             continue
         cls_name = emit.flatten_name(target, renames)
         cd = by_name_all.get(target)
+        # The INHERITED pool chain, exactly as the class path above gets it.
+        # Loose methods are ordinary methods of this class and resolve bare
+        # constants the same way it does — `OS.UserLibrary` declares only
+        # `imports: #(#{OS.MessageBoxConstants private})`, and its
+        # `getWindowStyle:` writes `GWL_STYLE`, which it inherits. Folding only
+        # the declared imports left that name bare, and a bare name is nil at
+        # runtime, and nil reached the FFI floor as `non-integer argument` from
+        # inside Dolphin's layout code — three layers from the cause.
         res = emit.emit_loose(cls_name, cd, ms, renames, pool_table,
-                              classvar_owners, constant_chains)
+                              classvar_owners, constant_chains,
+                              inherited_pool_chain(by_name_all, target))
         refusals.extend(res.refusals)
         fname = f"90_{cls_name}_loose.mst"
         with open(os.path.join(args.out, fname), "w",

@@ -8,7 +8,7 @@ Object subclass: VersionLibrary [
      generated methods."
     VersionLibrary class >> default [ ^self ]
     VersionLibrary class >> primGetFileVersionInfo: lpstrFilename dwHandle: dwHandle dwLen: dwLen lpData: lpData [
-        <primitive: FFI function: #GetFileVersionInfoW ret: #g args: #( g g g g )>
+        <primitive: FFI function: #GetFileVersionInfoW ret: #b args: #( g g g g )>
     ]
     VersionLibrary class >> getFileVersionInfo: lpstrFilename dwHandle: dwHandle dwLen: dwLen lpData: lpData [
         | t0 |
@@ -26,7 +26,7 @@ Object subclass: VersionLibrary [
             ensure: [ t0 isNil ifFalse: [ t0 free ]. ]
     ]
     VersionLibrary class >> primVerQueryValue: pBlock lpSubBlock: lpstrSubBlock lplpBuffer: lplpBuffer puLen: puLen [
-        <primitive: FFI function: #VerQueryValueW ret: #g args: #( g g g g )>
+        <primitive: FFI function: #VerQueryValueW ret: #b args: #( g g g g )>
     ]
     VersionLibrary class >> verQueryValue: pBlock lpSubBlock: lpstrSubBlock lplpBuffer: lplpBuffer puLen: puLen [
         | t1 |

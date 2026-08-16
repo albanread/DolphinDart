@@ -46,7 +46,12 @@ WinView subclass: WinControl [
             hMenu: anId
             hInstance: 0
             lpParam: 0 ] ensure: [ cls free ].
-        h = 0 ifTrue: [
+        "`isNil`, not `= 0`. CreateWindowExW returns a HANDLE, and the floor's
+         `#h` convention answers nil for NULL (DD10) — so a `= 0` test here
+         would answer false on failure and hand back a nil handle as if the
+         call had worked. Every failure check on a handle return has to move
+         with the convention."
+        h isNil ifTrue: [
             ^Win32Error new setCode: Win32 lastError; signalWithCode ].
         ^(self onHandle: h parent: aParent) setControlId: anId
     ]

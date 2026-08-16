@@ -11,7 +11,7 @@ Object subclass: UserLibrary [
         	self isProcessSystemDpiAware ifTrue: [self enableNonClientDpiScaling: anExternalHandle]
     ]
     UserLibrary class >> getClassAtom: hWnd [
-        	^self getClassLongPtr: hWnd nIndex: GCW_ATOM
+        	^self getClassLongPtr: hWnd nIndex: -32
     ]
     UserLibrary class >> getClassName: anExternalHandle [
         	| buf |
@@ -26,10 +26,10 @@ Object subclass: UserLibrary [
         	^buf trimNulls
     ]
     UserLibrary class >> getWindowExStyle: hWnd [
-        	^self getWindowLong: hWnd nIndex: GWL_EXSTYLE
+        	^self getWindowLong: hWnd nIndex: -20
     ]
     UserLibrary class >> getWindowStyle: hWnd [
-        	^self getWindowLong: hWnd nIndex: GWL_STYLE
+        	^self getWindowLong: hWnd nIndex: -16
     ]
     UserLibrary class >> getWindowText: hWnd [
         	| text textLen |
@@ -66,7 +66,7 @@ Object subclass: UserLibrary [
     ]
     UserLibrary class >> isProcessSystemDpiAware [
         "Answer whether the process default Dpi awareness is the 'system' level, i.e. a common high DPI applied to all monitors regardless of their physical DPI, as opposed to per-monitor high DPI."
-        ^self areDpiAwarenessContextsEqual: DPI_AWARENESS_CONTEXT_SYSTEM_AWARE
+        ^self areDpiAwarenessContextsEqual: -2
         		dpiContextB: DpiAwarenessContext
     ]
     UserLibrary class >> mapRectangle: aRectangle from: hwndSrc to: hwndDest [

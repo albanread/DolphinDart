@@ -8,13 +8,13 @@ Object subclass: ThemeLibrary [
      generated methods."
     ThemeLibrary class >> default [ ^self ]
     ThemeLibrary class >> primBeginBufferedAnimation: hwnd hdcTarget: hdcTarget prcTarget: prcTarget dwFormat: dwFormat pPaintParams: pPaintParams pAnimationParams: pAnimationParams phdcFrom: phdcFrom phdcTo: phdcTo [
-        <primitive: FFI function: #BeginBufferedAnimation ret: #g args: #( g g g g g g g g )>
+        <primitive: FFI function: #BeginBufferedAnimation ret: #h args: #( g g g g g g g g )>
     ]
     ThemeLibrary class >> beginBufferedAnimation: hwnd hdcTarget: hdcTarget prcTarget: prcTarget dwFormat: dwFormat pPaintParams: pPaintParams pAnimationParams: pAnimationParams phdcFrom: phdcFrom phdcTo: phdcTo [
         ^self primBeginBufferedAnimation: (FFICoerce word: hwnd) hdcTarget: (FFICoerce word: hdcTarget) prcTarget: (FFICoerce pointer: prcTarget) dwFormat: (FFICoerce word: dwFormat) pPaintParams: (FFICoerce pointer: pPaintParams) pAnimationParams: (FFICoerce pointer: pAnimationParams) phdcFrom: (FFICoerce pointer: phdcFrom) phdcTo: (FFICoerce pointer: phdcTo)
     ]
     ThemeLibrary class >> primBeginBufferedPaint: hdcTarget prcTarget: prcTarget dwFormat: dwFormat pPaintParams: pPaintParams phDC: phDC [
-        <primitive: FFI function: #BeginBufferedPaint ret: #g args: #( g g g g g )>
+        <primitive: FFI function: #BeginBufferedPaint ret: #h args: #( g g g g g )>
     ]
     ThemeLibrary class >> beginBufferedPaint: hdcTarget prcTarget: prcTarget dwFormat: dwFormat pPaintParams: pPaintParams phDC: phDC [
         ^self primBeginBufferedPaint: (FFICoerce word: hdcTarget) prcTarget: (FFICoerce pointer: prcTarget) dwFormat: (FFICoerce word: dwFormat) pPaintParams: (FFICoerce pointer: pPaintParams) phDC: (FFICoerce pointer: phDC)
@@ -29,7 +29,7 @@ Object subclass: ThemeLibrary [
         <primitive: FFI function: #BufferedPaintInit ret: #g args: #(  )>
     ]
     ThemeLibrary class >> bufferedPaintRenderAnimation: hwnd hdcTarget: hdcTarget [
-        <primitive: FFI function: #BufferedPaintRenderAnimation ret: #g args: #( g g )>
+        <primitive: FFI function: #BufferedPaintRenderAnimation ret: #b args: #( g g )>
     ]
     ThemeLibrary class >> primBufferedPaintSetAlpha: hBufferedPaint prc: prc alpha: alpha [
         <primitive: FFI function: #BufferedPaintSetAlpha ret: #g args: #( g g g )>
@@ -104,10 +104,10 @@ Object subclass: ThemeLibrary [
         ^self primGetBufferedPaintBits: (FFICoerce word: hBufferedPaint) ppbBuffer: (FFICoerce pointer: ppbBuffer) pcxRow: (FFICoerce pointer: pcxRow)
     ]
     ThemeLibrary class >> getBufferedPaintDC: hBufferedPaint [
-        <primitive: FFI function: #GetBufferedPaintDC ret: #g args: #( g )>
+        <primitive: FFI function: #GetBufferedPaintDC ret: #h args: #( g )>
     ]
     ThemeLibrary class >> getBufferedPaintTargetDC: hBufferedPaint [
-        <primitive: FFI function: #GetBufferedPaintTargetDC ret: #g args: #( g )>
+        <primitive: FFI function: #GetBufferedPaintTargetDC ret: #h args: #( g )>
     ]
     ThemeLibrary class >> primGetBufferedPaintTargetRect: hBufferedPaint prc: prc [
         <primitive: FFI function: #GetBufferedPaintTargetRect ret: #g args: #( g g )>
@@ -243,13 +243,13 @@ Object subclass: ThemeLibrary [
             ensure: [ t4 isNil ifFalse: [ t4 free ]. ]
     ]
     ThemeLibrary class >> getThemeSysBool: htheme iBoolId: iBoolId [
-        <primitive: FFI function: #GetThemeSysBool ret: #g args: #( g g )>
+        <primitive: FFI function: #GetThemeSysBool ret: #b args: #( g g )>
     ]
     ThemeLibrary class >> getThemeSysColor: htheme iColorId: iColorId [
         <primitive: FFI function: #GetThemeSysColor ret: #g args: #( g g )>
     ]
     ThemeLibrary class >> getThemeSysColorBrush: htheme iColorId: iColorId [
-        <primitive: FFI function: #GetThemeSysColorBrush ret: #g args: #( g g )>
+        <primitive: FFI function: #GetThemeSysColorBrush ret: #h args: #( g g )>
     ]
     ThemeLibrary class >> primGetThemeSysFont: htheme iFontId: iFontId plf: plf [
         <primitive: FFI function: #GetThemeSysFont ret: #g args: #( g g g )>
@@ -291,28 +291,28 @@ Object subclass: ThemeLibrary [
         ^self primGetThemeTextMetrics: (FFICoerce word: htheme) hdc: (FFICoerce word: hdc) iPartId: (FFICoerce word: iPartId) iStateId: (FFICoerce word: iStateId) pTM: (FFICoerce pointer: pTM)
     ]
     ThemeLibrary class >> getWindowTheme: hwnd [
-        <primitive: FFI function: #GetWindowTheme ret: #g args: #( g )>
+        <primitive: FFI function: #GetWindowTheme ret: #h args: #( g )>
     ]
     ThemeLibrary class >> isAppThemed [
-        <primitive: FFI function: #IsAppThemed ret: #g args: #(  )>
+        <primitive: FFI function: #IsAppThemed ret: #b args: #(  )>
     ]
     ThemeLibrary class >> isCompositionActive [
-        <primitive: FFI function: #IsCompositionActive ret: #g args: #(  )>
+        <primitive: FFI function: #IsCompositionActive ret: #b args: #(  )>
     ]
     ThemeLibrary class >> isThemeActive [
-        <primitive: FFI function: #IsThemeActive ret: #g args: #(  )>
+        <primitive: FFI function: #IsThemeActive ret: #b args: #(  )>
     ]
     ThemeLibrary class >> isThemeBackgroundPartiallyTransparent: htheme iPartId: iPartId iStateId: iStateId [
-        <primitive: FFI function: #IsThemeBackgroundPartiallyTransparent ret: #g args: #( g g g )>
+        <primitive: FFI function: #IsThemeBackgroundPartiallyTransparent ret: #b args: #( g g g )>
     ]
     ThemeLibrary class >> isThemeDialogTextureEnabled: hwnd [
-        <primitive: FFI function: #IsThemeDialogTextureEnabled ret: #g args: #( g )>
+        <primitive: FFI function: #IsThemeDialogTextureEnabled ret: #b args: #( g )>
     ]
     ThemeLibrary class >> isThemePartDefined: htheme iPartId: iPartId iStateId: iStateId [
-        <primitive: FFI function: #IsThemePartDefined ret: #g args: #( g g g )>
+        <primitive: FFI function: #IsThemePartDefined ret: #b args: #( g g g )>
     ]
     ThemeLibrary class >> primOpenThemeData: hwnd pszClassList: pszClassList [
-        <primitive: FFI function: #OpenThemeData ret: #g args: #( g g )>
+        <primitive: FFI function: #OpenThemeData ret: #h args: #( g g )>
     ]
     ThemeLibrary class >> openThemeData: hwnd pszClassList: pszClassList [
         | t1 |
@@ -321,7 +321,7 @@ Object subclass: ThemeLibrary [
             ensure: [ t1 isNil ifFalse: [ t1 free ]. ]
     ]
     ThemeLibrary class >> primOpenThemeDataForDpi: hwnd pszClassList: pszClassList dpi: dpi [
-        <primitive: FFI function: #OpenThemeDataForDpi ret: #g args: #( g g g )>
+        <primitive: FFI function: #OpenThemeDataForDpi ret: #h args: #( g g g )>
     ]
     ThemeLibrary class >> openThemeDataForDpi: hwnd pszClassList: pszClassList dpi: dpi [
         | t1 |

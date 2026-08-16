@@ -11,34 +11,34 @@ Object subclass: CommCtrlLibrary [
         <primitive: FFI function: #ImageList_AddMasked ret: #g args: #( g g g )>
     ]
     CommCtrlLibrary class >> imageList_BeginDrag: himlTrack iTrack: iTrack dxHotspot: dxHotspot dyHotspot: dyHotspot [
-        <primitive: FFI function: #ImageList_BeginDrag ret: #g args: #( g g g g )>
+        <primitive: FFI function: #ImageList_BeginDrag ret: #b args: #( g g g g )>
     ]
     CommCtrlLibrary class >> imageList_Create: cx cy: cy flags: flags cInitial: cInitial cGrow: cGrow [
-        <primitive: FFI function: #ImageList_Create ret: #g args: #( g g g g g )>
+        <primitive: FFI function: #ImageList_Create ret: #h args: #( g g g g g )>
     ]
     CommCtrlLibrary class >> imageList_Destroy: himl [
-        <primitive: FFI function: #ImageList_Destroy ret: #g args: #( g )>
+        <primitive: FFI function: #ImageList_Destroy ret: #b args: #( g )>
     ]
     CommCtrlLibrary class >> imageList_DragEnter: hwndLock x: x y: y [
-        <primitive: FFI function: #ImageList_DragEnter ret: #g args: #( g g g )>
+        <primitive: FFI function: #ImageList_DragEnter ret: #b args: #( g g g )>
     ]
     CommCtrlLibrary class >> imageList_DragLeave: hwndLock [
-        <primitive: FFI function: #ImageList_DragLeave ret: #g args: #( g )>
+        <primitive: FFI function: #ImageList_DragLeave ret: #b args: #( g )>
     ]
     CommCtrlLibrary class >> imageList_DragMove: x y: y [
-        <primitive: FFI function: #ImageList_DragMove ret: #g args: #( g g )>
+        <primitive: FFI function: #ImageList_DragMove ret: #b args: #( g g )>
     ]
     CommCtrlLibrary class >> imageList_DragShowNolock: fShow [
-        <primitive: FFI function: #ImageList_DragShowNolock ret: #g args: #( g )>
+        <primitive: FFI function: #ImageList_DragShowNolock ret: #b args: #( g )>
     ]
     CommCtrlLibrary class >> imageList_Draw: hImageList i: index hdcDst: hdc x: x y: y fStyle: style [
-        <primitive: FFI function: #ImageList_Draw ret: #g args: #( g g g g g g )>
+        <primitive: FFI function: #ImageList_Draw ret: #b args: #( g g g g g g )>
     ]
     CommCtrlLibrary class >> imageList_DrawEx: himl i: i hdcDst: hdcDst x: x y: y dx: dx dy: dy rgbBk: rgbBk rgbFg: rgbFg fStyle: fStyle [
-        <primitive: FFI function: #ImageList_DrawEx ret: #g args: #( g g g g g g g g g g )>
+        <primitive: FFI function: #ImageList_DrawEx ret: #b args: #( g g g g g g g g g g )>
     ]
     CommCtrlLibrary class >> imageList_Duplicate: himl [
-        <primitive: FFI function: #ImageList_Duplicate ret: #g args: #( g )>
+        <primitive: FFI function: #ImageList_Duplicate ret: #h args: #( g )>
     ]
     CommCtrlLibrary class >> imageList_EndDrag [
         <primitive: FFI function: #ImageList_EndDrag ret: #v args: #(  )>
@@ -47,10 +47,10 @@ Object subclass: CommCtrlLibrary [
         <primitive: FFI function: #ImageList_GetBkColor ret: #g args: #( g )>
     ]
     CommCtrlLibrary class >> imageList_GetIcon: himl i: i flags: flags [
-        <primitive: FFI function: #ImageList_GetIcon ret: #g args: #( g g g )>
+        <primitive: FFI function: #ImageList_GetIcon ret: #h args: #( g g g )>
     ]
     CommCtrlLibrary class >> primImageList_GetIconSize: himl cx: cx cy: cy [
-        <primitive: FFI function: #ImageList_GetIconSize ret: #g args: #( g g g )>
+        <primitive: FFI function: #ImageList_GetIconSize ret: #b args: #( g g g )>
     ]
     CommCtrlLibrary class >> imageList_GetIconSize: himl cx: cx cy: cy [
         ^self primImageList_GetIconSize: (FFICoerce word: himl) cx: (FFICoerce pointer: cx) cy: (FFICoerce pointer: cy)
@@ -59,7 +59,7 @@ Object subclass: CommCtrlLibrary [
         <primitive: FFI function: #ImageList_GetImageCount ret: #g args: #( g )>
     ]
     CommCtrlLibrary class >> primImageList_LoadImage: hi lpbmp: lpbmp cx: cx cGrow: cGrow crMask: crMask uType: uType uFlags: uFlags [
-        <primitive: FFI function: #ImageList_LoadImageW ret: #g args: #( g g g g g g g )>
+        <primitive: FFI function: #ImageList_LoadImageW ret: #h args: #( g g g g g g g )>
     ]
     CommCtrlLibrary class >> imageList_LoadImage: hi lpbmp: lpbmp cx: cx cGrow: cGrow crMask: crMask uType: uType uFlags: uFlags [
         | t1 |
@@ -74,10 +74,10 @@ Object subclass: CommCtrlLibrary [
         <primitive: FFI function: #ImageList_SetBkColor ret: #g args: #( g g )>
     ]
     CommCtrlLibrary class >> imageList_SetDragCursorImage: himlDrag iDrag: iDrag dxHotspot: dxHotspot dyHotspot: dyHotspot [
-        <primitive: FFI function: #ImageList_SetDragCursorImage ret: #g args: #( g g g g )>
+        <primitive: FFI function: #ImageList_SetDragCursorImage ret: #b args: #( g g g g )>
     ]
     CommCtrlLibrary class >> primInitCommonControlsEx: anINITCOMMONCONTROLSEX [
-        <primitive: FFI function: #InitCommonControlsEx ret: #g args: #( g )>
+        <primitive: FFI function: #InitCommonControlsEx ret: #b args: #( g )>
     ]
     CommCtrlLibrary class >> initCommonControlsEx: anINITCOMMONCONTROLSEX [
         ^self primInitCommonControlsEx: (FFICoerce pointer: anINITCOMMONCONTROLSEX)

@@ -41,7 +41,7 @@ Object subclass: OLELibrary [
         ^self primCoDisconnectObject: (FFICoerce pointer: pUnk) dwReserved: (FFICoerce word: zero)
     ]
     OLELibrary class >> primCoFileTimeNow: struct [
-        <primitive: FFI function: #CoFileTimeNow ret: #g args: #( g )>
+        <primitive: FFI function: #CoFileTimeNow ret: #b args: #( g )>
     ]
     OLELibrary class >> coFileTimeNow: struct [
         ^self primCoFileTimeNow: (FFICoerce pointer: struct)
@@ -273,7 +273,7 @@ Object subclass: OLELibrary [
         ^self primStgCreateDocfileOnILockBytes: (FFICoerce pointer: plkbyt) grfMode: (FFICoerce word: grfMode) reserved: (FFICoerce word: reserved) ppstgOpen: (FFICoerce pointer: ppstgOpen)
     ]
     OLELibrary class >> primStgIsStorageFile: pwcsName [
-        <primitive: FFI function: #StgIsStorageFile ret: #g args: #( g )>
+        <primitive: FFI function: #StgIsStorageFile ret: #b args: #( g )>
     ]
     OLELibrary class >> stgIsStorageFile: pwcsName [
         | t0 |

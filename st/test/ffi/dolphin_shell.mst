@@ -41,15 +41,69 @@ ShellView subclass: DolphinShell [
         ^self
     ]
 
+    "Dolphin's own idiom, which is narrower than it looks: build the view
+     UNREALIZED, set its parent, and let `addSubView:` realize it.
+
+     `View>>basicAddSubView:` is `aView parentView: self. aView show.`, and its
+     own comment on that line says it forces creation — adding a sub-view is
+     what creates its window. An earlier version here called `create` and then
+     `addSubView:`, which asked for the window twice; `parentView:` is
+     documented as usable only before realization, for the same reason."
     makeChild: aHeightOrNil [
         | v |
         v := View new.
         v parentView: self.
-        v create.
+        "Two sends, not one. `preferredExtent:` records the wanted size;
+         `usePreferredExtent:` is a separate flag (bit 256 of `flags`) that
+         decides whether the layout consults it at all —
+
+             layoutExtent: ctx
+                 ^self usePreferredExtent
+                     ifTrue: [self actualPreferredExtent: ctx]
+                     ifFalse: [ctx extentOf: self]
+
+         With the extent set but the flag clear, BorderLayout asked the view
+         for its CURRENT extent and docked the edges at the 100x100 creation
+         default — a plausible-looking arrangement that simply ignored what
+         was asked for."
+        aHeightOrNil isNil ifFalse: [
+            v preferredExtent: 0 @ aHeightOrNil.
+            v usePreferredExtent: true ].
         self addSubView: v.
-        aHeightOrNil isNil ifFalse: [ v preferredExtent: 0 @ aHeightOrNil ].
-        v show.
         ^v
+    ]
+
+    "How many children Dolphin's own sibling walk finds.
+
+     Counted through `subViewsDo:` DELIBERATELY, rather than from the three
+     ivars this class already holds. That walk is the method that spun forever
+     before the floor's `#h` handle-return convention — it asks Windows for
+     the first child and follows `GW_HWNDNEXT` until the chain ends in NULL —
+     so counting through it is what proves the termination, and an ivar count
+     would prove nothing at all."
+    subViewCount [
+        | n |
+        n := 0.
+        self subViewsDo: [ :each | n := n + 1 ].
+        ^n
+    ]
+
+    "The raw sibling chain, as handles, for diagnosis. `subViewCount` counting
+     more children than were built has two very different causes — extra
+     windows, or the same windows revisited — and only the handles tell them
+     apart."
+    childHandleReport [
+        | out child n |
+        out := WriteStream on: String new.
+        child := User32 getWindow: handle uCmd: 5.
+        n := 0.
+        [ child isNil or: [ n > 20 ] ] whileFalse: [
+            out nextPutAll: child printString;
+                nextPutAll: '(parent='; nextPutAll: (User32 getParent: child) printString;
+                nextPutAll: ') '.
+            n := n + 1.
+            child := User32 getWindow: child uCmd: 2 ].
+        ^out contents
     ]
 
     "One layout pass, driven the way Dolphin drives it."
@@ -82,6 +136,41 @@ ShellView subclass: DolphinShell [
         | r |
         r := aView getRect.
         ^Array with: r origin x with: r origin y with: r width with: r height
+    ]
+
+    "How many CHILD WINDOWS each step of `makeChild:` leaves behind.
+
+     `makeChild:` is meant to produce exactly one window per call. When the
+     sibling walk finds three times as many as were built, the question is
+     which step made the extras — so this runs the same steps one at a time
+     and reports the raw child count after each."
+    diagChildSteps [
+        | out v |
+        out := WriteStream on: String new.
+        out nextPutAll: 'start='; nextPutAll: self rawChildCount printString.
+        v := View new.
+        out nextPutAll: ' new='; nextPutAll: self rawChildCount printString.
+        v parentView: self.
+        out nextPutAll: ' parentView='; nextPutAll: self rawChildCount printString.
+        v create.
+        out nextPutAll: ' create='; nextPutAll: self rawChildCount printString.
+        self addSubView: v.
+        out nextPutAll: ' addSubView='; nextPutAll: self rawChildCount printString.
+        v show.
+        out nextPutAll: ' show='; nextPutAll: self rawChildCount printString.
+        ^out contents
+    ]
+
+    "Children counted straight off Windows, with no `lookupWindow:` filter —
+     so it sees windows the registry does not know about too."
+    rawChildCount [
+        | child n |
+        child := User32 getWindow: handle uCmd: 5.
+        n := 0.
+        [ child isNil or: [ n > 40 ] ] whileFalse: [
+            n := n + 1.
+            child := User32 getWindow: child uCmd: 2 ].
+        ^n
     ]
 
     "A step-by-step build, answering WHERE it stopped. A gate that only sees

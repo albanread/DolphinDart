@@ -674,7 +674,8 @@ def _house_pattern(m: Method, cls_name: str) -> str:
 
 
 def emit_loose(cls_name: str, cd, methods, renames, pool_table,
-               classvar_owners=None, constant_chains=None) -> EmitResult:
+               classvar_owners=None, constant_chains=None,
+               inherited_imports=None) -> EmitResult:
     """Emit LOOSE methods as a reopen of an already-existing class.
 
     The class itself is not translated — `OS.UserLibrary` is GENERATED from
@@ -710,9 +711,16 @@ def emit_loose(cls_name: str, cd, methods, renames, pool_table,
             continue
         body = rewrite_qualified_classvars(body, classvar_owners)
         body = rewrite_qualified_constants(body, pool_table, constant_chains)
+        # Own imports FIRST, then the inherited chain — the same order and the
+        # same reason as the class path: a pool a class names itself wins over
+        # one it merely inherits. Without the chain, `GWL_STYLE` in
+        # `getWindowStyle:` stayed a bare name and became a runtime nil.
+        imports = list(cd.imports) if cd else []
+        for p in (inherited_imports or []):
+            if p not in imports:
+                imports.append(p)
         body, r = rewrite_pool_constants(
-            body, where, list(cd.imports) if cd else [], pool_table,
-            set(m.arg_names))
+            body, where, imports, pool_table, set(m.arg_names))
         refusals.extend(r)
         body = rewrite_selectors(body)
         body, r = rewrite_cascades(body, where); refusals.extend(r)

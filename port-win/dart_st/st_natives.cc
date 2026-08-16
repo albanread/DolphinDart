@@ -1676,6 +1676,43 @@ void ST_ffiCall(Dart_NativeArguments args) {
 
   if (ret == 'v') {
     Dart_SetReturnValue(args, Dart_Null());
+  } else if (ret == 'h' && r == 0) {
+    // A HANDLE return, and it is NULL.
+    //
+    // Dolphin's external-call machinery answers nil for a NULL handle, and its
+    // own code depends on that — `View>>subViewsDo:` walks the sibling chain
+    // with
+    //
+    //     child := User32 getWindow: handle uCmd: 5.
+    //     [child isNil] whileFalse: [ ... ]
+    //
+    // and Windows terminates that chain by answering NULL. Answering 0 here
+    // instead made `0 isNil` false and the loop never ended: `ShellView>>show`
+    // hung, with no error and no output. Six such loops and eight
+    // handle-returning call sites exist in the DD10 wave alone.
+    //
+    // So `#h` is a distinct return code from `#g`: same machine word, but a
+    // NULL becomes nil rather than zero. It is applied only where the metadata
+    // says the return really is a handle (genprims reads winkb), because
+    // turning every zero into nil would be far worse — `GetWindowLong`
+    // answering 0 is a legitimate style bitmask, not an absence.
+    Dart_SetReturnValue(args, Dart_Null());
+  } else if (ret == 'b') {
+    // A BOOL return: answer a real Boolean, as Dolphin's own external-call
+    // machinery does for `<stdcall: bool ...>`.
+    //
+    // The same lesson as `#h`, one layer up, and found by the same kind of
+    // silence. `View>>isOpen` is `handle notNil and: [User32 isWindow:
+    // handle]` and `View>>show` is `self isOpen ifFalse: [self create]`. With
+    // an integer 1 flowing into `ifFalse:` the branch went the wrong way and
+    // every `show` created another window on top of the one already there —
+    // no error, no warning, just three live windows per view and a teardown
+    // that could never find them all.
+    //
+    // Note this is NOT "nonzero means true" applied everywhere: only returns
+    // Dolphin declared `bool` get the code. A `dword` holding 0 or 1 stays a
+    // number, because its caller is entitled to do arithmetic on it.
+    Dart_SetReturnValue(args, Dart_NewBoolean(r != 0));
   } else {
     Dart_SetReturnValue(args, Dart_NewInteger(static_cast<int64_t>(r)));
   }

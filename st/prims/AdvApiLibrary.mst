@@ -8,13 +8,13 @@ Object subclass: AdvApiLibrary [
      generated methods."
     AdvApiLibrary class >> default [ ^self ]
     AdvApiLibrary class >> closeServiceHandle: hSCObject [
-        <primitive: FFI function: #CloseServiceHandle ret: #g args: #( g )>
+        <primitive: FFI function: #CloseServiceHandle ret: #b args: #( g )>
     ]
     AdvApiLibrary class >> deregisterEventSource: anExternalHandle [
-        <primitive: FFI function: #DeregisterEventSource ret: #g args: #( g )>
+        <primitive: FFI function: #DeregisterEventSource ret: #b args: #( g )>
     ]
     AdvApiLibrary class >> primEnumServicesStatusEx: hSCManager infoLevel: infoLevel dwServiceType: dwServiceType dwServiceState: dwServiceState lpServices: lpServices cbBufSize: cbBufSize pcbBytesNeeded: pcbBytesNeeded lpServicesReturned: lpServicesReturned lpResumeHandle: lpResumeHandle pszGroupName: pszGroupName [
-        <primitive: FFI function: #EnumServicesStatusExW ret: #g args: #( g g g g g g g g g g )>
+        <primitive: FFI function: #EnumServicesStatusExW ret: #b args: #( g g g g g g g g g g )>
     ]
     AdvApiLibrary class >> enumServicesStatusEx: hSCManager infoLevel: infoLevel dwServiceType: dwServiceType dwServiceState: dwServiceState lpServices: lpServices cbBufSize: cbBufSize pcbBytesNeeded: pcbBytesNeeded lpServicesReturned: lpServicesReturned lpResumeHandle: lpResumeHandle pszGroupName: pszGroupName [
         | t9 |
@@ -23,13 +23,13 @@ Object subclass: AdvApiLibrary [
             ensure: [ t9 isNil ifFalse: [ t9 free ]. ]
     ]
     AdvApiLibrary class >> primGetTokenInformation: tokenHandle tokenInformationClass: tokenInformationClass tokenInformation: tokenInformation tokenInformationLength: tokenInformationLength returnLength: returnLength [
-        <primitive: FFI function: #GetTokenInformation ret: #g args: #( g g g g g )>
+        <primitive: FFI function: #GetTokenInformation ret: #b args: #( g g g g g )>
     ]
     AdvApiLibrary class >> getTokenInformation: tokenHandle tokenInformationClass: tokenInformationClass tokenInformation: tokenInformation tokenInformationLength: tokenInformationLength returnLength: returnLength [
         ^self primGetTokenInformation: (FFICoerce word: tokenHandle) tokenInformationClass: (FFICoerce word: tokenInformationClass) tokenInformation: (FFICoerce pointer: tokenInformation) tokenInformationLength: (FFICoerce word: tokenInformationLength) returnLength: (FFICoerce pointer: returnLength)
     ]
     AdvApiLibrary class >> primGetUserName: buffer nSize: pBufSize [
-        <primitive: FFI function: #GetUserNameW ret: #g args: #( g g )>
+        <primitive: FFI function: #GetUserNameW ret: #b args: #( g g )>
     ]
     AdvApiLibrary class >> getUserName: buffer nSize: pBufSize [
         | t0 |
@@ -38,19 +38,19 @@ Object subclass: AdvApiLibrary [
             ensure: [ t0 isNil ifFalse: [ t0 free ]. ]
     ]
     AdvApiLibrary class >> primIsTextUnicode: lpv iSize: iSize lpiResult: lpiResult [
-        <primitive: FFI function: #IsTextUnicode ret: #g args: #( g g g )>
+        <primitive: FFI function: #IsTextUnicode ret: #b args: #( g g g )>
     ]
     AdvApiLibrary class >> isTextUnicode: lpv iSize: iSize lpiResult: lpiResult [
         ^self primIsTextUnicode: (FFICoerce pointer: lpv) iSize: (FFICoerce word: iSize) lpiResult: (FFICoerce pointer: lpiResult)
     ]
     AdvApiLibrary class >> primOpenProcessToken: processHandle desiredAccess: desiredAccess tokenHandle: tokenHandle [
-        <primitive: FFI function: #OpenProcessToken ret: #g args: #( g g g )>
+        <primitive: FFI function: #OpenProcessToken ret: #b args: #( g g g )>
     ]
     AdvApiLibrary class >> openProcessToken: processHandle desiredAccess: desiredAccess tokenHandle: tokenHandle [
         ^self primOpenProcessToken: (FFICoerce word: processHandle) desiredAccess: (FFICoerce word: desiredAccess) tokenHandle: (FFICoerce pointer: tokenHandle)
     ]
     AdvApiLibrary class >> primOpenSCManager: lpMachineName lpDatabaseName: lpDatabaseName dwDesiredAccess: dwDesiredAccess [
-        <primitive: FFI function: #OpenSCManagerW ret: #g args: #( g g g )>
+        <primitive: FFI function: #OpenSCManagerW ret: #h args: #( g g g )>
     ]
     AdvApiLibrary class >> openSCManager: lpMachineName lpDatabaseName: lpDatabaseName dwDesiredAccess: dwDesiredAccess [
         | t0 t1 |
@@ -60,7 +60,7 @@ Object subclass: AdvApiLibrary [
             ensure: [ t0 isNil ifFalse: [ t0 free ]. t1 isNil ifFalse: [ t1 free ]. ]
     ]
     AdvApiLibrary class >> primOpenService: hSCManager lpServiceName: lpServiceName dwDesiredAccess: dwDesiredAccess [
-        <primitive: FFI function: #OpenServiceW ret: #g args: #( g g g )>
+        <primitive: FFI function: #OpenServiceW ret: #h args: #( g g g )>
     ]
     AdvApiLibrary class >> openService: hSCManager lpServiceName: lpServiceName dwDesiredAccess: dwDesiredAccess [
         | t1 |
@@ -69,7 +69,7 @@ Object subclass: AdvApiLibrary [
             ensure: [ t1 isNil ifFalse: [ t1 free ]. ]
     ]
     AdvApiLibrary class >> primQueryServiceStatusEx: hService infoLevel: infoLevel lpBuffer: lpBuffer cbBufSize: cbBufSize pcbBytesNeeded: pcbBytesNeeded [
-        <primitive: FFI function: #QueryServiceStatusEx ret: #g args: #( g g g g g )>
+        <primitive: FFI function: #QueryServiceStatusEx ret: #b args: #( g g g g g )>
     ]
     AdvApiLibrary class >> queryServiceStatusEx: hService infoLevel: infoLevel lpBuffer: lpBuffer cbBufSize: cbBufSize pcbBytesNeeded: pcbBytesNeeded [
         ^self primQueryServiceStatusEx: (FFICoerce word: hService) infoLevel: (FFICoerce word: infoLevel) lpBuffer: (FFICoerce pointer: lpBuffer) cbBufSize: (FFICoerce word: cbBufSize) pcbBytesNeeded: (FFICoerce pointer: pcbBytesNeeded)
@@ -196,7 +196,7 @@ Object subclass: AdvApiLibrary [
             ensure: [ t1 isNil ifFalse: [ t1 free ]. ]
     ]
     AdvApiLibrary class >> primReportEvent: hEventLog wType: wType wCategory: wCategory dwEventId: dwEventId lpUserSid: lpUserSid wNumStrings: wNumStrings dwDataSize: dwDataSize lpStrings: lpStrings lpRawData: lpRawData [
-        <primitive: FFI function: #ReportEventW ret: #g args: #( g g g g g g g g g )>
+        <primitive: FFI function: #ReportEventW ret: #b args: #( g g g g g g g g g )>
     ]
     AdvApiLibrary class >> reportEvent: hEventLog wType: wType wCategory: wCategory dwEventId: dwEventId lpUserSid: lpUserSid wNumStrings: wNumStrings dwDataSize: dwDataSize lpStrings: lpStrings lpRawData: lpRawData [
         ^self primReportEvent: (FFICoerce word: hEventLog) wType: (FFICoerce word: wType) wCategory: (FFICoerce word: wCategory) dwEventId: (FFICoerce word: dwEventId) lpUserSid: (FFICoerce pointer: lpUserSid) wNumStrings: (FFICoerce word: wNumStrings) dwDataSize: (FFICoerce word: dwDataSize) lpStrings: (FFICoerce pointer: lpStrings) lpRawData: (FFICoerce pointer: lpRawData)

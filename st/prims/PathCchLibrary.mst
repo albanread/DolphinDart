@@ -84,7 +84,7 @@ Object subclass: PathCchLibrary [
             ensure: [ t0 isNil ifFalse: [ t0 free ]. ]
     ]
     PathCchLibrary class >> primPathCchIsRoot: pszPath [
-        <primitive: FFI function: #PathCchIsRoot ret: #g args: #( g )>
+        <primitive: FFI function: #PathCchIsRoot ret: #b args: #( g )>
     ]
     PathCchLibrary class >> pathCchIsRoot: pszPath [
         | t0 |
@@ -166,7 +166,7 @@ Object subclass: PathCchLibrary [
             ensure: [ t0 isNil ifFalse: [ t0 free ]. ]
     ]
     PathCchLibrary class >> primPathIsUNCEx: pszPath ppszServer: ppszServer [
-        <primitive: FFI function: #PathIsUNCEx ret: #g args: #( g g )>
+        <primitive: FFI function: #PathIsUNCEx ret: #b args: #( g g )>
     ]
     PathCchLibrary class >> pathIsUNCEx: pszPath ppszServer: ppszServer [
         | t0 |
