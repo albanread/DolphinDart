@@ -148,6 +148,15 @@ def main(argv):
         print("translate_mvp: no targets found under %s" % args.corpus)
         return 2
 
+    # CLEAN FIRST. The generator owns this directory: anything it did not
+    # emit on THIS run is stale, and stale generated files are invisible to
+    # every gate — measured, when a brief .pax-emitting run left 93 files
+    # behind and the whole suite stayed green over them.
+    if os.path.isdir(args.out):
+        for f in os.listdir(args.out):
+            if f.endswith(".mst") or f in ("_refusals.txt", "_report.md"):
+                os.remove(os.path.join(args.out, f))
+
     cmd = [sys.executable, os.path.join(HERE, "dolphin2mst", "cli.py"),
            "--out", args.out,
            # Dolphin's convenience layer over the generated prims: 177 methods

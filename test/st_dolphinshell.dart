@@ -98,30 +98,27 @@ main(List<String> a) {
       '(DShell isKindOf: ShellView)', 'true');
   expect('and it registered itself', 'UiSession windowCount', '1');
 
-  // ── STOPS HERE (2026-08-16) ─────────────────────────────────────────────
+  // ── STOPS HERE — root cause known (review, 2026-08-16 evening) ──────────
   //
-  // The shell is fully Dolphin's and it works: created by Dolphin's own path,
-  // registered by Dolphin's own binding moment, destroyed cleanly. Two things
-  // after that do not work yet, and both are recorded rather than papered
-  // over.
+  // `ShellView>>show` hangs in `View>>subViewsDo:`:
   //
-  // 1. `ShellView>>show` HANGS. Narrowed: `create` alone is fine — the
-  //    assertions above run with it — and the hang appears the moment `show`
-  //    is sent. ShowWindow generates real WM_PAINT/WM_SHOWWINDOW traffic, and
-  //    the door reflects paint through the named channel whether or not a
-  //    message map is installed; a paint handler that invalidates would spin
-  //    the pump forever. That is the shape to look for, and `View`'s paint
-  //    path is where to start.
+  //     child := User32 getWindow: handle uCmd: 5.
+  //     [child isNil] whileFalse: [ ... getWindow: child uCmd: 2 ]
   //
-  // 2. CHILD views are therefore untested here. `addSubView:` reaches
-  //    `View>>subViewsDo:`, which enumerates real child HWNDs and asks
-  //    `InputState>>lookupWindow:` for each.
+  // Dolphin's external-call machinery answers NIL for a NULL handle return;
+  // this port's generated prims answer 0 (every UserLibrary return is
+  // `ret: #g`). `0 isNil` is false, so the loop never terminates — and it
+  // only "worked" before `InputState>>lookupWindow:` existed because the
+  // first iteration raised inside the loop. (The earlier paint-spin guess in
+  // this comment was wrong; the paint path never calls lookupWindow:.)
   //
-  // Left as an explicit stop rather than a hanging assertion: a gate that
-  // hangs is worse than one that says where it stopped. Everything above this
-  // line is real and passing, and `st_shell.dart` still covers the full
-  // BorderLayout arrangement through the `WinView` adapter meanwhile — which
-  // is exactly why that scaffolding is not deleted yet.
+  // The fix is a FAMILY fix, not a patch: a `#h` handle-return convention in
+  // the floor (NULL -> nil), driven from winkb, which knows which returns
+  // are handles. Until it lands the gate stops here and says so — a gate
+  // that hangs is worse than one that reports where it stopped — and
+  // `st_shell.dart` keeps covering the full BorderLayout arrangement through
+  // the WinView adapter, which is exactly why that scaffolding is not
+  // deleted yet.
   print('');
   print('  -- stops here: ShellView>>show hangs; child views not yet covered --');
 

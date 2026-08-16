@@ -38,6 +38,62 @@
 > Per-CLASS message maps (the global `MessageMap` on `UiSession`) can wait for
 > DD11, when different view classes first coexist with different maps.
 
+> ## STATUS 2 + REVIEW (2026-08-16, evening)
+>
+> **Done since the morning block:** per-window routing (`st_twowin`), real
+> EDIT controls + triad over them (`st_text`), commands + real menus
+> (`st_command`), the worker mechanism (`st_worker`), accelerators in the
+> pump, the substrate demo app (`st_app`, demoted per the course correction),
+> **`UI.View` window ownership** (`st_dolphinview`) and a partial shell-gate
+> rebuild on it (`st_dolphinshell`).
+>
+> **The blocker has a ROOT CAUSE, not a hypothesis.** `ShellView>>show` hangs
+> in `View>>subViewsDo:`:
+>
+> ```smalltalk
+> child := User32 getWindow: handle uCmd: 5.
+> [child isNil] whileFalse: [ ... child := User32 getWindow: child uCmd: 2 ]
+> ```
+>
+> Dolphin's external-call machinery answers **nil** for a NULL handle return;
+> our generated prims answer **0** (`ret: #g` — all 230 of UserLibrary's
+> returns are `#g`). `0 isNil` is false, so the loop never terminates. It
+> "worked" before `InputState>>lookupWindow:` existed only because the first
+> iteration raised inside the loop. This is a FAMILY: 6 `whileFalse:` loops
+> and 8 handle-returning call sites in the wave alone, and every one walks a
+> chain Windows terminates with NULL.
+>
+> **Fix direction (next work item):** a handle-return convention in the floor
+> — a `#h` return type in genprims/st_natives that answers nil for NULL —
+> driven from winkb, which knows which returns are handles. NOT a per-method
+> compat patch: the family is the point.
+>
+> **REMAINING for DD10, in retirement order:**
+> 1. The handle-return convention → `show` unhangs → child views under a
+>    Dolphin shell → full `st_dolphinshell` gate → **retire `WinView`**
+>    (delete it and `st_shell`; the successor gate covers the arrangement).
+> 2. Control SUBCLASSING substrate (the known-hard piece, not started): a door
+>    trampoline for comctl WndProcs, then translate `UI.TextEdit` and drive
+>    `UI.TextPresenter` → **retire `TextField`/`WinTextEdit`**.
+> 3. Drive `UI.Menu`'s own realization over the floor → **retire `WinMenu`**;
+>    translated `AcceleratorTable` → **retire `WinAccelerators`**.
+> 4. The acceptance app on Dolphin's `Shell`/`TextPresenter`/`Menu` — and a
+>    **VISIBLE shell**, named explicitly: everything so far is
+>    headless-verified, and nothing has yet been put on screen by Dolphin's
+>    own `show`.
+>
+> **Scope call:** `ListBox` may ride with DD11's control wave — `TextEdit`
+> alone proves the value-presenter path here, and `ListModel` is not needed by
+> the acceptance app. Recorded as a decision, not a slip.
+>
+> **Tooling, from three incidents this week:** `translate_mvp.py` now CLEANS
+> its output directory before emitting (93 stale files from the brief
+> .pax-emitting run were invisible to every gate); still recommended but not
+> built — a single gate-sweep script to replace the bespoke per-sweep
+> one-liners, and a shared `test/gate_util.dart` for `ev`/`must`/paint-liveness
+> so the gate-harness defect pattern (boolean-vs-0, coalescing-flaky paint
+> counts, temps-less `ev`) stops recurring.
+
 **Objective:** Model–View–Presenter in anger: the framework wave plus the
 first app that exercises exceptions, converters, commands, and the
 long-command doctrine. Prior-art G5 transfers as scope + gate; the worker

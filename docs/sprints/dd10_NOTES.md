@@ -487,3 +487,41 @@ not create; and the DESKTOP terminating the parent chain —
 `View>>invalidateLayout` walks up via `parent childLayoutInvalidated`, and that
 method walks on UNCONDITIONALLY, because in Dolphin the chain always ends at a
 DesktopView that answers it.
+
+## REVIEW (2026-08-16, evening): the show hang is root-caused, and it is a family
+
+The review went to name the next work item and found the cause instead —
+`View>>subViewsDo:` is readable in the emitted source:
+
+```smalltalk
+child := User32 getWindow: handle uCmd: 5.
+[child isNil] whileFalse: [
+    (inputState lookupWindow: child) ifNotNil: [...].
+    child := User32 getWindow: child uCmd: 2]
+```
+
+Dolphin's external-call machinery answers **nil** for a NULL handle return.
+This port's generated prims answer **0** — every one of UserLibrary's 230
+returns is `ret: #g`, an integer. `0 isNil` is false, so the loop never
+terminates. The timing evidence closes it: the hang appeared at exactly the
+commit that added `InputState>>lookupWindow:`, because before that the FIRST
+iteration raised inside the loop and the containment broke it. The paint-spin
+guess recorded earlier was wrong — the paint path never calls `lookupWindow:`
+— and the gate comment now says so.
+
+**It is a family, not a site.** 6 `whileFalse:` loops and 8 handle-returning
+call sites in this wave alone, and every one walks a chain Windows terminates
+with NULL: siblings, parents, dialog tab order. The fix is therefore a
+CONVENTION, not a patch: a `#h` return type in the floor (NULL → nil), emitted
+by genprims wherever winkb says the return is a handle. This joins the
+silent-nil family the translator work kept finding — bare unbound names,
+offset D157 slots, un-walked constant chains — as the same disease in the FFI
+layer: a sentinel of the wrong TYPE, invisible until a loop trusts it.
+
+The rest of the review's outcomes live in the brief's STATUS 2 block: the
+remaining-work checklist in retirement order, the ListBox scope call (may ride
+with DD11's control wave), the explicit note that everything so far is
+HEADLESS-verified and a visible shell is a named acceptance item, and the
+tooling ledger — `translate_mvp.py` now cleans its output directory before
+emitting (the 93-stale-files incident), with a gate-sweep script and a shared
+`test/gate_util.dart` recommended but not yet built.

@@ -34,7 +34,7 @@ use `on:do:` in translated code (prior-art rule, carried).
 | DD7 | ✅ DONE | Door proven to depth 5 through real `SendMessageW`; visible window with real WM_PAINT/WM_COMMAND; `ValidateRect` backstop; generation guard — all falsifiably tested |
 | DD8 | ✅ DONE | Compat kernel: events, `UiSession`, Model/ValueModel, SearchPolicy, GUID, properties |
 | DD9 | ✅ DONE | **Gate green.** Dolphin's `BorderLayout` arranges real Win32 windows; live WM_SIZE relayout via Dolphin's own `buildMessageMap`; paint through the HDC proved by pixel readback; focus/tab; clean destroy. Class-side `super` implemented in the front-end. Carried forward: `Graphics.Canvas` wave, supervisor respawn demo |
-| DD10 | 🚧 IN PROGRESS | Model side, per-window routing, real controls, commands+menus, isolate worker: all green. **COURSE-CORRECTED 2026-08-16** (scope rules 7/8): the hand-written presenter/view layer is SCAFFOLDING, the substrate app is a demo, and DD10 completes only when Dolphin's own `TextPresenter`/`Shell`/`Menu` are load-bearing. NEXT: `UI.View` window ownership |
+| DD10 | 🚧 IN PROGRESS | `UI.View` OWNS ITS WINDOW (Dolphin's own create path, end to end); shell-gate rebuild partial. Blocker root-caused: NULL handle returns are 0 here, nil in Dolphin — `subViewsDo:`'s `[child isNil] whileFalse:` never ends. NEXT: a `#h` handle-return convention in the floor, then child views → retire WinView → control subclassing → `UI.TextEdit`/`TextPresenter` → acceptance app. See the brief's STATUS 2 block |
 | DD11–DD13 | ⬜ PENDING | DD11 needs per-class message maps; DD12 (goal gate) hard-depends on DD10's per-window routing |
 
 Two standing corrections the ladder should be read with:
