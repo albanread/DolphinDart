@@ -322,3 +322,98 @@ The next work item is therefore **Dolphin View window ownership** —
 `View>>create` running against the door's window class — after which
 `UI.TextEdit`/`UI.TextPresenter` replace `WinTextEdit`/`TextField`, and the
 scaffolding column above starts emptying.
+
+## UI.VIEW OWNS ITS WINDOW (`test/st_dolphinview.dart`)
+
+**Dolphin's own `View>>create` makes a real window, registers itself, and
+receives messages through its own message map.** `ShellView` too. That is the
+milestone this sprint's course correction pointed at: the class doing the work
+is Dolphin's, not a stand-in.
+
+The path is Dolphin's code end to end — `create` -> `createWindow:` ->
+`basicCreateWindow:` -> `CreateWindow>>create:` -> `User32 createWindowEx:` —
+with the substrate supplying only what is genuinely its own:
+
+* **The window CLASS.** Its WndProc has to be the door's, so
+  `View class >> winClassName` answers the door's class name. Asking for the
+  name now REGISTERS it: the door registered lazily and the only path in used
+  to be `mvpCreateTopWindow`, so Dolphin's path got an unregistered class and
+  CreateWindowExW answered 0 with GetLastError 0 — the least informative
+  failure Win32 offers.
+* **WM_NCCREATE**, where the door stamps the generation and tells the image.
+  That is Dolphin's own binding moment: inside CreateWindowExW, with the view
+  still parked in the slot the creating code put it in.
+* **THE GREEN-PROCESS SLOT** — scope rule 8 at its smallest. Dolphin's
+  `basicCreateWindow:` brackets the call with
+  `Processor activeProcess newWindow: self`, using the active process as a
+  thread-local holding slot. With one UI thread that is a variable, and
+  PROVIDING it rather than rewriting the method is what keeps Dolphin's code
+  running verbatim.
+* **SessionManager/InputState**, bridged to `UiSession`'s registry rather than
+  duplicating it. Two maps would drift and the one the door routes through
+  would win silently.
+* **DesktopView**, the creation parent — including
+  `createShellWindow:withFunction:`, which `ShellView>>createWindow:`
+  delegates to because a container may adjust placement first.
+
+### WS_CHILD with no parent — why the first window would not open
+
+`View>>create` calls `parentView: self class desktop` when no parent is set,
+and `parentView:` ORs **WS_CHILD** into the creation style. The desktop stood
+in as a plain object answering `asParameter` = 0, and a WS_CHILD window with
+hWndParent 0 is invalid — so CreateWindowExW failed while the *same arguments
+issued by hand succeeded*, because by hand nothing had set WS_CHILD. The
+desktop now answers the real `GetDesktopWindow`, which is what Dolphin's own
+DesktopView does.
+
+### Three more translator defects, all silent
+
+1. **Qualified CLASS-VARIABLE reads.** `^Point.Zero` reads Graphics.Point's
+   class variable; both segments are capitalised, so the namespace flattener
+   rsplit it to a bare unbound `Zero` — nil at runtime, no diagnostic.
+   **384 sites, 62 distinct**: `Point.Zero` 60, `SessionManager.Current` 49,
+   `Color.Black` 29. Now an accessor send, with a reader emitted on every
+   class; an untranslated owner gives a loud doesNotUnderstand, not a nil.
+2. **Primitive 157 fills slots 1..N of the WHOLE object**, inherited first —
+   not offset past the superclass. Settled by evidence:
+   `UI.CreateWindowApiCall` holds `rectangle dpi` (1-2), `UI.CreateWindow`
+   holds `styles title` (3-4), and Dolphin's `rectangle:dpi:styles:title:`
+   takes all four in that order, which an offset reading cannot express with
+   two own slots. Every constructor met before had a parent with no ivars, so
+   the readings agreed and the difference stayed invisible.
+3. **Class CONSTANTS are inherited too.** `ShellView>>defaultExtent` reads
+   `CreateWindow.UseDefaultGeometry`, which `CreateWindow` inherits from
+   `CreateWindowFunction`; looking only at the named owner left it unfolded
+   and the flattener rsplit it to a bare name. The lookup now walks the chain.
+   Its value is a POINT — `(-16r80000000 @ -16r80000000)` — so the pool parser
+   learned that a point of two literals is a literal, and that a leading sign
+   belongs to the whole radix literal.
+
+### Compat added, each a named Dolphin part
+
+`whileMutableDo:` (the pair of the `beImmutableObject` no-op — nothing here is
+frozen), `release`, **`free`** (Dolphin's default does nothing, which is what
+makes `combinedAcceleratorTable free` safe when none was made; nil needed it
+too, and `nil species` already proved nil reaches Object's protocol),
+`isNull`/`notNull`, `Signal`, and Dolphin's rectangle PROTOCOL on the
+generated `RECT`/`RECTL` — the struct's layout is generated from Win32
+metadata, which has no opinion about Smalltalk protocol.
+
+`DolphinBoot` sends the class-side `initialize` that Dolphin's package loader
+would, and reports the classes that FAILED rather than aborting: a boot line
+that stops half way leaves whatever followed it silently un-run, which is
+exactly how this gate first read an empty registry.
+
+### One in the gate itself
+
+`stMvpIsWindow` answers a BOOLEAN, and both assertions compared it to 0.
+`true != 0` is true and `false == 0` is false, so the "is a window" check
+passed whatever the answer and the "is destroyed" check could never pass. Two
+assertions, neither of them measuring anything.
+
+### Scaffolding status
+
+`WinView` is now retired IN PRINCIPLE — a Dolphin View that owns its own HWND
+does not need an adapter standing in for one. It stays until the DD9 shell
+gate is rebuilt on `UI.View`, which is the next step, followed by
+`UI.TextEdit`/`UI.TextPresenter` replacing `WinTextEdit`/`TextField`.

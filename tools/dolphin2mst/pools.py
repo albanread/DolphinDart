@@ -29,7 +29,9 @@ from typing import Dict, Optional
 
 # 'NAME' -> <literal> .   (the trailing period separates entries)
 _ENTRY = re.compile(r"'([^']+)'\s*->\s*([^.\n}]+?)\s*(?:\.|(?=\})|$)", re.M)
-_RADIX = re.compile(r"^(\d+)r(-?[0-9A-Za-z]+)$")
+_RADIX = re.compile(r"^(-?)(\d+)r(-?[0-9A-Za-z]+)$")
+_POINT = re.compile(r"^\(?\s*([^@()]+?)\s*@\s*([^@()]+?)\s*\)?$")
+_NUMERIC = re.compile(r"^-?\d+(\.\d+)?$")
 
 
 def parse_literal(text: str) -> Optional[str]:
@@ -46,7 +48,10 @@ def parse_literal(text: str) -> Optional[str]:
     m = _RADIX.match(t)
     if m:
         try:
-            return str(int(m.group(2), int(m.group(1))))
+            # A LEADING sign belongs to the whole literal: `-16r80000000` is
+            # negative two-to-the-31, not radix -16.
+            v = int(m.group(3), int(m.group(2)))
+            return str(-v if m.group(1) == "-" else v)
         except ValueError:
             return None
     if re.match(r"^-?\d+$", t):
@@ -59,6 +64,17 @@ def parse_literal(text: str) -> Optional[str]:
         return t
     if re.match(r"^\$.$", t):
         return t
+    # A POINT constant: `(-16r80000000 @ -16r80000000)`. Both operands are
+    # literals, so the whole thing is one — Dolphin writes geometry constants
+    # this way and `UI.CreateWindowFunction`'s `UseDefaultGeometry` is the one
+    # the View creation path needs. Refused as "not a literal", it left
+    # `ShellView>>defaultExtent` answering nil and `create` dying on
+    # `nil extent:`.
+    m = _POINT.match(t)
+    if m:
+        x, y = parse_literal(m.group(1)), parse_literal(m.group(2))
+        if x is not None and y is not None and _NUMERIC.match(x) and _NUMERIC.match(y):
+            return "(%s @ %s)" % (x, y)
     return None
 
 

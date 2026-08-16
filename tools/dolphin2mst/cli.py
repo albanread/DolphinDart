@@ -178,6 +178,26 @@ def main(argv: List[str]) -> int:
                 base = cd.name.rsplit(".", 1)[-1]
                 classvar_owners.setdefault(base, set()).update(cd.cvars)
 
+    by_name_all_early = {cd.name: cd
+                         for pf in list(reference.values()) + list(parsed.values())
+                         for cd in (pf.classdefs or ([pf.classdef] if pf.classdef else []))}
+    # Class BASE name -> the pool keys to search for one of ITS constants,
+    # nearest first: itself, then every ancestor. Class constants are
+    # inherited, so `CreateWindow.UseDefaultGeometry` must find the one
+    # `CreateWindowFunction` declares.
+    constant_chains: Dict[str, List[str]] = {}
+    for full, cd in by_name_all_early.items():
+        base = full.rsplit(".", 1)[-1]
+        chain = [full]
+        walk, guard = cd.superclass, 0
+        while walk and walk != "nil" and guard < 64:
+            chain.append(walk)
+            parent = by_name_all_early.get(walk)
+            if parent is None:
+                break
+            walk, guard = parent.superclass, guard + 1
+        constant_chains[base] = chain
+
     by_name_all = {cd.name: cd
                    for pf in list(reference.values()) + list(parsed.values())
                    for cd in (pf.classdefs or ([pf.classdef] if pf.classdef else []))}
@@ -207,7 +227,7 @@ def main(argv: List[str]) -> int:
             adopted += len(extra)
             res = emit.emit_class(pf, renames, ivars, pool_table, extra, cd,
                                   inherited_pool_chain(by_name_all, cd.name),
-                                  classvar_owners)
+                                  classvar_owners, constant_chains)
             refusals.extend(res.refusals)
             notes.extend(res.notes)
             name = emit.flatten_name(cd.name, renames)

@@ -1,7 +1,7 @@
 # dolphin2mst run report
 
 - inputs: **39** source files (`.cls` + `.pax`)
-- shared-pool constants available: **6299** from **168** pools
+- shared-pool constants available: **6459** from **171** pools
 - loose methods adopted from `.pax`: **0**
 - parsed: **39**  (unbalanced/skipped: 0)
 - emitted: **39** `.mst`

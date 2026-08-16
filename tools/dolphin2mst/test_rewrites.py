@@ -224,6 +224,21 @@ check("imports: the chain is walked to the root, nearest ancestor first",
       inherited_pool_chain(_by, "UI.ShellView"),
       ["UI.ContainerView", "UI.View", "OS.Win32Constants", "OS.Win32Errors"])
 
+# --- pool literals: point constants and signed radix ------------------------
+# Dolphin writes geometry constants as points. `UI.CreateWindowFunction`'s
+# `UseDefaultGeometry` is `(-16r80000000 @ -16r80000000)`; refused as "not a
+# literal" it left ShellView>>defaultExtent answering nil and View creation
+# dying on `nil extent:`.
+import pools
+check("pool: a point of two literals IS a literal",
+      pools.parse_literal("(-16r80000000 @ -16r80000000)"),
+      "(-2147483648 @ -2147483648)")
+check("pool: a leading sign belongs to the whole radix literal",
+      pools.parse_literal("-16r10"), "-16")
+check("pool: an unsigned radix still works", pools.parse_literal("16rF5"), "245")
+check("pool: a point of NON-literals is refused",
+      pools.parse_literal("(a @ b)"), None)
+
 # --- qualified CLASS-VARIABLE reads ------------------------------------------
 # `^Point.Zero` reads Graphics.Point's class variable. Both segments are
 # capitalised, so the flattener rsplit it to a bare unbound `Zero` — nil at

@@ -45,13 +45,13 @@ CreateWindowApiCall subclass: CreateWindow [
         	position := self position.
         	extent := self extent.
         	"If the position is not specified, we will need to work out a suitable position on the active monitor"
-        	(aShellView isRestoringFromProxy or: [position = UseDefaultGeometry])
+        	(aShellView isRestoringFromProxy or: [position = (-2147483648 @ -2147483648)])
         		ifTrue: 
         			["Default position, so should go on the default monitor. This is usually the active monitor, but for a dialog it would be the monitor of the owner."
         			monitor := DisplayMonitor active.
         			targetDpi := monitor effectiveDpi.
         			"Now work out the extent to use at the DPI of the active monitor, which is either the specified extent remapped to the active monitor DPI, or if unspecified the monitor default"
-        			extent := extent = UseDefaultGeometry
+        			extent := extent = (-2147483648 @ -2147483648)
         						ifTrue: [monitor defaultWindowExtent * targetDpi // monitor dpi]
         						ifFalse: [extent * targetDpi // dpi].
         			position := aShellView isInitiallyCentered
@@ -62,7 +62,7 @@ CreateWindowApiCall subclass: CreateWindow [
         			monitor := DisplayMonitor nearestPoint: position * SystemMetrics current dpi // dpi.
         			targetDpi := monitor effectiveDpi.
         			"Now we can calculate the extent as above"
-        			extent := extent = UseDefaultGeometry
+        			extent := extent = (-2147483648 @ -2147483648)
         						ifTrue: [monitor defaultWindowExtent * targetDpi // monitor dpi]
         						ifFalse: [extent * targetDpi // dpi].
         			"If should be initially centered, override the specified position, but keeping to the same monitor"

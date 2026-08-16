@@ -21,7 +21,7 @@ Object subclass: CreateWindowFunction [
     ]
     hasDefaultExtent [
         "Answer whether the window should be created at the default extent determined by Windows, or if not a top-level window an extent yet to be determined."
-        ^self extent = UseDefaultGeometry
+        ^self extent = (-2147483648 @ -2147483648)
     ]
     position [
         "Answer a <point> expressing the position (top-left corner) of the window to be created. The position is measured at the receiver's DPI."
@@ -44,6 +44,6 @@ Object subclass: CreateWindowFunction [
         aView scaleChildCreation: self
     ]
     CreateWindowFunction class >> initialize [
-        	self addClassConstant: 'UseDefaultGeometry' value: CW_USEDEFAULT @ CW_USEDEFAULT
+        	self addClassConstant: 'UseDefaultGeometry' value: -2147483648 @ -2147483648
     ]
 ]

@@ -1,0 +1,74 @@
+"00_rect_protocol.mst — Dolphin's rectangle protocol on the Win32 RECT
+ (DolphinDart DD10).
+
+ `st/prims/structs/RECT.mst` is GENERATED from winkb: four fields at four
+ offsets, and nothing else — which is all a struct definition is. Dolphin
+ treats the same struct as a geometric object and sends it Smalltalk
+ rectangle protocol; its own `UI.CreateWindowApiCall` writes
+
+     rectangle := RECT origin: positionPoint extent: extentPoint
+
+ and `UI.CreateWindow>>create:` then reads `rectangle left/top/width/height`.
+
+ So this is the PROTOCOL half of a class whose LAYOUT is generated. It lives
+ here rather than in the generator because the generator's input is Win32
+ metadata, which has no opinion about Smalltalk protocol — and hand-editing
+ the generated file is forbidden.
+
+ LATE LAYER, necessarily: `st/prims/structs` loads after `st/dolphin_compat`,
+ so a reopen there would be overwritten by the generated class.
+
+ Both RECT and RECTL get it. They are the same shape — four 32-bit edges —
+ and the corpus uses whichever the API it is calling declares."
+ExternalMemory subclass: RECT [
+    "Dolphin's constructor: two Points, stored as edges."
+    RECT class >> origin: originPoint extent: extentPoint [
+        | r |
+        r := self new.
+        r left: originPoint x.
+        r top: originPoint y.
+        r right: originPoint x + extentPoint x.
+        r bottom: originPoint y + extentPoint y.
+        ^r
+    ]
+    RECT class >> origin: originPoint corner: cornerPoint [
+        | r |
+        r := self new.
+        r left: originPoint x. r top: originPoint y.
+        r right: cornerPoint x. r bottom: cornerPoint y.
+        ^r
+    ]
+    width [ ^self right - self left ]
+    height [ ^self bottom - self top ]
+    origin [ ^self left @ self top ]
+    corner [ ^self right @ self bottom ]
+    extent [ ^self width @ self height ]
+    "A Smalltalk Rectangle from the struct, for code that wants to compute
+     with it rather than pass it to Windows."
+    asRectangle [ ^Rectangle origin: self origin corner: self corner ]
+]
+
+ExternalMemory subclass: RECTL [
+    RECTL class >> origin: originPoint extent: extentPoint [
+        | r |
+        r := self new.
+        r left: originPoint x.
+        r top: originPoint y.
+        r right: originPoint x + extentPoint x.
+        r bottom: originPoint y + extentPoint y.
+        ^r
+    ]
+    RECTL class >> origin: originPoint corner: cornerPoint [
+        | r |
+        r := self new.
+        r left: originPoint x. r top: originPoint y.
+        r right: cornerPoint x. r bottom: cornerPoint y.
+        ^r
+    ]
+    width [ ^self right - self left ]
+    height [ ^self bottom - self top ]
+    origin [ ^self left @ self top ]
+    corner [ ^self right @ self bottom ]
+    extent [ ^self width @ self height ]
+    asRectangle [ ^Rectangle origin: self origin corner: self corner ]
+]

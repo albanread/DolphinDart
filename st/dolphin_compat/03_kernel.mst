@@ -46,6 +46,9 @@ Object subclass: DeafObject [
     DeafObject class >> current [
         Current isNil ifTrue: [ Current := self basicNew ]. ^Current
     ]
+    "Read as `DeafObject.Current` in the corpus (12 sites), which the
+     translator rewrites to this accessor."
+    DeafObject class >> classVarCurrent [ ^self current ]
     doesNotUnderstand: aMessage [ ^nil ]
     isNil [ ^false ]
     notNil [ ^true ]
@@ -124,6 +127,30 @@ nil subclass: Object [
 
     beImmutableObject [ ^self ]
     isImmutable [ ^false ]
+
+    "Dolphin's `whileMutableDo:` un-freezes an immutable object for the extent
+     of a block and re-freezes it after. Nothing here is ever frozen — see
+     `beImmutableObject` above — so this is exactly `aBlock value`, and it is
+     the PAIR of that divergence rather than a separate one. `View class >>
+     registerMessageMappings:` is the caller: it edits the MessageMap that
+     `View class >> initialize` had marked immutable."
+    whileMutableDo: aNiladicBlock [ ^aNiladicBlock value ]
+
+    "Dolphin's `release` — drop references to external resources and to other
+     objects, so a discarded object does not hold a graph alive. The default
+     genuinely does nothing in Dolphin too; subclasses override it. `View>>
+     destroy` sends it."
+    release [ ^self ]
+
+    "Dolphin's `free` — relinquish an external resource. The DEFAULT does
+     nothing, which is what makes `combinedAcceleratorTable free` safe in
+     `ShellView>>releaseAccelerators` when no accelerator table was ever made.
+     `ExternalMemory>>free` overrides it and really frees.
+
+     nil needs it as much as any object: `nil species` already answers
+     UndefinedObject here, so nil does reach Object's protocol — `free` simply
+     was not part of it, and the send fell through to Dart's null."
+    free [ ^self ]
 
     propertyAt: aKey [ ^(PropertyRegistry propertiesOf: self) at: aKey ifAbsent: [ nil ] ]
     propertyAt: aKey ifAbsent: aBlock [

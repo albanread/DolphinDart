@@ -393,7 +393,7 @@ Object subclass: View [
         "Places the receiver above all non-topmost windows (that is, behind all topmost windows).
         	This has no effect if the window is already a non-topmost window.
         	Answers whether the operation was successful."
-        ^self zOrderAfter: HWND_NOTOPMOST
+        ^self zOrderAfter: -2
     ]
     bePopupFor: aView [
         "Sets the receiver to be a popup window owned by the <View> argument."
@@ -404,7 +404,7 @@ Object subclass: View [
         "Places the receiver above all non-topmost windows without activating it.
         	The window maintains its topmost position even when it is deactivated.
         	Answers whether the operation was successful."
-        ^self zOrderAfter: HWND_TOPMOST
+        ^self zOrderAfter: -1
     ]
     binaryStoreUsing: anSTXOutFiler [
         "Stores the receiver in a serialized form using the <STxOutFiler> argument such that it can be reconstituted to an equivalent view. For Views we need to store a proxy that captures any external state not represented directly in the Smalltalk object."
@@ -1404,8 +1404,8 @@ Object subclass: View [
         "Note: The compiler will optimise out the conditional because it is constant."
 
         	^false
-        		ifTrue: [User32 getWindowULongPtr: handle nIndex: GWLP_WNDPROC]
-        		ifFalse: [User32 getWindowULong: handle nIndex: GWL_WNDPROC]
+        		ifTrue: [User32 getWindowULongPtr: handle nIndex: -4]
+        		ifFalse: [User32 getWindowULong: handle nIndex: -4]
     ]
     handle [
         "Private - Answer the receiver's handle (an instance of ExternalHandle or nil)."
@@ -1541,11 +1541,11 @@ Object subclass: View [
     ]
     id [
         "Answer the Integer identifier of the receiver"
-        ^self getWindowLongPtr: GWLP_ID
+        ^self getWindowLongPtr: -12
     ]
     id: anInteger [
         "Set the receiver's Integer identifier."
-        ^self setWindowLong: GWL_ID to: anInteger
+        ^self setWindowLong: -12 to: anInteger
     ]
     inDpiAwarenessContextDo: aNiladicValuable [
         "Evaluate the <niladicValuable> argument in the receiver's native DPI awareness context."
@@ -2956,7 +2956,7 @@ Object subclass: View [
     ]
     setWindowExStyle: anInteger [
         "Private - Set the receiver's extended window style bits to anInteger."
-        self setWindowLong: GWL_EXSTYLE to: anInteger 
+        self setWindowLong: -20 to: anInteger 
     ]
     setWindowLong: anIntegerOffset to: anIntegerValue [
         "Private - Set the receiver's Window UInt32 at the specified offset to the specified integer value."
@@ -2981,7 +2981,7 @@ Object subclass: View [
         "Private - Set the receiver's window style bits to anInt32."
         User32
         		setWindowULong: handle
-        		nIndex: GWL_STYLE
+        		nIndex: -16
         		dwNewLong: anInt32
     ]
     setWindowText: aString [
@@ -2999,12 +2999,12 @@ Object subclass: View [
         		ifTrue: 
         			[User32
         				setWindowULongPtr: handle
-        				nIndex: GWL_WNDPROC
+        				nIndex: -4
         				dwNewLong: anAddress]
         		ifFalse: 
         			[User32
         				setWindowULong: handle
-        				nIndex: GWL_WNDPROC
+        				nIndex: -4
         				dwNewLong: anAddress]
     ]
     show [

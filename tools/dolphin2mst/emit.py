@@ -512,14 +512,20 @@ def rewrite_qualified_classvars(body: str, owners) -> str:
 _QUALIFIED_CONST = re.compile(r"(?<![\w.])([A-Z][A-Za-z0-9_]*)\.(_?[A-Za-z][A-Za-z0-9_]*)(?![\w])")
 
 
-def rewrite_qualified_constants(body: str, table) -> str:
+def rewrite_qualified_constants(body: str, table, chains=None) -> str:
     if table is None:
         return body
     blanked = strip_code(body)
     out, last = [], 0
     for m in _QUALIFIED_CONST.finditer(blanked):
         owner, name = body[m.start(1):m.end(1)], body[m.start(2):m.end(2)]
-        val = table.lookup([owner], name)
+        # CLASS CONSTANTS ARE INHERITED, so the search follows the owner's
+        # chain and not just the owner. `ShellView>>defaultExtent` reads
+        # `CreateWindow.UseDefaultGeometry`, which `CreateWindow` inherits from
+        # `CreateWindowFunction` — looking only at CreateWindow's own constants
+        # left it unfolded, the flattener rsplit it to a bare
+        # `UseDefaultGeometry`, and ShellView's default geometry was nil.
+        val = table.lookup((chains or {}).get(owner, [owner]), name)
         if val is None:
             continue
         out.append(body[last:m.start()])
@@ -672,7 +678,8 @@ def emit_class(pf: ParsedFile, renames: Dict[str, str],
                pool_table=None, extra_methods: Optional[List[Method]] = None,
                classdef: Optional[ClassDef] = None,
                inherited_imports: Optional[List[str]] = None,
-               classvar_owners: Optional[Dict[str, set]] = None) -> EmitResult:
+               classvar_owners: Optional[Dict[str, set]] = None,
+               constant_chains: Optional[Dict[str, List[str]]] = None) -> EmitResult:
     cd = classdef or pf.classdef
     if cd is None:
         return EmitResult("", [Refusal(pf.path, "classdef", "no class-definition chunk")])
@@ -778,7 +785,8 @@ def emit_class(pf: ParsedFile, renames: Dict[str, str],
             # Pools fold BEFORE `##()`, so a compile-time expression written
             # over pool names (`##(BM_CLICK bitOr: 4)`) has literals to fold.
             body = rewrite_qualified_classvars(body, classvar_owners)
-            body = rewrite_qualified_constants(body, pool_table)
+            body = rewrite_qualified_constants(body, pool_table,
+                                               constant_chains)
             body, r = rewrite_pool_constants(
                 body, where, own_imports, pool_table, shadowed | set(m.arg_names))
             refusals.extend(r)

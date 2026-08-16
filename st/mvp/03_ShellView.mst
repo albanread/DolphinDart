@@ -152,11 +152,11 @@ ContainerView subclass: ShellView [
     ]
     defaultExtent [
         "Private - Answer the default size of the receiver in device-independent pixels (aka DIPs, i.e. 96-dpi). This is used only to determine the size of a view when it is first created (although after scaling DIPs to the monitor DPI). Thereafter preferredExtent is used when the desired size of a view is requested."
-        ^UseDefaultGeometry
+        ^(-2147483648 @ -2147483648)
     ]
     defaultPosition [
         "Private - Answer the default position for the receiver in device-independent pixels (aka DIPs, i.e. 96-dpi). Normally this is unspecified, so we want to open the new window at the next cascade position for the monitor."
-        ^UseDefaultGeometry
+        ^(-2147483648 @ -2147483648)
     ]
     defaultShowStyle [
         	^self isMaximized ifTrue: [3] ifFalse: [1]
@@ -1001,7 +1001,7 @@ ContainerView subclass: ShellView [
         	We also display the wait cursor for disabled shells that have no active popup. This lets the
         	user know the window is disabled without requiring the application programmer to explicitly 
         	set and maintain the global wait cursor."
-        lParam lowPartSigned == HTERROR 
+        lParam lowPartSigned == -2 
         		ifTrue: 
         			[| msg |
         			msg := lParam highWord.

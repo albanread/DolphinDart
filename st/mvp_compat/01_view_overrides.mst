@@ -40,10 +40,57 @@ Object subclass: DesktopView [
     DesktopView class >> current [
         Current isNil ifTrue: [ Current := self basicNew ]. ^Current
     ]
-    asParameter [ ^0 ]
-    handle [ ^0 ]
+    "THE REAL DESKTOP HWND, not 0. `View>>create` does
+
+         creationParent isNil ifTrue: [self parentView: self class desktop]
+
+     and `parentView:` ORs **WS_CHILD** into the creation style. A WS_CHILD
+     window whose hWndParent is 0 is invalid, so CreateWindowExW answered 0 —
+     with the same arguments succeeding when issued by hand, because by hand
+     nothing had set WS_CHILD. Handing back the desktop window makes the pair
+     consistent, which is what Dolphin's own DesktopView does."
+    asParameter [ ^self handle ]
+    handle [ ^User32 getDesktopWindow ]
     dpi [ ^96 ]
     scaleChildCreation: aCreateWindow [ ^aCreateWindow ]
+
+    "`ShellView>>createWindow:` delegates the whole creation to its parent,
+     because a container may want to adjust placement or styles first —
+     `UI.ContainerView` has its own version. This is the DESKTOP's, and it is
+     modelled on ContainerView's: settle the extent, place the window, hand
+     the DPI down, then let the shell create itself.
+
+     No DPI scaling: the desktop reports 96 and the DD9 brief's recorded trim
+     keeps it there, so `extent * targetDpi // aCreateWindow dpi` is the
+     identity and is written as such rather than computed."
+    createShellWindow: aShellView withFunction: aCreateWindow [
+        | extent |
+        extent := aCreateWindow hasDefaultExtent
+            ifTrue: [ self defaultExtentOf: aShellView ]
+            ifFalse: [ aCreateWindow extent ].
+        aCreateWindow
+            position: (aShellView isInitiallyCentered
+                        ifTrue: [ self centerExtent: extent ]
+                        ifFalse: [ Point classVarZero ])
+            extent: extent
+            dpi: self dpi.
+        aShellView dpi: self dpi.
+        ^aShellView basicCreateWindow: aCreateWindow
+    ]
+
+    "A shell that asked for no particular size gets a reasonable one. Dolphin
+     asks the monitor; 640x480 is this port's recorded default until
+     per-monitor DPI lands."
+    defaultExtentOf: aShellView [ ^640 @ 480 ]
+
+    "Centred on the desktop's client area."
+    centerExtent: anExtent [
+        | r |
+        r := RECTL new.
+        User32 getClientRect: self handle lpRect: r address.
+        ^(((r right - r left) - anExtent x) // 2) @
+         (((r bottom - r top) - anExtent y) // 2)
+    ]
     isOpen [ ^true ]
     parentView [ ^nil ]
     "`ShellView>>initialize` sets its parent to the desktop and then asks the
@@ -89,9 +136,16 @@ Object subclass: DolphinBoot [
         ^failed asArray
     ]
 
-    "The ones that must work for a View to be created at all."
+    "The ones that must work for a View to be created at all. Each is
+     attempted independently and the FAILURES are answered, for the same
+     reason `initializeClasses` does it: a boot line that aborts half way
+     leaves whatever came after it — `UiSession startUp`, in the gate that
+     found this — silently not run."
     DolphinBoot class >> initializeViewClasses [
-        Rectangle initialize. View initialize. ShellView initialize.
-        ^true
+        | failed |
+        failed := OrderedCollection new.
+        { Rectangle. View. ShellView } do: [ :each |
+            [ each initialize ] on: Error do: [ :e | failed add: each name ] ].
+        ^failed asArray
     ]
 ]
