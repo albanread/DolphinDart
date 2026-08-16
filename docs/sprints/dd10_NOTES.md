@@ -104,3 +104,33 @@ The build order, and the one step that carries the doctrine, are in
 `docs/WORKERS.md` §"The build order when it lands" — step 3 must POST the
 continuation, not call it. Calling it directly from the reply handler would
 work, look correct, and violate every reason above.
+
+## Per-window routing — the prerequisite the brief did not name
+
+Gate: `test/st_twowin.dart`.
+
+The door's funnel carried `(kind, msg, wParam, lParam)` and `UiSession`
+dispatched to `LastWindow` — whichever view registered most recently. **Every
+door gate in the tree passed under that**, because every one of them opens
+exactly one window. It is wrong the moment two exist: a shell owning an EDIT
+control needs `WM_COMMAND` to reach the control's OWNER, and DD12's stacked
+modals cannot work at all.
+
+The funnel now carries the HWND: `(kind, hwnd, a, b, c)`. Every dispatch
+resolves its receiver through `viewFor:` — a registry that **already existed
+and was already maintained**; the handle was the only missing piece.
+`LastWindow` survives solely as the fallback for an unregistered hwnd, which
+is what the DD7 spike suites present (they drive the raw door without
+registering a view). A real window is always registered, so the fallback never
+fires for one.
+
+The gate opens two windows and asserts each message lands on exactly one:
+WM_SIZE through Dolphin's map with each window's own lParam, the named
+WM_COMMAND channel, and paint. Each assertion is written as **"A saw it AND B
+did not"** — a broadcast to both would satisfy "A saw it" on its own. It also
+checks that closing A leaves B routable, which is exactly what a
+LastWindow-shaped router breaks.
+
+One thing the first run caught in the gate itself: invalidating a HIDDEN window
+produces no WM_PAINT, so the paint check passed on two zeroes and proved
+nothing. Both windows are shown first now.

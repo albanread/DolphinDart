@@ -1,0 +1,29 @@
+"twowin_probe.mst — per-window routing (DolphinDart DD10).
+
+ A view that records WHICH messages reached IT. Two of these exist at once in
+ the gate, which is the whole point: with routing by `LastWindow` both windows'
+ messages land on whichever registered second, and every single-window gate in
+ the tree still passes. The only way to see that is to open two."
+UiWindow subclass: TwoWinProbe [
+    | tag sizes commands paints lastL |
+
+    TwoWinProbe class >> claimValue [ ^777 ]
+
+    initWindow [ super initWindow. sizes := 0. commands := 0. paints := 0 ]
+    tag: aSymbol [ tag := aSymbol ]
+    tag [ ^tag ]
+    sizes [ ^sizes ]
+    commands [ ^commands ]
+    paints [ ^paints ]
+    lastL [ ^lastL ]
+
+    "Through Dolphin's message map."
+    wmSize: msg wParam: wp lParam: lp [
+        sizes := sizes + 1. lastL := lp. ^TwoWinProbe claimValue
+    ]
+
+    "Through the door's named WM_COMMAND channel — the one a control
+     notification arrives on, and the reason the owner must be identifiable."
+    onCommand: controlId [ commands := commands + 1. ^0 ]
+    onPaint: hdc [ paints := paints + 1. ^0 ]
+]

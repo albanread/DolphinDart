@@ -1359,7 +1359,7 @@ stMvpStormBurst(int h, int msg, int n) native "ST_mvpStormBurst";
 /// Route a door message to the image. `UiSession` is the Smalltalk entry point
 /// (DD8 owns it); until then the spike class answers. A miss must not take the
 /// pump down, so the send is a TRY and a null answer becomes 0.
-_mvpToSmalltalk(int kind, int a, int b, int c) {
+_mvpToSmalltalk(int kind, int hwnd, int a, int b, int c) {
   // kind 0 is the re-entry spike's own recursion probe; 1..3 are the visible
   // window's reflected messages (paint/command/destroy). Two receivers, one
   // funnel — DD8's UiSession replaces both.
@@ -1380,7 +1380,8 @@ _mvpToSmalltalk(int kind, int a, int b, int c) {
   } else {
     _doorUiSession ??= stClassNamed('UiSession');
     if (_doorUiSession != null) {
-      box = _stClassSendTry(_doorUiSession, 'wndProc_a_b_c_', [kind, a, b, c]);
+      box = _stClassSendTry(_doorUiSession, 'wndProc_hwnd_a_b_c_',
+                            [kind, hwnd, a, b, c]);
     }
     // The DD7 spike classes remain the door's own regression, and they predate
     // the wider funnel — they still see (kind, payload).

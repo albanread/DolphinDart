@@ -145,10 +145,11 @@ LRESULT CALLBACK MvpWndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
     // precisely so the two cannot collide: routing on the payload made a
     // depth-3 recursion probe look like a WM_DESTROY.
     Dart_Handle fn = Dart_HandleFromPersistent(g_mvp_dispatch);
-    Dart_Handle a[4] = { Dart_NewInteger(kKindMessage),
+    Dart_Handle a[5] = { Dart_NewInteger(kKindMessage),
+                         Dart_NewInteger((int64_t)(intptr_t)hwnd),
                          Dart_NewInteger((int64_t)wp), Dart_NewInteger(0),
                          Dart_NewInteger(0) };
-    Dart_Handle r = Dart_InvokeClosure(fn, 4, a);
+    Dart_Handle r = Dart_InvokeClosure(fn, 5, a);
     if (Dart_IsError(r)) {
       // CONTAINMENT. A raise inside the image must not escape into the OS: the
       // pump has to keep pumping, and Win32 has no notion of a Smalltalk
@@ -170,21 +171,32 @@ LRESULT CALLBACK MvpWndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
   return (LRESULT)result;
 }
 
-// Call the image funnel: (kind, a, b, c).
+// Call the image funnel: (kind, hwnd, a, b, c).
 //
-// FOUR arguments, not two (DD9). paint/command/destroy each carry one payload
-// and fitted the old shape, but a REFLECTED WINDOWS MESSAGE carries three —
-// msg, wParam, lParam — and Dolphin's `buildMessageMap` dispatch needs all of
-// them. Widening here rather than packing them into one integer keeps the
-// channel and its payload separate, which is the same discipline that stopped
-// a depth-3 recursion probe reading as a WM_DESTROY.
+// FIVE arguments. The middle three carry the payload — DD9 widened them from
+// one to three so a reflected Windows message could pass (msg, wParam,
+// lParam) to Dolphin's `buildMessageMap` dispatch.
+//
+// THE HWND IS THE DD10 ADDITION, and it is what makes more than one window
+// possible. Without it the image can only ask "which message?", never "which
+// WINDOW?", so `UiSession` had to route everything to whichever view was
+// registered last. That is invisible while exactly one window exists and
+// wrong the moment two do: a shell owning an EDIT control needs WM_COMMAND to
+// reach the control's OWNER, and stacked modal dialogs (the DD12 goal gate)
+// cannot work at all without it. The registry to route through — `viewFor:` —
+// already existed and was already maintained; the HWND is the piece that was
+// missing.
+//
+// Widening rather than packing keeps channel, window and payload separate,
+// the same discipline that stopped a depth-3 recursion probe reading as a
+// WM_DESTROY.
 //
 // Answers false when the image raised (contained here) — the caller then takes
 // its default. `*handled` distinguishes "the image answered nothing" (Dart
 // null, i.e. this message is not in its map) from "the image answered 0",
 // which is a perfectly ordinary LRESULT.
-bool CallImage(int64_t kind, int64_t a0, int64_t b0, int64_t c0, int64_t* out,
-               bool* handled) {
+bool CallImage(int64_t kind, HWND hwnd, int64_t a0, int64_t b0, int64_t c0,
+               int64_t* out, bool* handled) {
   if (handled != nullptr) *handled = false;
   if (g_mvp_dispatch == nullptr) return false;
   bool ok = true;
@@ -193,9 +205,11 @@ bool CallImage(int64_t kind, int64_t a0, int64_t b0, int64_t c0, int64_t* out,
   Dart_EnterScope();
   {
     Dart_Handle fn = Dart_HandleFromPersistent(g_mvp_dispatch);
-    Dart_Handle a[4] = { Dart_NewInteger(kind), Dart_NewInteger(a0),
-                         Dart_NewInteger(b0), Dart_NewInteger(c0) };
-    Dart_Handle r = Dart_InvokeClosure(fn, 4, a);
+    Dart_Handle a[5] = { Dart_NewInteger(kind),
+                         Dart_NewInteger((int64_t)(intptr_t)hwnd),
+                         Dart_NewInteger(a0), Dart_NewInteger(b0),
+                         Dart_NewInteger(c0) };
+    Dart_Handle r = Dart_InvokeClosure(fn, 5, a);
     if (Dart_IsError(r)) {
       g_contained++;
       ok = false;
@@ -223,7 +237,7 @@ LRESULT CALLBACK MvpTopWndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
       HDC hdc = BeginPaint(hwnd, &ps);
       bool ok = false;
       if (live) {
-        ok = CallImage(kKindPaint, (int64_t)(intptr_t)hdc, 0, 0,
+        ok = CallImage(kKindPaint, hwnd, (int64_t)(intptr_t)hdc, 0, 0,
                        nullptr, nullptr);
       }
       if (!ok) {
@@ -240,11 +254,13 @@ LRESULT CALLBACK MvpTopWndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
     }
     case WM_COMMAND:
       // A child control notifying its parent: the control id is LOWORD(wp).
-      if (live) CallImage(kKindCommand, (int64_t)LOWORD(wp), 0, 0, nullptr,
-                          nullptr);
+      // The command's payload is the CONTROL id; the hwnd is the OWNER the
+      // notification arrived at, which is the window that has to handle it.
+      if (live) CallImage(kKindCommand, hwnd, (int64_t)LOWORD(wp), 0, 0,
+                          nullptr, nullptr);
       return 0;
     case WM_DESTROY:
-      if (live) CallImage(kKindDestroy, 0, 0, 0, nullptr, nullptr);
+      if (live) CallImage(kKindDestroy, hwnd, 0, 0, 0, nullptr, nullptr);
       return 0;
     default: {
       // The storm census (DD9). Counting is two loads and a store — cheap
@@ -268,15 +284,15 @@ LRESULT CALLBACK MvpTopWndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
       if (live && IsRoutedMessage(msg)) {
         int64_t out = 0;
         bool handled = false;
-        if (CallImage(kKindWinMsg, (int64_t)msg, (int64_t)wp, (int64_t)lp,
-                      &out, &handled) &&
+        if (CallImage(kKindWinMsg, hwnd, (int64_t)msg, (int64_t)wp,
+                      (int64_t)lp, &out, &handled) &&
             handled) {
           return (LRESULT)out;
         }
         return DefWindowProcW(hwnd, msg, wp, lp);
       }
       if (g_storm_route && live && slot != kStormOther) {
-        CallImage(kKindStorm, (int64_t)msg, (int64_t)wp, (int64_t)lp,
+        CallImage(kKindStorm, hwnd, (int64_t)msg, (int64_t)wp, (int64_t)lp,
                   nullptr, nullptr);
       }
       return DefWindowProcW(hwnd, msg, wp, lp);

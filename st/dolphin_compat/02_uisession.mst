@@ -62,28 +62,54 @@ Object subclass: UiSession [
     ]
 
     "── message routing ─────────────────────────────────────────────────
-     The door hands us (kind, a, b, c). Kinds 1..3 are the named reflections
-     (paint/command/destroy) and use `a` alone; kind 5 is a REFLECTED WINDOWS
-     MESSAGE and uses all three — (msg, wParam, lParam) — which is why the
-     funnel carries four arguments since DD9.
+     The door hands us (kind, hwnd, a, b, c). Kinds 1..3 are the named
+     reflections (paint/command/destroy) and use `a` alone; kind 5 is a
+     REFLECTED WINDOWS MESSAGE and uses all three — (msg, wParam, lParam) —
+     which is why the funnel carries the payload in three slots since DD9.
+
+     THE HWND IS WHAT MAKES MORE THAN ONE WINDOW POSSIBLE (DD10). Every
+     dispatch resolves its receiver through `viewFor:`, so a message reaches
+     the view that OWNS the window it arrived at. Before this, routing went to
+     `LastWindow` — whichever view registered most recently — which is
+     invisible with one window and wrong with two: a shell owning an EDIT
+     control needs WM_COMMAND to reach the control's owner, and stacked modal
+     dialogs cannot work at all.
+
+     `LastWindow` survives only as the fallback for an UNREGISTERED hwnd,
+     which is what the DD7 spike suites present: they drive the raw door
+     without registering a view. A real window is always registered, so the
+     fallback never fires for one.
 
      ANSWERING NIL MEANS 'NOT HANDLED', and the door then calls DefWindowProcW.
      Answering 0 is a different statement: it is an ordinary LRESULT, and for
      WM_NCHITTEST it means HTNOWHERE. Collapsing the two would make the door
      swallow every message it was asked to reflect."
-    UiSession class >> wndProc: kind a: a b: b c: c [
+    UiSession class >> wndProc: kind hwnd: h a: a b: b c: c [
+        | view |
         MessageCount := (MessageCount ifNil: [ 0 ]) + 1.
-        kind = 1 ifTrue: [ ^self dispatch: #onPaint: arg: a ].
-        kind = 2 ifTrue: [ ^self dispatch: #onCommand: arg: a ].
-        kind = 3 ifTrue: [ ^self dispatch: #onDestroy: arg: a ].
-        kind = 5 ifTrue: [ ^self dispatchMessage: a wParam: b lParam: c ].
+        view := self viewForMessage: h.
+        kind = 1 ifTrue: [ ^self send: #onPaint: to: view arg: a ].
+        kind = 2 ifTrue: [ ^self send: #onCommand: to: view arg: a ].
+        kind = 3 ifTrue: [ ^self send: #onDestroy: to: view arg: a ].
+        kind = 5 ifTrue: [
+            ^self dispatchMessage: a wParam: b lParam: c to: view ].
         ^0
     ]
 
-    "The old two-argument entry, kept because it is what the DD7 spike suite
-     drives and those tortures are the door's own regression."
+    "The registered owner of `anHwnd`, or — only when nothing is registered
+     for it — the last window, which is what the raw-door spikes rely on."
+    UiSession class >> viewForMessage: anHwnd [
+        ^(self viewFor: anHwnd) ifNil: [ LastWindow ]
+    ]
+
+    "The older entries, kept because the DD7 spike suite drives them and those
+     tortures are the door's own regression. They carry no window, so they
+     resolve the same way an unregistered hwnd does."
+    UiSession class >> wndProc: kind a: a b: b c: c [
+        ^self wndProc: kind hwnd: 0 a: a b: b c: c
+    ]
     UiSession class >> wndProc: kind arg: arg [
-        ^self wndProc: kind a: arg b: 0 c: 0
+        ^self wndProc: kind hwnd: 0 a: arg b: 0 c: 0
     ]
 
     "A reflected Windows message.
@@ -96,18 +122,17 @@ Object subclass: UiSession [
 
      Either way the view answers nil for anything it does not handle, and that
      nil rides all the way back out to DefWindowProcW."
-    UiSession class >> dispatchMessage: msg wParam: wp lParam: lp [
-        | view sel |
-        view := LastWindow.
-        view isNil ifTrue: [ ^nil ].
+    UiSession class >> dispatchMessage: msg wParam: wp lParam: lp to: aView [
+        | sel |
+        aView isNil ifTrue: [ ^nil ].
         sel := self selectorForMessage: msg.
         sel isNil ifTrue: [
-            (view respondsTo: #onMessage:wParam:lParam:) ifFalse: [ ^nil ].
-            ^[ view onMessage: msg wParam: wp lParam: lp ]
+            (aView respondsTo: #onMessage:wParam:lParam:) ifFalse: [ ^nil ].
+            ^[ aView onMessage: msg wParam: wp lParam: lp ]
                 on: Error
                 do: [ :e | self noteHandlerError: e. nil ] ].
-        (view respondsTo: sel) ifFalse: [ ^nil ].
-        ^[ view perform: sel with: msg with: wp with: lp ]
+        (aView respondsTo: sel) ifFalse: [ ^nil ].
+        ^[ aView perform: sel with: msg with: wp with: lp ]
             on: Error
             do: [ :e | self noteHandlerError: e. nil ]
     ]
@@ -154,16 +179,19 @@ Object subclass: UiSession [
         ^self routeMessages: (Array new: 0)
     ]
 
-    "Route to the current view, protecting the send HERE — inside the entry —
+    "Route to a NAMED view, protecting the send HERE — inside the entry —
      because the door contains raises rather than propagating them outward."
-    UiSession class >> dispatch: aSelector arg: arg [
-        | view |
-        view := LastWindow.
-        view isNil ifTrue: [ ^0 ].
-        (view respondsTo: aSelector) ifFalse: [ ^0 ].
-        ^[ view perform: aSelector with: arg ]
+    UiSession class >> send: aSelector to: aView arg: arg [
+        aView isNil ifTrue: [ ^0 ].
+        (aView respondsTo: aSelector) ifFalse: [ ^0 ].
+        ^[ aView perform: aSelector with: arg ]
             on: Error
             do: [ :e | self noteHandlerError: e. 0 ]
+    ]
+
+    "The old spelling, still used by anything that means `the current view`."
+    UiSession class >> dispatch: aSelector arg: arg [
+        ^self send: aSelector to: LastWindow arg: arg
     ]
 
     UiSession class >> noteHandlerError: anException [
