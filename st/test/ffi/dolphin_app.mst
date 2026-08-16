@@ -184,6 +184,19 @@ ShellView subclass: DolphinApp [
         ^model value
     ]
 
+    "Give the shell a usable size and lay out into it. The gates resize to
+     prove the arrangement tracks the container; the demo just wants a window
+     a person can look at."
+    resizeTo: w by: h [
+        User32
+            setWindowPos: handle
+            hWndInsertAfter: 0
+            x: 0 y: 0 cx: w cy: h
+            uFlags: 16r16.        "SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE"
+        self layout.
+        ^self
+    ]
+
     textOfA [ ^User32 getWindowText: fieldA handle ]
     textOfB [ ^User32 getWindowText: fieldB handle ]
 ]

@@ -141,6 +141,16 @@ classes: two fields one model, converters and the bad-input revert, commands
 with `queryCommand:` enablement, menus, a worker-backed long command, and
 accelerators via `UI.AcceleratorTable`.
 
-**Still owed for DD10:** a VISIBLE shell. Everything is headless-verified —
-windows are created, shown and destroyed within a gate, and nothing has been
-left on screen for a human to look at.
+**Still owed for DD10: a VISIBLE shell, and the first attempt did not count.**
+
+`demos/dolphin_app.dart` puts a window on screen with a menu and two fields
+attached, and that is all it proves. Judged as a demo it is not interesting:
+it has no real event loop of its own beyond a `UiSession pump` slice in a
+Dart `while`, nothing was driven through it by hand, and a screenshot of a
+window is not evidence that anything in it works. Keeping it as "done" would
+have been the same self-deception this project keeps writing gates to avoid.
+
+The demo file stays — it is a harness worth having — but **the item is still
+open**, and what it actually needs is: a shell that owns its own message loop,
+keyboard input reaching a control, a menu opened and clicked by a person, and
+the accelerator firing. None of that is shown yet.
