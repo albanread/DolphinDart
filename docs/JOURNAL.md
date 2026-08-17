@@ -589,3 +589,59 @@ dispatch started working) and worth being clear that they are not the fix.
 **Next, and it is now a narrow question:** follow WM_NOTIFY from
 `View>>wmNotify:wParam:lParam:` to the child control and find where the chain
 stops. The counters are in place to answer it in one run.
+
+---
+
+## DD11 — the notify dispatch: ONE LINE was stopping every handler
+
+`ControlView>>nmNotify:` decodes a notification's code as
+
+    pNMHDR int32AtOffset: 8
+
+which is right for Win32's 12-byte `NMHDR` — `{ HWND; UINT_PTR; UINT code; }`
+with 4-byte pointers — and wrong here, where the two leading fields are 8 bytes
+and `code` sits at **16**. So every notification decoded as a slice of
+`idFrom`, missed its map, fell through `ifNil: [super nmNotify:]`, missed
+again, and answered nil. **No WM_NOTIFY handler in the port had ever run.**
+
+Counters before and after say it plainly: `Dictionary ()` -> `#getDispInfo->182`.
+
+Fixed as a TRANSLATOR REWRITE (`rewrite_nmhdr_code`), not an override,
+because `TreeView` and `ListView` build their notification maps INLINE inside
+`nmNotify:` — overriding would have meant copying ~30 lines of generated map
+into a hand-maintained file to change one number.
+
+### The standing rule, now tooled
+
+**Dolphin 8 is a 32-bit system. Assume every byte offset and struct size in
+the corpus is wrong here.** `tools/audit_offsets.py` hunts them instead of
+waiting: it reads the real layouts out of the 384 generated structs, then
+reports every literal offset in the wave that is NOT a field of the struct its
+variable is named after. It never rewrites — each needs a judgement.
+
+First run: 7 suspects. Six were the same "index past the header" idiom
+(`pNMHDR asInteger + 12`, `uint32AtOffset: 12`) and are now re-derived
+generically as `NMHDR sizeInBytes`. The seventh was
+`wantCustomDrawItemNotifications:` measuring the paint rect at
+`NMCUSTOMDRAW.rc` = 20 (it is 40 here) — guarded by `customDrawBlock notNil`
+so currently unreachable, and fixed anyway, because it would have come alive
+silently and answered false for every item.
+
+### Where the tree stops now, and it is a clean edge
+
+All 182 callbacks raise `does not understand truncated`, from
+`CCITEM>>textInBuffer:` — the method that writes an item's text into the
+buffer the control supplies. `OS.CCITEM` is Dolphin's ABSTRACT BASE for
+`TVITEMW`/`LVITEMW` and holds `textInBuffer:`, `maskIn:` and the rest of the
+shared item protocol.
+
+**It can never be generated.** genstructs builds structs from winkb, and
+CCITEM is not a Win32 struct — it is Dolphin's own class. So `_struct_super`
+finds no layout for it and both item structs root at `ExternalMemory`,
+inheriting nothing.
+
+**Next, and it is one well-shaped piece:** emit `CCITEM` as a hand-written
+`ExternalMemory` subclass carrying the corpus's shared item protocol (or
+`--reopen` it onto such a base), and let `_struct_super` treat a declared
+struct parent as valid when this port supplies it rather than winkb. Then
+`TVITEMW`/`LVITEMW` inherit `textInBuffer:` and the callbacks can answer.

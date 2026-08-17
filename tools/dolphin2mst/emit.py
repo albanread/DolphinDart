@@ -144,6 +144,60 @@ def _split_top_level(text: str, ch: str) -> List[str]:
     return parts
 
 
+# --- rewrite: the NMHDR notification CODE is at a 32-bit offset -------------
+# Dolphin reads a notification's code as `pNMHDR int32AtOffset: 8`, which is
+# right for Win32's 12-byte NMHDR — `{ HWND hwndFrom; UINT_PTR idFrom; UINT
+# code; }` with 4-byte pointers. On a 64-bit target the two leading fields are
+# 8 bytes each and `code` is at **16**.
+#
+# THIS ONE LINE STOPS EVERY NOTIFICATION. `ControlView>>nmNotify:` and the
+# `TreeView`/`ListView` overrides all decode the code this way and then look it
+# up in their notification map; reading offset 8 yields a slice of `idFrom`, so
+# the lookup misses and NO handler is ever called. Nothing raises — a missed
+# lookup is `ifNil: [super ...]`, which misses again and answers nil.
+#
+# Measured, and only measurable with a picture: a ListView reporting 33 rows
+# and drawing none, and a TreeView that would not expand. Counters in the
+# handlers proved they were never entered at all.
+#
+# REWRITTEN rather than overridden because the two subclass dispatchers build
+# their notification map INLINE, in the same method — overriding them would
+# mean copying ~30 lines of generated map into a hand-maintained file, where it
+# would drift from the corpus. The receiver must be NMHDR-named, so this cannot
+# touch an unrelated `int32AtOffset: 8`.
+_NMHDR_CODE = re.compile(
+    r"(?<![\w.])([A-Za-z_]\w*NMHDR\w*)\s+(u?int32AtOffset:)\s*8(?![\d])",
+    re.I)
+
+# THE SECOND 32-BIT NMHDR IDIOM: "the byte just past the header".
+#
+# A notification structure is `{ NMHDR hdr; <the rest> }`, so Dolphin reaches
+# the payload by adding the header's size — as the literal 12, its size on
+# Win32. On x64 it is 24. Both spellings appear:
+#
+#     self itemStructure fromAddress: pNMHDR asInteger + 12
+#     drawStage := pNMHDR uint32AtOffset: 12
+#
+# and both mean `NMHDR sizeInBytes`. Found by `tools/audit_offsets.py`, which
+# reports every literal that is not a real field offset of the struct its
+# variable is named after; these were seven of them.
+_NMHDR_PAST = re.compile(
+    r"(?<![\w.])([A-Za-z_]\w*NMHDR\w*)\s+"
+    r"(asInteger\s*\+|u?int(?:8|16|32|ptr)?AtOffset:|byteAtOffset:)\s*12(?![\d])",
+    re.I)
+
+
+def rewrite_nmhdr_code(body: str) -> str:
+    """Re-derive the 32-bit NMHDR literals from the generated struct.
+
+    Only a receiver NAMED after NMHDR is touched, so an unrelated
+    `int32AtOffset: 8` elsewhere is left alone. See `tools/audit_offsets.py`
+    for how these are found and `docs/LOOSE_ENDS.md` for the standing rule.
+    """
+    body = _NMHDR_CODE.sub(r"\1 \2 NMHDR _OffsetOf_code", body)
+    return _NMHDR_PAST.sub(r"\1 \2 NMHDR sizeInBytes", body)
+
+
 def rewrite_cascades(body: str, where: str) -> Tuple[str, List[Refusal]]:
     blank = strip_code(body)
     if ";" not in blank:
@@ -1156,6 +1210,7 @@ def emit_class(pf: ParsedFile, renames: Dict[str, str],
             body, r = rewrite_pool_constants(
                 body, where, own_imports, pool_table, shadowed | set(m.arg_names))
             refusals.extend(r)
+            body = rewrite_nmhdr_code(body)
             body = rewrite_selectors(body)
             body, r = rewrite_cascades(body, where); refusals.extend(r)
             body = rewrite_add_class_constant(body)

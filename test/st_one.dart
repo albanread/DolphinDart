@@ -21,21 +21,16 @@ main(List<String> a) {
       if (r.toString().startsWith('ERR')) print('LOAD FAIL ' + f + ': ' + r.toString());
     } } }
   stRun(new File('st/test/ffi/dolphin_browser.mst').readAsStringSync());
-  print('  init -> ' + ev('DolphinBoot initializeViewClasses'));
-  stRun('UiSession startUp.');
-  stRun('BShell := BrowserShell new.'); stRun('BShell create.');
-  stRun('BShell build.'); stRun('BShell show.');
-  stRun('BShell populateTree.');
-  stRun(new File('st/test/ffi/dolphin_browser.mst').readAsStringSync());
   stRun('DolphinBoot initializeViewClasses.'); stRun('UiSession startUp.');
   stRun('BShell := BrowserShell new.'); stRun('BShell create.');
   stRun('BShell build.'); stRun('BShell show.'); stRun('BShell populateTree.');
-  for (var e in ['TVITEMW newBuffer maskIn: 64',
-                 'TVITEMW newBuffer allCallbacks',
-                 'TVITEMEXW newBuffer allCallbacks',
-                 '(TVINSERTSTRUCTW hParent: 0 hInsertAfter: 0) item cChildren',
-                 '(TVINSERTSTRUCTW hParent: 0 hInsertAfter: 0) item mask',
-                 'BShell tree model hasChildren: Magnitude'])
-    print('  ' + e.padRight(52) + ' -> ' + ev(e));
+  for (var e in ['UiSession windowCount',
+                 '(UiSession viewFor: BShell handle) class name',
+                 '(UiSession viewFor: BShell tree handle) isNil',
+                 '(UiSession viewFor: BShell list handle) isNil',
+                 '(SessionManager classVarCurrent inputState lookupWindow: BShell tree handle) isNil',
+                 'BShell tree handle',
+                 'UiSession windows keys asSortedCollection asArray printString'])
+    print('  ' + e.padRight(62) + ' -> ' + ev(e));
   exit(0);
 }

@@ -102,13 +102,42 @@ TreeView extend [
     ]
 ]
 
+"── the custom-draw paint rect ─────────────────────────────────────────
+ `NMCUSTOMDRAW` is `{ NMHDR hdr; DWORD dwDrawStage; HDC hdc; RECT rc; ... }`.
+ On Win32 that puts `rc` at 20, so Dolphin tests the paint rect as
+ `(pNMHDR int32AtOffset: 28) - (pNMHDR int32AtOffset: 20)` — right minus left.
+ On this target `hdc` is pointer-sized and 8-aligned, so `rc` is at 40.
+
+ Reported by `tools/audit_offsets.py` as the one literal the generic NMHDR
+ rewrite cannot reach: these offsets belong to NMCUSTOMDRAW, not to the header.
+
+ CURRENTLY HARMLESS and fixed anyway. The whole expression is guarded by
+ `self customDrawBlock notNil`, and nothing in the port sets one — so it
+ short-circuits before reading anything. It would have come alive silently the
+ first time someone used custom draw, answering false for every item because
+ the rect it measured was four fields to the left."
+TreeView extend [
+    wantCustomDrawItemNotifications: pNMHDR [
+        "OVERRIDDEN: NMCUSTOMDRAW.rc is at 20 on Win32 and 40 here."
+        | rc |
+        rc := NMCUSTOMDRAW _OffsetOf_rc.
+        ^self customDrawBlock notNil and: [
+            (pNMHDR int32AtOffset: rc + RECT _OffsetOf_right)
+                - (pNMHDR int32AtOffset: rc + RECT _OffsetOf_left) > 0
+            and: [ (pNMHDR int32AtOffset: rc + RECT _OffsetOf_bottom)
+                - (pNMHDR int32AtOffset: rc + RECT _OffsetOf_top) > 0 ] ]
+    ]
+]
+
 "── STILL ON THE CORPUS'S 32-BIT OFFSETS ───────────────────────────────
  Bounded sweep, so the boundary is written down rather than left to be
  discovered:
 
-   * `IconicListAbstract>>nmCustomDraw:` reads `dwDrawStage` at 12; on this
-     target `NMCUSTOMDRAW _OffsetOf_dwDrawStage` is 24. Custom draw is not
-     exercised by any gate yet, so it is named here rather than fixed blind.
+   * NOTHING in `st/mvp` any more: `tools/audit_offsets.py` reports clean.
+     The `+ 12` and `AtOffset: 8` families are now re-derived by
+     `rewrite_nmhdr_code` in the translator, which is better than an override
+     because it keeps the corpus's own logic — including the two notification
+     maps that `TreeView` and `ListView` build INLINE inside `nmNotify:`.
    * `ControlView>>ttnGetDispInfoW:` builds an `NMTTDISPINFOW` `fromAddress:
      pNMHDR` with no offset at all, which is correct — the header IS the start
      of that struct — and is listed only so it is not 'fixed' by someone

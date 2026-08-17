@@ -402,7 +402,7 @@ ListControlView subclass: IconicListAbstract [
         "Private - Default handler for the ?VN_BEGINLABELEDITW notification message.
         	N.B. This notification is not necessarily sent by all subclasses."
         | item event | 
-        	item := self itemStructure fromAddress: pNMHDR asInteger + 12.
+        	item := self itemStructure fromAddress: pNMHDR asInteger + NMHDR sizeInBytes.
         	event := LabelEditingEvent forSource: self.event item: item. event object: (self objectFromHandle: item handle).
         	self presenter onAboutToEditLabel: event.
         	event cancel
@@ -429,7 +429,7 @@ ListControlView subclass: IconicListAbstract [
         	draw speed too much as this message can be sent several times per sub-item."
 
         	| drawStage context item | 
-        	(drawStage := pNMHDR uint32AtOffset: 12) == 1
+        	(drawStage := pNMHDR uint32AtOffset: NMHDR sizeInBytes) == 1
         		ifTrue: 
         			["Before any painting"
         			^(self wantCustomDrawItemNotifications: pNMHDR)
@@ -461,7 +461,7 @@ ListControlView subclass: IconicListAbstract [
         	changed. N.B. This notification is not necessarily sent by all subclasses."
         | item object text |
         	SessionManager classVarCurrent inputState removeWindowAt: self getEditControl.
-        	item := self itemStructure fromAddress: pNMHDR asInteger + 12.
+        	item := self itemStructure fromAddress: pNMHDR asInteger + NMHDR sizeInBytes.
         	text := item pszText.
         	self canEditLabels ifFalse: [self disableLabelEdit].
         	text isNil
@@ -477,7 +477,7 @@ ListControlView subclass: IconicListAbstract [
         "Private - Handler for a ?VN_GETDISPINFO notification message.
         	N.B. This notification is not necessarily sent by all subclasses."
         ^self
-        		onDisplayDetailsRequired: (self itemStructure fromAddress: pNMHDR asInteger + 12)
+        		onDisplayDetailsRequired: (self itemStructure fromAddress: pNMHDR asInteger + NMHDR sizeInBytes)
     ]
     nmSelChanged: anExternalAddress [
         "Private - Default handler for the ??N_SELCHANGED notification message.
@@ -488,7 +488,7 @@ ListControlView subclass: IconicListAbstract [
         "Private - Default handler for the ?VN_SETDISPINFO notification message.
         	Forward as an onDisplayDetailsChanged: event."
         ^self
-        		onDisplayDetailsChanged: (self itemStructure fromAddress: pNMHDR asInteger + 12)
+        		onDisplayDetailsChanged: (self itemStructure fromAddress: pNMHDR asInteger + NMHDR sizeInBytes)
     ]
     notificationClass [
         "Private - Answer the class of NMHDR associated with certain notifications sent

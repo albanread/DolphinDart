@@ -539,7 +539,7 @@ IconicListAbstract subclass: TreeView [
         		at: -400 - -419 + 1 put: #tvnItemChanged:;
         		at: -400 - -459 + 1 put: #nmBeginLabelEdit:;
         		at: -400 - -460 + 1 put: #nmEndLabelEdit:;
-        		yourself] value lookup: -399 - (pNMHDR int32AtOffset: 8))
+        		yourself] value lookup: -399 - (pNMHDR int32AtOffset: NMHDR _OffsetOf_code))
         		ifNil: [super nmNotify: pNMHDR]
         		ifNotNil: [:action | self perform: action with: pNMHDR]
     ]
@@ -964,7 +964,7 @@ IconicListAbstract subclass: TreeView [
     tvnItemExpanding: pNMHDR [
         "Private - Default handler for the TVN_ITEMEXPANDINGW notification message."
         | tviParent hParent |
-        	(pNMHDR uint32AtOffset: 12) == 2 ifFalse: [^0].
+        	(pNMHDR uint32AtOffset: NMHDR sizeInBytes) == 2 ifFalse: [^0].
         	tviParent := TVITEMW fromAddress: pNMHDR asInteger + 56.
         	"See if we have been expanded before"
         	tviParent isStateExpandedOnce ifTrue: [^0].

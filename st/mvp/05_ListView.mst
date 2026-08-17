@@ -1505,7 +1505,7 @@ IconicListAbstract subclass: ListView [
         		at: -100 - -181 + 1 put: #lvnEndScroll:;
         		at: -100 - -184 + 1 put: #lvnLinkClick:;
         		at: -100 - -187 + 1 put: #lvnGetEmptyMarkup:;
-        		yourself] value lookup: -99 - (pNMHDR int32AtOffset: 8))
+        		yourself] value lookup: -99 - (pNMHDR int32AtOffset: NMHDR _OffsetOf_code))
         		ifNil: [super nmNotify: pNMHDR]
         		ifNotNil: [:action | self perform: action with: pNMHDR]
     ]
