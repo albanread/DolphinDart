@@ -272,6 +272,51 @@ void ST_loadFresh(Dart_NativeArguments args) {
 }
 
 // stInvokeStatic(String className, String selector, List args) -> result
+// THE METACLASS SHADOWS a class-side lookup must search, in order.
+//
+// Class-side methods live on a `Foo class` shadow. For a BRIDGED core name
+// (Array, String, Integer, … — see `IsBridgedCoreName` in st_loader.cc) a
+// world-file definition is holder-ized to `Array ext`, so ITS class-side
+// methods land on `Array ext class` — a name nothing looked up. The instance
+// side has always consulted the holder; the class side never did.
+//
+// The cost was total and silent: `Array class >> withAll:`, written in
+// st/world/52_collection_ext.mst, had NEVER been reachable, and neither was
+// anything else added to a bridged class's class side from a `.mst` file. It
+// loaded without complaint and was never called — which is the exact
+// silent-no-op shape this port keeps paying for. Found in DD11 when Dolphin's
+// TreeView asked for `Array new:withAll:` from inside a WM_NOTIFY handler,
+// where the contained-error path made even the miss invisible.
+//
+// ORDER MATTERS AND THE HOLDER IS SECOND. The bridge's own `Foo class` is
+// searched first, so this can only fill genuine misses — it never changes an
+// answer that already resolved. Putting the holder first would let a world
+// file silently re-point an existing bridge constructor, which is a different
+// and much larger decision than fixing a lookup.
+static const char* const kClassShadowSuffix[] = {" class", " ext class"};
+static const size_t kNumClassShadows =
+    sizeof(kClassShadowSuffix) / sizeof(kClassShadowSuffix[0]);
+
+// Walk the metaclass-shadow chains for `sel`, finalizing each visited class on
+// demand. Answers a null Function on a miss.
+static RawFunction* LookupClassSideMethod(Thread* thread, Zone* zone,
+                                          const std::string& cls_name,
+                                          const String& sel) {
+  Function& fn = Function::Handle(zone);
+  Class& c = Class::Handle(zone);
+  for (size_t i = 0; i < kNumClassShadows; i++) {
+    const std::string shadow = cls_name + kClassShadowSuffix[i];
+    c = ::st::FindStClassByName(thread, shadow.c_str());
+    while (!c.IsNull()) {
+      if (!c.is_finalized()) ClassFinalizer::FinalizeClass(c);
+      fn ^= c.LookupStaticFunction(sel);
+      if (!fn.IsNull()) return fn.raw();
+      c ^= c.SuperClass();
+    }
+  }
+  return Function::null();
+}
+
 //
 // Sprint 3 of ST_PLAN.md — THE invocation surface: look up a loaded ST class by
 // name, find its CLASS-SIDE (static) method by selector, and call it via
@@ -483,6 +528,33 @@ static void STSendCommon(Dart_NativeArguments args, bool probe) {
       fn ^= c.LookupDynamicFunction(sel);
       if (!fn.IsNull()) break;
       c ^= c.SuperClass();
+    }
+    // CLASS-SIDE FALLBACK — the receiver is a class VALUE and the walk above
+    // could never have found it.
+    //
+    // A send like `Array withAll: #(1 2)` arrives HERE, not at
+    // `stClassSend`, because for a BRIDGED core name the class value is the
+    // prelude's own Dart class and the builder emits a dynamic send. The
+    // receiver is then a Type, `recv.clazz()` is the internal `_Type`, and
+    // that chain holds no Smalltalk at all — so the metaclass shadow was
+    // never consulted and EVERY class-side method written on a bridged class
+    // missed. `Array class >> withAll:` in st/world/52_collection_ext.mst had
+    // never once been reachable.
+    //
+    // `LookupClassSideMethod` searches `Foo class` and then the extension
+    // holder's `Foo ext class`, which is where a world-file reopen of a
+    // bridged name actually lands (st_loader.cc holder-izes it to `Foo ext`).
+    // The " ext" suffix is stripped first because the helper re-adds both
+    // forms — and because the name may already carry it.
+    //
+    // Invoking below passes `recv` as argument 0, which is exactly the
+    // class-side `self` a class-side method expects.
+    if (fn.IsNull() && recv.IsType()) {
+      const Class& tc = Class::Handle(zone, Type::Cast(recv).type_class());
+      std::string base(String::Handle(zone, tc.Name()).ToCString());
+      const size_t sn = base.size();
+      if (sn >= 4 && base.compare(sn - 4, 4, " ext") == 0) base.erase(sn - 4);
+      fn ^= LookupClassSideMethod(thread, zone, base, sel);
     }
     if (fn.IsNull()) {
       if (!probe) {
@@ -1083,15 +1155,10 @@ static void STClassSendCommon(Dart_NativeArguments args, bool probe) {
         }
       }
       if (!cached) {
-        // The metaclass-shadow chain holds class-side methods.
-        Class& c = Class::Handle(
-            zone, ::st::FindStClassByName(thread, (cls_name + " class").c_str()));
-        while (!c.IsNull()) {
-          if (!c.is_finalized()) ClassFinalizer::FinalizeClass(c);
-          fn ^= c.LookupStaticFunction(sel);
-          if (!fn.IsNull()) break;
-          c ^= c.SuperClass();
-        }
+        // The metaclass-shadow chains hold class-side methods — the class's
+        // own `Foo class`, then the extension holder's `Foo ext class` for a
+        // bridged core name. See `LookupClassSideMethod`.
+        fn ^= LookupClassSideMethod(thread, zone, cls_name, sel);
         std::lock_guard<std::mutex> lock(g_ext_mutex);
         g_cls_cache[ckey] = fn.raw();  // the hit, OR null = a known miss
       }

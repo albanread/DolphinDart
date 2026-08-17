@@ -96,10 +96,19 @@ main(List<String> a) {
   // The SHAPE, from the model: Magnitude is the only root and the other two
   // descend from it, so a flat tree fails here and nowhere else.
   expect('the tree has ONE root', 'BShell rootCount', '1');
-  // The COUNT, from Windows. TVM_GETCOUNT — a model correctly filled and a
-  // control that never received the items is the failure this asks about.
+  // The COUNT, from Windows. TVM_GETCOUNT. A dynamic tree holds only its
+  // ROOTS until something is expanded, so this is 1 here — and that is the
+  // assertion, not a compromise: it proves an item reached the control.
+  must(num('BShell treeItemCount') == 1,
+      'and WINDOWS holds the root item');
+
+  // NOW EXPAND, which drives the lazy child insert — TVN_ITEMEXPANDING ->
+  // TVM_INSERTITEM through TVINSERTSTRUCTW. This is the path that needed the
+  // struct sized by hand (winkb models its `item` as an anonymous union), so
+  // it is the one worth asserting.
+  stRun('BShell expandRoots.');
   must(num('BShell treeItemCount') == 3,
-      'and WINDOWS holds all three tree items');
+      'expanding the root inserts its children: WINDOWS holds all three');
 
   // ── THE LIST ────────────────────────────────────────────────────────────
   print('  .. showClass -> ' + ev('(BShell showClass: Integer) name'));

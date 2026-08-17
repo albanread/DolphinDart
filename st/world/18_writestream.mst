@@ -79,6 +79,24 @@ Object subclass: WriteStream [
         position > 0 ifTrue: [ r replaceFrom: 1 to: position with: collection ].
         ^r
     ]
+    "Dolphin's `grabContents`, which its own comment describes as
+     DESTRUCTIVE: `^collection resize: position` — it truncates the backing
+     collection in place and hands it over, on the stated assumption that the
+     stream is going out of scope.
+
+     Here it answers `self contents`, which builds the same correctly-sized
+     collection without mutating the stream. Every caller in the corpus is the
+     documented going-out-of-scope case (`View>>allChildren`,
+     `TreeModelAbstract>>asArray`, `ListView>>selections`), so the ANSWER is
+     identical; the only divergence is that the stream remains usable, which
+     no caller relies on and none can be harmed by.
+
+     A copy rather than a resize because this dialect has no in-place
+     `resize:` primitive for an arbitrary collection — and inventing one to
+     match an optimisation nothing measures would be the wrong trade."
+    grabContents ^ <SequenceableCollection> [
+        ^self contents
+    ]
     << anObject <Object> ^ <Self> [
         anObject isString ifTrue: [ self nextPutAll: anObject. ^self ].
         anObject isCharacter ifTrue: [ self nextPut: anObject. ^self ].

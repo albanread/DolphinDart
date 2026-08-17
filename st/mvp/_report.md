@@ -1,19 +1,19 @@
 # dolphin2mst run report
 
-- inputs: **99** source files (`.cls` + `.pax`)
+- inputs: **101** source files (`.cls` + `.pax`)
 - shared-pool constants available: **7851** from **206** pools
 - loose methods adopted from `.pax`: **1**
-- parsed: **99**  (unbalanced/skipped: 0)
-- emitted: **100** `.mst`
-- methods: **4205**
-- refusals: **191**
+- parsed: **101**  (unbalanced/skipped: 0)
+- emitted: **102** `.mst`
+- methods: **4252**
+- refusals: **192**
 
 ## Refusals by rewrite class
 
 | Rewrite | Count |
 |---|--:|
 | `hashhash` | 84 |
-| `cascade` | 54 |
+| `cascade` | 55 |
 | `pragma` | 25 |
 | `binding-literal` | 15 |
 | `orphan-loose-methods` | 10 |
@@ -101,6 +101,8 @@
 | `String (loose)` | 2 | 0 |
 | `SystemFont` | 5 | 0 |
 | `SystemMetrics` | 77 | 2 |
+| `TVITEMEXW (reopen)` | 9 | 0 |
+| `TVITEMW (reopen)` | 38 | 1 |
 | `TextEdit` | 179 | 21 |
 | `TextPresenter` | 20 | 5 |
 | `TreeModel` | 31 | 1 |

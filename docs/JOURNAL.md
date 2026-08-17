@@ -444,3 +444,84 @@ when the next control refuses to populate.
 the two methods there or make a bridged class's class-side reopen install
 properly. The second is the real fix; the first leaves the trap for the next
 selector.
+
+---
+
+## DD11 — the bridged-class dispatch hole, and st_browser at 1
+
+### `Array` class-side reopens: the hole was in `STSendCommon`, not `stClassSend`
+
+`st_loader.cc` holder-izes a bridged core name — a world file's
+`ArrayedCollection subclass: Array [...]` registers as `Array ext` — so its
+class-side methods land on `Array ext class`. The first fix added that shadow
+to `STClassSendCommon`'s lookup and changed nothing, because **these sends
+never reach `stClassSend` at all**. The error said so and I did not read it:
+`stSend: Array class has no method 'withAll:'`.
+
+For a bridged name the class value is the PRELUDE's Dart class, so the builder
+emits a DYNAMIC send. `STSendCommon` then walks `recv.clazz()` — the internal
+`_Type` — whose chain holds no Smalltalk whatsoever, and the metaclass shadow
+was never consulted from that path.
+
+The fix is a class-side fallback in `STSendCommon`: when the dynamic walk
+misses and the receiver is a Type, look up the metaclass shadows via
+`LookupClassSideMethod` (`Foo class`, then `Foo ext class`), holder second so
+it can only fill genuine misses. `Array class >> withAll:` — dead since the
+day it was written in `52_collection_ext.mst` — now resolves, and
+`new:withAll:` / `writeStream:` sit beside it and work.
+
+### Two more flattenings, both in genstructs, both silent
+
+**Handle typedefs, now derived.** Win32Metadata models every opaque handle as
+a struct with one pointer-sized `Value` field. `HWND` was in a hardcoded name
+list; `HTREEITEM` was not, so it came out as a read-only nested VIEW and
+`TVINSERTSTRUCTW>>hParent:` did not exist. Derived from the metadata now,
+which also stops the list growing once per control family.
+
+**The struct HIERARCHY, now preserved.** `OS.TVITEMEXW` is a subclass of
+`OS.TVITEMW`, which is a subclass of `OS.CCITEM`. genstructs emitted all three
+as flat `ExternalMemory` subclasses, so `maskIn:`, `children:` and
+`beStateExpandedOnce` — which TreeView's notify handlers are written entirely
+over — were unreachable from the subclass that actually receives them.
+
+### Two translator bugs the reopen path surfaced
+
+* The `_OffsetOf_*` rewrite ran BEFORE pool folding, so folding then replaced
+  the name the rewrite had just qualified: `TVITEMW _OffsetOf_mask` came out
+  as `TVITEMW 0`. Those names are SHADOWED now, which is the existing "already
+  bound, do not fold" mechanism.
+* The `bytes` -> `self bytes` rewrite fired on a cascade PART, where `bytes`
+  is a selector rather than the ivar. `TVITEMW class >>
+  initializeCallbackPrototype` is `self new allCallbacks; bytes` and became
+  `; self bytes`, which is not a cascade part and would not parse.
+
+### st_browser: 1 assertion short, and it is a real one
+
+Everything else is green — reflection data, the shell, `populateTree`, the
+tree's SHAPE (one root), the root item reaching Windows, the ListView filled
+from real selectors with the count matching reflection, the text pane, and
+BOTH dependent panes re-driving on a class change. No contained handler
+errors.
+
+The remaining failure is the lazy child insert: a `#dynamic` TreeView holds
+only its roots until expansion, and `expand:` does not yet produce children in
+the control. The whole chain exists and now has its protocol — TVM_EXPAND ->
+TVN_GETDISPINFO -> `onDisplayDetailsRequired:` -> `children:` ->
+TVN_ITEMEXPANDING -> `addItems:inHandle:afterHandle:` -> TVM_INSERTITEM. What
+is not yet established is which link is silent; nothing raises, so it is a
+notification that is not arriving or a lookup answering nil on the quiet path.
+
+**Next:** instrument the tree with a counting subclass to find which
+notification does not arrive, rather than reasoning about it. That is one
+sitting, not a sprint.
+
+### A day lost to two bad readings, worth recording
+
+`gen_snapshot.exe` began failing mid-session. Git-bash reports a Windows
+Application Control block as "Segmentation fault", and a `| tail` pipeline
+made `EXIT=$?` report tail's status rather than the program's — so a policy
+block read as a crash that appeared to come and go. I bisected the VM for it.
+The cause was **Smart App Control**, which arms itself on a clean install and
+flips from evaluation to enforced on its own. Turning it off needs a REBOOT:
+the registry state goes to 0 immediately and the loaded policy keeps
+enforcing until restart.

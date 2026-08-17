@@ -9,6 +9,19 @@
  table layout and probing."
 
 Collection subclass: HashedCollection [
+    "Dolphin's `shrink`: rebuild the table at the optimal size for the number
+     of elements it actually holds. It is a pure SPACE optimisation — every
+     sender discards the result and the collection answers the same thing
+     before and after — so a no-op here is not a stand-in, it is the whole of
+     the contract this implementation can offer.
+
+     This table grows by doubling and never shrinks, which is the only
+     difference: a collection that was briefly large stays large. Found via
+     `UI.ControlView class >> defaultNotificationMap`, which builds its
+     WM_NOTIFY dispatch table with a sparse tooltip entry and then calls
+     `nmMap shrink` — inside a WM_NOTIFY handler, where the contained-error
+     path made the miss invisible."
+    shrink [ ^self ]
 ]
 
 "I map keys to values by hashing: an open-addressed table that doubles

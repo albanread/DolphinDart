@@ -101,4 +101,19 @@ ShellView subclass: BrowserShell [
      out of the slice, Magnitude is the only root and Number/Integer descend
      from it, so a flat tree and a correct one differ here."
     rootCount [ ^roots size ]
+
+    "EXPAND, then count again. A TreeView in `#dynamic` update mode — the
+     default, and what `TreeView>>initialize` installs — inserts only the ROOT
+     items up front and asks for a node's children when it is expanded. So a
+     freshly populated three-object model correctly puts ONE item in the
+     control, and a gate asserting three there is asserting a bug.
+
+     Expanding is also the better test: it drives the lazy-insert path
+     (TVN_ITEMEXPANDING -> `addItems:inHandle:afterHandle:` ->
+     TVM_INSERTITEM through the TVINSERTSTRUCTW this port had to size by
+     hand), which is where the tree either works or does not."
+    expandRoots [
+        roots do: [ :each | tree expand: each ].
+        ^roots size
+    ]
 ]

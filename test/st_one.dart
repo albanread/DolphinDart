@@ -20,11 +20,17 @@ main(List<String> a) {
       var r = stRun(new File(f).readAsStringSync());
       if (r.toString().startsWith('ERR')) print('LOAD FAIL ' + f + ': ' + r.toString());
     } } }
-  for (var e in ['Array withAll: #(1 2)',
-                 '(Array new: 3 withAll: 7) printString',
-                 '(Array with: 1 with: 2) printString',
-                 '(Array writeStream: 4) class name',
-                 '(Array respondsTo: #new:withAll:) printString'])
+  stRun(new File('st/test/ffi/dolphin_browser.mst').readAsStringSync());
+  print('  init -> ' + ev('DolphinBoot initializeViewClasses'));
+  stRun('UiSession startUp.');
+  stRun('BShell := BrowserShell new.'); stRun('BShell create.');
+  stRun('BShell build.'); stRun('BShell show.');
+  stRun('BShell populateTree.');
+  for (var e in ['TVITEMEXW newBuffer allCallbacks',
+                 'TVITEMEXW newBuffer children: 1',
+                 'TVITEMW newBuffer allCallbacks',
+                 'TVITEMEXW superclass name',
+                 'TVITEMW superclass name'])
     print('  ' + e.padRight(40) + ' -> ' + ev(e));
   exit(0);
 }

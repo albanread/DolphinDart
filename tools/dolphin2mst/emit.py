@@ -898,14 +898,23 @@ def emit_loose(cls_name: str, cd, methods, renames, pool_table,
         # genstructs emits alongside the offsets it actually used. A qualified
         # send rather than `self class ...` because these methods appear on
         # both sides.
+        offset_names = set()
         if not force_class_side:
+            offset_names = set(re.findall(
+                r"(?<![\w.])(_OffsetOf_\w+|_\w+_Size)(?![\w:])", body))
             body = re.sub(r"(?<![\w.])(_OffsetOf_\w+|_\w+_Size)(?![\w:])",
                           cls_name + r" \1", body)
         for p in (inherited_imports or []):
             if p not in imports:
                 imports.append(p)
+        # The offset names are SHADOWED so pool folding leaves them alone. It
+        # would otherwise fold the very name this rewrite just qualified —
+        # `_OffsetOf_mask` belongs to `OS.CCITEM` and is reachable through the
+        # INHERITED pool chain, so `TVITEMW _OffsetOf_mask` came back out as
+        # `TVITEMW 0` and the file would not parse. Shadowing is the existing
+        # mechanism for "this name is already bound, do not fold it".
         body, r = rewrite_pool_constants(
-            body, where, imports, pool_table, set(m.arg_names))
+            body, where, imports, pool_table, set(m.arg_names) | offset_names)
         refusals.extend(r)
         # `bytes` is `External.Structure`'s instance variable — the byte object
         # the fields live in — and every accessor Dolphin writes goes through
@@ -914,7 +923,18 @@ def emit_loose(cls_name: str, cd, methods, renames, pool_table,
         # not a unary send, so it read as an unbound global. Rewritten to the
         # send, which is the same value with a name the builder can resolve.
         if not force_class_side:
-            body = re.sub(r"(?<![\w.])bytes(?![\w:])", "self bytes", body)
+            # NOT when it is a cascade PART. `bytes` is a variable in
+            # `bytes uint32AtOffset: ...` and a SELECTOR in
+            # `self new allCallbacks; bytes` — Dolphin's
+            # `TVITEMW class >> initializeCallbackPrototype` has exactly that,
+            # and rewriting it produced `; self bytes`, which is not a cascade
+            # part at all and would not parse.
+            def _bytes_to_self(m, _src=None):
+                before = body[:m.start()].rstrip()
+                if before.endswith(";"):
+                    return m.group(0)
+                return "self bytes"
+            body = re.sub(r"(?<![\w.])bytes(?![\w:])", _bytes_to_self, body)
         body = rewrite_selectors(body)
         body, r = rewrite_cascades(body, where); refusals.extend(r)
         body = rewrite_add_class_constant(body)

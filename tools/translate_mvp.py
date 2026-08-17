@@ -224,6 +224,16 @@ TARGETS = [
     # Its Win32 counterpart, REOPENED onto the generated struct (see --reopen
     # in the cli invocation below).
     "Core/Object Arts/Dolphin/MVP/Views/Common Controls/OS.LVCOLUMNW.cls",
+    # The TREE item structs, for the same reason and by the same mechanism.
+    # `TreeView`'s notify handlers are written over their Smalltalk protocol,
+    # not their fields: `onDisplayDetailsRequired:` calls `children:` and
+    # `maskIn:`, `tvnItemExpanding:` calls `isStateExpandedOnce` /
+    # `beStateExpandedOnce`. Without them the control asks for a node's child
+    # count, gets nothing, concludes the node is childless, and never sends
+    # TVN_ITEMEXPANDING — so expanding a root inserts no children and the tree
+    # silently holds only its roots.
+    "Core/Object Arts/Dolphin/MVP/Views/Common Controls/OS.TVITEMW.cls",
+    "Core/Object Arts/Dolphin/MVP/Views/Common Controls/OS.TVITEMEXW.cls",
 
     "Core/Object Arts/Dolphin/MVP/Views/Common Controls/UI.IconicListUpdateMode.cls",
     "Core/Object Arts/Dolphin/MVP/Views/Common Controls/UI.ListViewUpdateMode.cls",
@@ -391,7 +401,9 @@ def main(argv):
            # Defining it here instead would load after genstructs and drop the
            # layout. The generated class lands in `st/prims/structs`, so the
            # reopen is moved to the late layer alongside the UserLibrary one.
-           "--reopen", "OS.LVCOLUMNW"]
+           "--reopen", "OS.LVCOLUMNW",
+           "--reopen", "OS.TVITEMW",
+           "--reopen", "OS.TVITEMEXW"]
     for r in refs:
         cmd += ["--reference", r]
     cmd += targets

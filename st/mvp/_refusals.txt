@@ -147,6 +147,7 @@ C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Presenters\Text\UI.TextPresenter
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Presenters\Text\UI.TextPresenter.cls:159: [binding-literal] `#{...}` variable-binding literal has no house equivalent
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Presenters\Text\UI.TextPresenter.cls:169: [binding-literal] `#{...}` variable-binding literal has no house equivalent
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Type Converters\UI.TypeConverter.cls:121: [hashhash] `##(self)` folded to a runtime block
+loose:309: [cascade] cascade on a receiver this rewriter cannot bound — splitting it could change evaluation
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Common Controls\UI.IconicListAbstract.cls:50: [binding-literal] `#{...}` variable-binding literal has no house equivalent
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Common Controls\UI.IconicListAbstract.cls:87: [hashhash] `##(IdentityDictionary withAll: {
 								#noIcons -> #(#beNoIco)` folded to a runtime block

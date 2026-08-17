@@ -94,6 +94,31 @@ ArrayedCollection subclass: Array [
         aCollection do: [:e | i := i + 1. arr at: i put: e ].
         ^arr
     ]
+
+    "ANSI class-side constructors Dolphin's control code sends. Both are
+     reached from inside a WM_NOTIFY handler — `new:withAll:` from the
+     TreeView's indent handling, `writeStream:` from a list item's
+     `displayString` — and that handler contains its errors by design, so a
+     miss here never surfaces as a failed assertion, only as a `handler error
+     in ...>>wmNotify:` line.
+
+     THESE COULD NOT WORK UNTIL DD11. `Array` is a bridged core name: a world
+     file's reopen is holder-ized to `Array ext`, so its class-side methods
+     land on `Array ext class`, and no dispatch path looked there. `withAll:`
+     above had been dead since the day it was written. The fix is in
+     `STSendCommon`'s class-side fallback (port-win/dart_st/st_natives.cc)."
+    Array class >> new: anInteger <Integer> withAll: anObject <Object> ^ <Array> [
+        | r |
+        r := self new: anInteger.
+        1 to: anInteger do: [ :i | r at: i put: anObject ].
+        ^r
+    ]
+    Array class >> writeStream: anInteger <Integer> ^ <WriteStream> [
+        ^WriteStream on: (self new: anInteger)
+    ]
+    Array class >> writeStream ^ <WriteStream> [
+        ^self writeStream: 0
+    ]
 ]
 
 Collection subclass: SequenceableCollection [
