@@ -96,19 +96,36 @@ main(List<String> a) {
   // The SHAPE, from the model: Magnitude is the only root and the other two
   // descend from it, so a flat tree fails here and nowhere else.
   expect('the tree has ONE root', 'BShell rootCount', '1');
-  // The COUNT, from Windows. TVM_GETCOUNT. A dynamic tree holds only its
-  // ROOTS until something is expanded, so this is 1 here — and that is the
-  // assertion, not a compromise: it proves an item reached the control.
-  must(num('BShell treeItemCount') == 1,
-      'and WINDOWS holds the root item');
+  // The COUNT, from Windows. TVM_GETCOUNT. Dolphin AUTO-EXPANDS the roots on
+  // refresh when the tree lacks lines-at-root (basicRefreshContents:
+  // `hasLinesAtRoot ifFalse: [roots reverseDo: [:each | self expand: each]]`),
+  // so a freshly populated tree already holds Magnitude AND its child Number.
+  // This assertion was `== 1` for a while and only passed because expansion
+  // was BROKEN — the auto-expand raised inside the contained handler path and
+  // inserted nothing. Asserting 2 asserts both the insert AND the synchronous
+  // expand chain (TVN_ITEMEXPANDING -> TVM_INSERTITEM) in one number.
+  must(num('BShell treeItemCount') == 2,
+      'WINDOWS holds root + auto-expanded child');
 
   // NOW EXPAND, which drives the lazy child insert — TVN_ITEMEXPANDING ->
   // TVM_INSERTITEM through TVINSERTSTRUCTW. This is the path that needed the
   // struct sized by hand (winkb models its `item` as an anonymous union), so
   // it is the one worth asserting.
+  //
+  // STEPWISE, matching what a dynamic tree actually does: expanding a node
+  // inserts that node's IMMEDIATE children only. Magnitude's model child is
+  // Number, so the count goes 1 -> 2; Integer arrives when Number expands,
+  // 2 -> 3. A single "expand root, expect 3" assertion was wrong — it assumed
+  // the whole subtree — and each step here names which expansion broke.
+  // Re-expanding an already-expanded root must be a NO-OP — the
+  // `isStateExpandedOnce` guard, which is exactly the read that used to raise
+  // on the corpus-renamed `dwState` field.
   stRun('BShell expandRoots.');
+  must(num('BShell treeItemCount') == 2,
+      're-expanding the root is idempotent');
+  stRun('BShell tree expand: Number.');
   must(num('BShell treeItemCount') == 3,
-      'expanding the root inserts its children: WINDOWS holds all three');
+      'expanding Number inserts Integer: WINDOWS holds all three');
 
   // ── THE LIST ────────────────────────────────────────────────────────────
   print('  .. showClass -> ' + ev('(BShell showClass: Integer) name'));

@@ -20,11 +20,20 @@ main(List<String> a) {
       var r = stRun(new File(f).readAsStringSync());
       if (r.toString().startsWith('ERR')) print('LOAD FAIL ' + f + ': ' + r.toString());
     } } }
-  for (var e in ['3 truncated', '3.5 truncated', '(3/2) truncated',
-                 '(2@3) truncated', '3 displayString',
-                 'Integer displayString',
-                 'Integer displayString asUtf16String class name',
-                 "'abc' asUtf16String class name"])
-    print('  ' + e.padRight(44) + ' -> ' + ev(e));
+  stRun(new File('st/test/ffi/dolphin_browser.mst').readAsStringSync());
+  stRun('DolphinBoot initializeViewClasses.'); stRun('UiSession startUp.');
+  print('  routed -> ' + ev('BrowserShell routeDolphinMessages'));
+  stRun('BShell := BrowserShell new.'); stRun('BShell create.');
+  stRun('BShell build.'); stRun('BShell show.');
+  print('  before populate -> ' + ev('BShell treeItemCount'));
+  stRun('NotifyTrace reset.');
+  stRun('BShell populateTree.');
+  print('  after populate  -> ' + ev('BShell treeItemCount'));
+  print('  populate counts -> ' + ev('NotifyTrace counts printString'));
+  stRun('NotifyTrace reset.');
+  stRun('BShell expandRoots.');
+  print('  after expand    -> ' + ev('BShell treeItemCount'));
+  print('  counts          -> ' + ev('NotifyTrace counts printString'));
+  print('  rootHandle      -> ' + ev('(BShell tree handleFromObject: Magnitude) isNil'));
   exit(0);
 }

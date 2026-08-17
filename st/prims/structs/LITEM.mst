@@ -13,6 +13,7 @@ ExternalMemory subclass: LITEM [
     LITEM class >> _OffsetOf_stateMask [ ^12 ]
     LITEM class >> _OffsetOf_szID [ ^16 ]
     LITEM class >> _OffsetOf_szUrl [ ^112 ]
+    "corpus constant _OffsetOf_szURL: no unambiguous winkb field (candidates: []) — not aliased"
     LITEM class >> _LITEM_Size [ ^120 ]
 
     mask [ ^self uint32At: 1 ]

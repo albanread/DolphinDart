@@ -24,6 +24,7 @@ ExternalMemory subclass: CHOOSEFONTW [
     CHOOSEFONTW class >> _OffsetOf____MISSING_ALIGNMENT__ [ ^90 ]
     CHOOSEFONTW class >> _OffsetOf_nSizeMin [ ^92 ]
     CHOOSEFONTW class >> _OffsetOf_nSizeMax [ ^96 ]
+    "corpus constant _OffsetOf_flags: no unambiguous winkb field (candidates: []) — not aliased"
     CHOOSEFONTW class >> _CHOOSEFONTW_Size [ ^104 ]
 
     lStructSize [ ^self uint32At: 1 ]

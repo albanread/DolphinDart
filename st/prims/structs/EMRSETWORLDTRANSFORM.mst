@@ -9,6 +9,7 @@ ENHMETARECORD subclass: EMRSETWORLDTRANSFORM [
 
     EMRSETWORLDTRANSFORM class >> _OffsetOf_emr [ ^0 ]
     EMRSETWORLDTRANSFORM class >> _OffsetOf_xform [ ^8 ]
+    "corpus constant _OffsetOf_XFORM: no unambiguous winkb field (candidates: []) — not aliased"
     EMRSETWORLDTRANSFORM class >> _EMRSETWORLDTRANSFORM_Size [ ^16 ]
 
     emr [ ^EMR viewOn: self at: 0 size: 8 ]

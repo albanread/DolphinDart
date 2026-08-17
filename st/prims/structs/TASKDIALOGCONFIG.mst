@@ -32,6 +32,10 @@ ExternalMemory subclass: TASKDIALOGCONFIG [
     TASKDIALOGCONFIG class >> _OffsetOf_pfCallback [ ^200 ]
     TASKDIALOGCONFIG class >> _OffsetOf_lpCallbackData [ ^208 ]
     TASKDIALOGCONFIG class >> _OffsetOf_cxWidth [ ^216 ]
+    "corpus constant _OffsetOf_hFooterIcon: no unambiguous winkb field (candidates: []) — not aliased"
+    "corpus constant _OffsetOf_hMainIcon: no unambiguous winkb field (candidates: []) — not aliased"
+    "corpus constant _OffsetOf_pszFooterIcon: no unambiguous winkb field (candidates: []) — not aliased"
+    "corpus constant _OffsetOf_pszMainIcon: no unambiguous winkb field (candidates: []) — not aliased"
     TASKDIALOGCONFIG class >> _TASKDIALOGCONFIG_Size [ ^224 ]
 
     cbSize [ ^self uint32At: 1 ]

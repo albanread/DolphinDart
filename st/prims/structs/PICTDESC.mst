@@ -10,6 +10,9 @@ ExternalMemory subclass: PICTDESC [
     PICTDESC class >> _OffsetOf_cbSizeofstruct [ ^0 ]
     PICTDESC class >> _OffsetOf_picType [ ^4 ]
     PICTDESC class >> _OffsetOf_Anonymous [ ^8 ]
+    "corpus constant _OffsetOf_dw1: no unambiguous winkb field (candidates: []) — not aliased"
+    "corpus constant _OffsetOf_dw2: no unambiguous winkb field (candidates: []) — not aliased"
+    "corpus constant _OffsetOf_handle: no unambiguous winkb field (candidates: []) — not aliased"
     PICTDESC class >> _PICTDESC_Size [ ^16 ]
 
     cbSizeofstruct [ ^self uint32At: 1 ]

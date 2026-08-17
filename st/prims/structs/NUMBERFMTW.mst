@@ -14,6 +14,8 @@ ExternalMemory subclass: NUMBERFMTW [
     NUMBERFMTW class >> _OffsetOf_lpDecimalSep [ ^16 ]
     NUMBERFMTW class >> _OffsetOf_lpThousandSep [ ^24 ]
     NUMBERFMTW class >> _OffsetOf_NegativeOrder [ ^32 ]
+    "corpus constant _OffsetOf_grouping: no unambiguous winkb field (candidates: []) — not aliased"
+    "corpus constant _OffsetOf_negativeOrder: no unambiguous winkb field (candidates: []) — not aliased"
     NUMBERFMTW class >> _NUMBERFMTW_Size [ ^40 ]
 
     numDigits [ ^self uint32At: 1 ]

@@ -12,6 +12,8 @@ ExternalMemory subclass: HTTP_REQUEST_TOKEN_BINDING_INFO [
     HTTP_REQUEST_TOKEN_BINDING_INFO class >> _OffsetOf_EKM [ ^16 ]
     HTTP_REQUEST_TOKEN_BINDING_INFO class >> _OffsetOf_EKMSize [ ^24 ]
     HTTP_REQUEST_TOKEN_BINDING_INFO class >> _OffsetOf_KeyType [ ^28 ]
+    "corpus constant _OffsetOf_TlsUnique: no unambiguous winkb field (candidates: []) — not aliased"
+    "corpus constant _OffsetOf_TlsUniqueSize: no unambiguous winkb field (candidates: []) — not aliased"
     HTTP_REQUEST_TOKEN_BINDING_INFO class >> _HTTP_REQUEST_TOKEN_BINDING_INFO_Size [ ^32 ]
 
     "tokenBinding: u8* at 0 — no accessor (width unknown); use byteAt: directly"

@@ -12,6 +12,11 @@ SOCKADDR subclass: SOCKADDR_IN6 [
     SOCKADDR_IN6 class >> _OffsetOf_sin6_flowinfo [ ^4 ]
     SOCKADDR_IN6 class >> _OffsetOf_sin6_addr [ ^8 ]
     SOCKADDR_IN6 class >> _OffsetOf_Anonymous [ ^24 ]
+    "corpus constant _OffsetOf_sin6_scope_id: no unambiguous winkb field (candidates: []) — not aliased"
+    "corpus constant _OffsetOf_sin6_scope_struct: no unambiguous winkb field (candidates: []) — not aliased"
+    "corpus constant _OffsetOf_sin_addr: no unambiguous winkb field (candidates: []) — not aliased"
+    "corpus constant _OffsetOf_sin_family: no unambiguous winkb field (candidates: []) — not aliased"
+    "corpus constant _OffsetOf_sin_port: no unambiguous winkb field (candidates: []) — not aliased"
     SOCKADDR_IN6 class >> _SOCKADDR_IN6_Size [ ^32 ]
 
     sin6_family [ ^self uint16At: 1 ]

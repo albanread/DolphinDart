@@ -16,6 +16,9 @@ ExternalMemory subclass: EXCEPINFO [
     EXCEPINFO class >> _OffsetOf_pvReserved [ ^40 ]
     EXCEPINFO class >> _OffsetOf_pfnDeferredFillIn [ ^48 ]
     EXCEPINFO class >> _OffsetOf_scode [ ^56 ]
+    "corpus constant _OffsetOf_pwszDescription: no unambiguous winkb field (candidates: []) — not aliased"
+    "corpus constant _OffsetOf_pwszHelpFile: no unambiguous winkb field (candidates: []) — not aliased"
+    "corpus constant _OffsetOf_pwszSource: no unambiguous winkb field (candidates: []) — not aliased"
     EXCEPINFO class >> _EXCEPINFO_Size [ ^60 ]
 
     wCode [ ^self uint16At: 1 ]

@@ -13,6 +13,8 @@ ExternalMemory subclass: MSG [
     MSG class >> _OffsetOf_lParam [ ^24 ]
     MSG class >> _OffsetOf_time [ ^32 ]
     MSG class >> _OffsetOf_pt [ ^36 ]
+    "corpus constant _OffsetOf_x: no unambiguous winkb field (candidates: []) — not aliased"
+    "corpus constant _OffsetOf_y: no unambiguous winkb field (candidates: []) — not aliased"
     MSG class >> _MSG_Size [ ^48 ]
 
     hwnd [ ^self intptrAt: 1 ]

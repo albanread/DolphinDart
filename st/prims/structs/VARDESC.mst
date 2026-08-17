@@ -13,6 +13,9 @@ ExternalMemory subclass: VARDESC [
     VARDESC class >> _OffsetOf_elemdescVar [ ^24 ]
     VARDESC class >> _OffsetOf_wVarFlags [ ^48 ]
     VARDESC class >> _OffsetOf_varkind [ ^52 ]
+    "corpus constant _OffsetOf_elemdesc: no unambiguous winkb field (candidates: []) — not aliased"
+    "corpus constant _OffsetOf_lpvarValue: no unambiguous winkb field (candidates: []) — not aliased"
+    "corpus constant _OffsetOf_oInst: no unambiguous winkb field (candidates: []) — not aliased"
     VARDESC class >> _VARDESC_Size [ ^56 ]
 
     memid [ ^self int32At: 1 ]

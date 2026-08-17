@@ -9,6 +9,9 @@ SQL_INTERVAL_STRUCT subclass: SQL_YEAR_MONTH_STRUCT [
 
     SQL_YEAR_MONTH_STRUCT class >> _OffsetOf_year [ ^0 ]
     SQL_YEAR_MONTH_STRUCT class >> _OffsetOf_month [ ^4 ]
+    "corpus constant _OffsetOf_fiiller3: no unambiguous winkb field (candidates: []) — not aliased"
+    "corpus constant _OffsetOf_filler1: no unambiguous winkb field (candidates: []) — not aliased"
+    "corpus constant _OffsetOf_filler2: no unambiguous winkb field (candidates: []) — not aliased"
     SQL_YEAR_MONTH_STRUCT class >> _SQL_YEAR_MONTH_STRUCT_Size [ ^8 ]
 
     year [ ^self uint32At: 1 ]

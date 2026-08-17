@@ -9,6 +9,7 @@ ExternalMemory subclass: IP_ADAPTER_INDEX_MAP [
 
     IP_ADAPTER_INDEX_MAP class >> _OffsetOf_Index [ ^0 ]
     IP_ADAPTER_INDEX_MAP class >> _OffsetOf_Name [ ^4 ]
+    "corpus constant _OffsetOf_index: no unambiguous winkb field (candidates: []) — not aliased"
     IP_ADAPTER_INDEX_MAP class >> _IP_ADAPTER_INDEX_MAP_Size [ ^12 ]
 
     index [ ^self uint32At: 1 ]

@@ -34,6 +34,19 @@ ExternalMemory subclass: DEVMODEW [
     DEVMODEW class >> _OffsetOf_dmReserved2 [ ^256 ]
     DEVMODEW class >> _OffsetOf_dmPanningWidth [ ^260 ]
     DEVMODEW class >> _OffsetOf_dmPanningHeight [ ^264 ]
+    "corpus constant _OffsetOf_dmCopies: no unambiguous winkb field (candidates: []) — not aliased"
+    "corpus constant _OffsetOf_dmDefaultSource: no unambiguous winkb field (candidates: []) — not aliased"
+    "corpus constant _OffsetOf_dmDisplayFixedOutput: no unambiguous winkb field (candidates: []) — not aliased"
+    "corpus constant _OffsetOf_dmDisplayFlags: no unambiguous winkb field (candidates: []) — not aliased"
+    "corpus constant _OffsetOf_dmDisplayOrientation: no unambiguous winkb field (candidates: []) — not aliased"
+    "corpus constant _OffsetOf_dmNup: no unambiguous winkb field (candidates: []) — not aliased"
+    "corpus constant _OffsetOf_dmOrientation: no unambiguous winkb field (candidates: []) — not aliased"
+    "corpus constant _OffsetOf_dmPaperLength: no unambiguous winkb field (candidates: []) — not aliased"
+    "corpus constant _OffsetOf_dmPaperSize: no unambiguous winkb field (candidates: []) — not aliased"
+    "corpus constant _OffsetOf_dmPaperWidth: no unambiguous winkb field (candidates: []) — not aliased"
+    "corpus constant _OffsetOf_dmPosition: no unambiguous winkb field (candidates: []) — not aliased"
+    "corpus constant _OffsetOf_dmPrintQuality: no unambiguous winkb field (candidates: []) — not aliased"
+    "corpus constant _OffsetOf_dmScale: no unambiguous winkb field (candidates: []) — not aliased"
     DEVMODEW class >> _DEVMODEW_Size [ ^268 ]
 
     "dmDeviceName: char[] at 0 — no accessor (width unknown); use byteAt: directly"

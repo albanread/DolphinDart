@@ -728,3 +728,49 @@ picture went from an empty pane to the word `Magnitude`.
 **Next:** the same counter technique on the ListView's display path, and on
 `tvnItemExpanding:` past its entry — both now reachable, which they were not
 this morning.
+
+---
+
+## DD11 — the tree EXPANDS and draws its hierarchy
+
+Screenshot: Magnitude / Number (live expand glyph) / Integer, indented, in a
+real SysTreeView32 — the class hierarchy from live reflection.
+
+One proven defect and one wrong assertion, found under the new working method
+(counters first, camera as arbiter — CLAUDE.md rules 4 and 5):
+
+### `dwState` — Dolphin RENAMED an SDK field, and the reopen missed
+
+Counters: `tie_item->2`, then silence. `isStateExpandedOnce` raised at
+`TVITEMW _OffsetOf_dwState` — the corpus's name for what the SDK (and
+therefore winkb, and therefore the generated struct) calls `state`.
+
+Closed as a CLASS in genstructs: the corpus's declared `_OffsetOf_*` NAMES are
+collected per struct (from `.cls` files only — a `.pax` re-declares many
+classes and briefly attributed the whole pool to each), each name matching no
+winkb field is de-Hungarianed (`dwState` -> `state`), and when exactly ONE
+field matches, an alias constant carrying the SAME x64 offset is emitted.
+Ambiguity emits a comment, never a guess. This fixes LVITEMW's `dwState` too,
+before anything sends it.
+
+### The gate asserted a count Dolphin never promises
+
+"WINDOWS holds the root item == 1" failed the moment expansion WORKED —
+because Dolphin auto-expands roots on refresh when the tree lacks
+lines-at-root (`basicRefreshContents`: `hasLinesAtRoot ifFalse: [roots
+reverseDo: [:each | self expand: each]]`). The assertion had only ever passed
+because the auto-expand was raising into the contained path and inserting
+nothing. A probe-vs-gate discrepancy (probe forgot `routeDolphinMessages`)
+briefly made three harnesses give three different counts, which is what forced
+reading the corpus instead of trusting the number.
+
+The gate now asserts the real contract: populate -> 2 (root + auto-expanded
+child, proving insert AND the synchronous expand chain in one number),
+re-expand -> 2 (idempotence — the exact `isStateExpandedOnce` read that used
+to raise), expand Number -> 3.
+
+### Standing
+
+Every functional st_browser assertion is green. The only failure is
+`handlerErrors 12` — the ListView's `textPointerOffset` residual, which is the
+concurrent agent task's acceptance target. 22/23 gates.

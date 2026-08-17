@@ -19,6 +19,15 @@ ExternalMemory subclass: CHARFORMAT2W [
     CHARFORMAT2W class >> _OffsetOf_bAnimation [ ^117 ]
     CHARFORMAT2W class >> _OffsetOf_bRevAuthor [ ^118 ]
     CHARFORMAT2W class >> _OffsetOf_bUnderlineColor [ ^119 ]
+    "corpus constant _OffsetOf_bCharSet: no unambiguous winkb field (candidates: []) — not aliased"
+    "corpus constant _OffsetOf_bPitchAndFamily: no unambiguous winkb field (candidates: []) — not aliased"
+    "corpus constant _OffsetOf_crTextColor: no unambiguous winkb field (candidates: []) — not aliased"
+    "corpus constant _OffsetOf_dwCookie: no unambiguous winkb field (candidates: []) — not aliased"
+    "corpus constant _OffsetOf_dwEffects: no unambiguous winkb field (candidates: []) — not aliased"
+    "corpus constant _OffsetOf_dwMask: no unambiguous winkb field (candidates: []) — not aliased"
+    "corpus constant _OffsetOf_szFaceName: no unambiguous winkb field (candidates: []) — not aliased"
+    "corpus constant _OffsetOf_yHeight: no unambiguous winkb field (candidates: []) — not aliased"
+    "corpus constant _OffsetOf_yOffset: no unambiguous winkb field (candidates: []) — not aliased"
     CHARFORMAT2W class >> _CHARFORMAT2W_Size [ ^120 ]
 
     base [ ^CHARFORMATW viewOn: self at: 0 size: 34 ]

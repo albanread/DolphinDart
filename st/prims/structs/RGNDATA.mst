@@ -9,6 +9,10 @@ ExternalMemory subclass: RGNDATA [
 
     RGNDATA class >> _OffsetOf_rdh [ ^0 ]
     RGNDATA class >> _OffsetOf_Buffer [ ^32 ]
+    "corpus constant _OffsetOf_iType: no unambiguous winkb field (candidates: []) — not aliased"
+    "corpus constant _OffsetOf_nCount: no unambiguous winkb field (candidates: []) — not aliased"
+    "corpus constant _OffsetOf_nRgnSize: no unambiguous winkb field (candidates: []) — not aliased"
+    "corpus constant _OffsetOf_rcBound: no unambiguous winkb field (candidates: []) — not aliased"
     RGNDATA class >> _RGNDATA_Size [ ^40 ]
 
     rdh [ ^RGNDATAHEADER viewOn: self at: 0 size: 32 ]

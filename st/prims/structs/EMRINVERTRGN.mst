@@ -11,6 +11,7 @@ ENHMETARECORD subclass: EMRINVERTRGN [
     EMRINVERTRGN class >> _OffsetOf_rclBounds [ ^8 ]
     EMRINVERTRGN class >> _OffsetOf_cbRgnData [ ^24 ]
     EMRINVERTRGN class >> _OffsetOf_RgnData [ ^28 ]
+    "corpus constant _OffsetOf_RGNDATA: no unambiguous winkb field (candidates: []) — not aliased"
     EMRINVERTRGN class >> _EMRINVERTRGN_Size [ ^36 ]
 
     emr [ ^EMR viewOn: self at: 0 size: 8 ]

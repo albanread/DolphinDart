@@ -11,6 +11,9 @@ ExternalMemory subclass: OVERLAPPED [
     OVERLAPPED class >> _OffsetOf_InternalHigh [ ^8 ]
     OVERLAPPED class >> _OffsetOf_Anonymous [ ^16 ]
     OVERLAPPED class >> _OffsetOf_hEvent [ ^24 ]
+    "corpus constant _OffsetOf_Offset: no unambiguous winkb field (candidates: []) — not aliased"
+    "corpus constant _OffsetOf_OffsetHigh: no unambiguous winkb field (candidates: []) — not aliased"
+    "corpus constant _OffsetOf_Pointer: no unambiguous winkb field (candidates: []) — not aliased"
     OVERLAPPED class >> _OVERLAPPED_Size [ ^32 ]
 
     internal [ ^self intptrAt: 1 ]

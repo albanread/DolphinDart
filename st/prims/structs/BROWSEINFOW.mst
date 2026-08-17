@@ -16,6 +16,8 @@ ExternalMemory subclass: BROWSEINFOW [
     BROWSEINFOW class >> _OffsetOf_lpfn [ ^40 ]
     BROWSEINFOW class >> _OffsetOf_lParam [ ^48 ]
     BROWSEINFOW class >> _OffsetOf_iImage [ ^56 ]
+    "corpus constant _OffsetOf_flags: no unambiguous winkb field (candidates: []) — not aliased"
+    "corpus constant _OffsetOf_lpfnHook: no unambiguous winkb field (candidates: []) — not aliased"
     BROWSEINFOW class >> _BROWSEINFOW_Size [ ^64 ]
 
     hwndOwner [ ^self intptrAt: 1 ]

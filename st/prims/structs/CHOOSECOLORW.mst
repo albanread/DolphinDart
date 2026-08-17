@@ -16,6 +16,7 @@ ExternalMemory subclass: CHOOSECOLORW [
     CHOOSECOLORW class >> _OffsetOf_lCustData [ ^48 ]
     CHOOSECOLORW class >> _OffsetOf_lpfnHook [ ^56 ]
     CHOOSECOLORW class >> _OffsetOf_lpTemplateName [ ^64 ]
+    "corpus constant _OffsetOf_flags: no unambiguous winkb field (candidates: []) — not aliased"
     CHOOSECOLORW class >> _CHOOSECOLORW_Size [ ^72 ]
 
     lStructSize [ ^self uint32At: 1 ]

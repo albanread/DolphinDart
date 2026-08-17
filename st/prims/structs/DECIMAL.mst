@@ -11,6 +11,10 @@ ExternalMemory subclass: DECIMAL [
     DECIMAL class >> _OffsetOf_Anonymous1 [ ^8 ]
     DECIMAL class >> _OffsetOf_Hi32 [ ^40 ]
     DECIMAL class >> _OffsetOf_Anonymous2 [ ^48 ]
+    "corpus constant _OffsetOf_hi32: no unambiguous winkb field (candidates: []) — not aliased"
+    "corpus constant _OffsetOf_lo64: no unambiguous winkb field (candidates: []) — not aliased"
+    "corpus constant _OffsetOf_scale: no unambiguous winkb field (candidates: []) — not aliased"
+    "corpus constant _OffsetOf_sign: no unambiguous winkb field (candidates: []) — not aliased"
     DECIMAL class >> _DECIMAL_Size [ ^56 ]
 
     wReserved [ ^self uint16At: 1 ]

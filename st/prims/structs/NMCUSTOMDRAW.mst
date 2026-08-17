@@ -15,6 +15,7 @@ NMHDR subclass: NMCUSTOMDRAW [
     NMCUSTOMDRAW class >> _OffsetOf_dwItemSpec [ ^56 ]
     NMCUSTOMDRAW class >> _OffsetOf_uItemState [ ^64 ]
     NMCUSTOMDRAW class >> _OffsetOf_lItemlParam [ ^72 ]
+    "corpus constant _OffsetOf_lParam: no unambiguous winkb field (candidates: []) — not aliased"
     NMCUSTOMDRAW class >> _NMCUSTOMDRAW_Size [ ^80 ]
 
     hdr [ ^NMHDR viewOn: self at: 0 size: 24 ]

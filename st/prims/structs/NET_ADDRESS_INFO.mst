@@ -9,6 +9,11 @@ ExternalMemory subclass: NET_ADDRESS_INFO [
 
     NET_ADDRESS_INFO class >> _OffsetOf_Format [ ^0 ]
     NET_ADDRESS_INFO class >> _OffsetOf_Anonymous [ ^8 ]
+    "corpus constant _OffsetOf_IpAddress: no unambiguous winkb field (candidates: []) — not aliased"
+    "corpus constant _OffsetOf_Ipv4Address: no unambiguous winkb field (candidates: []) — not aliased"
+    "corpus constant _OffsetOf_Ipv6Address: no unambiguous winkb field (candidates: []) — not aliased"
+    "corpus constant _OffsetOf_NamedAddress_Address: no unambiguous winkb field (candidates: []) — not aliased"
+    "corpus constant _OffsetOf_NamedAddress_Port: no unambiguous winkb field (candidates: []) — not aliased"
     NET_ADDRESS_INFO class >> _NET_ADDRESS_INFO_Size [ ^16 ]
 
     format [ ^self uint32At: 1 ]

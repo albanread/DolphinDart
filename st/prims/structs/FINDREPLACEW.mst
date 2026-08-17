@@ -18,6 +18,7 @@ ExternalMemory subclass: FINDREPLACEW [
     FINDREPLACEW class >> _OffsetOf_lCustData [ ^56 ]
     FINDREPLACEW class >> _OffsetOf_lpfnHook [ ^64 ]
     FINDREPLACEW class >> _OffsetOf_lpTemplateName [ ^72 ]
+    "corpus constant _OffsetOf_flags: no unambiguous winkb field (candidates: []) — not aliased"
     FINDREPLACEW class >> _FINDREPLACEW_Size [ ^80 ]
 
     lStructSize [ ^self uint32At: 1 ]

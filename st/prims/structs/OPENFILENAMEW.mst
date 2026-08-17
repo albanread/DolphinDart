@@ -31,6 +31,8 @@ ExternalMemory subclass: OPENFILENAMEW [
     OPENFILENAMEW class >> _OffsetOf_pvReserved [ ^136 ]
     OPENFILENAMEW class >> _OffsetOf_dwReserved [ ^144 ]
     OPENFILENAMEW class >> _OffsetOf_FlagsEx [ ^148 ]
+    "corpus constant _OffsetOf_flags: no unambiguous winkb field (candidates: []) — not aliased"
+    "corpus constant _OffsetOf_flagsEx: no unambiguous winkb field (candidates: []) — not aliased"
     OPENFILENAMEW class >> _OPENFILENAMEW_Size [ ^152 ]
 
     lStructSize [ ^self uint32At: 1 ]

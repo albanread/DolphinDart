@@ -10,6 +10,7 @@ ENHMETARECORD subclass: EMRMODIFYWORLDTRANSFORM [
     EMRMODIFYWORLDTRANSFORM class >> _OffsetOf_emr [ ^0 ]
     EMRMODIFYWORLDTRANSFORM class >> _OffsetOf_xform [ ^8 ]
     EMRMODIFYWORLDTRANSFORM class >> _OffsetOf_iMode [ ^32 ]
+    "corpus constant _OffsetOf_XFORM: no unambiguous winkb field (candidates: []) — not aliased"
     EMRMODIFYWORLDTRANSFORM class >> _EMRMODIFYWORLDTRANSFORM_Size [ ^36 ]
 
     emr [ ^EMR viewOn: self at: 0 size: 8 ]

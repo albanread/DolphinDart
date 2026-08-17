@@ -29,6 +29,7 @@ ExternalMemory subclass: PRINTDLGEXW [
     PRINTDLGEXW class >> _OffsetOf_lphPropertyPages [ ^120 ]
     PRINTDLGEXW class >> _OffsetOf_nStartPage [ ^128 ]
     PRINTDLGEXW class >> _OffsetOf_dwResultAction [ ^132 ]
+    "corpus constant _OffsetOf_flags: no unambiguous winkb field (candidates: []) — not aliased"
     PRINTDLGEXW class >> _PRINTDLGEXW_Size [ ^136 ]
 
     lStructSize [ ^self uint32At: 1 ]

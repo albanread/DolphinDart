@@ -14,6 +14,7 @@ CCITEM subclass: TCITEMW [
     TCITEMW class >> _OffsetOf_cchTextMax [ ^24 ]
     TCITEMW class >> _OffsetOf_iImage [ ^28 ]
     TCITEMW class >> _OffsetOf_lParam [ ^32 ]
+    "corpus constant _OffsetOf_stateMask: no unambiguous winkb field (candidates: []) — not aliased"
     TCITEMW class >> _TCITEMW_Size [ ^40 ]
 
     mask [ ^self uint32At: 1 ]

@@ -10,6 +10,7 @@ ExternalMemory subclass: TVINSERTSTRUCTW [
     TVINSERTSTRUCTW class >> _OffsetOf_hParent [ ^0 ]
     TVINSERTSTRUCTW class >> _OffsetOf_hInsertAfter [ ^8 ]
     TVINSERTSTRUCTW class >> _OffsetOf_Anonymous [ ^16 ]
+    "corpus constant _OffsetOf_item: no unambiguous winkb field (candidates: []) — not aliased"
     TVINSERTSTRUCTW class >> _TVINSERTSTRUCTW_Size [ ^24 ]
 
     hParent [ ^self intptrAt: 1 ]

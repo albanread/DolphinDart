@@ -21,6 +21,8 @@ ExternalMemory subclass: PAGESETUPDLGW [
     PAGESETUPDLGW class >> _OffsetOf_lpfnPagePaintHook [ ^104 ]
     PAGESETUPDLGW class >> _OffsetOf_lpPageSetupTemplateName [ ^112 ]
     PAGESETUPDLGW class >> _OffsetOf_hPageSetupTemplate [ ^120 ]
+    "corpus constant _OffsetOf_flags: no unambiguous winkb field (candidates: []) — not aliased"
+    "corpus constant _OffsetOf_lpfnHook: no unambiguous winkb field (candidates: []) — not aliased"
     PAGESETUPDLGW class >> _PAGESETUPDLGW_Size [ ^128 ]
 
     lStructSize [ ^self uint32At: 1 ]

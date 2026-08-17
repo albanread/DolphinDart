@@ -9,6 +9,7 @@ ExternalMemory subclass: IP_ADAPTER_ORDER_MAP [
 
     IP_ADAPTER_ORDER_MAP class >> _OffsetOf_NumAdapters [ ^0 ]
     IP_ADAPTER_ORDER_MAP class >> _OffsetOf_AdapterOrder [ ^4 ]
+    "corpus constant _OffsetOf_table: no unambiguous winkb field (candidates: []) — not aliased"
     IP_ADAPTER_ORDER_MAP class >> _IP_ADAPTER_ORDER_MAP_Size [ ^12 ]
 
     numAdapters [ ^self uint32At: 1 ]

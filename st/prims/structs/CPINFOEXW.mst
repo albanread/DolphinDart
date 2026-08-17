@@ -13,6 +13,7 @@ ExternalMemory subclass: CPINFOEXW [
     CPINFOEXW class >> _OffsetOf_UnicodeDefaultChar [ ^18 ]
     CPINFOEXW class >> _OffsetOf_CodePage [ ^20 ]
     CPINFOEXW class >> _OffsetOf_CodePageName [ ^24 ]
+    "corpus constant _OffsetOf_codepage: no unambiguous winkb field (candidates: []) — not aliased"
     CPINFOEXW class >> _CPINFOEXW_Size [ ^32 ]
 
     maxCharSize [ ^self uint32At: 1 ]

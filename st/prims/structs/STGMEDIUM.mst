@@ -11,6 +11,10 @@ ExternalMemory subclass: STGMEDIUM [
     STGMEDIUM class >> _OffsetOf_tymed [ ^0 ]
     STGMEDIUM class >> _OffsetOf_u [ ^4 ]
     STGMEDIUM class >> _OffsetOf_pUnkForRelease [ ^24 ]
+    "corpus constant _OffsetOf_handle: no unambiguous winkb field (candidates: []) — not aliased"
+    "corpus constant _OffsetOf_lpszFileName: no unambiguous winkb field (candidates: []) — not aliased"
+    "corpus constant _OffsetOf_pstg: no unambiguous winkb field (candidates: []) — not aliased"
+    "corpus constant _OffsetOf_pstm: no unambiguous winkb field (candidates: []) — not aliased"
     STGMEDIUM class >> _STGMEDIUM_Size [ ^32 ]
 
     tymed [ ^self uint32At: 1 ]

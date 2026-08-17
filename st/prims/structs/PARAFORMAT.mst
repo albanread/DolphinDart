@@ -17,6 +17,7 @@ ExternalMemory subclass: PARAFORMAT [
     PARAFORMAT class >> _OffsetOf_wAlignment [ ^36 ]
     PARAFORMAT class >> _OffsetOf_cTabCount [ ^38 ]
     PARAFORMAT class >> _OffsetOf_rgxTabs [ ^40 ]
+    "corpus constant _OffsetOf_wEffects: no unambiguous winkb field (candidates: []) — not aliased"
     PARAFORMAT class >> _PARAFORMAT_Size [ ^48 ]
 
     cbSize [ ^self uint32At: 1 ]

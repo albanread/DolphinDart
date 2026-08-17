@@ -22,6 +22,7 @@ CCITEM subclass: LVITEMW [
     LVITEMW class >> _OffsetOf_puColumns [ ^64 ]
     LVITEMW class >> _OffsetOf_piColFmt [ ^72 ]
     LVITEMW class >> _OffsetOf_iGroup [ ^80 ]
+    LVITEMW class >> _OffsetOf_dwState [ ^12 ]  "corpus alias of state"
     LVITEMW class >> _LVITEMW_Size [ ^88 ]
 
     mask [ ^self uint32At: 1 ]

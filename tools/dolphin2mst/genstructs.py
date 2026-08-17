@@ -110,6 +110,28 @@ STRUCT_ROOT = re.compile(r"(?:^|\.)\w*Structure$")
 # methods for. Filled by `corpus_struct_names`, read by the emitter.
 DECLARED_IVARS: Dict[str, List[str]] = {}
 
+# `_OffsetOf_*` names the corpus DECLARES for a struct, per struct base name.
+# The corpus's VALUES are 32-bit and never used; the NAMES are how its methods
+# spell the fields, and Dolphin renamed some against the SDK: the real
+# TVITEMW field is `state` (which is what winkb answers) but Dolphin calls it
+# `dwState`, so a reopened corpus method sends `TVITEMW _OffsetOf_dwState` and
+# misses. Proven by counters in DD11: `isStateExpandedOnce` raised there and
+# tree expansion silently inserted nothing.
+DECLARED_CONSTANTS: Dict[str, set] = {}
+
+# Hungarian prefixes Dolphin's renames carry over the SDK name. Longest first.
+_HUNGARIAN = ("cch", "psz", "dw", "fs", "lp", "ul", "us",
+              "b", "c", "f", "h", "i", "l", "n", "u", "w")
+
+
+def _dehungarian(name: str):
+    """Candidate SDK spellings for a corpus field name, best first."""
+    out = []
+    for p in _HUNGARIAN:
+        if name.startswith(p) and len(name) > len(p) and name[len(p)].isupper():
+            out.append(name[len(p)].lower() + name[len(p) + 1:])
+    return out
+
 # Struct base name -> its corpus superclass base name. Filled by
 # `corpus_struct_names`, read by the emitter so the GENERATED hierarchy matches
 # the corpus's. Flattening every struct to `ExternalMemory` silently drops the
@@ -205,6 +227,14 @@ def corpus_struct_names(root: str) -> collections.Counter:
                 # buffer alive while the struct points at it.
                 if m.group(3):
                     DECLARED_IVARS.setdefault(base, m.group(3).split())
+                # `.cls` ONLY: a `.cls` declares one class, so every constant
+                # in the file is that class's. A `.pax` re-declares MANY
+                # classes, and attributing its whole constant pool to each of
+                # them handed TVITEMW all of LVCOLUMNW's names — dozens of
+                # spurious "not aliased" comments per struct.
+                if path.endswith(".cls"):
+                    for cname in re.findall(r"'_OffsetOf_(\w+)'", raw):
+                        DECLARED_CONSTANTS.setdefault(base, set()).add(cname)
 
     def is_struct(base: str, seen=None) -> bool:
         """Does this class's ancestry reach an `External.Structure`?"""
@@ -413,6 +443,28 @@ def main(argv: List[str]) -> int:
         # is used, silently.
         for _ord, _fname, _ftype, _off in rows:
             lines.append(f"    {name} class >> _OffsetOf_{_fname} [ ^{_off} ]")
+        # CORPUS-NAME ALIASES. Dolphin sometimes renamed an SDK field with a
+        # Hungarian prefix — the real TVITEMW field is `state` (winkb's name,
+        # and the row above) but the corpus spells it `dwState` — so a reopened
+        # corpus method sends `TVITEMW _OffsetOf_dwState` and misses. The
+        # corpus's declared constant NAMES were collected during discovery;
+        # each one that matches no winkb field is de-Hungarianed and, when
+        # exactly ONE field matches, emitted as an alias carrying the SAME
+        # x64 offset. An ambiguous or unmatchable name is emitted as a comment
+        # — a loud refusal at the reopen's first send, never a guess.
+        _fields = {r[1]: r[3] for r in rows}
+        for _cname in sorted(DECLARED_CONSTANTS.get(name, ())):
+            if _cname in _fields:
+                continue
+            _cands = [c for c in _dehungarian(_cname) if c in _fields]
+            if len(_cands) == 1:
+                lines.append(f"    {name} class >> _OffsetOf_{_cname} "
+                             f"[ ^{_fields[_cands[0]]} ]  "
+                             f"\"corpus alias of {_cands[0]}\"")
+            else:
+                lines.append(f"    \"corpus constant _OffsetOf_{_cname}: no "
+                             f"unambiguous winkb field (candidates: "
+                             f"{_cands}) — not aliased\"")
         lines.append(f"    {name} class >> _{name}_Size [ ^{sizes[name]} ]")
         lines.append("")
         for ordinal, fname, ftype, off in rows:

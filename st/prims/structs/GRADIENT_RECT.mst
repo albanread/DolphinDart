@@ -9,6 +9,8 @@ ExternalMemory subclass: GRADIENT_RECT [
 
     GRADIENT_RECT class >> _OffsetOf_UpperLeft [ ^0 ]
     GRADIENT_RECT class >> _OffsetOf_LowerRight [ ^4 ]
+    "corpus constant _OffsetOf_lowerRight: no unambiguous winkb field (candidates: []) — not aliased"
+    "corpus constant _OffsetOf_upperLeft: no unambiguous winkb field (candidates: []) — not aliased"
     GRADIENT_RECT class >> _GRADIENT_RECT_Size [ ^8 ]
 
     upperLeft [ ^self uint32At: 1 ]

@@ -17,6 +17,7 @@ CCITEM subclass: TVITEMW [
     TVITEMW class >> _OffsetOf_iSelectedImage [ ^40 ]
     TVITEMW class >> _OffsetOf_cChildren [ ^44 ]
     TVITEMW class >> _OffsetOf_lParam [ ^48 ]
+    TVITEMW class >> _OffsetOf_dwState [ ^16 ]  "corpus alias of state"
     TVITEMW class >> _TVITEMW_Size [ ^56 ]
 
     mask [ ^self uint32At: 1 ]

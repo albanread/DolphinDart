@@ -84,6 +84,7 @@ main(List<String> a) {
 
   shot('opened');
   stRun('DShell expandRoots.');
+  stRun('DShell tree expand: Number.');
   print('expand    -> ' + ev('DShell treeItemCount'));
   print('pump      -> ' + ev('UiSession runFor: 500'));
   shot('expanded');

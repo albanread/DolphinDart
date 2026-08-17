@@ -8,6 +8,7 @@ ExternalMemory subclass: HTTP_PROPERTY_FLAGS [
     HTTP_PROPERTY_FLAGS class >> new [ ^self new: 4 ]
 
     HTTP_PROPERTY_FLAGS class >> _OffsetOf__bitfield [ ^0 ]
+    "corpus constant _OffsetOf_Present: no unambiguous winkb field (candidates: []) — not aliased"
     HTTP_PROPERTY_FLAGS class >> _HTTP_PROPERTY_FLAGS_Size [ ^4 ]
 
     _bitfield [ ^self uint32At: 1 ]

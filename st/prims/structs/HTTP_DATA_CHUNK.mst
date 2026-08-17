@@ -10,6 +10,14 @@ ExternalMemory subclass: HTTP_DATA_CHUNK [
 
     HTTP_DATA_CHUNK class >> _OffsetOf_DataChunkType [ ^0 ]
     HTTP_DATA_CHUNK class >> _OffsetOf_Anonymous [ ^8 ]
+    "corpus constant _OffsetOf_FromFileHandle_ByteRange: no unambiguous winkb field (candidates: []) — not aliased"
+    "corpus constant _OffsetOf_FromFileHandle_FileHandle: no unambiguous winkb field (candidates: []) — not aliased"
+    "corpus constant _OffsetOf_FromFragmentCacheEx_ByteRange: no unambiguous winkb field (candidates: []) — not aliased"
+    "corpus constant _OffsetOf_FromFragmentCacheEx_pFragmentName: no unambiguous winkb field (candidates: []) — not aliased"
+    "corpus constant _OffsetOf_FromFragmentCache_FragmentNameLength: no unambiguous winkb field (candidates: []) — not aliased"
+    "corpus constant _OffsetOf_FromFragmentCache_pFragmentName: no unambiguous winkb field (candidates: []) — not aliased"
+    "corpus constant _OffsetOf_FromMemory_BufferLength: no unambiguous winkb field (candidates: []) — not aliased"
+    "corpus constant _OffsetOf_FromMemory_pBuffer: no unambiguous winkb field (candidates: []) — not aliased"
     HTTP_DATA_CHUNK class >> _HTTP_DATA_CHUNK_Size [ ^16 ]
 
     dataChunkType [ ^self uint32At: 1 ]

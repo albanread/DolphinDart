@@ -8,6 +8,8 @@ ExternalMemory subclass: IN6_ADDR [
     IN6_ADDR class >> new [ ^self new: 8 ]
 
     IN6_ADDR class >> _OffsetOf_u [ ^0 ]
+    "corpus constant _OffsetOf_Bytes: no unambiguous winkb field (candidates: []) — not aliased"
+    "corpus constant _OffsetOf_Words: no unambiguous winkb field (candidates: []) — not aliased"
     IN6_ADDR class >> _IN6_ADDR_Size [ ^8 ]
 
     "u: _u_e__Union at 0 — no accessor (width unknown); use byteAt: directly"

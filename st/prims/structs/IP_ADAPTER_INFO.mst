@@ -25,6 +25,8 @@ ExternalMemory subclass: IP_ADAPTER_INFO [
     IP_ADAPTER_INFO class >> _OffsetOf_SecondaryWinsServer [ ^640 ]
     IP_ADAPTER_INFO class >> _OffsetOf_LeaseObtained [ ^688 ]
     IP_ADAPTER_INFO class >> _OffsetOf_LeaseExpires [ ^696 ]
+    "corpus constant _OffsetOf_index: no unambiguous winkb field (candidates: []) — not aliased"
+    "corpus constant _OffsetOf_type: no unambiguous winkb field (candidates: []) — not aliased"
     IP_ADAPTER_INFO class >> _IP_ADAPTER_INFO_Size [ ^704 ]
 
     "next: Windows.Win32.NetworkManagement.IpHelper.IP_ADAPTER_INFO* at 0 — no accessor (width unknown); use byteAt: directly"

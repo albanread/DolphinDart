@@ -9,6 +9,7 @@ ExternalMemory subclass: IP_INTERFACE_INFO [
 
     IP_INTERFACE_INFO class >> _OffsetOf_NumAdapters [ ^0 ]
     IP_INTERFACE_INFO class >> _OffsetOf_Adapter [ ^4 ]
+    "corpus constant _OffsetOf_table: no unambiguous winkb field (candidates: []) — not aliased"
     IP_INTERFACE_INFO class >> _IP_INTERFACE_INFO_Size [ ^12 ]
 
     numAdapters [ ^self int32At: 1 ]

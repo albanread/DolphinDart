@@ -13,6 +13,10 @@ ExternalMemory subclass: TRIVERTEX [
     TRIVERTEX class >> _OffsetOf_Green [ ^10 ]
     TRIVERTEX class >> _OffsetOf_Blue [ ^12 ]
     TRIVERTEX class >> _OffsetOf_Alpha [ ^14 ]
+    "corpus constant _OffsetOf_alpha: no unambiguous winkb field (candidates: []) — not aliased"
+    "corpus constant _OffsetOf_blue: no unambiguous winkb field (candidates: []) — not aliased"
+    "corpus constant _OffsetOf_green: no unambiguous winkb field (candidates: []) — not aliased"
+    "corpus constant _OffsetOf_red: no unambiguous winkb field (candidates: []) — not aliased"
     TRIVERTEX class >> _TRIVERTEX_Size [ ^16 ]
 
     x [ ^self int32At: 1 ]

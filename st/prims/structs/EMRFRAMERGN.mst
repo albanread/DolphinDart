@@ -13,6 +13,7 @@ ENHMETARECORD subclass: EMRFRAMERGN [
     EMRFRAMERGN class >> _OffsetOf_ihBrush [ ^28 ]
     EMRFRAMERGN class >> _OffsetOf_szlStroke [ ^32 ]
     EMRFRAMERGN class >> _OffsetOf_RgnData [ ^40 ]
+    "corpus constant _OffsetOf_RGNDATA: no unambiguous winkb field (candidates: []) — not aliased"
     EMRFRAMERGN class >> _EMRFRAMERGN_Size [ ^48 ]
 
     emr [ ^EMR viewOn: self at: 0 size: 8 ]

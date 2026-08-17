@@ -9,6 +9,9 @@ ExternalMemory subclass: MONITORINFOEXW [
 
     MONITORINFOEXW class >> _OffsetOf_monitorInfo [ ^0 ]
     MONITORINFOEXW class >> _OffsetOf_szDevice [ ^40 ]
+    "corpus constant _OffsetOf_dwFlags: no unambiguous winkb field (candidates: []) — not aliased"
+    "corpus constant _OffsetOf_rcMonitor: no unambiguous winkb field (candidates: []) — not aliased"
+    "corpus constant _OffsetOf_rcWork: no unambiguous winkb field (candidates: []) — not aliased"
     MONITORINFOEXW class >> _MONITORINFOEXW_Size [ ^48 ]
 
     monitorInfo [ ^MONITORINFO viewOn: self at: 0 size: 40 ]

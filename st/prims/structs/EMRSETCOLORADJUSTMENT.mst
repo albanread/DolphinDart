@@ -9,6 +9,7 @@ ENHMETARECORD subclass: EMRSETCOLORADJUSTMENT [
 
     EMRSETCOLORADJUSTMENT class >> _OffsetOf_emr [ ^0 ]
     EMRSETCOLORADJUSTMENT class >> _OffsetOf_ColorAdjustment [ ^8 ]
+    "corpus constant _OffsetOf_COLORADJUSTMENT: no unambiguous winkb field (candidates: []) — not aliased"
     EMRSETCOLORADJUSTMENT class >> _EMRSETCOLORADJUSTMENT_Size [ ^32 ]
 
     emr [ ^EMR viewOn: self at: 0 size: 8 ]

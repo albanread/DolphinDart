@@ -11,6 +11,7 @@ ENHMETARECORD subclass: EMREXTSELECTCLIPRGN [
     EMREXTSELECTCLIPRGN class >> _OffsetOf_cbRgnData [ ^8 ]
     EMREXTSELECTCLIPRGN class >> _OffsetOf_iMode [ ^12 ]
     EMREXTSELECTCLIPRGN class >> _OffsetOf_RgnData [ ^16 ]
+    "corpus constant _OffsetOf_RGNDATA: no unambiguous winkb field (candidates: []) — not aliased"
     EMREXTSELECTCLIPRGN class >> _EMREXTSELECTCLIPRGN_Size [ ^24 ]
 
     emr [ ^EMR viewOn: self at: 0 size: 8 ]
