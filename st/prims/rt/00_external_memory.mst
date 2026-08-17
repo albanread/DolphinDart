@@ -128,18 +128,13 @@ Object subclass: ExternalMemory [
     isView [ ^owned ~~ true ]
     address [ ^address ]
 
-    "`asInteger` on an external address IS its address, and Dolphin's code
-     relies on that: `View>>wmNotify:wParam:lParam:` boxes lParam with
-     `asExternalAddress`, and every notification handler then indexes off
-     `pNMHDR asInteger + <offset>`.
-
-     Without it the send fell through to `Number ext >> asInteger`, which is
-     `^self truncated` — so the failure surfaced as `does not understand
-     truncated` on a receiver that is not a number and never was. It cost a
-     sitting to find, because a notification handler's exception is contained
-     twice (the image's `on: Error do:` and then the door) and neither reports
-     a receiver or a frame."
-    asInteger [ ^address ]
+    "`asInteger` is NOT defined here, deliberately — a method of that name
+     cannot be reached from ANY receiver. It is a universal helper aliased to
+     `stTruncated` at every call site, and the helper's slow path re-dispatches
+     as `truncated`, never `asInteger` (tools/audit_helpers.py flags it as a
+     DEAD ALIAS). One was written here anyway during DD11 and sat inert while
+     every WM_NOTIFY handler failed; the real fix is in `_stTruncSlow`
+     (cocoa.dart), which answers `address` for anything carrying one."
     "Dolphin's spelling of the same thing — 'the address of the receiver's
      contents'. `OS.LVCOLUMNW>>pszText:` writes `anUtf16String yourAddress`
      into the struct, which is how a column's caption reaches the control."
