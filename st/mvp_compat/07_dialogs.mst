@@ -1,0 +1,46 @@
+"07_dialogs.mst — the MODAL LOOP, on this port's terms (DD12).
+
+ Dolphin runs a modal dialog by FORKING A GREEN UI PROCESS
+ (`DialogView>>runModalLoop`: `Processor forkMainIfMain`, priorities, a
+ Semaphore to wait on) — process machinery this port deliberately replaced
+ with Dart isolates and does not intend to imitate. The user's standing rule
+ decides what to do instead: 'we are running the dolphin MVP but we are not
+ dolphin... it is the GUI behaviour we need.'
+
+ THE GUI BEHAVIOUR of a modal is: the owner is disabled, the dialog answers
+ input, everything else keeps painting, and control returns to the caller when
+ the dialog closes. That is exactly a NESTED MESSAGE LOOP in the current
+ process — which is also what a native Win32 DialogBox does, and which
+ Dolphin itself offers as `runModalInProcessLoop`:
+
+     self isModal: true.
+     SessionManager current inputState loopWhile: [self isModal]
+
+ So the compat surface is two small pieces: `InputState>>loopWhile:` over the
+ provisional pump, and `runModalLoop` routed to the in-process variant.
+ STACKED modals fall out for free — each `showModal` nests one more
+ `loopWhile:`, and they unwind innermost-first, which is the only order a
+ single-threaded pump can unwind in and the order the goal gate asserts."
+
+InputState extend [
+    "Pump until aBlock answers false. Sleeps when the queue is empty for the
+     same reason `UiSession runFor:` does: a tight PeekMessage loop on an
+     empty queue burns a core. Deferred actions drain inside `pump`, which is
+     what lets a gate drive a modal it is itself blocked under: the action it
+     posted BEFORE entering `showModal` runs from the nested loop."
+    loopWhile: aBlock [
+        [ aBlock value ] whileTrue: [
+            UiSession pump.
+            KernelLibrary sleepEx: 5 bAlertable: false ]
+    ]
+]
+
+DialogView extend [
+    "In-process IS this port's process model, so the fork-a-UI-process loop
+     routes to Dolphin's own in-process variant rather than reimplementing
+     it. `isModal:` false is set by the dialog's own close path, which is what
+     ends the loop."
+    runModalLoop [
+        ^self runModalInProcessLoop
+    ]
+]

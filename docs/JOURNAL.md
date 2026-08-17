@@ -862,3 +862,33 @@ stays — its assertions are countable in a way 705 classes are not.
 
 24/24. The demo now takes the shell class as an argument:
 `... st_demo.dart <layers> ... dolphin_class_browser.mst 60 <shots> ClassBrowserShell`
+
+---
+
+## DD12 begun — the dialog wave is in, the modal loop is decided
+
+The whole dialog family now translates and loads with the suite green:
+`Dialog` (the buffered presenter — `model:` wraps the subject in a
+ValueBuffer, `ok` applies-and-closes, `cancel` discards), `ValueDialog`,
+`DialogView` + `CreateDialog` (its create function — untranslated it was a
+send to nil at the first `create`), `Prompter`, `CommandButton`/`PushButton`
+(there is no `UI.Button`; naming one emitted nothing, silently),
+`Clipboard`, `CommonDialog`/`FileDialog`/`FileOpenDialog` over the generated
+ComDlgLibrary + OPENFILENAMEW floor.
+
+THE MODAL DECISION, made once and recorded (`st/mvp_compat/07_dialogs.mst`):
+Dolphin's `runModalLoop` forks a green UI process; this port's process model
+is isolates, and the user's rule — GUI behaviour, not Dolphin's machinery —
+picks the NESTED PUMP: `InputState>>loopWhile:` over the provisional pump,
+`runModalLoop` routed to Dolphin's own `runModalInProcessLoop`, which was
+already written in exactly that shape. Stacked modals fall out of pump
+nesting and unwind innermost-first. A gate drives a modal it is itself
+blocked under by posting a deferred action BEFORE `showModal` — actions
+drain inside the nested pump.
+
+**Next (the goal gate itself):** a modal probe — DialogView + PushButtons
+over a buffered ValueHolder; assert owner disabled while open, OK applies
+the buffered value and Cancel discards it, `showModal` returns, two stacked
+modals unwind in order. Then the prompter view (programmatic, per the
+not-Dolphin rule), the file-open round trip, clipboard paste — and the
+camera on all of it.

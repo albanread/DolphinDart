@@ -288,6 +288,10 @@ TARGETS = [
     # and is the user's standing rule applied: GUI behaviour, not Dolphin's
     # image machinery. Stacked modals fall out of pump nesting.
     "Core/Object Arts/Dolphin/MVP/Dialogs/UI.DialogView.cls",
+    # Its create function: `DialogView>>creationFunction:dpi:` answers
+    # `CreateDialog rectangle:dpi:` — untranslated that is a send to nil at
+    # the first `create`, before any modal machinery runs.
+    "Core/Object Arts/Dolphin/MVP/Dialogs/UI.CreateDialog.cls",
     # The prompter presenter: prompt + reply TextPresenters over the buffered
     # model. Its VIEW comes from an STB resource in Dolphin; here it is built
     # programmatically in the probe (same rule as above).
