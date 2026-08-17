@@ -167,18 +167,6 @@ Object subclass: DolphinBoot [
                     [ each initialize ]
                         on: Error
                         do: [ :e | failed add: each name ] ] ].
-        "AND `reset`, a THIRD initializer shape. `DisplayMonitor`'s `Instances`
-         cache (hMonitor -> monitor) is built neither in `initialize` (which
-         only wires a settings-changed handler) nor in `onStartup`, but in
-         `reset` — so every window-positioning path found `at:ifAbsentPut:`
-         sent to nil. It cost a sitting inside `showModal`, where the failure
-         is contained and the modal simply never opens.
-
-         LOOSE_ENDS 3.15 predicted the class of this bug and named the wrong
-         selector; the lesson generalises to: find where the class variable is
-         ASSIGNED, do not assume which initializer holds it."
-        { DisplayMonitor } do: [ :each |
-            [ each reset ] on: Error do: [ :e | failed add: each name, ' reset' ] ].
         ^failed asArray
     ]
 
@@ -249,6 +237,18 @@ Object subclass: DolphinBoot [
          `View onStartup` and the list goes away."
         { ListView } do: [ :each |
             [ each onStartup ] on: Error do: [ :e | failed add: each name, ' onStartup' ] ].
+        "AND `reset`, a THIRD initializer shape. `DisplayMonitor`'s `Instances`
+         cache (hMonitor -> monitor) is built neither in `initialize` (which
+         only wires a settings-changed handler) nor in `onStartup`, but in
+         `reset` — so every window-positioning path found `at:ifAbsentPut:`
+         sent to nil. It cost a sitting inside `showModal`, where the failure
+         is contained and the modal simply never opens.
+
+         LOOSE_ENDS 3.15 predicted the class of this bug and named the wrong
+         selector; the lesson generalises to: find where the class variable is
+         ASSIGNED, do not assume which initializer holds it."
+        { DisplayMonitor } do: [ :each |
+            [ each reset ] on: Error do: [ :e | failed add: each name, ' reset' ] ].
         ^failed asArray
     ]
 ]

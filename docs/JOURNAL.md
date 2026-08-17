@@ -952,3 +952,43 @@ discarding, two stacked modals unwinding innermost-first; (c) the camera on
 all of it.
 
 24/24 gates stay green throughout — every piece above is additive compat.
+
+---
+
+## DD12 — `reset` was in the wrong initializer; the last modal link is still open
+
+**Fixed:** the `DisplayMonitor reset` call added last session went into
+`DolphinBoot class >> initializeClasses`, but every gate calls
+`initializeViewClasses` — so it never ran, and `Instances` stayed nil. Moved.
+`DisplayMonitor classVarInstances` now answers a real Dictionary and
+`at:ifAbsentPut:` is no longer sent to nil. (`at:ifAbsentPut:` does exist on
+Dictionary, and LookupTable inherits it — the first suspicion in the previous
+entry was wrong and is retracted here.)
+
+**Still open, and now precisely bounded.** `DisplayMonitor fromHandle: 65537`
+raises `fromHandle_` sent to NULL with the right argument, while
+`DisplayMonitor classVarInstances`, `DisplayMonitor new` and
+`DisplayMonitor new handle: 65537; yourself` all work in the same run. So the
+class resolves, the class-side dispatch reaches SOMETHING, and the receiver
+arriving at that send is null.
+
+**A dead end worth recording so nobody repeats it:** `respondsTo:` cannot see
+class-side methods. It answers false for `DisplayMonitor reset`, which
+demonstrably works — so it is useless for "is this class method installed?"
+and any conclusion drawn from it (I drew one) is void. A real probe is to
+CALL the method.
+
+**Two live hypotheses for the next sitting**, in order of cheapness:
+
+1. The emitted `fromHandle:` body is a multi-line CASCADE INSIDE A BLOCK
+   (`[self new handle: h; yourself]`). If that parses in a way that detaches
+   the method, the send would fall through to the dynamic path — where
+   `recv.clazz()` is `_Type` and the DD11 class-side fallback in
+   `STSendCommon` re-dispatches. Read the emitted text byte-for-byte and try
+   the same shape in a fresh class.
+2. The class-side fallback added in DD11 (`LookupClassSideMethod`, `Foo class`
+   then `Foo ext class`) may be invoking with the wrong argument 0 for a
+   TRANSLATED class reached dynamically. A one-line probe distinguishes them:
+   define the identical method on a fresh class and call it.
+
+24/24 gates stay green — the modal work remains additive compat.

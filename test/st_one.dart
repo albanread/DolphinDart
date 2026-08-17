@@ -13,31 +13,35 @@ String ev(String expr) {
   catch (e) { return 'THREW: ' + e.toString(); }
 }
 main(List<String> a) {
-  for (var g in a) { for (var d in g.split(';')) {
-    d = d.trim(); if (d.isEmpty) continue;
-    var files = d.endsWith('.mst') ? [d] : mstIn(d);
-    for (var f in files) {
-      var r = stRun(new File(f).readAsStringSync());
-      if (r.toString().startsWith('ERR')) print('LOAD FAIL ' + f + ': ' + r.toString());
-    } } }
+  for (var g in a) {
+    for (var d in g.split(';')) {
+      d = d.trim(); if (d.isEmpty) continue;
+      var files = d.endsWith('.mst') ? [d] : mstIn(d);
+      for (var f in files) {
+        var r = stRun(new File(f).readAsStringSync());
+        if (r.toString().startsWith('ERR')) print('LOAD FAIL ' + f + ': ' + r.toString());
+      }
+    }
+  }
   stRun(new File('st/test/ffi/dolphin_modal.mst').readAsStringSync());
-  stRun('DolphinBoot initializeViewClasses.'); stRun('UiSession startUp.');
-  print('  routed -> ' + ev('ModalOwnerShell routeDolphinMessages'));
-  stRun('MO := ModalOwnerShell new.'); stRun('MO create.');
-  print('  init    -> ' + ev('DolphinBoot initializeViewClasses'));
-  print('  build   -> ' + ev('MO build printString'));
-  print('  monInst -> ' + ev('DisplayMonitor reset printString'));
+  print('init   -> ' + ev('DolphinBoot initializeViewClasses'));
+  stRun('UiSession startUp.');
+  print('routed -> ' + ev('ModalOwnerShell routeDolphinMessages'));
+  stRun('MO := ModalOwnerShell new.'); stRun('MO create.'); stRun('MO build.');
   stRun('MO show.');
-  print('  subject -> ' + ev('MO subjectValue'));
-  print('  ownerEn -> ' + ev('MO ownerEnabled'));
-  print('  newPrompt -> ' + ev('MO newPrompt printString'));
-  print('  dlg handle -> ' + ev('MO inner handle'));
-  // Dismiss from INSIDE the modal loop: the action is posted before entering,
-  // and the nested pump drains it while the caller is blocked.
-  stRun("UiSession postAction: [ MO inner edit text: 'edited'. MO inner ok ].");
-  for (var e in ['(DisplayMonitor fromHandle: 65537) printString',
+  print('newPrompt -> ' + ev('MO newPrompt printString'));
+  // Isolate each step of what showModal does, in order.
+  for (var e in ['(DisplayMonitor respondsTo: #reset) printString',
+                 'DisplayMonitor isNil printString',
+                 '(DisplayMonitor respondsTo: #fromHandle:) printString',
+                 'DisplayMonitor new class name',
+                 '(DisplayMonitor new handle: 65537; yourself) class name',
                  'DisplayMonitor classVarInstances printString',
-                 '(DisplayMonitor respondsTo: #fromHandle:) printString'])
+                 '(DisplayMonitor fromHandle: 65537) printString',
+                 '(DisplayMonitor nearestPoint: 100@100) printString',
+                 'MO inner isModal printString',
+                 'MO inner owner class name',
+                 '(MO inner owner isEnabled) printString'])
     print('  ' + e.padRight(46) + ' -> ' + ev(e));
   exit(0);
 }
