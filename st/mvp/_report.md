@@ -1,11 +1,11 @@
 # dolphin2mst run report
 
-- inputs: **103** source files (`.cls` + `.pax`)
+- inputs: **105** source files (`.cls` + `.pax`)
 - shared-pool constants available: **7851** from **206** pools
 - loose methods adopted from `.pax`: **1**
-- parsed: **103**  (unbalanced/skipped: 0)
-- emitted: **104** `.mst`
-- methods: **4327**
+- parsed: **105**  (unbalanced/skipped: 0)
+- emitted: **106** `.mst`
+- methods: **4344**
 - refusals: **192**
 
 ## Refusals by rewrite class
@@ -95,6 +95,8 @@
 | `RGB` | 11 | 0 |
 | `Rectangle` | 98 | 2 |
 | `ScrollEvent` | 16 | 1 |
+| `SelectionChangeEvent` | 12 | 0 |
+| `SelectionChangingEvent` | 5 | 0 |
 | `Shell` | 39 | 2 |
 | `ShellView` | 156 | 11 |
 | `StockBrush` | 7 | 0 |

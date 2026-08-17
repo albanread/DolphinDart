@@ -148,6 +148,29 @@ main(List<String> a) {
   must(ev('BShell text text').contains('Magnitude'),
       'and re-fills the text pane');
 
+  // ── SELECTION DRIVES THE BROWSER ─────────────────────────────────────────
+  // Everything above called showClass: BY HAND. These assert the wiring a
+  // human would actually use: Dolphin's selection API goes through
+  // TVM_SELECTITEM, the CONTROL sends TVN_SELCHANGED (the same notification a
+  // mouse click produces), and the event chain — nmSelChanged: ->
+  // onSelChanged: -> trigger #selectionChanged -> onClassSelected — re-drives
+  // the panes. Before this gate that chain had never fired once.
+  print('  .. select Number -> ' + ev('(BShell select: Number) name'));
+  expect('selecting in the TREE re-fills the list',
+      '(BShell listItemCount = (ClassMirror selectorsOf: Number) size)', 'true');
+  must(ev('BShell shownClassName').contains('Number'),
+      'and the text pane follows the tree selection');
+
+  // A REAL KEYSTROKE. WM_KEYDOWN(VK_DOWN) at the control: the TreeView's own
+  // keyboard handling moves the caret from Number to its next visible node,
+  // Integer, and the SAME notification chain fires. This is the closest a
+  // gate gets to a human at the keyboard — if this passes, arrow keys work.
+  print('  .. VK_DOWN -> ' + ev('BShell pressKey: 16r28'));
+  expect('ARROW KEY moves the selection and re-drives the list',
+      '(BShell listItemCount = (ClassMirror selectorsOf: Integer) size)', 'true');
+  must(ev('BShell shownClassName').contains('Integer'),
+      'and the text pane shows the keyboard-selected class');
+
   expect('no handler error was contained',
       'UiSession handlerErrors printString', "'0'");
 

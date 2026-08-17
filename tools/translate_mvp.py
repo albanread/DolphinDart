@@ -281,6 +281,19 @@ TARGETS = [
     # Small classes, and the whole chain is needed because the constructor is
     # `WindowsEvent class >> window:message:wParam:lParam:`, two levels up.
     "Core/Object Arts/Dolphin/MVP/Base/UI.Event.cls",
+    # The selection-VETO event. `TreeView>>onSelChangingFrom:to:cause:` builds
+    # one for every selection change and reads `event value` back to allow or
+    # refuse it — the protocol a presenter uses to say "you may not leave this
+    # item". Untranslated it was a nil `forSource:`, contained per keystroke:
+    # arrow keys WORKED, but only because containment answered the default.
+    # This is GUI behaviour (the veto), not image machinery, which is why it
+    # is translated rather than stubbed.
+    # ...and its PARENT, which carries the old/new-selection accessors. The
+    # first attempt took only the leaf and the loader auto-vivified
+    # `SelectionChangeEvent` as an Object-rooted stub — severing the chain to
+    # `Event class >> forSource:`, so the miss just moved one class up.
+    "Core/Object Arts/Dolphin/MVP/Base/UI.SelectionChangeEvent.cls",
+    "Core/Object Arts/Dolphin/MVP/Base/UI.SelectionChangingEvent.cls",
     "Core/Object Arts/Dolphin/MVP/Base/UI.WindowsEvent.cls",
     "Core/Object Arts/Dolphin/MVP/Base/UI.PointEvent.cls",
     "Core/Object Arts/Dolphin/MVP/Base/UI.MouseEvent.cls",

@@ -1,0 +1,20 @@
+SelectionChangeEvent subclass: SelectionChangingEvent [
+    | permit |
+
+    canIntercept [
+        	^true
+    ]
+    setSource: aWindow [
+        	permit := true.
+        	super setSource: aWindow
+    ]
+    value [
+        	^permit
+    ]
+    value: aBoolean [
+        	permit := aBoolean
+    ]
+    SelectionChangingEvent class >> new [
+        	^self shouldNotImplement
+    ]
+]

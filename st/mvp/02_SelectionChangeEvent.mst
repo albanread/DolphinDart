@@ -1,0 +1,44 @@
+Event subclass: SelectionChangeEvent [
+    | newSelections oldSelections cause |
+
+    canIntercept [
+        	^self subclassResponsibility
+    ]
+    cause [
+        	^(cause ifNil: [ #unknown ]) 
+    ]
+    cause: aSymbol [
+        "Record the cause of the selection changing, one of:
+        		 #unknown (e.g. for programmatic changes)
+        		#mouse or
+        		#keyboard (for user initiated actions through those input devices)."
+        cause := aSymbol
+    ]
+    newSelection [
+        	^self newSelections notEmpty ifTrue: [self newSelections first]
+    ]
+    newSelection: anObject [
+        	newSelections := anObject ifNotNil: [{anObject}]
+    ]
+    newSelections [
+        	^(newSelections ifNil: [ #() ]) 
+    ]
+    newSelections: anArray [
+        	newSelections := anArray
+    ]
+    oldSelection [
+        	^self oldSelections notEmpty ifTrue: [self oldSelections first]
+    ]
+    oldSelection: anObject [
+        	oldSelections := anObject ifNotNil: [{anObject}]
+    ]
+    oldSelections [
+        	^(oldSelections ifNil: [ #() ]) 
+    ]
+    oldSelections: anArray [
+        	oldSelections := anArray
+    ]
+    value [
+        	^self subclassResponsibility
+    ]
+]

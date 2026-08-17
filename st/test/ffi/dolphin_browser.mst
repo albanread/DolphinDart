@@ -48,7 +48,24 @@ ShellView subclass: BrowserShell [
             center: list;
             south: text;
             yourself).
+        "THE WIRING THAT MAKES IT A BROWSER, exactly as Dolphin does it:
+         selecting in the tree drives the dependent panes through the EVENT
+         chain — TVN_SELCHANGED -> nmSelChanged: -> onSelChanged: ->
+         `presenter trigger: #selectionChanged` -> this observer. (The tree
+         is its own presenter here: `View>>initialize` sets
+         `interactor := presenter := self`.) Until this line, `showClass:`
+         was only ever CALLED by the harness — the selection path had never
+         fired once in the port's life."
+        tree when: #selectionChanged send: #onClassSelected to: self.
         ^self
+    ]
+
+    "The selection observer. `selectionOrNil` reads the control's actual
+     selection back (TVM_GETNEXTITEM/TVGN_CARET -> objectFromHandle:), so the
+     panes follow what WINDOWS says is selected, not what some caller last
+     passed in — a keyboard-moved selection drives this identically."
+    onClassSelected [
+        (tree selectionOrNil) ifNotNil: [ :cls | self showClass: cls ]
     ]
 
     makeControl: aViewClass [
@@ -115,5 +132,28 @@ ShellView subclass: BrowserShell [
     expandRoots [
         roots do: [ :each | tree expand: each ].
         ^roots size
+    ]
+
+    "── driving the selection the two honest ways ──────────────────────────
+     `select:` is Dolphin's own API (TVM_SELECTITEM underneath, which makes
+     the control itself send TVN_SELCHANGED — the same notification a mouse
+     click produces). `pressKey:` synthesizes a real WM_KEYDOWN/WM_KEYUP pair
+     at the CONTROL, so the control's own keyboard handling moves the
+     selection — as close to a human at the keyboard as a gate can get
+     without a robot. VK_DOWN is 16r28."
+    select: aClass [
+        ^tree selection: aClass ifAbsent: [ nil ]
+    ]
+    pressKey: virtualKey [
+        User32 sendMessage: tree handle msg: 16r100 wParam: virtualKey lParam: 0.
+        User32 sendMessage: tree handle msg: 16r101 wParam: virtualKey lParam: 0.
+        ^virtualKey
+    ]
+
+    "What the panes currently SHOW, read back from the controls themselves —
+     the text pane via WM_GETTEXT, the list via its Windows row count — so an
+     assertion about 'the browser followed the selection' asks Windows."
+    shownClassName [
+        ^text text
     ]
 ]
