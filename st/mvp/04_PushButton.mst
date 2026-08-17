@@ -1,0 +1,292 @@
+"PushButton is a <CommandButton> implementing the Windows ""BUTTON"" class, usually in push button mode, i.e. with the BS_PUSHLIKE style. 
+
+Note that we have chosen not to support the text alignment styles of the BUTTON control on PushButton's, because the ability to align the text in the push button rectangle doesn't seem that useful. Alignment styles are, however, supported on the other incarnations of the BUTTON control as represented by the <CheckBox> and <RadioButton> classes, and so if needed the implementation can be borrowed from there.
+
+As of Dolphin 6.1 the Vista Command Link button style, with a note displayed in the form of a sub-title, is supported, but only when running on Vista. Command Link buttons degrade to a normal push button on earlier platforms. 
+
+Instance Variables:
+	image			<Image> or nil, specifying an image to overlay the button.
+	buttonStyle		<integer> Windows style flags for the button.
+	note				<String> or nil. Sub-text used if in Command Link button style.
+	_reserved1		Reserved for future use.
+	_reserved2		Reserved for future use.
+
+Class Variables:
+	ButtonStyleMap		<IdentityDictionary> mapping <Symbol>ic button style names to the corresponding <Integer> style flags."
+
+CommandButton subclass: PushButton [
+    <classVars: ButtonStyleMap>
+    PushButton class >> classVarButtonStyleMap [ ^ButtonStyleMap ]
+    PushButton class >> classVarButtonStyleMap: v [ ^ButtonStyleMap := v ]
+    | image isDefault note _reserved1 _reserved2 |
+
+    bmSetStyle: message wParam: wParam lParam: lParam [
+        "Private - Handler for BM_SETSTYLE message."
+        "Implementation Note: We use this to keep track of the button style which is useful when 
+        	buttons are used in dialogs, because the default dialog proc. toggles between BS_PUSHBUTTON
+        	and BS_DEFPUSHBUTTON as the user navigates around."
+
+        	isDefault := wParam allMask: 1.
+        	^nil
+    ]
+    calculateExtent: aLayoutContext [
+        "Private - Answer the desired window extent (for the receiver within the specified
+        	<LayoutContext>. By default the current extent recorded in the context (which might be a
+        	suggestion or the existing extent) is retained. Subclasses can reimplement it to answer an
+        	fixed preferred extent, or one calculated to fit the current contents of a view (for
+        	example)."
+        "N.B. This should be the complete extent for the Window, including non-client adornments
+        	such as borders, etc."
+
+        	| size |
+        	size := SIZEL new.
+        	self
+        		sendMessage: 5633
+        		wParam: 0
+        		lpParam: size.
+        	^size asPoint
+    ]
+    command: codeInteger id: idInteger [
+        "Private - Responds to a command notification message which has been redirected to us."
+        ^codeInteger == 0 ifTrue: [self presenter performAction]
+    ]
+    defaultWindowStyle [
+        "Private - Answer the default style to use when creating a push button."
+        ^super defaultWindowStyle bitOr: 8192
+    ]
+    getNote [
+        	| length chars |
+        	length := self sendMessage: 5643.
+        	length == 0 ifTrue: [^''].
+        	chars := Utf16String newFixed: length.
+        	length := UInt32Bytes fromInteger: length + 1.
+        	self
+        		sendMessage: 5642
+        		wParam: length yourAddress
+        		lpParam: chars.
+        	^chars asString
+    ]
+    hasFlatAppearance [
+        "Answers true if the receiver has a flat appearance."
+        ^self baseStyleAllMask: 32768
+    ]
+    hasFlatAppearance: aBoolean [
+        "Sets the receiver to have a flat appearance if aBoolean is true.
+        	Note that this has no effect on Windows XP using new look common controls,
+        	as the visual appearance of these is determined by the current theme."
+        self 
+        		baseStyleMask: 32768
+        		set: aBoolean
+        		recreateIfChanged: true	"Recreate required for this change to take effect."
+    ]
+    id: anInteger [
+        "Set the receiver's identifier to the <integer> argument."
+        "Implementation Note: Default push buttons need to keep their shell informed 
+        	of any change because these need to keep track of the default button id
+        	to correctly manage the default when the user navigates to non-button controls."
+
+        	| currentId |
+        	currentId := self id.
+        	(currentId ~~ 0 and: [currentId ~~ anInteger and: [self isDefault]]) 
+        		ifTrue: 
+        			[self isDefault: false.
+        			super id: anInteger.
+        			self isDefault: true]
+        		ifFalse: [super id: anInteger]
+    ]
+    image [
+        "Answers the <Image> used for the receiver's background, or nil if none."
+        ^image
+    ]
+    image: anImageOrNil [
+        "Sets the image displayed by the receiver to anImageOrNil"
+        (image := anImageOrNil) isNil 
+        		ifTrue: 
+        			[self baseStyle: 0 maskedBy: 192.
+        			^self].
+        	self baseStyle: (anImageOrNil imageType = 1 ifTrue: [64] ifFalse: [128])
+        		maskedBy: 192.
+        	self 
+        		sendMessage: 247
+        		wParam: anImageOrNil imageType
+        		lParam: anImageOrNil asParameter
+    ]
+    initialize [
+        	super initialize.
+        	isDefault := false
+    ]
+    isChecked [
+        "Answer whether the receiver is currently pushed."
+        "Implementation Note: The answer is always false if the receiver is the standard push button
+        	style (i.e. not a toggle button or checkbox)"
+
+        	| state |
+        	state := self 
+        				sendMessage: 242
+        				wParam: 0
+        				lParam: 0.
+        	^state allMask: 1
+    ]
+    isChecked: aBoolean [
+        "Set whether the receiver is 'checked'. If the receiver has check-box style, this means it
+        	will be ticked, if toggle-button it will appear pushed in, and if a standard push-button
+        	then this method has no effect."
+        "Note that we don't support the 3rd (indeterminate) state for checkable command buttons"
+        	| buttonState |
+        	buttonState := aBoolean ifTrue: [1] ifFalse: [0].
+        	self 
+        		sendMessage: 241
+        		wParam: buttonState
+        		lParam: 0
+    ]
+    isDefault [
+        "Answer whether the receiver has the default button style."
+        ^isDefault and: [#(#link #push) includes: self style]
+    ]
+    isDefault: aBoolean [
+        "Set the receiver to be the default button in the nearest enclosing Shell according to
+        	aBoolean. If true, the button displays the default button border (however that is
+        	represented in the configured theme), and the user can press it by hitting the ENTER key,
+        	even when the button does not have the input focus. The Shell manages which of its buttons
+        	is the default, and any conflict as to defaultness is resolved such that the last claimant
+        	wins."
+        self isOpen ifTrue: [self setDefault: aBoolean] ifFalse: [isDefault := aBoolean]
+    ]
+    isDefaultButton [
+        "Answer whether the receiver has the default button style."
+        ^self isDefault
+    ]
+    isMultiline [
+        "Answers whether the receiver can display multiple lines of button text."
+        ^self baseStyleAllMask: 8192
+    ]
+    isMultiline: boolean [
+        "Set whether the receiver can display multiple lines of button text."
+        self 
+        		baseStyleMask: 8192
+        		set: boolean
+        		recreateIfChanged: true	"Recreate required for this style change to take effect"
+    ]
+    note [
+        "Answer the note (sub-text) associated with the Command Link button, if any."
+        ^(note ifNil: [ '' ]) 
+    ]
+    note: aString [
+        "Set the note (sub-text) associated with the Command Link button. Has no visual effect if the receiver is not of Command Link button style."
+        | newValue |
+        	newValue := (aString isNil or: [aString isEmpty]) ifFalse: [aString].
+        	note = newValue ifTrue: [^self].
+        	note := newValue.
+        	self setNote
+    ]
+    onDestroyed [
+        "Private - Handler for destroy. Inform the top shell that the receiver is being
+        	destroyed so that, if it is the default button, it may be removed as such"
+        self topShell view buttonRemoved: self.
+        	^super onDestroyed
+    ]
+    onViewCreated [
+        "The receiver's window has been created. Copy any instance variable information
+        	across. Also buttons must inform their shell if they think they are the default
+        	(the last such created default button will assume the default state)."
+        super onViewCreated.
+        	self image: self image.
+        	self isDefault ifTrue: [self setDefault: true].
+        	(note notNil and: [note notEmpty]) ifTrue: [self setNote]
+    ]
+    plainText: aString [
+        "Sets the text of the receiver (and its command description) to aString"
+        super plainText: aString.
+        	self invalidateCalculatedExtent.
+        	commandDescription description: aString
+    ]
+    setDefault: aBoolean [
+        "Private - Inform the receiver's shell of its (non-)default state."
+        self topShell view setDefaultButton: self state: aBoolean
+    ]
+    setNote [
+        	| text |
+        	self style == #link ifFalse: [^self].
+        	text := self note asUtf16String.
+        	self
+        		sendMessageNz: 5641
+        		wParam: 0
+        		lpParam: text
+    ]
+    style [
+        	^ButtonStyleMap 
+        		keyAtValue: (self baseStyle bitAnd: [(15 bitOr: 4096) maskClear: 1] value)
+    ]
+    style: aSymbol [
+        	| styleFlags _casc1 | 
+        	self style == aSymbol ifTrue: [^self].
+        	"We must make sure the button is not checked if switching out of checked button style, as
+        	otherwise it may remain pushed such that it cannot be unpushed."
+        	aSymbol == #check ifFalse: [self isChecked: false].
+        	styleFlags := ButtonStyleMap at: aSymbol ifAbsent: #push.
+        	self isDefault ifTrue: [styleFlags := styleFlags maskSet: 1].
+        	self
+        		baseStyle: styleFlags
+        		maskedBy: 4111
+        		recreateIfChanged: styleFlags == #link._casc1 := "Redraw the button in the new style, and it may need checking/unchecking depending on that new style"
+        	self. _casc1 invalidate. _casc1 invalidateUserInterface
+    ]
+    text: aString [
+        "Sets the text of the receiver (and its command description) to aString"
+        super text: aString.
+        	commandDescription description: aString
+    ]
+    PushButton class >> buttonMessageMappings [
+        	^{244 -> #bmSetStyle:wParam:lParam:}
+    ]
+    PushButton class >> icon [
+        "Answers an <Icon> that can be used to represent this class"
+        ^[self] value defaultIcon
+    ]
+    PushButton class >> initialize [
+        "Private - Initialize the receiver's class variables.
+        		PushButton initialize"
+        self registerMessageMappings: self buttonMessageMappings.
+        	ButtonStyleMap := (IdentityDictionary withAll: {
+        						#push -> 0.
+        						#toggle -> (2 | 4096).
+        						#check -> 2.
+        						#link -> 14
+        					}).
+
+        	"Implementation makes some assumptions about the nature of the default button encoding in the style flags"
+        	self assert: [1 == 1 and: [15 == (14 | 1)]]
+    ]
+    PushButton class >> stbConvertFromVersion1: anArray [
+        "Private - Perform an STB conversion from a version 1 (or earlier) <View> to version 2.
+        	Originally PushButtons held a command symbol, rather than a <CommandDescription>."
+        ^(super stbConvertFromVersion1: anArray)
+        		at: 13 put: (CommandDescription command: (anArray at: 13));
+        		yourself
+    ]
+    PushButton class >> stbConvertFromVersion9: anArray [
+        "Private - Perform an STB conversion from a version 9 (or earlier) <View> to version 10,
+        	i.e. use #reserved1 inst. var. for flags."
+        | array |
+        	array := super stbConvertFromVersion9: anArray.
+        	array at: 17 put: (array at: 17) == 1.
+        	^array
+    ]
+    PushButton class >> stbVersion [
+        	^14
+    ]
+    PushButton class >> uninitialize [
+        	self unregisterMessageMappings: {244}
+    ]
+    PushButton class >> winClassName [
+        "Private - Answer the name of the Windows window class to use when realising the receiver."
+        ^'BUTTON'
+    ]
+    PushButton class >> initializeClassConstants [
+        "Private - Assign the `classConstants:` entries whose values are expressions. GENERATED: Dolphin holds these in its image, so no source assigns them and every read was a nil."
+        ButtonStyleMap := (IdentityDictionary withAll: { #check -> 16r2. #link -> 16rE. #push -> 16r0. #toggle -> 16r1002 }).
+        ^self
+    ]
+]
+
+PushButton initializeClassConstants.

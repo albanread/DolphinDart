@@ -1,0 +1,152 @@
+"`Prompter` is a `<valueDialogPresenter>` that can be used to prompt a user to enter a `<readableString>` response to a question. The `<valueModel>` initially holds the default response and, if the dialog is confirmed, will hold the actual response from the user.
+
+The user input to a `Prompter` can be validated by supplying a validater block. This is passed the current input text as edited, and can follow the original simple pattern of answering true/false for valid/invalid (set through #validationBlock:), or for more flexibility can answer a `ValidationResult`. The returned result includes a valid/invalid boolean value, but also a validation hint represented as an `Exception` subinstance, which need not be an `Error`, but but could also be a `Warning` or even `Notification`. When a hint is provided, the 
+
+## Instance Variables:
+  `promptPresenter`		`<textPresenter>` holding the prompt text.
+  `replyPresenter`		`<textPresenter>` holding the reply text.
+  `validater`			`<monadicValuable>` evaluated against the current user input (the reply text) to distinguish valid from invalid input. Expected to answer a `ValidationResult`
+  `validationResult`		`ValidationResult` provided by the last evaluation of the `validater`
+  `hintBubble`			`MessageBubble` shown for a validation hint
+  `validationDwell`		`Duration` to wait after typing stops before displaying a validation hint (defaults to 1 second)
+  `hintDwell`			`Duration` for which the hint bubble should be shown (defaults to 10 seconds)
+  `flags`				`<integer>` holding various boolean flags
+  `hintFont`			`Font` to be used for the hint bubble text (not caption)"
+
+ValueDialog subclass: Prompter [
+    <classVars: NoHintBubble NoHintWhenEmpty>
+    Prompter class >> classVarNoHintBubble [ ^NoHintBubble ]
+    Prompter class >> classVarNoHintBubble: v [ ^NoHintBubble := v ]
+    Prompter class >> classVarNoHintWhenEmpty [ ^NoHintWhenEmpty ]
+    Prompter class >> classVarNoHintWhenEmpty: v [ ^NoHintWhenEmpty := v ]
+    | promptPresenter replyPresenter validationDwell flags |
+
+    createComponents [
+        "Create the presenters contained by the receiver"
+        super createComponents.
+        	promptPresenter := self add: TextPresenter new name: 'prompt'.
+        	replyPresenter := self add: TextPresenter new name: 'reply'
+    ]
+    createSchematicWiring [
+        "Create the trigger wiring for the receiver"
+        super createSchematicWiring.
+        	replyPresenter
+        		when: #valueChanged
+        		send: #onReplyChanged
+        		to: self
+    ]
+    createValidationResultPresenter [
+        	super createValidationResultPresenter.
+        	"We don't want to show an error bubble if the user hasn't entered any text yet."
+        	validationResultPresenter
+        		filterBlock: [:result | self showHintBubble and: [self hasEmptyValue not or: [self showHintWhenEmpty]]]
+    ]
+    hasEmptyValue [
+        	^self value isEmpty
+    ]
+    initialize [
+        "Private - Initialize the receiver"
+        super initialize.
+        	validationDwell := 1 seconds.
+        	flags := 0
+    ]
+    model: aSubjectModel [
+        "Connect the receiver to aSubjectModel. The reply presenter shares this	same model since it is responsible for editing its value."
+        super model: aSubjectModel.	
+        	replyPresenter model: self model.
+    ]
+    onReplyChanged [
+        "Private - The response has been edited. Initiate delayed validation."
+        self deferredValidate
+    ]
+    prompt: aString [
+        "Set the text to use as the description in the dialog box."
+        promptPresenter value: aString
+    ]
+    showHintBubble [
+        "Answer whether any hint provided by the validater should be shown using a <MessageBubble>. The validation hint is intended to help the user understand why the Ok button is disabled, as not knowing why the input is invalid can be very frustrating. By default the bubble will be shown if a validater is set that sets a hint on the <ValidationResult> it returns."
+        ^flags noMask: 1
+    ]
+    showHintBubble: aBoolean [
+        "Set whether any hint provided by the validater should be shown using a <MessageBubble>. By default the bubble will be shown, but this setting is to allow it to be disabled."
+        flags := flags mask: 1 set: aBoolean not
+    ]
+    showHintWhenEmpty [
+        "Answer whether any hint provided by the validater should be shown when the reply is empty. If the hint bubble is entirely disabled, then this setting has no effect either way."
+        ^flags noMask: 2
+    ]
+    showHintWhenEmpty: aBoolean [
+        "Set whether any hint provided by the validater is shown even if the reply is empty. Sometimes it can be a bit annoying to show a hint when the reply is emptied by deleting all the text, so this setting allows the validation hint bubble to be suppressed if the reply is emptied. By default the hint bubble will be shown even when the reply is empty, although not when the prompter is first opened."
+        flags := flags mask: 2 set: aBoolean not
+    ]
+    validater: aMonadicValuable [
+        "Set the <monadicValuable> used to validate the user's reply. The valuable is passed the current reply text as its argument first argument, and is expected to answer a <ValuationResult>, the value of which indicates whether the text is considered valid in context. The OK button is not enabled until the ValidationResult's value is true. The validator can also pass out a hint details to be displayed in a message bubble if desired (see ValidationResult for the options available). The hint is primarily intended as a means to explain to the user why the OK button is disabled, as this can otherwise be difficult to understand."
+        self model validater: 
+        			[:methodName |
+        			(aMonadicValuable value: methodName)
+        				presenter: replyPresenter;
+        				yourself]
+    ]
+    validationDwell [
+        "Answer the <Duration> to wait after the user has stopped typing before re-validating and possibly showing a hint bubble."
+        ^validationDwell
+    ]
+    validationDwell: aDuration [
+        	validationDwell := aDuration
+    ]
+    validationResultPresenterClass [
+        	^ValidationHintPresenter
+    ]
+    Prompter class >> create: aViewName on: aValueModel prompt: aStringPrompt caption: aStringCaptionOrNil [
+        	| prompter |
+        	(prompter := self create: aViewName on: aValueModel) prompt: aStringPrompt.
+        	aStringCaptionOrNil notNil ifTrue: [
+        		prompter caption: aStringCaptionOrNil ].
+        	^prompter
+    ]
+    Prompter class >> createOn: aValueModel prompt: aStringPrompt caption: aStringCaptionOrNil [
+        "Creates an instance of the receiver on aValueModel and aStringPrompt. The prompter is
+        	given a caption according to aStringCaptionOrNil; if nil a default caption is used. The
+        	prompter is displayed modally, prompting for a String reply. The initial value of the reply
+        	field is the original value of aValueModel. The dialog is not shown."
+        | prompter |
+        	(prompter := self createOn: aValueModel) prompt: aStringPrompt.
+        	aStringCaptionOrNil notNil ifTrue: [prompter caption: aStringCaptionOrNil].
+        	^prompter
+    ]
+    Prompter class >> defaultModel [
+        	^String new
+    ]
+    Prompter class >> icon [
+        "Answers an Icon that can be used to represent this class"
+        ^Icon fromId: '!APPLICATION'
+    ]
+    Prompter class >> on: aValueModel prompt: aStringPrompt caption: aStringCaptionOrNil [
+        "Creates an instance of the receiver on aValueModel and aStringPrompt. The prompter is given
+        	a caption according to aStringCaptionOrNil; if nil a default caption is used. The prompter
+        	is displayed modally, prompting for a String reply. The initial value of the reply field is
+        	the original value of aValueModel.
+
+        	Answers the reply or nil if the dialog is cancelled"
+        ^(self 
+        		createOn: aValueModel
+        		prompt: aStringPrompt
+        		caption: aStringCaptionOrNil) showModal
+    ]
+    Prompter class >> prompt: aStringPrompt [
+        "Creates an instance of the receiver with aStringPrompt and a default caption.
+        	The prompter is displayed modally, prompting for a String reply. 
+
+        	Answer the reply or nil if the dialog is cancelled"
+        ^self prompt: aStringPrompt caption: nil
+    ]
+    Prompter class >> prompt: aStringPrompt caption: aStringCaptionOrNil [
+        "Creates an instance of the receiver with aStringPrompt.
+        	The prompter is given a caption according to aStringCaptionOrNil; if nil
+        	a default caption is used. The prompter is displayed modally, prompting 
+        	for a String reply. 
+
+        	Answer the reply or nil if the dialog is cancelled"
+        ^self on: self defaultModel prompt: aStringPrompt caption: aStringCaptionOrNil 
+    ]
+]

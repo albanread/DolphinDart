@@ -271,6 +271,41 @@ TARGETS = [
     "Core/Object Arts/Dolphin/MVP/Views/Common Controls/UI.TreeViewStaticUpdateMode.cls",
     "Core/Object Arts/Dolphin/MVP/Views/Common Controls/UI.TreeViewVirtualUpdateMode.cls",
 
+    # ── DD12: DIALOGS, the goal-gate wave ──────────────────────────────────
+    # `Dialog` is the BUFFERED presenter: `model:` wraps the subject in a
+    # ValueBuffer (`bufferedModelFor:`), `ok` applies-and-closes, `cancel`
+    # discards — exactly the OK/Cancel contract the goal gate names. ValueBuffer
+    # itself has been in the wave since DD10.
+    "Core/Object Arts/Dolphin/MVP/Dialogs/UI.Dialog.cls",
+    # `ValueDialog` sits between Dialog and both Prompter and CommonDialog —
+    # without it both landed at depth 00 over an auto-vivified stub, re-rooted
+    # at Object with none of the buffered-model contract.
+    "Core/Object Arts/Dolphin/MVP/Dialogs/UI.ValueDialog.cls",
+    # The view side: `answer`, IDOK/IDCANCEL command routing, owner
+    # enable/disable. Its `runModalLoop` forks a green UI process — machinery
+    # this port replaces — so the modal loop is overridden in compat with a
+    # NESTED PUMP until closed, which is what a native Win32 modal does anyway
+    # and is the user's standing rule applied: GUI behaviour, not Dolphin's
+    # image machinery. Stacked modals fall out of pump nesting.
+    "Core/Object Arts/Dolphin/MVP/Dialogs/UI.DialogView.cls",
+    # The prompter presenter: prompt + reply TextPresenters over the buffered
+    # model. Its VIEW comes from an STB resource in Dolphin; here it is built
+    # programmatically in the probe (same rule as above).
+    "Core/Object Arts/Dolphin/MVP/Presenters/Prompters/UI.Prompter.cls",
+    # OK/Cancel need real BUTTON controls. `CommandButton` is the parent that
+    # carries the command plumbing (there is no `UI.Button` in the corpus —
+    # the first attempt named one and silently emitted nothing).
+    "Core/Object Arts/Dolphin/MVP/Views/Buttons/UI.CommandButton.cls",
+    "Core/Object Arts/Dolphin/MVP/Views/Buttons/UI.PushButton.cls",
+    # Clipboard paste is a goal-gate item; the class is a thin wrapper over
+    # User32 clipboard calls the generated floor already has.
+    "Core/Object Arts/Dolphin/MVP/Base/UI.Clipboard.cls",
+    # The file-open round trip: CommonDialog drives the OS dialog through the
+    # generated ComDlgLibrary + OPENFILENAMEW (both already on the floor).
+    "Core/Object Arts/Dolphin/MVP/Dialogs/Common/UI.CommonDialog.cls",
+    "Core/Object Arts/Dolphin/MVP/Dialogs/Common/UI.FileDialog.cls",
+    "Core/Object Arts/Dolphin/MVP/Dialogs/Common/UI.FileOpenDialog.cls",
+
     # ── DD10: the EVENT family ─────────────────────────────────────────────
     # Once Dolphin's own `buildMessageMap` is installed as the routed set, its
     # mouse and key handlers run — and every one of them builds an event

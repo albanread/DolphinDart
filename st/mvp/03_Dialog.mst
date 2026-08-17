@@ -1,0 +1,222 @@
+"Dialog is an abstract <dialogPresenter> superclass for allowing model data to be displayed and edited within a top-level modal dialog window. The fact that a Dialog is modal means that any changes made to the displayed data are usually buffered and not written directly back to the model until they are explicitly applied. This happens, usually after clicking an OK button. Hence a user has the opportunity of cancelling out of a Dialog without any changes being made to the underlying model.
+
+When designing a <dialogPresenter> it is necessary to make an initial decision as to how the model data should be edited. If the model is a mutable object, in that it is legal (and sensible) to modify it in place using its aspect accessors, then it is sensible to treat it as a simple <dialogPresenter> and it can be subclassed directly from Dialog itself. If, on the other hand, the model is to be immutable then the dialog should be implemented as a <valueDialogPresenter> and, most likely, be subclassed from the ValueDialog class. The decision made here can often be quite subtle. On the one hand, making changes to a mutable object seems the most direct approach, however, a <valueDialogPresenter> can often be more flexible because it can be connected to anything that supports the <valueModel> protocol. Often the choice comes down to this: If the identity of the underlying model data must remain unchanged then use a standard <dialogPresenter>. If this is not the case then a <valueDialogPresenter> will be more suitable.
+
+From this point let us consider the operation of a standard <dialogPresenter>. When the dialog is created, and given a subject model on which to operate, an <AspectBuffer> is created onto this subject. This is used to buffer the changes to any of the subject's aspects so that they do not affect the original data directly. It is this <AspectBuffer> that is used as the actual model for the <dialogPresenter>. Interestingly, the use of an <AspectBuffer> imposes an additional factor in the decision to use a standard <dialogPresenter> rather than a <valueDialogPresenter>, this being, that the subject model must be capable of being cloned correctly using #copy. For more details see the comment for AspectBuffer itself.
+
+Instance Variables:
+	confirmed		<boolean> indicating whether the dialog has been confirmed and the changes applied.
+	ownerView	<topView> which owns the dialog and is suspended waiting for it to complete."
+
+Shell subclass: Dialog [
+    <classVars: ValidationTimerId>
+    Dialog class >> classVarValidationTimerId [ ^ValidationTimerId ]
+    Dialog class >> classVarValidationTimerId: v [ ^ValidationTimerId := v ]
+    | confirmed ownerView validationResultPresenter |
+
+    answer [
+        "Answer the model if the receiver was confirmed (with #apply, #ok) or nil otherwise"
+        ^self isConfirmed
+        		ifTrue: [ self model subject ]
+        		ifFalse: [ nil ]
+    ]
+    apply [
+        "Apply the changes cached in the receiver back to the original model. This can be used to
+        	dynamically see the effect of the changes without closing the dialog. More often
+        	it is sent by the #ok method just before closing the associated view."
+        "First ensure that any changes cached in the view with focus (if any) are flushed"
+
+        	self flushChanges.
+        	self model apply.
+        	confirmed := true
+    ]
+    bufferedModelFor: aSubjectModel [
+        "Private - Answers a buffer suitable for the receiver on aSubjectModel. This will become the
+        	actual model to which the receiver is bound. May be overridden by subclasses that
+        	wish to use a different buffering scheme."
+        ^AspectBuffer subject: aSubjectModel
+    ]
+    cancel [
+        "Close the receiver without applying the changes back to the original model"
+        self view close.
+    ]
+    clearValidationResult [
+        	validationResultPresenter value: nil
+    ]
+    createComponents [
+        	super createComponents.
+        	self createValidationResultPresenter
+    ]
+    createSchematicWiring [
+        "Create the trigger wiring for the receiver"
+        super createSchematicWiring.
+        	self
+        		when: #timerTick:
+        		send: #onTimerTick:
+        		to: self
+    ]
+    createValidationResultPresenter [
+        	validationResultPresenter := self add: self validationResultPresenterClass new
+        				name: 'validationResult'
+    ]
+    createView: aResourceNameString [
+        "Private - Creates and connects a view for the receiver from the resource identified
+        	by aResourceNameString. Answers the new view created"
+        self view: (self class loadViewResource: aResourceNameString
+        				inContext: (STBViewContext
+        						parent: (parentPresenter ifNil: [View desktop] ifNotNil: [parentPresenter view])
+        						owner: ownerView)).
+        	^self view
+    ]
+    deferredValidate [
+        	self clearValidationResult.
+        	self view setTimer: 257 interval: self validationDwell
+    ]
+    flushChanges [
+        "Private - First ensure that any changes cached in the view with focus (if any) are flushed"
+        | focus |
+        	focus := View focus.
+        	focus isNil ifFalse: [focus updateModel]
+    ]
+    hintDwell [
+        "Answer the <Duration> for which a hint bubble should be shown before fading away."
+        ^validationResultPresenter dwell
+    ]
+    hintDwell: aDuration [
+        	validationResultPresenter dwell: aDuration
+    ]
+    hintFont [
+        "Answer the `Font` to be used for the main text of any hint bubble. This does not affect the headline text, the font of which is not configurable."
+        ^validationResultPresenter hintFont
+    ]
+    initialize [
+        "Private - Initialize the receiver"
+        super initialize.
+        	self ownerView: View activeOrDesktop.
+        	confirmed := false
+    ]
+    isConfirmed [
+        "Answer true if the receiver has been confirmed and changes have been applied
+        	to the associated model. Can be sent after the dialog view has closed
+        	to determine (usually) if the Ok button was pressed."
+        ^confirmed
+    ]
+    model: aSubjectModel [
+        "Set the model of the receiver to be a buffer onto aSubjectModel."
+        | actualModel |
+        	actualModel := aSubjectModel notNil ifTrue: [self bufferedModelFor: aSubjectModel].
+        	super model: actualModel
+    ]
+    onTimerTick: anInteger [
+        	anInteger == 257 ifTrue: [self validate]
+    ]
+    ownerView [
+        "Answer the view that is parent/owner of the receiver"
+        ^ownerView
+    ]
+    ownerView: aView [
+        "Private - Set the view that is parent/owner of the receiver"
+        ownerView := aView.
+    ]
+    preTranslateKeyboardInput: aMSG [
+        "Answer whether the receiver would like to consume the argument aMSG, which is a keyboard message."
+        (aMSG isKeyPress: 13)
+        		ifTrue: 
+        			[| button |
+        			"If the default button is disabled, it may be helpful to show validation errors"
+        			button := self view defaultButton.
+        			(button notNil and: [button isEnabled not]) ifTrue: [self validate]].
+        	^super preTranslateKeyboardInput: aMSG
+    ]
+    queryOk: aCommandQuery [
+        "Private - Subclasses should override to perform any necessary validation and selectively enable the Ok button as required."
+        aCommandQuery validationResult: self validateModel
+    ]
+    revert [
+        "Revert the changes cached in the receiver and go back to the data in the original subject."
+        self model revert
+    ]
+    show [
+        "Shows the view of the receiver"
+        self view showModeless
+    ]
+    showModal [
+        "Show the receiver's view as a modal dialog.
+        	Answer the model if the receiver was confirmed (with #apply, #okay) or nil otherwise"
+        self showModalView.
+        	^self answer
+    ]
+    showModalView [
+        	self view showModal
+    ]
+    showShell [
+        "Show the receiver a modeless dialog"
+        self show
+    ]
+    subject [
+        "Answer the original model onto which the receiver was created"
+        ^self model subject
+    ]
+    validate [
+        	| result |
+        	self view killTimer: 257.
+        	result := self validateModel.
+        	self validationResult: result.
+        	^result
+    ]
+    validateModel [
+        	^self model validate
+    ]
+    validater [
+        	^self model validater
+    ]
+    validater: aMonadicValuable [
+        "Set the <monadicValuable> used to validate the model. The valuable is passed the current (buffered) model value as its first argument, and is expected to answer a <ValuationResult>, the value of which indicates whether the model should be considered valid in context. The OK button is not enabled until the ValidationResult's value is true. The validator can also pass out a hint details to be displayed in the receiver's <ValidationResultPresenter> if desired (see ValidationResult for the options available). The hint is useful, for example, to explain to the user why the OK button is disabled, as this can otherwise be difficult to understand."
+        self model validater: aMonadicValuable
+    ]
+    validationBlock: aBlock [
+        "Set the <monadicValuable> used to validate the user's reply. The valuable is passed the current reply text as its argument first argument and should answer true/false indicating whether the text is valid or not.
+        	This method is present mainly for backwards compatibility."
+        "Although not deprecated because the old-style true/false result is adequate for many purposes, the alternative of providing a block that returns a full <ValidationResult> (see #validater:) is preferred."
+
+        	self validater: [:response | ValidationResult value: (aBlock value: response)]
+    ]
+    validationDwell [
+        "The <Duration> to wait after the user has stopped typing before re-validating and possibly showing a validation hint."
+        ^1 seconds
+    ]
+    validationResult: aValidationResult [
+        	validationResultPresenter value: aValidationResult
+    ]
+    validationResultPresenterClass [
+        	^ValidationStatusPresenter
+    ]
+    Dialog class >> icon [
+        "Answers an Icon that can be used to represent this class"
+        ^[self] value defaultIcon
+    ]
+    Dialog class >> showModal [
+        "Creates a default instance of the receiver with a default view	and displays it modal 
+        	to the current active window. 
+        	Answers the result of the dialog if confirmed or nil otherwise"
+        ^self create showModal
+    ]
+    Dialog class >> showModal: aDialogResourceNameString [
+        "Creates an instance of the receiver with a view identified by aResourceNameString
+        	and displays it modal to the current	active window. 
+        	Answers the result of dialog if confirmed or nil otherwise"
+        ^(self create: aDialogResourceNameString) showModal
+    ]
+    Dialog class >> showModal: aDialogResourceNameString on: aModel [
+        "Creates an instance of the receiver with a view identified by aResourceNameString
+        	and connected to aModel. The view is displayed modal to the current active window. 
+        	Answers the result of dialog if confirmed or nil otherwise"
+        ^(self create: aDialogResourceNameString on: aModel) showModal
+    ]
+    Dialog class >> showModalOn: aModel [
+        "Creates an instance of the receiver with a default view and connected to aModel. 
+        	The view is displayed modal to the current active window. 
+        	Answers the result of dialog if confirmed or nil otherwise"
+        ^(self createOn: aModel) showModal
+    ]
+]

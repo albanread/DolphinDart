@@ -1,21 +1,21 @@
 # dolphin2mst run report
 
-- inputs: **105** source files (`.cls` + `.pax`)
-- shared-pool constants available: **7851** from **206** pools
+- inputs: **115** source files (`.cls` + `.pax`)
+- shared-pool constants available: **7856** from **209** pools
 - loose methods adopted from `.pax`: **1**
-- parsed: **105**  (unbalanced/skipped: 0)
-- emitted: **106** `.mst`
-- methods: **4344**
-- refusals: **192**
+- parsed: **115**  (unbalanced/skipped: 0)
+- emitted: **116** `.mst`
+- methods: **4656**
+- refusals: **220**
 
 ## Refusals by rewrite class
 
 | Rewrite | Count |
 |---|--:|
-| `hashhash` | 84 |
-| `cascade` | 55 |
-| `pragma` | 25 |
-| `binding-literal` | 15 |
+| `hashhash` | 99 |
+| `cascade` | 58 |
+| `pragma` | 26 |
+| `binding-literal` | 24 |
 | `orphan-loose-methods` | 10 |
 | `qq` | 3 |
 
@@ -33,15 +33,18 @@
 | `Brush` | 29 | 1 |
 | `CCITEM` | 32 | 0 |
 | `Canvas` | 126 | 5 |
+| `Clipboard` | 42 | 1 |
 | `Color` | 268 | 9 |
 | `ColorDefault` | 11 | 1 |
 | `ColorEvent` | 2 | 0 |
 | `ColorNone` | 11 | 0 |
 | `ColorRef` | 6 | 0 |
+| `CommandButton` | 16 | 1 |
 | `CommandDescription` | 46 | 0 |
 | `CommandMenuItem` | 45 | 0 |
 | `CommandPolicy` | 21 | 0 |
 | `CommandQuery` | 39 | 2 |
+| `CommonDialog` | 30 | 1 |
 | `ContainerView` | 37 | 3 |
 | `ControlView` | 61 | 3 |
 | `CreateWindow` | 11 | 0 |
@@ -49,9 +52,13 @@
 | `CreateWindowFunction` | 12 | 0 |
 | `Cursor` | 47 | 1 |
 | `DelegatingCommandPolicy` | 1 | 0 |
+| `Dialog` | 43 | 3 |
+| `DialogView` | 57 | 5 |
 | `DividerMenuItem` | 26 | 1 |
 | `DpiChangedEvent` | 5 | 0 |
 | `Event` | 5 | 2 |
+| `FileDialog` | 40 | 4 |
+| `FileOpenDialog` | 7 | 1 |
 | `Font` | 26 | 0 |
 | `GraphicsTool` | 32 | 2 |
 | `Icon` | 62 | 2 |
@@ -92,6 +99,8 @@
 | `PointEvent` | 5 | 0 |
 | `PositionEvent` | 23 | 0 |
 | `Presenter` | 152 | 6 |
+| `Prompter` | 26 | 3 |
+| `PushButton` | 41 | 8 |
 | `RGB` | 11 | 0 |
 | `Rectangle` | 98 | 2 |
 | `ScrollEvent` | 16 | 1 |
@@ -124,6 +133,7 @@
 | `ValueAspectAdaptor` | 17 | 1 |
 | `ValueBuffer` | 17 | 1 |
 | `ValueConvertingControlView` | 19 | 2 |
+| `ValueDialog` | 10 | 1 |
 | `ValueHolder` | 4 | 2 |
 | `ValueModel` | 17 | 2 |
 | `ValuePresenter` | 8 | 1 |
