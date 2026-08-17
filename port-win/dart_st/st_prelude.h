@@ -103,6 +103,12 @@ Object subclass: Win32 [
     Win32 class >> mvpCreateButton: parent id: anId [ <stprim: stMvpCreateButton> ]
     Win32 class >> mvpShow: h [ <stprim: stMvpShow> ]
     Win32 class >> mvpPump: budget [ <stprim: stMvpPump> ]
+    "CAPTURE the window to a 24-bit BMP and answer (width << 20) | height,
+     or 0 on failure. `clientOnly` picks the client area over the whole frame.
+     Provisional and deliberately crude: it exists so a GUI change can be
+     LOOKED AT rather than inferred from handle values and item counts, which
+     is how this port has been reading its own windows until now."
+    Win32 class >> mvpCapture: hwnd path: aString clientOnly: aBoolean [ <stprim: stMvpCapture> ]
     Win32 class >> mvpClick: h id: anId [ <stprim: stMvpClick> ]
     Win32 class >> mvpInvalidate: h [ <stprim: stMvpInvalidate> ]
     Win32 class >> mvpBumpGeneration [ <stprim: stMvpBumpGeneration> ]

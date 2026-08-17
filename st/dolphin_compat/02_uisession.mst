@@ -322,6 +322,49 @@ Object subclass: UiSession [
         self reset.
         ^self
     ]
+
+    "── the RUN LOOP (provisional) ──────────────────────────────────────
+     `pump` drains a budget of messages and returns. That is right for a gate,
+     which creates, asserts and destroys — but it means a window that is on
+     screen never processes anything, so it never paints and never answers
+     input. Every window this port has shown a human has been an unpainted
+     frame: chrome, and a blank client area.
+
+     `runFor:` is the missing half — pump until the budget of milliseconds is
+     spent. It SLEEPS when the queue is empty rather than spinning: `pump`
+     answers the number of messages it drained, and a tight PeekMessage loop
+     on zero would burn a core for nothing.
+
+     PROVISIONAL, and named so. A real Dolphin run loop blocks in GetMessage
+     and wakes on input, which costs nothing while idle; this wakes 100 times
+     a second regardless. That is invisible for a test and wrong for an app.
+
+     RETIREMENT: a blocking wait in the door (MsgWaitForMultipleObjects), so
+     `run` can be unbounded and idle at zero cost. Recorded in
+     docs/LOOSE_ENDS.md."
+    UiSession class >> runFor: milliseconds [
+        | deadline drained |
+        deadline := Smalltalk millisecondClock + milliseconds.
+        drained := 0.
+        [ Smalltalk millisecondClock < deadline ] whileTrue: [
+            drained := drained + self pump.
+            KernelLibrary sleepEx: 10 bAlertable: false ].
+        ^drained
+    ]
+
+    "Pump until every registered window has gone, or the deadline passes —
+     whichever comes first. The deadline is not optional: a gate that waits
+     for a human to close a window is a gate that hangs, and this project
+     already treats a hang as a result rather than a reason to wait."
+    UiSession class >> runUntilClosedOr: milliseconds [
+        | deadline |
+        deadline := Smalltalk millisecondClock + milliseconds.
+        [ self windowCount > 0 and: [ Smalltalk millisecondClock < deadline ] ]
+            whileTrue: [
+                self pump.
+                KernelLibrary sleepEx: 10 bAlertable: false ].
+        ^self windowCount
+    ]
 ]
 
 "The minimal view a session can route to. DD9 replaces this with the translated

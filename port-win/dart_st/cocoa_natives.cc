@@ -59,6 +59,7 @@ void ST_mvpBindOldProc(Dart_NativeArguments args);
 void ST_mvpCreateButton(Dart_NativeArguments args);
 void ST_mvpShow(Dart_NativeArguments args);
 void ST_mvpPump(Dart_NativeArguments args);
+void ST_mvpCapture(Dart_NativeArguments args);
 void ST_mvpClick(Dart_NativeArguments args);
 void ST_mvpInvalidate(Dart_NativeArguments args);
 void ST_mvpBumpGeneration(Dart_NativeArguments args);
@@ -131,6 +132,7 @@ void ST_symbolFor(Dart_NativeArguments args);   // interned symbol lookup (perf 
   V(ST_mvpCreateButton, 2)                                                \
   V(ST_mvpShow, 1)                                                        \
   V(ST_mvpPump, 1)                                                        \
+  V(ST_mvpCapture, 3)                                                     \
   V(ST_mvpClick, 2)                                                       \
   V(ST_mvpInvalidate, 1)                                                  \
   V(ST_mvpBumpGeneration, 0)                                              \

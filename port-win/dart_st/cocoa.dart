@@ -1387,6 +1387,7 @@ stMvpCreateTopWindow(int w, int h) native "ST_mvpCreateTopWindow";
 stMvpCreateButton(int parent, int id) native "ST_mvpCreateButton";
 stMvpShow(int h) native "ST_mvpShow";
 stMvpPump(int budget) native "ST_mvpPump";
+stMvpCapture(int hwnd, String path, int clientOnly) native "ST_mvpCapture";
 stMvpClick(int h, int id) native "ST_mvpClick";
 stMvpInvalidate(int h) native "ST_mvpInvalidate";
 _mvpBumpGeneration() native "ST_mvpBumpGeneration";

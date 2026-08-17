@@ -525,3 +525,67 @@ The cause was **Smart App Control**, which arms itself on a clean install and
 flips from evaluation to enforced on its own. Turning it off needs a REBOOT:
 the registry state goes to 0 immediately and the loaded policy keeps
 enforcing until restart.
+
+---
+
+## DD11 — a pump, a camera, and what they immediately showed
+
+Both at the user's suggestion, and both earned their place within the hour.
+
+### The pump
+
+`UiSession pump` drains a budget and returns, which is right for a gate and
+useless for a window a human is looking at: nothing pumps, so WM_PAINT never
+runs. **Every window this port has shown anyone has been an unpainted frame.**
+
+`runFor:` and `runUntilClosedOr:` pump until a deadline, sleeping (SleepEx 10)
+when the queue is empty rather than spinning. Provisional and named so: a real
+run loop blocks in GetMessage and idles at zero cost; this wakes 100 times a
+second regardless. Retirement is a blocking wait in the door.
+
+### The camera
+
+`Win32 mvpCapture:path:clientOnly:` — PrintWindow with a BitBlt fallback, into
+a 24-bit BMP; `tools/shot.py` re-wraps it as PNG with nothing but `zlib` and
+`struct`. `test/st_demo.dart` opens the browser shell, pumps for a real
+interval, and photographs it at intervals.
+
+**The first picture was worth the whole detour.** It showed: the window
+painting; BorderLayout placing all three panes correctly; the TextEdit
+displaying LIVE reflection data — `Integer | 33 selectors`; the ListView with
+a working scrollbar sized for 33 rows — and **not one row of text, and an
+empty tree**.
+
+That is a distinction no assertion in this suite could make. `listItemCount`
+answers 33 and passes either way.
+
+### What the picture led to, and what it did NOT
+
+Reading the corpus against the generated structs found a real defect:
+**Dolphin's WM_NOTIFY handlers index past NMHDR with 32-bit literals.**
+`NMHDR` is 12 bytes on Win32 and 24 on x64, so
+
+    nmGetDispInfoW:   `pNMHDR asInteger + 12`   should be + 24
+    tvnItemExpanding: `uint32AtOffset: 12`      should be 24  (action)
+                      `pNMHDR asInteger + 56`   should be 88  (itemNew)
+
+Same shape as LOOSE_ENDS 3.14 one level up, and it fails silently: the expand
+guard compares a slice of `idFrom` to TVE_EXPAND, finds it unequal, and
+returns. `st/mvp_compat/05_notify_offsets.mst` overrides both families with
+offsets DERIVED from the generated `_OffsetOf_` constants, and records the
+handlers deliberately left alone.
+
+**It changed nothing on screen, and that is the finding.** A counter in each
+overridden handler came back EMPTY: `Dictionary ()`. Neither
+TVN_GETDISPINFO nor TVN_ITEMEXPANDING reaches the image at all. WM_NOTIFY
+does reach the shell — its earlier `Array` errors are how the whole
+class-side hole was found — but it is not being dispatched onward to the
+control's own handler.
+
+So the offsets were a bug fixed by reading, sitting behind the bug that
+actually matters. Worth keeping (they would have been wrong the moment
+dispatch started working) and worth being clear that they are not the fix.
+
+**Next, and it is now a narrow question:** follow WM_NOTIFY from
+`View>>wmNotify:wParam:lParam:` to the child control and find where the chain
+stops. The counters are in place to answer it in one run.

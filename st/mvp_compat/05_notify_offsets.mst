@@ -1,0 +1,121 @@
+"05_notify_offsets.mst — Dolphin's WM_NOTIFY handlers index past NMHDR with
+ 32-BIT literals.
+
+ THE BUG, and it is the same shape as LOOSE_ENDS 3.14 one level up. That entry
+ records struct field offsets baked for Win32 in a `classConstants:` block.
+ These are the same numbers baked into METHOD BODIES:
+
+     nmGetDispInfoW: pNMHDR
+         ^self onDisplayDetailsRequired:
+             (self itemStructure fromAddress: pNMHDR asInteger + 12)
+
+     tvnItemExpanding: pNMHDR
+         (pNMHDR uint32AtOffset: 12) == 2 ifFalse: [^0].
+         tviParent := TVITEMW fromAddress: pNMHDR asInteger + 56.
+
+ `NMHDR` is 12 bytes on Win32 and **24** on x64 — three fields, two of them
+ pointer-sized, and `code` aligned after them. So every one of those literals
+ points into the middle of the header instead of past it.
+
+ WHAT IT LOOKED LIKE, which is why it survived so long: nothing raises.
+ `tvnItemExpanding:` reads a word from inside `idFrom`, compares it to 2,
+ finds it unequal and returns 0 — so expanding a tree node silently inserts
+ nothing. `nmGetDispInfoW:` builds an item structure over the wrong address
+ and fills in text and image fields that the control is not reading. The
+ SCREENSHOT is what finally showed it: a ListView with a working scrollbar
+ (33 rows, correct count) and not one row of text.
+
+ THE FIX is to override the affected handlers with offsets DERIVED from the
+ generated structs — `NMHDR sizeInBytes`, `NMTREEVIEWW _OffsetOf_action`,
+ `NMTREEVIEWW _OffsetOf_itemNew` — which genstructs takes from winkb per
+ target. A literal here would just be a 64-bit number waiting to be as wrong
+ as the 32-bit one.
+
+ NOT A STAND-IN, and so not in the scaffolding section of LOOSE_ENDS: the
+ corpus's own numbers are unusable on this target and there is no version of
+ this port where they become right. It is recorded as a DIVERGENCE, with the
+ rule that any further handler taken from the corpus must be checked for the
+ same thing.
+
+ THE ONES NOT COVERED HERE are listed at the end, so the next person knows the
+ sweep was bounded rather than complete."
+
+"── the ?VN_GETDISPINFO family ─────────────────────────────────────────
+ `NMTVDISPINFOW` and `NMLVDISPINFOW` are both `{ NMHDR hdr; <item> item; }`,
+ so the item sits at exactly `NMHDR sizeInBytes` — 24 here, 12 in the corpus.
+ This is what fills a tree node's or a list row's text and icon, so with it
+ wrong the control draws empty rows."
+Object subclass: NotifyTrace [
+    <classVars: Counts>
+    NotifyTrace class >> bump: aSymbol [
+        Counts isNil ifTrue: [ Counts := Dictionary new ].
+        Counts at: aSymbol put: (Counts at: aSymbol ifAbsent: [ 0 ]) + 1.
+        ^Counts
+    ]
+    NotifyTrace class >> counts [ ^Counts ifNil: [ Dictionary new ] ]
+    NotifyTrace class >> reset [ Counts := Dictionary new ]
+]
+
+IconicListAbstract extend [
+    nmGetDispInfoW: pNMHDR [
+        NotifyTrace bump: #getDispInfo.
+        "Private - Handler for a ?VN_GETDISPINFO notification message.
+         OVERRIDDEN: the corpus adds 12, which is the 32-bit NMHDR size."
+        ^self onDisplayDetailsRequired:
+            (self itemStructure fromAddress: pNMHDR asInteger + NMHDR sizeInBytes)
+    ]
+    nmSetDispInfoW: pNMHDR [
+        "Private - Handler for a ?VN_SETDISPINFO notification message.
+         OVERRIDDEN for the same reason as `nmGetDispInfoW:`."
+        ^self onDisplayDetailsChanged:
+            (self itemStructure fromAddress: pNMHDR asInteger + NMHDR sizeInBytes)
+    ]
+]
+
+"── the tree's expand notification ─────────────────────────────────────
+ `NMTREEVIEWW` is `{ NMHDR hdr; UINT action; TVITEM itemOld; TVITEM itemNew; }`.
+ The corpus reads `action` at 12 and `itemNew` at 56; on this target they are
+ at 24 and 88, and genstructs emits both.
+
+ This is the one that made a tree refuse to expand: the guard on the first
+ line compared a slice of `idFrom` against TVE_EXPAND and bailed out."
+TreeView extend [
+    tvnItemExpanding: pNMHDR [
+        "Private - Default handler for the TVN_ITEMEXPANDINGW notification.
+         OVERRIDDEN: 32-bit offsets in the corpus (12 and 56)."
+        | tviParent hParent |
+        NotifyTrace bump: #itemExpanding.
+        (pNMHDR uint32AtOffset: NMTREEVIEWW _OffsetOf_action) == 2 ifFalse: [
+            NotifyTrace bump: #expandWrongAction. ^0 ].
+        tviParent := TVITEMW fromAddress:
+            pNMHDR asInteger + NMTREEVIEWW _OffsetOf_itemNew.
+        "See if we have been expanded before."
+        tviParent isStateExpandedOnce ifTrue: [ ^0 ].
+        hParent := tviParent hItem.
+        (self objectFromHandle: hParent ifAbsent: nil) ifNotNil: [ :parentObject |
+            | children |
+            children := self model childrenOf: parentObject.
+            children isEmpty ifFalse: [
+                updateMode addItems: children inHandle: hParent afterHandle: -65534 ].
+            tviParent beStateExpandedOnce ].
+        ^0	"Allow the expansion to proceed — TRUE would prevent it."
+    ]
+]
+
+"── STILL ON THE CORPUS'S 32-BIT OFFSETS ───────────────────────────────
+ Bounded sweep, so the boundary is written down rather than left to be
+ discovered:
+
+   * `IconicListAbstract>>nmCustomDraw:` reads `dwDrawStage` at 12; on this
+     target `NMCUSTOMDRAW _OffsetOf_dwDrawStage` is 24. Custom draw is not
+     exercised by any gate yet, so it is named here rather than fixed blind.
+   * `ControlView>>ttnGetDispInfoW:` builds an `NMTTDISPINFOW` `fromAddress:
+     pNMHDR` with no offset at all, which is correct — the header IS the start
+     of that struct — and is listed only so it is not 'fixed' by someone
+     pattern-matching the others.
+   * Anything reached through `nmSelChanged:` / `nmBeginDrag:` and friends
+     takes the raw pNMHDR, so it is unaffected.
+
+ THE RULE for anything new taken from the corpus: a handler that adds a
+ literal to `pNMHDR`, or reads `uint32AtOffset:` from it, is wrong on this
+ target until the number comes from a generated `_OffsetOf_`."

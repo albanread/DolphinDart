@@ -525,6 +525,16 @@ int64_t ArgInt(Dart_NativeArguments args, int i) {
   return v;
 }
 
+// A UTF-8 string argument. The pointer is owned by the Dart API and stays
+// valid for the duration of the native call, which is all `ST_mvpCapture`
+// needs it for (it opens the file and is done).
+const char* ArgStr(Dart_NativeArguments args, int i) {
+  const char* p = nullptr;
+  Dart_Handle h = Dart_GetNativeArgument(args, i);
+  if (Dart_IsError(Dart_StringToCString(h, &p))) return nullptr;
+  return p;
+}
+
 // _mvpRegisterDispatch(Function f) — the single funnel, as the view-server does.
 void ST_mvpRegisterDispatch(Dart_NativeArguments args) {
   Dart_Handle f = Dart_GetNativeArgument(args, 0);
@@ -609,6 +619,93 @@ void ST_mvpShow(Dart_NativeArguments args) {
   ShowWindow(h, SW_SHOW);
   UpdateWindow(h);   // synchronous WM_PAINT, so a paint fault surfaces NOW
   Dart_SetReturnValue(args, Dart_True());
+}
+
+// CAPTURE a window to a 24-bit BMP file, and answer the pixel dimensions.
+//
+// WHY THIS EXISTS. Every GUI conclusion in this port so far has been an
+// INFERENCE: a handle is non-zero, a control answers its class name, an item
+// count comes back from TVM_GETCOUNT. All true, and all of it was true while
+// the window on screen was an unpainted frame — because the gates pump once,
+// at the end, so WM_PAINT never ran. An assertion cannot tell the difference
+// between "drew correctly" and "never drew". A picture can.
+//
+// PrintWindow FIRST, BitBlt as the fallback. PrintWindow asks the window to
+// render itself into the DC, which works for a window that is occluded or has
+// never been shown; BitBlt copies whatever is actually on the screen DC, which
+// is what a human would see. Trying PrintWindow first and falling back means
+// an occluded window still yields a picture rather than a black rectangle.
+//
+// BMP because it needs no encoder: a 14-byte file header, a 40-byte info
+// header, and bottom-up BGR rows padded to 4 bytes. tools/shot.py converts it
+// to PNG so it can be looked at.
+void ST_mvpCapture(Dart_NativeArguments args) {
+  HWND h = reinterpret_cast<HWND>(static_cast<intptr_t>(ArgInt(args, 0)));
+  const char* path = ArgStr(args, 1);
+  int64_t client_only = ArgInt(args, 2);
+  if (h == nullptr || !IsWindow(h) || path == nullptr) {
+    Dart_SetReturnValue(args, Dart_NewInteger(0));
+    return;
+  }
+  RECT r;
+  if (client_only != 0 ? !GetClientRect(h, &r) : !GetWindowRect(h, &r)) {
+    Dart_SetReturnValue(args, Dart_NewInteger(0));
+    return;
+  }
+  const int w = r.right - r.left;
+  const int ht = r.bottom - r.top;
+  if (w <= 0 || ht <= 0) {
+    Dart_SetReturnValue(args, Dart_NewInteger(0));
+    return;
+  }
+  HDC src = client_only != 0 ? GetDC(h) : GetWindowDC(h);
+  HDC mem = CreateCompatibleDC(src);
+  HBITMAP bmp = CreateCompatibleBitmap(src, w, ht);
+  HGDIOBJ old = SelectObject(mem, bmp);
+  // PW_RENDERFULLCONTENT = 2 — needed for a window that is partly occluded.
+  if (!PrintWindow(h, mem, client_only != 0 ? 1 : 0)) {
+    BitBlt(mem, 0, 0, w, ht, src, 0, 0, SRCCOPY);
+  }
+
+  BITMAPINFOHEADER bi;
+  ZeroMemory(&bi, sizeof(bi));
+  bi.biSize = sizeof(bi);
+  bi.biWidth = w;
+  bi.biHeight = ht;          // positive = bottom-up, which BMP wants
+  bi.biPlanes = 1;
+  bi.biBitCount = 24;
+  bi.biCompression = BI_RGB;
+  const int stride = ((w * 3) + 3) & ~3;
+  const size_t bytes = static_cast<size_t>(stride) * ht;
+  unsigned char* pixels = new unsigned char[bytes];
+  const int got = GetDIBits(mem, bmp, 0, ht, pixels,
+                            reinterpret_cast<BITMAPINFO*>(&bi), DIB_RGB_COLORS);
+
+  int64_t answer = 0;
+  if (got != 0) {
+    FILE* f = nullptr;
+    fopen_s(&f, path, "wb");
+    if (f != nullptr) {
+      const uint32_t offbits = 14 + 40;
+      const uint32_t total = offbits + static_cast<uint32_t>(bytes);
+      unsigned char fh[14] = {0};
+      fh[0] = 'B'; fh[1] = 'M';
+      memcpy(fh + 2, &total, 4);
+      memcpy(fh + 10, &offbits, 4);
+      fwrite(fh, 1, 14, f);
+      fwrite(&bi, 1, 40, f);
+      fwrite(pixels, 1, bytes, f);
+      fclose(f);
+      // width and height packed into one integer, so one call answers both.
+      answer = (static_cast<int64_t>(w) << 20) | static_cast<int64_t>(ht);
+    }
+  }
+  delete[] pixels;
+  SelectObject(mem, old);
+  DeleteObject(bmp);
+  DeleteDC(mem);
+  ReleaseDC(h, src);
+  Dart_SetReturnValue(args, Dart_NewInteger(answer));
 }
 
 // Pump every pending message and answer how many were dispatched. The image

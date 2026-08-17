@@ -26,11 +26,16 @@ main(List<String> a) {
   stRun('BShell := BrowserShell new.'); stRun('BShell create.');
   stRun('BShell build.'); stRun('BShell show.');
   stRun('BShell populateTree.');
-  for (var e in ['TVITEMEXW newBuffer allCallbacks',
-                 'TVITEMEXW newBuffer children: 1',
+  stRun(new File('st/test/ffi/dolphin_browser.mst').readAsStringSync());
+  stRun('DolphinBoot initializeViewClasses.'); stRun('UiSession startUp.');
+  stRun('BShell := BrowserShell new.'); stRun('BShell create.');
+  stRun('BShell build.'); stRun('BShell show.'); stRun('BShell populateTree.');
+  for (var e in ['TVITEMW newBuffer maskIn: 64',
                  'TVITEMW newBuffer allCallbacks',
-                 'TVITEMEXW superclass name',
-                 'TVITEMW superclass name'])
-    print('  ' + e.padRight(40) + ' -> ' + ev(e));
+                 'TVITEMEXW newBuffer allCallbacks',
+                 '(TVINSERTSTRUCTW hParent: 0 hInsertAfter: 0) item cChildren',
+                 '(TVINSERTSTRUCTW hParent: 0 hInsertAfter: 0) item mask',
+                 'BShell tree model hasChildren: Magnitude'])
+    print('  ' + e.padRight(52) + ' -> ' + ev(e));
   exit(0);
 }
