@@ -1,0 +1,173 @@
+"dolphin_class_browser.mst — the REAL class browser: the WHOLE live image.
+
+ The three-node BrowserShell (dolphin_browser.mst) is a GATE PROBE — small,
+ named classes so its assertions are countable. It stays. THIS is the product
+ that probe existed to make possible: every class in the running image (~730)
+ in a proper tree — buttons, lines, lines-at-root, collapsed to its root like
+ Dolphin's own — with a selector list and a class-detail pane driven by the
+ SELECTION EVENT chain, and a menu bar carrying real commands.
+
+ WE ARE NOT DOLPHIN, AND THAT IS THE DESIGN RULE HERE (the user's, verbatim:
+ 'we are running the dolphin MVP but we are not dolphin, and our image is not
+ accessed the same way, it is the GUI behaviour we need'). Dolphin's own
+ ClassBrowserShell reads its panes from STB view RESOURCES serialized in its
+ image and its data from its own class objects. This browser keeps the GUI
+ BEHAVIOUR — the same controls, the same MVP wiring, the same lazy tree, the
+ same selection/keyboard semantics — over THIS VM's reflection surface
+ (ClassMirror, st/world/76_reflection.mst), which is the honest equivalent of
+ 'the image'."
+ShellView subclass: ClassBrowserShell [
+    | tree list text model |
+
+    tree [ ^tree ]
+    list [ ^list ]
+    text [ ^text ]
+    treeModel [ ^model ]
+
+    ClassBrowserShell class >> routeDolphinMessages [ ^UiSession routeMessagesFrom: View ]
+
+    build [
+        tree := TreeView new.
+        tree parentView: self.
+        tree preferredExtent: 260 @ 400.
+        tree usePreferredExtent: true.
+        "The CLASSIC tree look, set BEFORE creation so the styles ride in on
+         CreateWindowExW: expand buttons, connector lines, and lines at root —
+         which also switches OFF Dolphin's auto-expand-roots behaviour
+         (basicRefreshContents expands roots only when hasLinesAtRoot is
+         false), so 730 classes open COLLAPSED to Object, as they should."
+        tree hasButtons: true.
+        tree hasLines: true.
+        tree hasLinesAtRoot: true.
+        self addSubView: tree.
+
+        list := ListView new.
+        list parentView: self.
+        list preferredExtent: 260 @ 400.
+        list usePreferredExtent: true.
+        self addSubView: list.
+
+        text := TextEdit new.
+        text parentView: self.
+        text preferredExtent: 520 @ 40.
+        text usePreferredExtent: true.
+        self addSubView: text.
+
+        self layoutManager: (BorderLayout new
+            west: tree;
+            center: list;
+            south: text;
+            yourself).
+
+        tree when: #selectionChanged send: #onClassSelected to: self.
+        self buildMenuBar.
+        ^self
+    ]
+
+    "Dolphin's own menu-string format: description / accelerator / command."
+    buildMenuBar [
+        | bar |
+        bar := MenuBar new.
+        bar fromStrings: #(
+            #('&Class' '&Refresh//refreshClasses' '&Collapse All//collapseAll')).
+        self menuBar: bar.
+        ^bar
+    ]
+    refreshClasses [ ^self populate ]
+    collapseAll [
+        model roots do: [ :each | tree collapse: each ].
+        ^self
+    ]
+    queryCommand: aCommandQuery [
+        aCommandQuery isEnabled: true.
+        ^true
+    ]
+
+    "── the model: EVERY class in the running image ─────────────────────────
+     `ClassMirror allClasses` is the VM's own class list. Kept as-is except:
+     internals (leading `_`), the test harness's scratch classes, and NAME
+     DUPLICATES (a bridged core class and its extension holder both answer the
+     same `name`; first occurrence wins so the tree shows `Integer` once, the
+     way a browser should). Parent = superclass, resolved TRANSITIVELY through
+     any skipped class so nothing is orphaned; anything whose chain ends
+     before `Object` roots under Object."
+    keepClass: cls seen: seenNames [
+        | n |
+        n := cls name.
+        (n isNil or: [ n isEmpty ]) ifTrue: [ ^false ].
+        (n first == $_) ifTrue: [ ^false ].
+        ((n startsWith: 'DemoQ') or: [ (n startsWith: 'CtQ') or: [ (n startsWith: 'QQ') ] ])
+            ifTrue: [ ^false ].
+        (seenNames includes: n) ifTrue: [ ^false ].
+        seenNames add: n.
+        ^true
+    ]
+
+    populate [
+        | classes kept keptSet seen |
+        classes := ClassMirror allClasses.
+        seen := Set new.
+        kept := OrderedCollection new.
+        classes do: [ :each |
+            (self keepClass: each seen: seen) ifTrue: [ kept add: each ] ].
+        keptSet := IdentitySet new.
+        kept do: [ :each | keptSet add: each ].
+
+        model := TreeModel new.
+        kept do: [ :each | self addClass: each to: keptSet ].
+        tree model: model.
+        ^model
+    ]
+
+    "Add `cls` under its nearest KEPT ancestor, adding that ancestor first.
+     `model includes:` guards re-entry from the recursion."
+    addClass: cls to: keptSet [
+        | parent |
+        (model includes: cls) ifTrue: [ ^cls ].
+        parent := cls superclass.
+        [ parent notNil and: [ (keptSet includes: parent) not ] ]
+            whileTrue: [ parent := parent superclass ].
+        parent ifNotNil: [ self addClass: parent to: keptSet ].
+        model add: cls asChildOf: parent.
+        ^cls
+    ]
+
+    "── selection drives the panes, same wiring the probe proved ────────────"
+    onClassSelected [
+        (tree selectionOrNil) ifNotNil: [ :cls | self showClass: cls ]
+    ]
+
+    selectorsFor: aClass [
+        ^(ClassMirror selectorsOf: aClass) asSortedCollection asArray
+    ]
+
+    showClass: aClass [
+        | sels ivars line |
+        sels := self selectorsFor: aClass.
+        list list: sels.
+        ivars := ClassMirror instanceVariablesOf: aClass.
+        line := aClass name.
+        aClass superclass ifNotNil: [ :sup | line := line , ' < ' , sup name ].
+        line := line , '   |   ' , sels size printString , ' selectors'.
+        ivars isEmpty ifFalse: [
+            line := line , '   |   ' , ivars size printString , ' ivars: '.
+            ivars do: [ :iv | line := line , iv , ' ' ] ].
+        text text: line.
+        ^aClass
+    ]
+
+    "── the same instrumentation surface the probe gates use ────────────────"
+    treeItemCount [ ^User32 sendMessage: tree handle msg: 4357 wParam: 0 lParam: 0 ]
+    listItemCount [ ^User32 sendMessage: list handle msg: 4100 wParam: 0 lParam: 0 ]
+    rootCount [ ^model roots size ]
+    classCount [ ^model size ]
+    shownClassName [ ^text text ]
+
+    select: aClass [ ^tree selection: aClass ifAbsent: [ nil ] ]
+    expandClass: aClass [ tree expand: aClass. ^aClass ]
+    pressKey: virtualKey [
+        User32 sendMessage: tree handle msg: 16r100 wParam: virtualKey lParam: 0.
+        User32 sendMessage: tree handle msg: 16r101 wParam: virtualKey lParam: 0.
+        ^virtualKey
+    ]
+]

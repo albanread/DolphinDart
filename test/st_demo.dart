@@ -58,16 +58,20 @@ main(List<String> a) {
   }
   var seconds = a.length > 4 ? int.parse(a[4], onError: (_) => 60) : 60;
   var shotDir = a.length > 5 ? a[5] : '.';
+  // Which shell to open. The three-node BrowserShell is the gate probe; the
+  // real product is ClassBrowserShell over the whole image.
+  var shell = a.length > 6 ? a[6] : 'BrowserShell';
 
   print('init      -> ' + ev('DolphinBoot initializeViewClasses'));
   stRun('UiSession startUp.');
-  print('routed    -> ' + ev('BrowserShell routeDolphinMessages'));
+  print('routed    -> ' + ev(shell + ' routeDolphinMessages'));
 
-  stRun('DShell := BrowserShell new.');
+  stRun('DShell := ' + shell + ' new.');
   stRun('DShell create.');
   print('build     -> ' + ev('DShell build printString'));
   stRun('DShell show.');
-  print('populate  -> ' + ev('DShell populateTree printString'));
+  print('populate  -> ' + ev(shell == 'BrowserShell'
+      ? 'DShell populateTree printString' : 'DShell populate printString'));
   print('showClass -> ' + ev('(DShell showClass: Integer) name'));
 
   // PUMP FIRST, then photograph. The capture reflects whatever the window has
@@ -83,8 +87,16 @@ main(List<String> a) {
   }
 
   shot('opened');
-  stRun('DShell expandRoots.');
-  stRun('DShell tree expand: Number.');
+  if (shell == 'BrowserShell') {
+    stRun('DShell expandRoots.');
+    stRun('DShell tree expand: Number.');
+  } else {
+    // The full-image browser opens collapsed to Object; walk a real drill-down
+    // so the watcher sees the hierarchy unfold and the panes follow.
+    stRun('DShell expandClass: Object.');
+    stRun('DShell expandClass: Magnitude.');
+    stRun('DShell select: Number.');
+  }
   print('expand    -> ' + ev('DShell treeItemCount'));
   print('pump      -> ' + ev('UiSession runFor: 500'));
   shot('expanded');

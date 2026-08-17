@@ -113,6 +113,9 @@ GATES = {
     "st_dolphinapp": [MVP, MVP_COMPAT, FFI + "/dolphin_app.mst"],
     "st_controls": [MVP, MVP_COMPAT, FFI + "/dolphin_controls.mst"],
     "st_browser": [MVP, MVP_COMPAT, FFI + "/dolphin_browser.mst"],
+    # The REAL one: the whole live image (~700 classes), menu bar, collapsed
+    # roots, lazy expand at scale, selection + keyboard driving the panes.
+    "st_classbrowser": [MVP, MVP_COMPAT, FFI + "/dolphin_class_browser.mst"],
 }
 
 # Gates with no window and no message pump. They run under `dart.exe`, which

@@ -20,20 +20,18 @@ main(List<String> a) {
       var r = stRun(new File(f).readAsStringSync());
       if (r.toString().startsWith('ERR')) print('LOAD FAIL ' + f + ': ' + r.toString());
     } } }
-  stRun(new File('st/test/ffi/dolphin_browser.mst').readAsStringSync());
+  stRun(new File('st/test/ffi/dolphin_class_browser.mst').readAsStringSync());
   stRun('DolphinBoot initializeViewClasses.'); stRun('UiSession startUp.');
-  print('  routed -> ' + ev('BrowserShell routeDolphinMessages'));
-  stRun('BShell := BrowserShell new.'); stRun('BShell create.');
-  stRun('BShell build.'); stRun('BShell show.');
-  print('  before populate -> ' + ev('BShell treeItemCount'));
-  stRun('NotifyTrace reset.');
-  stRun('BShell populateTree.');
-  print('  after populate  -> ' + ev('BShell treeItemCount'));
-  print('  populate counts -> ' + ev('NotifyTrace counts printString'));
-  stRun('NotifyTrace reset.');
-  stRun('BShell expandRoots.');
-  print('  after expand    -> ' + ev('BShell treeItemCount'));
-  print('  counts          -> ' + ev('NotifyTrace counts printString'));
-  print('  rootHandle      -> ' + ev('(BShell tree handleFromObject: Magnitude) isNil'));
+  print('  routed -> ' + ev('ClassBrowserShell routeDolphinMessages'));
+  stRun('CB := ClassBrowserShell new.'); stRun('CB create.');
+  print('  build      -> ' + ev('CB build printString'));
+  stRun('CB show.');
+  print('  populate   -> ' + ev('CB populate printString'));
+  for (var e in ['CB classCount', 'CB rootCount', 'CB treeItemCount',
+                 'CB expandClass: Object', 'CB treeItemCount',
+                 '(CB treeModel childrenOf: Object) size',
+                 '(CB select: Magnitude) name', 'CB listItemCount',
+                 'CB shownClassName'])
+    print('  ' + e.padRight(40) + ' -> ' + ev(e));
   exit(0);
 }

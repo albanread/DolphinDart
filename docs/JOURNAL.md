@@ -810,3 +810,55 @@ both panes, teardown, empty registry, zero contained errors.
 Still ahead in DD11's tail before DD12: a HUMAN driving it — clicking a tree
 node to drive the list is wired through TVN_SELCHANGED but has no gate, and
 per-row icons wait on the icon machinery (LOOSE_ENDS 3.20).
+
+---
+
+## DD11 -> DD12 — THE REAL CLASS BROWSER. The whole image. 24/24.
+
+The user called the three-node tree what it was — a toy — and the correction
+is on screen: `ClassBrowserShell` over the ENTIRE live image.
+
+Screenshot: a menu bar ("Class"); a tree with expand buttons, connector lines
+and lines-at-root, opened COLLAPSED and here shown with Object unfolded —
+Message, Boolean, UndefinedObject, Behavior, BlockClosure, Magnitude
+(unfolded: Number highlighted as the selection, Character), Collection,
+Association, SystemDictionary, ReadStream... — over 705 classes; Number's 23
+selectors in two columns in the list; `Number < Magnitude | 23 selectors` in
+the detail pane. handlerErrors 0.
+
+### What it is, and what it deliberately is not
+
+The user's design rule, verbatim: "we are running the dolphin MVP but we are
+not dolphin, and our image is not accessed the same way, it is the GUI
+behaviour we need." Dolphin's own ClassBrowserShell reads its panes from STB
+view resources serialized in its image. This browser keeps the GUI BEHAVIOUR —
+the same controls, MVP wiring, lazy dynamic tree, selection event chain,
+keyboard semantics, menu bar with real commands — over THIS VM's reflection
+surface (`ClassMirror`), which is the honest equivalent of the image.
+
+### What made it a few dozen lines instead of a sprint
+
+Everything hard was already proven by the probe gates: notify dispatch, the
+dispinfo text path, lazy expansion, selection events, keyboard. The browser is
+just Dolphin's own pieces assembled: `hasButtons:/hasLines:/hasLinesAtRoot:`
+(which also switches OFF the auto-expand — the same corpus line the probe gate
+had to learn about), a TreeModel built from `allClasses` with transitive
+parent resolution and name-dedup (a bridged core class and its extension
+holder both answer the same name; first wins), and the `#selectionChanged`
+observer reading the CONTROL's selection back.
+
+One trap avoided by the audit habit: `beginsWith:` does not exist in the world
+layer (`startsWith:` does) — caught at first load, not in a window.
+
+### Gates
+
+`st_classbrowser` (new): menu bar confirmed by `User32 getMenu:`, >500-class
+floor (deliberately far below the real ~705 so class-count drift never fails
+it for the wrong reason), collapsed == roots on open, expanding Object inserts
+exactly `childrenOf: Object` size, selection fills the list with the selected
+class's own selectors, VK_DOWN moves the selection and the list FOLLOWS THE
+CONTROL (`selectionOrNil`), not a prediction. The three-node `st_browser`
+stays — its assertions are countable in a way 705 classes are not.
+
+24/24. The demo now takes the shell class as an argument:
+`... st_demo.dart <layers> ... dolphin_class_browser.mst 60 <shots> ClassBrowserShell`
