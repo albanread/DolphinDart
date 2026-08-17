@@ -1,18 +1,18 @@
 # dolphin2mst run report
 
-- inputs: **116** source files (`.cls` + `.pax`)
+- inputs: **117** source files (`.cls` + `.pax`)
 - shared-pool constants available: **7856** from **209** pools
 - loose methods adopted from `.pax`: **1**
-- parsed: **116**  (unbalanced/skipped: 0)
-- emitted: **117** `.mst`
-- methods: **4659**
-- refusals: **220**
+- parsed: **117**  (unbalanced/skipped: 0)
+- emitted: **118** `.mst`
+- methods: **4708**
+- refusals: **223**
 
 ## Refusals by rewrite class
 
 | Rewrite | Count |
 |---|--:|
-| `hashhash` | 99 |
+| `hashhash` | 102 |
 | `cascade` | 58 |
 | `pragma` | 26 |
 | `binding-literal` | 24 |
@@ -55,6 +55,7 @@
 | `DelegatingCommandPolicy` | 1 | 0 |
 | `Dialog` | 43 | 3 |
 | `DialogView` | 57 | 5 |
+| `DisplayMonitor` | 49 | 3 |
 | `DividerMenuItem` | 26 | 1 |
 | `DpiChangedEvent` | 5 | 0 |
 | `Event` | 5 | 2 |

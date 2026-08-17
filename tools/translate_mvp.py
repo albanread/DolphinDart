@@ -292,6 +292,12 @@ TARGETS = [
     # `CreateDialog rectangle:dpi:` — untranslated that is a send to nil at
     # the first `create`, before any modal machinery runs.
     "Core/Object Arts/Dolphin/MVP/Dialogs/UI.CreateDialog.cls",
+    # `DisplayMonitor` — the multi-monitor geometry every window-positioning
+    # path goes through: `CreateWindow`/`CreateDialog` clamp the initial
+    # position to the nearest monitor's work area, and `showModal` centres the
+    # dialog on its owner through it. Untranslated it was a nil
+    # `nearestPoint:` INSIDE showModal, so the modal never opened.
+    "Core/Object Arts/Dolphin/MVP/Base/UI.DisplayMonitor.cls",
     # The prompter presenter: prompt + reply TextPresenters over the buffered
     # model. Its VIEW comes from an STB resource in Dolphin; here it is built
     # programmatically in the probe (same rule as above).

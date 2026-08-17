@@ -20,18 +20,24 @@ main(List<String> a) {
       var r = stRun(new File(f).readAsStringSync());
       if (r.toString().startsWith('ERR')) print('LOAD FAIL ' + f + ': ' + r.toString());
     } } }
-  stRun(new File('st/test/ffi/dolphin_class_browser.mst').readAsStringSync());
+  stRun(new File('st/test/ffi/dolphin_modal.mst').readAsStringSync());
   stRun('DolphinBoot initializeViewClasses.'); stRun('UiSession startUp.');
-  print('  routed -> ' + ev('ClassBrowserShell routeDolphinMessages'));
-  stRun('CB := ClassBrowserShell new.'); stRun('CB create.');
-  print('  build      -> ' + ev('CB build printString'));
-  stRun('CB show.');
-  print('  populate   -> ' + ev('CB populate printString'));
-  for (var e in ['CB classCount', 'CB rootCount', 'CB treeItemCount',
-                 'CB expandClass: Object', 'CB treeItemCount',
-                 '(CB treeModel childrenOf: Object) size',
-                 '(CB select: Magnitude) name', 'CB listItemCount',
-                 'CB shownClassName'])
-    print('  ' + e.padRight(40) + ' -> ' + ev(e));
+  print('  routed -> ' + ev('ModalOwnerShell routeDolphinMessages'));
+  stRun('MO := ModalOwnerShell new.'); stRun('MO create.');
+  print('  init    -> ' + ev('DolphinBoot initializeViewClasses'));
+  print('  build   -> ' + ev('MO build printString'));
+  print('  monInst -> ' + ev('DisplayMonitor reset printString'));
+  stRun('MO show.');
+  print('  subject -> ' + ev('MO subjectValue'));
+  print('  ownerEn -> ' + ev('MO ownerEnabled'));
+  print('  newPrompt -> ' + ev('MO newPrompt printString'));
+  print('  dlg handle -> ' + ev('MO inner handle'));
+  // Dismiss from INSIDE the modal loop: the action is posted before entering,
+  // and the nested pump drains it while the caller is blocked.
+  stRun("UiSession postAction: [ MO inner edit text: 'edited'. MO inner ok ].");
+  for (var e in ['(DisplayMonitor fromHandle: 65537) printString',
+                 'DisplayMonitor classVarInstances printString',
+                 '(DisplayMonitor respondsTo: #fromHandle:) printString'])
+    print('  ' + e.padRight(46) + ' -> ' + ev(e));
   exit(0);
 }

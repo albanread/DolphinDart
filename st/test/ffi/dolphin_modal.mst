@@ -1,0 +1,133 @@
+"dolphin_modal.mst — DD12's goal-gate core: a REAL modal dialog.
+
+ A `DialogView` owned by a shell, carrying a TextEdit and OK/Cancel
+ `PushButton`s over a BUFFERED model — Dolphin's own classes, its own
+ `showModal`, its own `ValueBuffer` semantics.
+
+ WHAT MAKES THIS THE GOAL GATE AND NOT A WINDOW WITH BUTTONS:
+
+   * The owner is DISABLED while the dialog is up and re-enabled after —
+     asked of Windows (`IsWindowEnabled`), not of the image.
+   * `showModal` BLOCKS: the statement after it does not run until the dialog
+     closes. A gate proves that by posting a deferred action BEFORE entering,
+     which the nested pump drains from INSIDE the modal loop — so the
+     dismissal happens while the caller is genuinely blocked.
+   * OK APPLIES the buffered edit to the subject; Cancel leaves the subject
+     untouched. That is the difference between a dialog and a form.
+   * Two STACKED modals unwind innermost-first, which is the only order a
+     single-threaded nested pump can unwind in.
+
+ NOT DOLPHIN'S VIEW RESOURCES. Dolphin builds this view from an STB resource
+ in its image; per the standing rule this builds the same controls
+ programmatically. The BEHAVIOUR is Dolphin's; the construction is ours."
+DialogView subclass: ValuePromptView [
+    | edit okButton cancelButton buffer |
+
+    edit [ ^edit ]
+    okButton [ ^okButton ]
+    cancelButton [ ^cancelButton ]
+    buffer [ ^buffer ]
+
+    "The BUFFER is the whole point. `ValueBuffer subject:` wraps the subject
+     model; edits go to the buffer, and only `apply` writes them through."
+    onSubject: aValueModel [
+        "`ValueBuffer class >> new` is `shouldNotImplement` — Dolphin insists
+         a buffer is created ON a subject, which is the whole contract."
+        buffer := ValueBuffer subject: aValueModel.
+        ^buffer
+    ]
+
+    build [
+        edit := TextEdit new.
+        edit parentView: self.
+        edit preferredExtent: 260 @ 26.
+        edit usePreferredExtent: true.
+        self addSubView: edit.
+
+        okButton := PushButton new.
+        okButton parentView: self.
+        okButton preferredExtent: 90 @ 28.
+        okButton usePreferredExtent: true.
+        self addSubView: okButton.
+        okButton text: '&OK'.
+
+        cancelButton := PushButton new.
+        cancelButton parentView: self.
+        cancelButton preferredExtent: 90 @ 28.
+        cancelButton usePreferredExtent: true.
+        self addSubView: cancelButton.
+        cancelButton text: '&Cancel'.
+
+        self layoutManager: (BorderLayout new
+            north: edit;
+            west: cancelButton;
+            east: okButton;
+            yourself).
+        ^self
+    ]
+
+    "Seed the editor from the buffer, which starts at the subject's value."
+    refreshFromBuffer [
+        edit text: (buffer value ifNil: [ '' ]) displayString.
+        ^edit text
+    ]
+
+    "OK: take what the user typed, put it in the BUFFER, apply the buffer to
+     the subject, then close. Cancel: close without applying — the buffer is
+     discarded with the dialog and the subject never hears about the edit."
+    ok [
+        buffer setValue: edit text.
+        buffer apply.
+        self answer: edit text.
+        self destroy.
+        ^self answer
+    ]
+    cancel [
+        self answer: nil.
+        self destroy.
+        ^nil
+    ]
+]
+
+"The owner. Opens the dialog and holds onto what it answered."
+ShellView subclass: ModalOwnerShell [
+    | subject lastAnswer inner |
+
+    subject [ ^subject ]
+    lastAnswer [ ^lastAnswer ]
+    inner [ ^inner ]
+
+    ModalOwnerShell class >> routeDolphinMessages [ ^UiSession routeMessagesFrom: View ]
+
+    build [
+        subject := ValueHolder new.
+        subject value: 'original'.
+        ^self
+    ]
+
+    "Build a modal on this shell, ready to show."
+    newPrompt [
+        | dlg |
+        dlg := ValuePromptView new.
+        dlg owner: self.
+        dlg parentView: self.
+        dlg create.
+        dlg build.
+        dlg onSubject: subject.
+        dlg refreshFromBuffer.
+        inner := dlg.
+        ^dlg
+    ]
+
+    "Show it modally. This BLOCKS in the nested pump until the dialog closes,
+     which is the assertion the gate cares about most."
+    promptModally [
+        lastAnswer := inner showModal.
+        ^lastAnswer
+    ]
+
+    subjectValue [ ^subject value ]
+
+    "Windows' answer, not the image's."
+    ownerEnabled [ ^User32 isWindowEnabled: self handle ]
+]

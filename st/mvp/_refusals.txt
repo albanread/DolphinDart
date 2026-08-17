@@ -13,6 +13,10 @@ C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.ControlView.cls:54: [has
 		at: -1 )` folded to a runtime block
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.ControlView.cls:133: [hashhash] `##(self indexOfInstVar: 'oldWndProc')` folded to a runtime block
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.ControlView.cls:542: [binding-literal] `#{...}` variable-binding literal has no house equivalent
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.DisplayMonitor.cls:341: [hashhash] `##(External.FunctionDescriptor returnType: 'bool'
+						argumen)` folded to a runtime block
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.DisplayMonitor.cls:364: [hashhash] `##(self)` folded to a runtime block
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.DisplayMonitor.cls:402: [hashhash] `##({'All'. 47})` folded to a runtime block
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.DividerMenuItem.cls:57: [hashhash] `##(IdentityDictionary
 		withAll: { 32 -> '||'. 64 -> '|'. 2048 )` folded to a runtime block
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.Event.cls:39: [cascade] cascade on a receiver this rewriter cannot bound — splitting it could change evaluation

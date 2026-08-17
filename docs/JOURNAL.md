@@ -892,3 +892,63 @@ the buffered value and Cancel discards it, `showModal` returns, two stacked
 modals unwind in order. Then the prompter view (programmatic, per the
 not-Dolphin rule), the file-open round trip, clipboard paste — and the
 camera on all of it.
+
+---
+
+## DD12 — the modal dialog: five layers down, one to go
+
+A `DialogView` with a TextEdit and OK/Cancel `PushButton`s over a
+`ValueBuffer` now CREATES — window class `#32770`, real handle, edit seeded
+from the buffer which reads the subject. `showModal` no longer hangs and no
+longer dies in the first three places it did. Five defects, each hidden
+behind the last, each fixed at its own level:
+
+1. **Dialogs are RESOURCE TEMPLATES in Dolphin.** `CreateDialog>>create:`
+   calls `CreateDialogParamW` with `templateId asResourceId` and a DLGPROC.
+   This port ships no resource DLL, so the first probe died on `int has no
+   method asResourceId` before a window existed. Re-pointed
+   `DialogView>>creationFunction:dpi:` at the ORDINARY `CreateWindow` path —
+   which is how a native Win32 app writes a modal that is not `DialogBox`,
+   and leaves every other part of DialogView (owner disable, `answer`,
+   `isModal`, the close path) Dolphin's own. Its `defaultWindowStyle` still
+   makes it LOOK like a dialog.
+2. **`endDialog:` cannot destroy a window `DialogBox` did not create**, and
+   Dolphin's `destroy` then deliberately skips `super destroy` on the modal
+   path — which would strand the window forever here. Overridden to always
+   destroy: our dialog is an ordinary window and there is no second process
+   to hand destruction to.
+3. **`Semaphore` and `postToMessageQueue`** — the fork handshake. Degenerate
+   in one process (the loop ends because `destroy` set `isModal: false`), but
+   an unbound `Semaphore` meant `initialize` left `endModal` nil and the close
+   path failed, contained. `postToMessageQueue` is this port's own
+   `UiSession postAction:`.
+4. **`MonitorFromPoint` takes a POINT BY VALUE**, which `genprims` refuses
+   outright rather than guess an ABI — so it is absent from the floor, and
+   `showModal`'s centring died on it. Answered with `MonitorFromRect` over a
+   degenerate rect: a different, exact API doing the same job, not a guess at
+   the by-value ABI. Verified equal to `MonitorFromWindow` (65537).
+5. **A THIRD initializer shape.** `DisplayMonitor`'s `Instances` cache is
+   built neither in `initialize` (which only wires a settings handler) nor in
+   `onStartup` — but in **`reset`**. LOOSE_ENDS 3.15 predicted this class of
+   bug and named the wrong selector. The lesson generalises: find where the
+   class variable is ASSIGNED; do not assume which initializer holds it.
+   `SharedLookupTable` was missing too (a plain LookupTable here — this
+   port's UI is one thread; concurrency is isolates).
+
+**Where it stands:** `showModal` now reaches `DisplayMonitor>>fromHandle:`
+and fails there — reported as `fromHandle_` sent to null WITH a null
+argument, and the same error then appears for an unrelated expression in the
+same run, which means the report itself is suspect (a stale or pending
+exception surfacing through the probe harness). `fromHandle:` is
+`Instances at: h ifAbsentPut: [self new handle: h; yourself]`, so the first
+thing to check is whether `LookupTable` answers `at:ifAbsentPut:` at all —
+if it does not, the DNU is being mis-attributed.
+
+**Next, in order:** (a) confirm `at:ifAbsentPut:` on LookupTable with a
+one-line probe and fix at that level; (b) then the modal assertions —
+owner disabled while open, `showModal` blocking (proved by a deferred action
+dismissing it from inside the nested pump), OK applying the buffer and Cancel
+discarding, two stacked modals unwinding innermost-first; (c) the camera on
+all of it.
+
+24/24 gates stay green throughout — every piece above is additive compat.

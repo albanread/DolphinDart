@@ -167,6 +167,18 @@ Object subclass: DolphinBoot [
                     [ each initialize ]
                         on: Error
                         do: [ :e | failed add: each name ] ] ].
+        "AND `reset`, a THIRD initializer shape. `DisplayMonitor`'s `Instances`
+         cache (hMonitor -> monitor) is built neither in `initialize` (which
+         only wires a settings-changed handler) nor in `onStartup`, but in
+         `reset` — so every window-positioning path found `at:ifAbsentPut:`
+         sent to nil. It cost a sitting inside `showModal`, where the failure
+         is contained and the modal simply never opens.
+
+         LOOSE_ENDS 3.15 predicted the class of this bug and named the wrong
+         selector; the lesson generalises to: find where the class variable is
+         ASSIGNED, do not assume which initializer holds it."
+        { DisplayMonitor } do: [ :each |
+            [ each reset ] on: Error do: [ :e | failed add: each name, ' reset' ] ].
         ^failed asArray
     ]
 
@@ -206,7 +218,13 @@ Object subclass: DolphinBoot [
            by the door's `InitCommonControlsEx` call, so skipping them does not
            fail here — it fails at CreateWindowExW, as a control class Windows
            has not been told to register."
-          IconicListAbstract. ListControlView. ListView. TreeView } do: [ :each |
+          IconicListAbstract. ListControlView. ListView. TreeView.
+          "DisplayMonitor caches its monitor objects in an `Instances`
+           class variable its `initialize` creates. Every window-positioning
+           path goes through `nearestPoint:`/`nearestView:`, so uninitialized
+           it was `at:ifAbsentPut:` sent to nil — inside `showModal`, where a
+           contained failure meant the modal simply never opened."
+          DisplayMonitor } do: [ :each |
             [ each initialize ] on: Error do: [ :e | failed add: each name ] ].
 
         "AND `onStartup`, which is a SECOND initializer Dolphin runs at image
