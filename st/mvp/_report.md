@@ -1,11 +1,11 @@
 # dolphin2mst run report
 
-- inputs: **102** source files (`.cls` + `.pax`)
+- inputs: **103** source files (`.cls` + `.pax`)
 - shared-pool constants available: **7851** from **206** pools
 - loose methods adopted from `.pax`: **1**
-- parsed: **102**  (unbalanced/skipped: 0)
-- emitted: **103** `.mst`
-- methods: **4284**
+- parsed: **103**  (unbalanced/skipped: 0)
+- emitted: **104** `.mst`
+- methods: **4327**
 - refusals: **192**
 
 ## Refusals by rewrite class
@@ -67,6 +67,7 @@
 | `IntegerToText` | 1 | 0 |
 | `KeyEvent` | 9 | 0 |
 | `LVCOLUMNW (reopen)` | 35 | 0 |
+| `LVITEMW (reopen)` | 43 | 0 |
 | `LayoutContext` | 16 | 0 |
 | `LayoutManager` | 11 | 0 |
 | `LayoutPlacement` | 11 | 0 |

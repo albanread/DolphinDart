@@ -591,3 +591,43 @@ for `item` and Dolphin's `hParent:hInsertAfter:` / `allCallbacks` /
 in `genstructs`. winkb records the union's members; the generator does not
 walk them. Any other struct with an anonymous union has the same silent
 under-allocation waiting.
+
+### 3.20 No per-row icons — `View class >> defaultGetImageBlock` answers nil
+Dolphin's port-wide default image block runs `rowObject icon` ->
+`^##(self defaultIcon)` — and `defaultIcon` lives in Dolphin's BASE IMAGE,
+outside the translated slice, with the whole icon chain behind it
+(`Icon>>extent` over GetIconInfo, `addToImageList:mask:` over real HICONs).
+Every image-request callback raised, contained, ~80 per two-second run.
+
+Stand-in at the shallowest honest point (`st/mvp_compat/06_listview.mst`):
+a nil getImageBlock is Dolphin's own first-class "list without images" state.
+The TreeView is unaffected (its image branch gates on `hasIcons`, false at
+the #noIcons default).
+
+**Retires when:** defaultIcon + Icon>>extent + ImageList population are
+translated — then DELETE the override. Trap recorded for that day: the
+`##()` lowering re-evaluates per send with dynamic self, so class-side
+`defaultIcon` overrides will be honoured where Dolphin's compile-time
+binding deliberately ignores them (see 3.21).
+
+### 3.21 Translator defects surfaced by the LVITEMW reopen (agent-reported)
+Four distinct emitter gaps, each currently patched around in
+`st/mvp_compat/06_listview.mst` with the emitted original documented there:
+
+* **Qualified pool references are emitted verbatim** — `OS.Win32Constants.
+  LPSTR_TEXTCALLBACK` comes out as `Win32Constants.LPSTR_TEXTCALLBACK`,
+  which parses as an unbound global (nil) plus stray statements. Fold
+  qualified `Ns.Pool.CONST` like bare names.
+* **`??` rewrite gaps** — a qualified right-hand side mangles
+  (`(x ifNil: [UI]) .ListView.NoImageIndex`), and four methods keep LITERAL
+  `??` sends. Those are now LIVE via `Object>>??`/`UndefinedObject>>??`
+  (Dolphin semantics, operand always evaluated; checked against
+  audit_helpers — not a universal helper), but the rewrite should cover
+  every form.
+* **ByteArray classConstants are 32-bit snapshots** — `CallbackPrototype`
+  is a 60-byte Win32 LVITEMW image copied byte-for-byte into
+  `initializeClassConstants`, loading as a plain List. Re-derive or refuse;
+  never copy. (`callbacksForIndex:` is rebuilt fresh in 06 instead.)
+* **`##()` lowers to `[...] value`** — re-evaluated per send with dynamic
+  self, where Dolphin binds once at compile time. A semantic divergence,
+  benign today, recorded with the defaultIcon trap above.

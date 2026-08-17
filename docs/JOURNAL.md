@@ -774,3 +774,39 @@ to raise), expand Number -> 3.
 Every functional st_browser assertion is green. The only failure is
 `handlerErrors 12` — the ListView's `textPointerOffset` residual, which is the
 concurrent agent task's acceptance target. 22/23 gates.
+
+---
+
+## DD11 — THE CLASS BROWSER IS DONE. 23/23, handlerErrors 0.
+
+Screenshot: Magnitude / Number / Integer expanded in the tree; Integer's real
+selectors in two columns in the list (`/`, `allMask:`, `anyMask:`, `asFloat`,
+`asFraction` ... `gcd:`, `hash`); "Integer | 33 selectors" in the text pane.
+Live reflection end to end, in real comctl32 controls.
+
+This was the first run of the new working method, and it held:
+
+* **One agent, one task, reviewed.** The ListView work went to a single agent
+  in a worktree with CLAUDE.md, counters, the camera, and acceptance criteria
+  (named assertions green + a screenshot it had to READ). It came back with
+  all four criteria met, every claim counter-proven, five overrides in house
+  style with named retirements, and four translator defects reported rather
+  than worked around silently (now LOOSE_ENDS 3.21). Review dropped exactly
+  one thing: its hand `dwState` alias, superseded mid-flight by the genstructs
+  alias emission from the tree-expansion side — the duplicate would have been
+  a silent override waiting for the generator to change.
+* **The two halves met in the middle.** The tree side closed the corpus
+  field-rename class in genstructs; the agent hit the same rename on LVITEMW
+  and its counters (`#lv_state->80`) proved the alias is exercised on the demo
+  path — load-bearing from both directions.
+* **Merge cost:** one self-inflicted parse error (unescaped quotes inside a
+  Smalltalk comment I edited) — caught by the gate in one run.
+
+DD11's deliverable — a two-pane class browser over live reflection data —
+exists, is photographed, and is asserted by `st_browser` end to end:
+construction, population, expansion (with idempotence), selection re-driving
+both panes, teardown, empty registry, zero contained errors.
+
+Still ahead in DD11's tail before DD12: a HUMAN driving it — clicking a tree
+node to drive the list is wired through TVN_SELCHANGED but has no gate, and
+per-row icons wait on the icon machinery (LOOSE_ENDS 3.20).

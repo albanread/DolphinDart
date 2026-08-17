@@ -241,6 +241,15 @@ TARGETS = [
     # tree and list simply drew nothing.
     "Core/Object Arts/Dolphin/MVP/Views/Common Controls/OS.CCITEM.cls",
     "Core/Object Arts/Dolphin/MVP/Views/Common Controls/OS.LVCOLUMNW.cls",
+    # The LIST item struct, for the same reason and by the same mechanism as
+    # the TREE pair below. `ListView>>onDisplayDetailsRequired:` is written
+    # over its Smalltalk protocol — `handle`, `textInBuffer:` (via
+    # `textPointerOffset`), `iStateImage:` — all of which the corpus files onto
+    # `OS.LVITEMW` and all of which are `subclassResponsibility` on `CCITEM`.
+    # Without the reopen every LVN_GETDISPINFO callback raised on the FIRST
+    # send (`handle`), ~168 per two-second run, all contained — so the list
+    # drew a correct scrollbar over zero rows of text.
+    "Core/Object Arts/Dolphin/MVP/Views/Common Controls/OS.LVITEMW.cls",
     # The TREE item structs, for the same reason and by the same mechanism.
     # `TreeView`'s notify handlers are written over their Smalltalk protocol,
     # not their fields: `onDisplayDetailsRequired:` calls `children:` and
@@ -423,6 +432,7 @@ def main(argv):
            # translated WHOLE rather than hand-transcribed.
            "--rename", "External.Structure=ExternalMemory",
            "--reopen", "OS.LVCOLUMNW",
+           "--reopen", "OS.LVITEMW",
            "--reopen", "OS.TVITEMW",
            "--reopen", "OS.TVITEMEXW"]
     for r in refs:

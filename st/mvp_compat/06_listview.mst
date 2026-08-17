@@ -1,0 +1,157 @@
+"06_listview.mst — the ListView display-details path (DD11).
+
+ WHAT WAS WRONG, proven by counters (CLAUDE.md rule 4): every one of the
+ ListView's ~168 LVN_GETDISPINFO callbacks raised on its FIRST send —
+ `anLVITEM handle`, `subclassResponsibility` from CCITEM — because
+ `OS.LVITEMW` was never in the translator's `--reopen` list, so the
+ corpus's item protocol (`handle`, `textPointerOffset`, `iStateImage:`,
+ ...) never arrived and the generated struct inherited only CCITEM's
+ abstract stubs. Counter run before: `Dictionary (#lv_enter->169)` —
+ nothing past the first statement; after the reopen the text branch
+ completed (`#lv_text->89`) and the image branch named the next hole.
+ The reopen itself is the fix (tools/translate_mvp.py now lists
+ OS.LVITEMW beside the TVITEMW pair); what remains in THIS file are the
+ defects the emitted reopen carries plus two base-image gaps the newly
+ reachable code exposed, each probed on the construction path (rule 3)
+ before it could fail silently in a window."
+
+"── the corpus-vs-winkb field rename: RETIRED before it merged ──────────
+ The corpus names LVITEMW's state field `dwState`; winkb names it `state`.
+ This file briefly carried a hand alias (`LVITEMW class >> _OffsetOf_dwState
+ [ ^self _OffsetOf_state ]`) — written concurrently with the tree-expansion
+ work that hit the SAME rename on TVITEMW and closed it as a CLASS:
+ `genstructs` now collects the corpus's declared constant names,
+ de-Hungarianises them, and emits alias constants into the generated structs
+ (see `st/prims/structs/LVITEMW.mst` line ~25, the corpus-alias line).
+ The hand alias was dropped at merge review: a duplicate of a generated
+ method is a silent override waiting for the generator to change. Note
+ `#lv_state->80` in the counter runs — the state branch is exercised on the
+ demo path, so the alias is load-bearing, not defensive."
+
+"── allCallbacks: an unfolded QUALIFIED pool constant ───────────────────
+ The corpus writes `OS.Win32Constants.LPSTR_TEXTCALLBACK` fully
+ qualified, and the reopen emitter folds only bare pool names — so the
+ emitted method read `put: Win32Constants.LPSTR_TEXTCALLBACK`, which this
+ dialect parses as `put: Win32Constants` (an unbound global, so NIL)
+ followed by two no-op statements. Probed as `the method '&' was called
+ on null`. Also 32-bit-poisoned in the corpus itself (rule 1):
+ LPSTR_TEXTCALLBACK is ((LPWSTR)-1) — POINTER-sized — and the corpus
+ writes it with `uint32AtOffset:`, which on this target fills only the
+ low half of an 8-byte field. Both constants fold to -1 (I_IMAGECALLBACK,
+ and -1 sign-extended over the full pointer via intPtrAtOffset:).
+ RETIRED when the emitter folds qualified pool references."
+LVITEMW extend [
+    allCallbacks [
+        | b |
+        b := self bytes.
+        b int32AtOffset: LVITEMW _OffsetOf_iImage put: -1.
+        b intPtrAtOffset: LVITEMW _OffsetOf_pszText put: -1.
+        self maskIn: 3
+    ]
+]
+
+"── callbacksForIndex: — a 32-BIT prototype over a missing idiom ────────
+ Dolphin holds `CallbackPrototype` in its image, so the corpus carries it
+ as a 60-byte LITERAL — LVITEMW's Win32 size, with the pszText callback
+ marker at the Win32 offset (20; it is 24-wide-8 here). Rule 1 in its
+ purest form: every byte of it is a 32-bit assumption. Here it also loads
+ as a plain List (`Class 'List' has no instance method
+ 'int32AtOffset_put_'`), and the method's `basicNew bytes:` construction
+ is an idiom this port has no equivalent for (`bytes` answers the
+ receiver; there is no `bytes:` — probed as `does not understand
+ bytes:`). Rebuilt FRESH per call instead: same result — an 88-byte item
+ in full callback mode with iItem set — by the corpus's own `allCallbacks`
+ recipe, with no prototype to get stale. The emitted
+ `initializeClassConstants` still assigns the dead 60-byte List to
+ `CallbackPrototype`; nothing reads it once this override is in place.
+ RETIRED if the emitter learns to re-derive prototype constants instead
+ of copying their bytes."
+LVITEMW extend [
+    LVITEMW class >> callbacksForIndex: anInteger [
+        | item |
+        item := self new.
+        item allCallbacks.
+        item iItem: anInteger.
+        ^item
+    ]
+]
+
+"── row:text:imageIndex:indent: — a mangled `??` ────────────────────────
+ The corpus writes `imageInteger ?? UI.ListView.NoImageIndex`, and the
+ emitter's `??` rewrite cannot carry a QUALIFIED right-hand side: it
+ emitted `(imageInteger ifNil: [ UI ]) .ListView.NoImageIndex`, which
+ this dialect parses as `iImage := imageInteger ifNil: [UI]` followed by
+ two bare-global statements — so a nil imageIndex silently became the
+ class UI. Not on the virtual-mode demo path (which inserts by count, not
+ by item), fixed because the static update mode reaches it on its first
+ use. RETIRED when the emitter's `??` rewrite handles qualified names."
+LVITEMW extend [
+    row: rowInteger text: aString imageIndex: imageInteger indent: indentInteger [
+        | mask iImage |
+        self iItem: rowInteger - 1.
+        self pszText: (text := aString asUtf16String).
+        mask := 3.
+        iImage := imageInteger ifNil: [ ListView classVarNoImageIndex ].
+        indentInteger == 0
+            ifFalse: [
+                self iIndent: indentInteger.
+                mask := mask bitOr: 16.
+                indentInteger < 0 ifTrue: [ iImage := ListView classVarNoImageIndex ] ].
+        self iImage: iImage - 1.
+        self mask: mask
+    ]
+]
+
+"── `??` exists nowhere in this image ───────────────────────────────────
+ Four generated methods (ListView>>onDisplayDetailsRequired:,
+ TreeViewStaticUpdateMode, ListViewColumn, TreeView) carry a LITERAL
+ `?? ` send — the emitter rewrites most of the corpus's `??` to `ifNil:`
+ but misses these (and refuses 3 more, counted as `qq` in its report).
+ The parser accepts the selector, so the files load and the send raises
+ only when REACHED: probed as `Class 'int' has no instance method '??'`.
+ Defined with Dolphin's semantics — answer the receiver unless it is nil,
+ else the operand; the operand is always evaluated, exactly as a binary
+ send must. Not in the IL builder's rewrite table (checked via
+ tools/audit_helpers.py), so a Smalltalk definition is LIVE. RETIRED when
+ the emitter's `??` rewrite covers every form and the literal sends stop
+ being emitted."
+Object extend [
+    ?? anOperand [ ^self ]
+]
+UndefinedObject extend [
+    ?? anOperand [ ^anOperand ]
+]
+
+"── no per-row icons until the icon machinery lands ─────────────────────
+ The port-wide default getImageBlock is
+ `Message selector: #iconImageIndex` (View class), so in virtual mode
+ EVERY image request runs `rowObject icon` -> `self class icon` ->
+ `^##(self defaultIcon)`. `defaultIcon` is defined in Dolphin's BASE
+ IMAGE, outside the corpus slice this port translates — it exists
+ NOWHERE here, so all 80 image-request callbacks in a two-second run
+ raised `stClassSend: 'String ext' has no class-side method
+ 'defaultIcon'` (counters isolated it to `imageFromRow:`:
+ `#lv_img_recv->80`, `#lv_img_fromrow` absent; the door named the send).
+ And behind `defaultIcon` sits the rest of the chain — `Icon>>extent` is
+ `^initializer extent` over GetIconInfo, then `addToImageList:mask:`
+ over real HICONs — none of it translated.
+
+ A STAND-IN at the shallowest honest point: a nil getImageBlock is
+ Dolphin's own first-class 'list without images' state
+ (`imageFromRow:` answers -1 by design), so the PORT's default is
+ no-images. The TreeView is unaffected — its image branch is gated by
+ `hasIcons`, false at its #noIcons default viewMode, which is why the
+ tree's callbacks completed while the list's raised. RETIRED when the
+ icon-resource machinery (defaultIcon, Icon>>extent, ImageList
+ population) is translated — restore Dolphin's default by deleting this
+ override.
+
+ NOTE for that day: the corpus's `icon` is `^##(self defaultIcon)` —
+ compile-time bound so every class WITHOUT an override answers OBJECT's
+ default icon. The hashhash lowering re-evaluates `[self defaultIcon]
+ value` per send, so a class-side `defaultIcon` override WILL be
+ honoured where Dolphin deliberately ignores it. Recorded so it is not
+ rediscovered the hard way."
+View extend [
+    View class >> defaultGetImageBlock [ ^nil ]
+]
