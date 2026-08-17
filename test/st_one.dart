@@ -20,17 +20,11 @@ main(List<String> a) {
       var r = stRun(new File(f).readAsStringSync());
       if (r.toString().startsWith('ERR')) print('LOAD FAIL ' + f + ': ' + r.toString());
     } } }
-  stRun(new File('st/test/ffi/dolphin_browser.mst').readAsStringSync());
-  stRun('DolphinBoot initializeViewClasses.'); stRun('UiSession startUp.');
-  stRun('BShell := BrowserShell new.'); stRun('BShell create.');
-  stRun('BShell build.'); stRun('BShell show.'); stRun('BShell populateTree.');
-  for (var e in ['UiSession windowCount',
-                 '(UiSession viewFor: BShell handle) class name',
-                 '(UiSession viewFor: BShell tree handle) isNil',
-                 '(UiSession viewFor: BShell list handle) isNil',
-                 '(SessionManager classVarCurrent inputState lookupWindow: BShell tree handle) isNil',
-                 'BShell tree handle',
-                 'UiSession windows keys asSortedCollection asArray printString'])
-    print('  ' + e.padRight(62) + ' -> ' + ev(e));
+  for (var e in ['3 truncated', '3.5 truncated', '(3/2) truncated',
+                 '(2@3) truncated', '3 displayString',
+                 'Integer displayString',
+                 'Integer displayString asUtf16String class name',
+                 "'abc' asUtf16String class name"])
+    print('  ' + e.padRight(44) + ' -> ' + ev(e));
   exit(0);
 }

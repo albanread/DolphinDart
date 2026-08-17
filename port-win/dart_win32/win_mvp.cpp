@@ -171,6 +171,19 @@ LRESULT CALLBACK MvpWndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
       // WndProc's own C++ frame and out through Windows' dispatch, which owns
       // this stack.
       g_contained++;
+      // AND SAY WHAT IT WAS. The count alone tells you something raised and
+      // nothing about what — and an exception raised inside a WM_NOTIFY
+      // handler is contained TWICE (the image's own `on: Error do:` and then
+      // here), so removing the image-side guard to get a stack just moves the
+      // silence. DD11 spent a sitting on `does not understand truncated` with
+      // no receiver, no selector and no frame, because this line dropped it.
+      //
+      // Rate-limited: a notification storm would otherwise write thousands of
+      // identical lines and bury the run.
+      if (g_contained <= 8) {
+        fprintf(stderr, "[door] contained: %s\n", Dart_GetError(r));
+        fflush(stderr);
+      }
       result = 0;
     } else if (Dart_IsInteger(r)) {
       Dart_IntegerToInt64(r, &result);
@@ -222,6 +235,13 @@ bool CallImage(int64_t kind, HWND hwnd, int64_t a0, int64_t b0, int64_t c0,
     Dart_Handle r = Dart_InvokeClosure(fn, 5, a);
     if (Dart_IsError(r)) {
       g_contained++;
+      // Same reason as the other containment site: the count says something
+      // raised, the message says WHAT. This is the funnel every reflected
+      // message goes through, WM_NOTIFY included.
+      if (g_contained <= 8) {
+        fprintf(stderr, "[door] contained: %s\n", Dart_GetError(r));
+        fflush(stderr);
+      }
       ok = false;
     } else if (Dart_IsInteger(r)) {
       if (handled != nullptr) *handled = true;

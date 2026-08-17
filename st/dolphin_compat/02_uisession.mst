@@ -251,6 +251,15 @@ Object subclass: UiSession [
             '>>', (sel isNil ifTrue: [ '?' ] ifFalse: [ sel ]) displayString,
             ' (WM ', msg printString, ') — ',
             anException class name, ': ', anException messageText.
+        "THE SELECTOR THAT MISSED, when the exception can name it. A contained
+         MessageNotUnderstood otherwise reports only its own message text —
+         `does not understand truncated` — with no hint of the RECEIVER, and
+         a notify handler runs deep enough that the sender is not guessable.
+         Costs nothing when the exception has no message."
+        (anException respondsTo: #message) ifTrue: [
+            (anException message ifNotNil: [ :m |
+                Transcript showCr: '    ... selector ', m selector displayString,
+                    ' args ', m arguments displayString ]) ].
         ^nil
     ]
 

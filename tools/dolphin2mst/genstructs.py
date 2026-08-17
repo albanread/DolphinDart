@@ -122,15 +122,28 @@ DECLARED_IVARS: Dict[str, List[str]] = {}
 DECLARED_SUPER: Dict[str, str] = {}
 
 
-def _struct_super(name, fields) -> str:
-    """The corpus superclass if it is also generated, else `ExternalMemory`.
+# Struct bases this PORT supplies, which winkb therefore knows nothing about.
+# `OS.CCITEM` is the case it exists for: Dolphin's abstract parent of every
+# common-control item structure (TVITEM, LVITEM, TCITEM), carrying the shared
+# `mask`/`maskIn:`/`textInBuffer:` protocol those structs are driven through.
+# It is not a Win32 struct, so `load()` can never find a layout for it — but it
+# IS translated (see translate_mvp) into `st/prims/rt`, which loads first.
+#
+# Filled from `--supplied`, so the dependency is explicit and greppable rather
+# than a name this file happens to know.
+SUPPLIED_BASES: set = set()
 
-    Only names that are themselves emitted qualify — a struct whose parent was
-    not generated must still root at `ExternalMemory` or it would reference a
-    class that does not exist.
+
+def _struct_super(name, fields) -> str:
+    """The corpus superclass when it is available here, else `ExternalMemory`.
+
+    Available means: generated from winkb like any other struct, OR named by
+    `--supplied` because this port provides it. A parent that is neither must
+    NOT be emitted — the class reference would be nil at load and every
+    inherited send would go to nothing.
     """
     sup = DECLARED_SUPER.get(name)
-    if sup and sup != name and sup in fields:
+    if sup and sup != name and (sup in fields or sup in SUPPLIED_BASES):
         return sup
     return "ExternalMemory"
 
@@ -221,8 +234,12 @@ def main(argv: List[str]) -> int:
     ap.add_argument("--out", required=True)
     ap.add_argument("--corpus", required=True)
     ap.add_argument("--winkb", default=r"C:\projects\windows_api\windows_api.db")
+    ap.add_argument("--supplied", action="append", default=[],
+                    help="a struct base this port supplies rather than winkb "
+                         "(OS.CCITEM); see SUPPLIED_BASES")
     args = ap.parse_args(argv)
 
+    SUPPLIED_BASES.update(n.rsplit(".", 1)[-1] for n in (args.supplied or []))
     if not os.path.exists(args.winkb):
         print("genstructs: winkb database not found — offsets come from there, "
               "so there is nothing to generate", file=sys.stderr)

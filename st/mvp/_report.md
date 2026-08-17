@@ -1,11 +1,11 @@
 # dolphin2mst run report
 
-- inputs: **101** source files (`.cls` + `.pax`)
+- inputs: **102** source files (`.cls` + `.pax`)
 - shared-pool constants available: **7851** from **206** pools
 - loose methods adopted from `.pax`: **1**
-- parsed: **101**  (unbalanced/skipped: 0)
-- emitted: **102** `.mst`
-- methods: **4252**
+- parsed: **102**  (unbalanced/skipped: 0)
+- emitted: **103** `.mst`
+- methods: **4284**
 - refusals: **192**
 
 ## Refusals by rewrite class
@@ -31,6 +31,7 @@
 | `AcceleratorTable` | 25 | 0 |
 | `BorderLayout` | 26 | 0 |
 | `Brush` | 29 | 1 |
+| `CCITEM` | 32 | 0 |
 | `Canvas` | 126 | 5 |
 | `Color` | 268 | 9 |
 | `ColorDefault` | 11 | 1 |

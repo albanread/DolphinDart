@@ -127,6 +127,19 @@ Object subclass: ExternalMemory [
     setAddress: p size: n owned: aBool [ address := p. size := n. owned := aBool ]
     isView [ ^owned ~~ true ]
     address [ ^address ]
+
+    "`asInteger` on an external address IS its address, and Dolphin's code
+     relies on that: `View>>wmNotify:wParam:lParam:` boxes lParam with
+     `asExternalAddress`, and every notification handler then indexes off
+     `pNMHDR asInteger + <offset>`.
+
+     Without it the send fell through to `Number ext >> asInteger`, which is
+     `^self truncated` — so the failure surfaced as `does not understand
+     truncated` on a receiver that is not a number and never was. It cost a
+     sitting to find, because a notification handler's exception is contained
+     twice (the image's `on: Error do:` and then the door) and neither reports
+     a receiver or a frame."
+    asInteger [ ^address ]
     "Dolphin's spelling of the same thing — 'the address of the receiver's
      contents'. `OS.LVCOLUMNW>>pszText:` writes `anUtf16String yourAddress`
      into the struct, which is how a column's caption reaches the control."

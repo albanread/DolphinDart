@@ -645,3 +645,86 @@ inheriting nothing.
 `--reopen` it onto such a base), and let `_struct_super` treat a declared
 struct parent as valid when this port supplies it rather than winkb. Then
 `TVITEMW`/`LVITEMW` inherit `textInBuffer:` and the callbacks can answer.
+
+---
+
+## DD11 — THE TREE DRAWS. `Magnitude`, from live reflection, in a real SysTreeView32.
+
+Four defects between the last entry and a tree node on screen, each hidden
+behind the one before it.
+
+### 1. `OS.CCITEM` — the base that could not be generated
+
+Dolphin's abstract parent of every common-control item struct (`TVITEMW`,
+`LVITEMW`, `TCITEMW`), carrying the shared protocol those structs are driven
+through: `mask`/`maskIn:`, `newTextBuffer:`, `textInBuffer:`.
+
+genstructs builds from winkb, and **CCITEM is not a Win32 struct** — it is
+Dolphin's own class, so no layout exists for it and both item structs rooted at
+`ExternalMemory` inheriting none of it.
+
+It is TRANSLATED now, with two new pieces of machinery:
+
+* `--rename External.Structure=ExternalMemory`, so a corpus struct class can be
+  translated whole rather than hand-transcribed.
+* `--supplied CCITEM` to genstructs, so `_struct_super` accepts a base this
+  PORT provides rather than only ones winkb knows.
+
+It is relocated to `st/prims/rt`, which BOOT loads two layers before
+`st/prims/structs`. That is not tidiness: emitted with the rest of the wave it
+would arrive AFTER `TVITEMW`, the loader would auto-vivify a stub, and the real
+declaration could not reopen it — it carries an ivar (`text`), which makes it a
+REPLACEMENT rather than a reopen, leaving TVITEMW bound to the empty stub.
+
+### 2. `asInteger` is a UNIVERSAL HELPER — the oldest trap in this port
+
+`View>>wmNotify:wParam:lParam:` boxes lParam with `asExternalAddress`, and every
+notification handler then indexes off `pNMHDR asInteger + <offset>`.
+
+`{"asInteger", "stTruncated", 0}` in the builder's table means `asInteger` is
+rewritten AT THE CALL SITE. So an `ExternalMemory>>asInteger` written in
+Smalltalk is never reached — I wrote one, and it changed nothing. The send went
+to `.truncated()` and raised **`does not understand truncated`** on a receiver
+that is not a number and never was.
+
+Fixed in `_stTruncSlow`, asked by PROTOCOL not class name: anything carrying an
+`address` is an external pointer and its integer value is that address.
+
+### 3. `textInBuffer:` needed a CRT this port does not have
+
+Dolphin copies an item's text into the control-supplied buffer with
+`OS.Ucrt wcsncpy_s:...`. `Ucrt` is not bound here, so the send went to nil —
+and it is the LAST link in the ?VN_GETDISPINFO chain, the one that actually
+gives a node its text. Written directly over the buffer protocol, clamped to
+`cchTextMax - 1` because the CONTROL owns that buffer. Dolphin's ellipsis on
+overflow is NOT reproduced and is recorded as such.
+
+### 4. The door threw away every contained error
+
+The count said something raised; the message was dropped. An exception in a
+notification handler is contained TWICE — the image's own `on: Error do:` and
+then the door — so removing the image-side guard to get a stack merely moves
+the silence. The door now PRINTS what it contained (rate-limited to 8).
+
+### How it was actually found, and the lesson
+
+Not by reading. Counters wired into the handler, stepped one statement at a
+time, narrowed it to the exact send: `gdi_cls` fired 183 times and `gdi_addr`
+never, so the raise was inside `pNMHDR asInteger` — a line that looks like
+nothing.
+
+**The screenshot is what made each step checkable.** `handlerErrors` fell
+184 -> 171 across these fixes and would have told you almost nothing; the
+picture went from an empty pane to the word `Magnitude`.
+
+### Where it stands
+
+* TREE: draws its root from live reflection data. ✔
+* Expansion: `itemExpanding` now FIRES (it never did before), but children are
+  still not inserted — `treeItemCount` stays 1.
+* LIST: still draws no rows despite a correct scrollbar and count. Its
+  `onDisplayDetailsRequired:` is `ListView`'s own, not the one just proven.
+
+**Next:** the same counter technique on the ListView's display path, and on
+`tvnItemExpanding:` past its entry — both now reachable, which they were not
+this morning.

@@ -187,6 +187,20 @@ _NMHDR_PAST = re.compile(
     re.I)
 
 
+def _rewrite_bytes_ivar(body: str) -> str:
+    """`bytes` -> `self bytes`, except where it is a cascade part.
+
+    `TVITEMW class >> initializeCallbackPrototype` is
+    `self new allCallbacks; bytes` — there `bytes` is a SELECTOR, and
+    rewriting it produced `; self bytes`, which is not a cascade part and
+    would not parse.
+    """
+    def sub(m):
+        before = body[:m.start()].rstrip()
+        return m.group(0) if before.endswith(";") else "self bytes"
+    return re.sub(r"(?<![\w.])bytes(?![\w:])", sub, body)
+
+
 def rewrite_nmhdr_code(body: str) -> str:
     """Re-derive the 32-bit NMHDR literals from the generated struct.
 
@@ -977,18 +991,7 @@ def emit_loose(cls_name: str, cd, methods, renames, pool_table,
         # not a unary send, so it read as an unbound global. Rewritten to the
         # send, which is the same value with a name the builder can resolve.
         if not force_class_side:
-            # NOT when it is a cascade PART. `bytes` is a variable in
-            # `bytes uint32AtOffset: ...` and a SELECTOR in
-            # `self new allCallbacks; bytes` — Dolphin's
-            # `TVITEMW class >> initializeCallbackPrototype` has exactly that,
-            # and rewriting it produced `; self bytes`, which is not a cascade
-            # part at all and would not parse.
-            def _bytes_to_self(m, _src=None):
-                before = body[:m.start()].rstrip()
-                if before.endswith(";"):
-                    return m.group(0)
-                return "self bytes"
-            body = re.sub(r"(?<![\w.])bytes(?![\w:])", _bytes_to_self, body)
+            body = _rewrite_bytes_ivar(body)
         body = rewrite_selectors(body)
         body, r = rewrite_cascades(body, where); refusals.extend(r)
         body = rewrite_add_class_constant(body)
@@ -1211,6 +1214,19 @@ def emit_class(pf: ParsedFile, renames: Dict[str, str],
                 body, where, own_imports, pool_table, shadowed | set(m.arg_names))
             refusals.extend(r)
             body = rewrite_nmhdr_code(body)
+            # `bytes` is `External.Structure`'s instance variable — the byte
+            # object a struct's fields live in — and Dolphin's struct accessors
+            # are written over it rather than over `self`. This port's structs
+            # ARE the memory, so `ExternalMemory>>bytes` answers self; but a
+            # bare lowercase name compiles as a VARIABLE here, not a unary
+            # send, so it read as an unbound global (nil).
+            #
+            # Only for a class rooted at `ExternalMemory` — which, thanks to
+            # `--rename External.Structure=ExternalMemory`, is exactly the
+            # corpus struct classes this port translates whole (`OS.CCITEM`).
+            # NOT when `bytes` is a cascade part, where it is a selector.
+            if sup == "ExternalMemory" and "bytes" not in cd.ivars:
+                body = _rewrite_bytes_ivar(body)
             body = rewrite_selectors(body)
             body, r = rewrite_cascades(body, where); refusals.extend(r)
             body = rewrite_add_class_constant(body)

@@ -136,6 +136,12 @@ def main(argv: List[str]) -> int:
                          "rather than a definition, because this project "
                          "GENERATES the class (OS.LVCOLUMNW: genstructs "
                          "builds the layout, the .cls carries the methods)")
+    ap.add_argument("--rename", action="append", default=[],
+                    help="Old.Name=NewName — map a corpus class name onto one "
+                         "this port already provides. `External.Structure` is "
+                         "the case it exists for: Dolphin roots its Win32 item "
+                         "structs there, and the equivalent here is "
+                         "`ExternalMemory`.")
     ap.add_argument("inputs", nargs="+")
     args = ap.parse_args(argv)
 
@@ -159,7 +165,19 @@ def main(argv: List[str]) -> int:
 
     # The hierarchy is resolved over BOTH sets; only `parsed` is emitted.
     ivars = superclass_ivar_counts({**reference, **parsed})
-    renames: Dict[str, str] = {}           # DD2: zero collisions, so empty by measurement
+    # DD2 measured zero base-name collisions, so this starts empty and is fed
+    # only by explicit `--rename`. It is NOT a collision table any more: its
+    # one caller maps `External.Structure` (Dolphin's root for Win32 item
+    # structs) onto this port's `ExternalMemory`, so a corpus struct class can
+    # be translated whole rather than hand-transcribed.
+    renames: Dict[str, str] = {}
+    for spec in (args.rename or []):
+        if "=" not in spec:
+            print("dolphin2mst: --rename wants Old=New, got %r" % spec,
+                  file=sys.stderr)
+            return 2
+        old_name, new_name = spec.split("=", 1)
+        renames[old_name] = new_name
 
     # Shared pools, gathered from EVERY parsed file (reference sources included:
     # the pools live in `.pax` manifests that are usually not translation

@@ -72,7 +72,12 @@ def main(argv):
     print("gen_prims: structs -> %s" % structs_out)
     return subprocess.call(
         [sys.executable, os.path.join(HERE, "dolphin2mst", "genstructs.py"),
-         "--out", structs_out, "--corpus", args.corpus, "--winkb", args.winkb])
+         "--out", structs_out, "--corpus", args.corpus, "--winkb", args.winkb,
+         # CCITEM is Dolphin's own abstract item base, not a Win32 struct, so
+         # winkb has no layout for it. `translate_mvp` emits it into
+         # `st/prims/rt` (which loads first); naming it here is what lets
+         # TVITEMW/LVITEMW actually subclass it.
+         "--supplied", "CCITEM"])
 
 
 if __name__ == "__main__":

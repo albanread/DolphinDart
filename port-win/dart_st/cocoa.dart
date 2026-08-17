@@ -1118,7 +1118,31 @@ stTruncated(r) {
   }
   return _stTruncSlow(r);
 }
-_stTruncSlow(r) => r.truncated();
+_stTruncSlow(r) {
+  // AN EXTERNAL ADDRESS answers its address. `asInteger` is aliased onto this
+  // helper (see the table in st_flow_graph_builder.cc), so an
+  // `ExternalMemory>>asInteger` written in Smalltalk is NEVER REACHED — the
+  // builder rewrote the call site before it could be. That is the universal
+  // helper trap this port keeps paying for, and here it cost a sitting.
+  //
+  // `View>>wmNotify:wParam:lParam:` boxes lParam with `asExternalAddress` and
+  // every notification handler then indexes off `pNMHDR asInteger + <offset>`.
+  // Routed to `.truncated()`, that raised `does not understand truncated` on
+  // a receiver that is not a number — contained twice (the image's own
+  // `on: Error do:` and then the door), so neither a receiver nor a frame ever
+  // reached the log. It stopped every ?VN_GETDISPINFO callback, which is what
+  // fills a tree node's or a list row's text.
+  //
+  // Asked by PROTOCOL, not by class name: anything carrying an `address` is an
+  // external pointer, and its integer value is that address.
+  try {
+    var a = r.address;
+    if (a is int) return a;
+  } catch (e) {
+    // not an external address — fall through to the ordinary meaning
+  }
+  return r.truncated();
+}
 stRounded(r) => r is num ? r.round() : _stRoundSlow(r);
 _stRoundSlow(r) => r.rounded();
 stFloorU(r) => r is num ? r.floor() : _stFloorSlow(r);

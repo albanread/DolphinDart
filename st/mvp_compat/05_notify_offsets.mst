@@ -58,7 +58,6 @@ Object subclass: NotifyTrace [
 
 IconicListAbstract extend [
     nmGetDispInfoW: pNMHDR [
-        NotifyTrace bump: #getDispInfo.
         "Private - Handler for a ?VN_GETDISPINFO notification message.
          OVERRIDDEN: the corpus adds 12, which is the 32-bit NMHDR size."
         ^self onDisplayDetailsRequired:
@@ -84,9 +83,7 @@ TreeView extend [
         "Private - Default handler for the TVN_ITEMEXPANDINGW notification.
          OVERRIDDEN: 32-bit offsets in the corpus (12 and 56)."
         | tviParent hParent |
-        NotifyTrace bump: #itemExpanding.
-        (pNMHDR uint32AtOffset: NMTREEVIEWW _OffsetOf_action) == 2 ifFalse: [
-            NotifyTrace bump: #expandWrongAction. ^0 ].
+        (pNMHDR uint32AtOffset: NMTREEVIEWW _OffsetOf_action) == 2 ifFalse: [ ^0 ].
         tviParent := TVITEMW fromAddress:
             pNMHDR asInteger + NMTREEVIEWW _OffsetOf_itemNew.
         "See if we have been expanded before."
@@ -148,3 +145,42 @@ TreeView extend [
  THE RULE for anything new taken from the corpus: a handler that adds a
  literal to `pNMHDR`, or reads `uint32AtOffset:` from it, is wrong on this
  target until the number comes from a generated `_OffsetOf_`."
+
+"── CCITEM>>textInBuffer: without the CRT ───────────────────────────────
+ Dolphin copies an item's text into the control-supplied buffer with
+ `OS.Ucrt wcsncpy_s:bufferSize:strSource:count:`. `Ucrt` is a binding this
+ port has no equivalent for, so the send went to nil — and it is the LAST link
+ in the ?VN_GETDISPINFO chain, the one that actually gives a tree node or a
+ list row its text.
+
+ Written directly instead, over the buffer protocol this port already has. The
+ contract is exactly Dolphin's: copy at most `cchTextMax - 1` characters into
+ the buffer at `pszText` and null-terminate, because the CONTROL owns that
+ buffer and told us how big it is. Overrunning it corrupts comctl32's memory,
+ which is why the clamp is on the control's number and not on ours.
+
+ Ellipsis on overflow is NOT reproduced — Dolphin appends U+2026 when the text
+ does not fit. Truncation is honest and visible; the ellipsis is cosmetic and
+ needs the lead-surrogate test its comment describes. Recorded rather than
+ silently dropped."
+CCITEM extend [
+    textInBuffer: anObject [
+        | src dest max chars base |
+        max := self cchTextMax.
+        (max isNil or: [ max < 2 ]) ifTrue: [ ^anObject ].
+        dest := self bytes intPtrAtOffset: self textPointerOffset.
+        (dest isNil or: [ dest = 0 ]) ifTrue: [ ^anObject ].
+        src := anObject displayString asUtf16String.
+        base := src address.
+        "`Utf16Buffer fromString:` allocates (n + 1) * 2 bytes, so the
+         character count is half the size less the null terminator."
+        chars := (src size // 2) - 1.
+        chars := chars min: max - 1.
+        chars < 0 ifTrue: [ chars := 0 ].
+        0 to: chars * 2 - 1 do: [ :i |
+            Win32 poke: dest + i put: (Win32 peek: base + i) ].
+        Win32 poke: dest + (chars * 2) put: 0.
+        Win32 poke: dest + (chars * 2) + 1 put: 0.
+        ^anObject
+    ]
+]

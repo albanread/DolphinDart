@@ -223,6 +223,23 @@ TARGETS = [
     "Core/Object Arts/Dolphin/MVP/Views/Common Controls/UI.ListViewColumn.cls",
     # Its Win32 counterpart, REOPENED onto the generated struct (see --reopen
     # in the cli invocation below).
+    # `OS.CCITEM` — the ABSTRACT BASE of every common-control item struct
+    # (`TVITEMW`, `LVITEMW`, ...). It carries the shared protocol those structs
+    # are driven through: `mask`/`maskIn:`, `textInBuffer:` (which writes an
+    # item's text into the buffer the control supplies), `newTextBuffer:`, the
+    # valid-mask constants.
+    #
+    # IT CANNOT BE GENERATED. `genstructs` builds struct classes from winkb, and
+    # CCITEM is not a Win32 struct at all — it is Dolphin's own class. So it is
+    # TRANSLATED, with `--rename External.Structure=ExternalMemory` giving it
+    # this port's root, and relocated to `st/prims/rt` (see EARLY_REOPEN below)
+    # so it loads BEFORE the generated structs that subclass it.
+    #
+    # Without it both item structs rooted at `ExternalMemory` inheriting none of
+    # that protocol, and every `?VN_GETDISPINFO` callback died on
+    # `textInBuffer:` — 182 of them in one two-second run, all contained, so the
+    # tree and list simply drew nothing.
+    "Core/Object Arts/Dolphin/MVP/Views/Common Controls/OS.CCITEM.cls",
     "Core/Object Arts/Dolphin/MVP/Views/Common Controls/OS.LVCOLUMNW.cls",
     # The TREE item structs, for the same reason and by the same mechanism.
     # `TreeView`'s notify handlers are written over their Smalltalk protocol,
@@ -401,6 +418,10 @@ def main(argv):
            # Defining it here instead would load after genstructs and drop the
            # layout. The generated class lands in `st/prims/structs`, so the
            # reopen is moved to the late layer alongside the UserLibrary one.
+           # Dolphin roots its item structs at `External.Structure`; the
+           # equivalent here is `ExternalMemory`. This lets `OS.CCITEM` be
+           # translated WHOLE rather than hand-transcribed.
+           "--rename", "External.Structure=ExternalMemory",
            "--reopen", "OS.LVCOLUMNW",
            "--reopen", "OS.TVITEMW",
            "--reopen", "OS.TVITEMEXW"]
@@ -429,6 +450,29 @@ def main(argv):
             fh.write(body)
         os.remove(loose)
         print("translate_mvp: loose UserLibrary methods -> %s" % late)
+
+    # CCITEM MUST LOAD BEFORE THE STRUCTS THAT SUBCLASS IT.
+    #
+    # BOOT order is `world; dolphin_compat; prims/rt; prims/structs; prims;
+    # prims/aliases`, and `st/mvp` is later still — so a CCITEM emitted with
+    # the rest of the wave would arrive AFTER `TVITEMW`. The loader would
+    # auto-vivify a stub for the forward reference, and the real declaration
+    # could not reopen it (it carries an ivar, `text`, which makes it a fresh
+    # REPLACEMENT rather than a reopen) — leaving TVITEMW pointing at the empty
+    # stub with none of the protocol.
+    #
+    # So it is moved to `st/prims/rt`, which BOOT loads two layers earlier.
+    for f in sorted(os.listdir(args.out)):
+        if not f.endswith("_CCITEM.mst"):
+            continue
+        early_dir = os.path.join(REPO, "st", "prims", "rt")
+        early = os.path.join(early_dir, "02_CCITEM.mst")
+        with open(os.path.join(args.out, f), encoding="utf-8") as fh:
+            body = fh.read()
+        with open(early, "w", encoding="utf-8", newline="\n") as fh:
+            fh.write(body)
+        os.remove(os.path.join(args.out, f))
+        print("translate_mvp: CCITEM (struct base) -> %s" % early)
 
     # Same relocation, same reason, for every `--reopen` class: it reopens
     # something `st/prims/structs` defines, so it must load after that layer.
