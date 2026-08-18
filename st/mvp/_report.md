@@ -1,21 +1,21 @@
 # dolphin2mst run report
 
-- inputs: **123** source files (`.cls` + `.pax`)
-- shared-pool constants available: **7856** from **209** pools
+- inputs: **136** source files (`.cls` + `.pax`)
+- shared-pool constants available: **7869** from **212** pools
 - loose methods adopted from `.pax`: **1**
-- parsed: **123**  (unbalanced/skipped: 0)
-- emitted: **124** `.mst`
-- methods: **4785**
-- refusals: **224**
+- parsed: **136**  (unbalanced/skipped: 0)
+- emitted: **137** `.mst`
+- methods: **5331**
+- refusals: **278**
 
 ## Refusals by rewrite class
 
 | Rewrite | Count |
 |---|--:|
-| `hashhash` | 103 |
-| `cascade` | 58 |
-| `pragma` | 26 |
-| `binding-literal` | 24 |
+| `hashhash` | 134 |
+| `cascade` | 61 |
+| `binding-literal` | 41 |
+| `pragma` | 29 |
 | `orphan-loose-methods` | 10 |
 | `qq` | 3 |
 
@@ -33,6 +33,7 @@
 | `Brush` | 29 | 1 |
 | `CCITEM` | 32 | 0 |
 | `Canvas` | 126 | 5 |
+| `CardContainer` | 48 | 4 |
 | `Clipboard` | 42 | 1 |
 | `Color` | 268 | 9 |
 | `ColorDefault` | 11 | 1 |
@@ -109,13 +110,22 @@
 | `Prompter` | 26 | 3 |
 | `PushButton` | 41 | 8 |
 | `RGB` | 11 | 0 |
+| `RadioButton` | 1 | 0 |
 | `Rectangle` | 98 | 2 |
+| `ReferenceView` | 17 | 3 |
 | `ResourceLibrary` | 18 | 0 |
 | `ScrollEvent` | 16 | 1 |
 | `SelectionChangeEvent` | 12 | 0 |
 | `SelectionChangingEvent` | 5 | 0 |
 | `Shell` | 39 | 2 |
 | `ShellView` | 156 | 11 |
+| `SlideyInneyOuteyThing` | 66 | 4 |
+| `SlidingCardTray` | 47 | 3 |
+| `Splitter` | 27 | 4 |
+| `StaticRectangle` | 7 | 1 |
+| `StatusBar` | 46 | 5 |
+| `StatusBarItem` | 21 | 0 |
+| `StatusBarNullItem` | 1 | 0 |
 | `StockBrush` | 7 | 0 |
 | `StockFont` | 14 | 0 |
 | `StockPen` | 8 | 0 |
@@ -124,8 +134,11 @@
 | `SystemMetrics` | 77 | 2 |
 | `TVITEMEXW (reopen)` | 9 | 0 |
 | `TVITEMW (reopen)` | 38 | 1 |
+| `TabView` | 78 | 3 |
+| `TabViewXP` | 23 | 2 |
 | `TextEdit` | 179 | 21 |
 | `TextPresenter` | 20 | 5 |
+| `Toolbar` | 164 | 25 |
 | `TreeModel` | 31 | 1 |
 | `TreeModelAbstract` | 57 | 7 |
 | `TreeNode` | 14 | 0 |

@@ -33,6 +33,9 @@ C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.Presenter.cls:1097: [has
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.Presenter.cls:1116: [cascade] cascade on a receiver this rewriter cannot bound — splitting it could change evaluation
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.Presenter.cls:1122: [binding-literal] `#{...}` variable-binding literal has no house equivalent
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.Presenter.cls:1132: [binding-literal] `#{...}` variable-binding literal has no house equivalent
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.ReferenceView.cls:45: [hashhash] `##(self indexOfInstVar: 'referee')` folded to a runtime block
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.ReferenceView.cls:161: [hashhash] `##(self)` folded to a runtime block
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.ReferenceView.cls:189: [binding-literal] `#{...}` variable-binding literal has no house equivalent
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.ScrollEvent.cls:69: [cascade] cascade on a receiver this rewriter cannot bound — splitting it could change evaluation
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.Shell.cls:292: [hashhash] `##(self)` folded to a runtime block
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.Shell.cls:300: [binding-literal] `#{...}` variable-binding literal has no house equivalent
@@ -181,6 +184,10 @@ C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Buttons\UI.PushButton.cls:
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Buttons\UI.PushButton.cls:369: [binding-literal] `#{...}` variable-binding literal has no house equivalent
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Buttons\UI.PushButton.cls:379: [binding-literal] `#{...}` variable-binding literal has no house equivalent
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Buttons\UI.PushButton.cls:389: [cascade] cascade on a receiver this rewriter cannot bound — splitting it could change evaluation
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Cards\UI.CardContainer.cls:65: [hashhash] `##(SWP_NOSIZE | SWP_NOMOVE)` folded to a runtime block
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Cards\UI.CardContainer.cls:314: [pragma] unhandled pragma <commandQuery: #queryTabOrientation:>
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Cards\UI.CardContainer.cls:340: [pragma] unhandled pragma <commandQuery: #queryViewMode:>
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Cards\UI.CardContainer.cls:427: [binding-literal] `#{...}` variable-binding literal has no house equivalent
 loose:309: [cascade] cascade on a receiver this rewriter cannot bound — splitting it could change evaluation
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Common Controls\UI.IconicListAbstract.cls:50: [binding-literal] `#{...}` variable-binding literal has no house equivalent
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Common Controls\UI.IconicListAbstract.cls:87: [hashhash] `##(IdentityDictionary withAll: {
@@ -217,6 +224,12 @@ C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Common Controls\UI.ListVie
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Common Controls\UI.ListViewColumn.cls:512: [cascade] cascade on a receiver this rewriter cannot bound — splitting it could change evaluation
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Common Controls\UI.ListViewColumn.cls:519: [cascade] cascade on a receiver this rewriter cannot bound — splitting it could change evaluation
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Common Controls\UI.ListViewStaticUpdateMode.cls:115: [cascade] cascade on a receiver this rewriter cannot bound — splitting it could change evaluation
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Common Controls\UI.TabView.cls:113: [hashhash] `##(350 @ 30)` folded to a runtime block
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Common Controls\UI.TabView.cls:312: [hashhash] `##((Array new: -550 - -552 + 1 withAll: #nmDummy:)
+		at: -550 -)` folded to a runtime block
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Common Controls\UI.TabView.cls:689: [hashhash] `##(self)` folded to a runtime block
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Common Controls\UI.TabViewXP.cls:78: [hashhash] `##(0 @ 1)` folded to a runtime block
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Common Controls\UI.TabViewXP.cls:78: [hashhash] `##(1 @ -1)` folded to a runtime block
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Common Controls\UI.TreeView.cls:298: [cascade] cascade on a receiver this rewriter cannot bound — splitting it could change evaluation
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Common Controls\UI.TreeView.cls:310: [cascade] cascade on a receiver this rewriter cannot bound — splitting it could change evaluation
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Common Controls\UI.TreeView.cls:570: [hashhash] `##(NMHDR byteSize)` folded to a runtime block
@@ -230,6 +243,48 @@ C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Common Controls\UI.TreeVie
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Common Controls\UI.TreeView.cls:1396: [hashhash] `##(self indexOfInstVar: 'tvFlags')` folded to a runtime block
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Common Controls\UI.TreeViewStaticUpdateMode.cls:19: [qq] `??` with a non-primary right operand
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Common Controls\UI.TreeViewStaticUpdateMode.cls:46: [cascade] cascade on a receiver this rewriter cannot bound — splitting it could change evaluation
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Control Bars\UI.StatusBar.cls:67: [hashhash] `##(350 @ 20)` folded to a runtime block
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Control Bars\UI.StatusBar.cls:72: [hashhash] `##(SBARS_SIZEGRIP | SBARS_TOOLTIPS)` folded to a runtime block
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Control Bars\UI.StatusBar.cls:305: [hashhash] `##(INFOTIPSIZE << 16)` folded to a runtime block
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Control Bars\UI.StatusBar.cls:428: [hashhash] `##(self)` folded to a runtime block
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Control Bars\UI.StatusBar.cls:433: [binding-literal] `#{...}` variable-binding literal has no house equivalent
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Control Bars\UI.Toolbar.cls:263: [hashhash] `##(TBSTYLE_FLAT | TBSTYLE_TRANSPARENT)` folded to a runtime block
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Control Bars\UI.Toolbar.cls:334: [hashhash] `##(350 @ 25)` folded to a runtime block
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Control Bars\UI.Toolbar.cls:364: [hashhash] `##(TBSTYLE_TOOLTIPS | TBSTYLE_WRAPABLE | TBSTYLE_FLAT)` folded to a runtime block
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Control Bars\UI.Toolbar.cls:369: [hashhash] `##(self indexOfInstVar: 'bitmapsStart')` folded to a runtime block
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Control Bars\UI.Toolbar.cls:369: [hashhash] `##(self indexOfInstVar: 'idMap')` folded to a runtime block
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Control Bars\UI.Toolbar.cls:471: [hashhash] `##(TBSTYLE_FLAT | TBSTYLE_TRANSPARENT)` folded to a runtime block
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Control Bars\UI.Toolbar.cls:536: [hashhash] `##(1 - 12 lowBit)` folded to a runtime block
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Control Bars\UI.Toolbar.cls:546: [hashhash] `##(12 bitInvert)` folded to a runtime block
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Control Bars\UI.Toolbar.cls:629: [hashhash] `##((Array new: TBN_FIRST - TBN_GETBUTTONINFOW + 1 withAll: #nmD)` folded to a runtime block
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Control Bars\UI.Toolbar.cls:629: [hashhash] `##(TBN_FIRST + 1)` folded to a runtime block
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Control Bars\UI.Toolbar.cls:724: [hashhash] `##(TBSTYLE_EX_DRAWDDARROWS | TBSTYLE_EX_DOUBLEBUFFER)` folded to a runtime block
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Control Bars\UI.Toolbar.cls:724: [hashhash] `##(TBSTYLE_EX_DRAWDDARROWS | TBSTYLE_EX_DOUBLEBUFFER | TBSTYLE_)` folded to a runtime block
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Control Bars\UI.Toolbar.cls:789: [hashhash] `##(16 * USER_DEFAULT_SCREEN_DPI)` folded to a runtime block
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Control Bars\UI.Toolbar.cls:922: [hashhash] `##(TBMF_PAD | TBMF_BARPAD | TBMF_BUTTONSPACING)` folded to a runtime block
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Control Bars\UI.Toolbar.cls:1431: [binding-literal] `#{...}` variable-binding literal has no house equivalent
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Control Bars\UI.Toolbar.cls:1441: [binding-literal] `#{...}` variable-binding literal has no house equivalent
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Control Bars\UI.Toolbar.cls:1451: [binding-literal] `#{...}` variable-binding literal has no house equivalent
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Control Bars\UI.Toolbar.cls:1461: [binding-literal] `#{...}` variable-binding literal has no house equivalent
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Control Bars\UI.Toolbar.cls:1471: [binding-literal] `#{...}` variable-binding literal has no house equivalent
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Control Bars\UI.Toolbar.cls:1481: [binding-literal] `#{...}` variable-binding literal has no house equivalent
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Control Bars\UI.Toolbar.cls:1491: [binding-literal] `#{...}` variable-binding literal has no house equivalent
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Control Bars\UI.Toolbar.cls:1501: [binding-literal] `#{...}` variable-binding literal has no house equivalent
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Control Bars\UI.Toolbar.cls:1511: [binding-literal] `#{...}` variable-binding literal has no house equivalent
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Control Bars\UI.Toolbar.cls:1521: [binding-literal] `#{...}` variable-binding literal has no house equivalent
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Control Bars\UI.Toolbar.cls:1531: [binding-literal] `#{...}` variable-binding literal has no house equivalent
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Sliding Tray\UI.SlideyInneyOuteyThing.cls:143: [cascade] cascade on a receiver this rewriter cannot bound — splitting it could change evaluation
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Sliding Tray\UI.SlideyInneyOuteyThing.cls:406: [cascade] cascade on a receiver this rewriter cannot bound — splitting it could change evaluation
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Sliding Tray\UI.SlideyInneyOuteyThing.cls:602: [hashhash] `##(self)` folded to a runtime block
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Sliding Tray\UI.SlideyInneyOuteyThing.cls:613: [binding-literal] `#{...}` variable-binding literal has no house equivalent
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Sliding Tray\UI.SlidingCardTray.cls:255: [hashhash] `##(2 @ 1)` folded to a runtime block
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Sliding Tray\UI.SlidingCardTray.cls:294: [cascade] cascade on a receiver this rewriter cannot bound — splitting it could change evaluation
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Sliding Tray\UI.SlidingCardTray.cls:333: [pragma] unhandled pragma <commandQuery: #queryTogglePin:>
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Splitter\UI.Splitter.cls:73: [hashhash] `##(5@5)` folded to a runtime block
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Splitter\UI.Splitter.cls:239: [hashhash] `##(self)` folded to a runtime block
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Splitter\UI.Splitter.cls:244: [binding-literal] `#{...}` variable-binding literal has no house equivalent
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Splitter\UI.Splitter.cls:254: [hashhash] `##(Color brightness: 225 / 255)` folded to a runtime block
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Static\Rectangle\UI.StaticRectangle.cls:84: [binding-literal] `#{...}` variable-binding literal has no house equivalent
 loose:2633: [hashhash] `##(self defaultIcon)` folded to a runtime block
 Core.Error: [orphan-loose-methods] 1 loose method(s) filed onto 'Core.Error', which was not translated
 Core.MessageSend: [orphan-loose-methods] 1 loose method(s) filed onto 'Core.MessageSend', which was not translated

@@ -1279,3 +1279,85 @@ Verified along the way, so it is not re-derived: Dolphin's own load flags
 module handle and the same HICON as an ordinary load, and Windows compares
 resource names case-insensitively, so `defaultIconName`'s 'ShellView.ico'
 finds the DLL's `SHELLVIEW.ICO`.
+
+---
+
+## DD14 — PORT DOLPHIN'S VIEWS. Stop building lookalikes.
+
+Corrected by the user, for the second time: *"stop building your own views and
+port dolphin views that is the entire bloody fucking point of this project,
+that and everything underneath needed to support them"*.
+
+The drift was real and measurable. `st/test/ffi/dolphin_class_browser.mst` is
+**7.5KB of my code** standing in for `Tools.ClassBrowserAbstract` +
+`Tools.ClassBrowserShell`, which are **140KB of Dolphin's**. The name made it
+worse by implying otherwise. `ModalOwnerShell`, `ValuePromptView`,
+`BrowserShell` and `TextEditShell` are the same mistake. They were useful as
+substrate probes and they are not the product.
+
+### What the corpus actually does, and why it changes the plan
+
+`Tools.ClassBrowserShell` does not construct its window. It carries
+
+    resource_Default_view    ^#(#'!!STL' 6 2118 11 #{UI.STBViewProxy} ...)
+
+— a **31KB literal array that IS the window**, deserialised at open. That is
+not peculiar to the browser:
+
+    classes carrying view resources ....... 217   (96 MVP, 86 IDE)
+    resource_* methods in all ............. 654
+    Kernel.STB* deserialiser classes ....... 25
+
+So a view-resource reader is not a nicety, it is THE enabler: it converts 654
+real Dolphin views from "code someone must re-type" into data we already have.
+Every hand-built shell is a view that reader would have given us for free.
+
+### Done this sitting
+
+Dolphin's own view classes, all of which live in MVP/Base and were therefore
+inside DD1's scope all along — they had simply never been listed:
+
+    ReferenceView  Toolbar  StatusBar  StatusBarItem  StatusBarNullItem
+    Splitter  TabView  TabViewXP  RadioButton  StaticRectangle
+    CardContainer  SlidingCardTray  SlideyInneyOuteyThing
+
+124 -> 137 classes, 4785 -> 5331 methods. **25/25 gates still pass**, so they
+load clean alongside the existing wave.
+
+### The order from here
+
+1. `UI.ResourceIdentifier` + `UI.STBViewProxy` + `Kernel.STBInFiler` and its
+   proxies — the reader. Nothing else unlocks 654 views.
+2. Instantiate ONE Dolphin view resource end to end and photograph it.
+3. `Tools.ClassBrowserAbstract` + `Tools.ClassBrowserShell` — which needs the
+   IDE package DD1 excluded, now explicitly wanted: *"it is the Dolphin
+   browser etc that we really want, the whole GUI/MVP"*.
+4. Retire my shells as each real view replaces them, and rename the probe
+   files so none of them claims to be Dolphin's.
+
+### Also this sitting: Scintilla, built for ARM64
+
+`UI.Scintilla.ScintillaView` is 438KB of Smalltalk over the C++ editor — the
+largest single "code we do not rewrite" win available, and what Dolphin's
+source panes are made of. Dolphin ships Scintilla 5.5.7 / Lexilla 5.4.5 as
+**I386** DLLs. Unlike `DolphinDR8.dll`, whose contents are architecture-neutral
+DATA readable from a 32-bit module, these are CODE and an ARM64 process cannot
+load them at all.
+
+Built from source instead, at the LATEST versions since Scintilla is
+backwards compatible at the message level:
+
+    Scintilla 5.6.1   scintilla.org      ARM64  1.05 MB
+    Lexilla   5.5.3   ScintillaOrg/lexilla (GitHub, rel-5-5-3)  ARM64  1.43 MB
+
+`scintilla.mak` already handles ARM64 (`!IF "$(PLATFORM:64=)" == "arm"`), so
+only the right vcvars was needed. The GitHub mirror of Scintilla proper
+(`mirror/scintilla`) is STALE at 5.5.2, so the official site is the source
+even though GitHub was asked for — recorded because it is a deliberate
+substitution.
+
+The integration risk is not the DLL. Scintilla is message-based
+(`SendMessage(hSci, SCI_*, wParam, lParam)`), which suits Smalltalk, and that
+is exactly where 64-bit bites: wParam/lParam carry positions and pointers, and
+`SCNotification` grows the way NMHDR did (12 -> 24 bytes of header). Rule 1,
+at every Scintilla call site.

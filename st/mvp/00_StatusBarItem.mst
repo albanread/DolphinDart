@@ -1,0 +1,166 @@
+"`StatusItem` is a class describing the standard items that can be held by a `StatusBar`. These can have both text and an image associated with them.
+
+## Instance Variables:
+  getTextBlock		`<monadicValuable>` for mapping a list item to its display text.
+  getImageBlock	`<monadicValuable>` for mapping a list item to an <integer> image index.
+  getTipTextBlock	`<monadicValuable>` for mapping a list item to its tool-tip text."
+
+StatusBarItemAbstract subclass: StatusBarItem [
+    | getTextBlock getImageBlock getTipTextBlock |
+
+    defaultGetTextBlock [
+        "Private - Answer a default block to use to find out the children of an object
+        	that will be placed in the receiver"
+        ^View defaultGetTextBlock
+    ]
+    drawImageOn: aCanvas at: positionPoint extent: extentPoint [
+        	^self getImage
+        		ifNotNil: 
+        			[:image |
+        			(self imageManager imageListWithExtent: extentPoint)
+        				draw: image
+        				on: aCanvas
+        				at: positionPoint.
+        			extentPoint x + (self textWidth: ' ' on: aCanvas)]
+        		ifNil: [0]
+    ]
+    drawItem: aCanvas bounding: aRectangle [
+        "Private - Draw the receiver's current model's value onto the <Canvas> argument."
+        | textOffset imageSize |
+        	(model isNil or: [model value isNil]) ifTrue: [^self].
+        	"The image is drawn in one of the system icon sizes (the largest that will fit). It's possible that the status bar is too small to draw even a 16x16 icon (most likely it is less than 15 pixels high due to a design-time error. In this case draw a 16x16 icon and just let the system truncate it."
+        	imageSize := self imageSizeIn: aRectangle.
+        	textOffset := 1 + (self
+        						drawImageOn: aCanvas
+        						at: aRectangle left @ (aRectangle top + ((aRectangle height - imageSize y) // 2))
+        						extent: imageSize).
+        	self drawTextOn: aCanvas offset: textOffset
+    ]
+    drawTextFlags [
+        	^2084
+    ]
+    drawTextOn: aCanvas offset: anInteger [
+        	| text |
+        	text := self getText.
+        	text isEmpty ifTrue: [^self].
+        	aCanvas
+        		formatText: text
+        			in: (self rectangle insetOriginBy: anInteger @ 0)
+        			flags: self drawTextFlags
+    ]
+    getImage [
+        	^self getImageBlock ifNotNil: [:getImage | getImage value: model value]
+    ]
+    getImageBlock [
+        "Answer the <monadicValuable> to use to find out the image index of an object that will
+        	be placed in the receiver. The answer may be nil if no icon is required."
+        ^getImageBlock
+    ]
+    getImageBlock: monad [
+        "Set the <monadicValuable> to be used to get the image index of an object that will
+        	be displayed in the receiver to the argument, monad. The block can also be set to nil if 
+        	no icon is required."
+        getImageBlock := monad.
+        	self refreshContents
+    ]
+    getText [
+        "Private - Answer the text for this item. Note that there is no default text if the getTextBlock is nil. This is for icon-only items."
+        | value |
+        	^(getTextBlock isNil or: [model isNil or: [(value := self model value) isNil]])
+        		ifTrue: ['']
+        		ifFalse: [(getTextBlock value: value) displayString]
+    ]
+    getTextBlock [
+        "Answer the <monadicValuable> used to determine the text to display for an 
+        	object placed in the receiver."
+        ^getTextBlock
+    ]
+    getTextBlock: monad [
+        "Set the <monadicValuable> used to determine the text to display for an object that will
+        	be placed in the receiver to the argument, monad."
+        getTextBlock := monad.
+        	self refreshContents
+    ]
+    getTipText [
+        "Private - Answer the tool-tip text to be used for this item when required (but see #toolTipText)."
+        ^getTipTextBlock isNil
+        		ifTrue: [super getTipText]
+        		ifFalse: 
+        			[| value |
+        			(model isNil or: [(value := self model value) isNil])
+        				ifTrue: ['']
+        				ifFalse: [(getTipTextBlock value: value) displayString]]
+    ]
+    getTipTextBlock [
+        	^getTipTextBlock
+    ]
+    getTipTextBlock: aMonadicValuableOrNil [
+        "Set (or clear if the argument is nil) the <monadicValuable> used to calculate the tip text to display for the receiver. See StatusBar>>tipTextAt: for details of when tooltips should be shown for an item."
+        getTipTextBlock := aMonadicValuableOrNil
+    ]
+    imageManager [
+        "Answer the imageManager which holds the icons."
+        ^IconImageManager current
+    ]
+    imageSizeIn: aRectangle [
+        	| height |
+        	height := aRectangle height.
+        	^Icon standardSizeFor: height @ height
+    ]
+    initialize [
+        "Private - Initialize the state of the receiver."
+        super initialize.
+        	self getImageBlock: View defaultGetImageBlock.
+        	self getTextBlock: self defaultGetTextBlock.
+    ]
+    printOn: aStream [
+        "Append a representation of the receiver to aStream."
+        aStream basicPrint: self.
+        	(parentView isKindOf: View) ifFalse: [^self].aStream nextPut: $(. aStream print: self name. aStream nextPut: $)
+    ]
+    textWidth: aString on: aCanvas [
+        	^(aCanvas
+        		textExtent: aString
+        		width: 0
+        		flags: self drawTextFlags) x
+    ]
+    toolTipText [
+        "Private - Answer the tool-tip text for the receiver. Answer nil if none, in which case no tip is shown."
+        "A tool-tip should be displayed when either:
+        		1. the item has only an icon (no text); or
+        		2. the item text is truncated due to the size of its pane; or
+        		3. the tip text is different from the item text.
+        	The first two cases are the default behaviour of the control as documented at https://docs.microsoft.com/en-us/windows/win32/controls/sb-settiptext.
+        	The final behaviour of displaying a tip when the text is different is a Dolphin specific enhancement that makes the tips useful in a wider range of scenarios."
+
+        	| text tipText |
+        	tipText := self getTipText.
+        	tipText isEmpty ifTrue: [^nil].
+        	text := self getText.
+        	tipText = text
+        		ifTrue: 
+        			[| rect canvas requiredWidth availableWidth |
+        			"May be case 2: Tip text is the same as item text, display if item text truncated"
+        			rect := self rectangle.
+        			canvas := parentView canvas.
+        			canvas font: parentView actualFont.
+        			requiredWidth := 1 + (self getImage
+        								ifNil: [self textWidth: text on: canvas]
+        								ifNotNil: [(self imageSizeIn: rect) + (self textWidth: ' ' , text on: canvas)]).
+        			canvas free.
+        			availableWidth := rect width - (self hasBorder
+        								ifTrue: 
+        									["Have to use a magic number for the width of the vertical separator that is drawn for any border as there doesn't appear to be a metric"
+        									2]
+        								ifFalse: [0]).
+        			availableWidth >= requiredWidth
+        				ifTrue: 
+        					["Not truncated, so we don't want to display a tip."
+        					^nil]].
+        	^tipText
+    ]
+    StatusBarItem class >> value: anObject [
+        	Notification deprecated.
+        	^anObject iconImageIndex
+    ]
+]

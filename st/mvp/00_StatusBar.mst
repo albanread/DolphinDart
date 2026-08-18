@@ -1,0 +1,344 @@
+"`StatusBar` is a `<compositeView>` implementing the Windows ""Msctls_Statusbar32"" common control.
+
+`StatusBar` holds a list of items, sub-instances of `StatusBarItemAbstract`, matching the order of items in the control. Items may be added and deleted once the view has been created. It also allows a name to be associated with each item. 
+
+Note that, internally, an additional separator is placed as the first item in the status common control when there are no user parts. This is because the common control does not allow you to remove all the items completely.
+
+## Instance Variables:
+  `parts`				`<Array>` of `StatusBarItemAbstract`.
+  `leftOverSeparator`	`StatusBarNullItem`
+  `layoutManager`		`<layoutManager>` or `nil`, for managing the layout of sub-views, if any."
+
+ControlBarAbstract subclass: StatusBar [
+    | _unused18 parts leftOverSeparator layoutManager |
+
+    addItem: aStatusBarItem [
+        "Append a new <StatusBarItem> to the list of items displayed in the receiver. Answer the new item."
+        aStatusBarItem parentView: self.
+        	parts := self contents copyWith: aStatusBarItem.
+        	self updateItem: aStatusBarItem.
+        	^aStatusBarItem
+    ]
+    addItem: aStatusBarItem name: aString [
+        "Append a new <StatusBarItem> to the list of items displayed in the receiver, associating
+        	the new item with the specified <String> name. Answer the new item."
+        self addItem: aStatusBarItem.
+        	self name: aStatusBarItem as: aString.
+        	^aStatusBarItem
+    ]
+    calcRectangleFromClientRectangle: aRectangle atDpi: anInteger [
+        	| borders padding |
+        	borders := self sbGetBorders.
+        	padding := borders first @ borders second * anInteger // self dpi.
+        	^aRectangle expandedBy: (padding corner: padding)
+    ]
+    calculateExtent: aLayoutContext [
+        "Private - Calculate an extent for the receiver that has the correct height to accommodate text in the current font and/or small icons."
+        | extent clientExt |
+        	clientExt := aLayoutContext clientExtentOf: self.
+        	extent := clientExt x @ self preferredHeight.
+
+        	"Now adjust required client extent to window extent"
+        	^self calcExtentFromClientExtent: extent
+    ]
+    contents [
+        "Answer a copy of all the accessible parts of the receiver."
+        ^parts copyWithout: leftOverSeparator
+    ]
+    defaultExtent [
+        "Private - Answer the default size of the receiver in device-independent pixels (96-dpi). This is used only to determine the size of a view when it is created (although after scaling DIPs to the monitor DPI). Thereafter preferredExtent is used when the desired size of a view is requested."
+        ^[350 @ 20] value
+    ]
+    defaultWindowStyle [
+        "Private - Answer a default base style to use when creating the receiver"
+        ^super defaultWindowStyle bitOr: [SBARS_SIZEGRIP | SBARS_TOOLTIPS] value
+    ]
+    getItemRect: anInteger [
+        "Private - Answer a <RECTL> describing the bounds of item at the specified zero-based <Integer> index."
+        | rect |
+        	rect := RECTL newBuffer.
+        	self
+        		sendMessage: SB_GETRECT
+        		wParam: anInteger
+        		lpParam: rect.
+        	"There is an apparent bug in the status bar control in that it may report the rectangle of the last item wrongly"
+        	(rect width == 0 and: [self width > 0]) ifTrue: [rect width: self width].
+        	^rect
+    ]
+    getWindowText [
+        "Private - Answers the text from the receiver. There is a bug in
+        	the status common control which will fail if the first part has
+        	SBT_OWNERDRAW set."
+        ^''
+    ]
+    getWindowTextLength [
+        "Private - Answers the length of text for the receiver. There is
+        	a bug in the status common control which will fail if the first part
+        	has SBT_OWNERDRAW set."
+        ^0
+    ]
+    hasSizeGrip [
+        "Answers true if the receiver has a sizeing grip.
+        	i.e. it has the SBARS_SIZEGRIP style"
+        ^self baseStyleAllMask: SBARS_SIZEGRIP
+    ]
+    hasSizeGrip: aBoolean [
+        "Sets the receiver to have a sizeing grip if aBoolean is true. This is the SBARS_SIZEGRIP
+        	style."
+        " Implementation Note: Help doesn't specify, but recreate is required to add or remove this
+        	style. Also, on XP turning off the style has no effect if the status bar is created or
+        	recreated as a child of a window with a resizable frame."
+
+        	self 
+        		baseStyleMask: SBARS_SIZEGRIP
+        		set: aBoolean
+        		recreateIfChanged: true
+    ]
+    hasToolTips [
+        "Answer whether or not the receiver has tool tips (i.e. the SBARS_TOOLTIPS style)."
+        ^self baseStyleAllMask: SBARS_TOOLTIPS
+    ]
+    hasToolTips: aBoolean [
+        "Set whether or not the receiver has tool tips (i.e. the SBARS_TOOLTIPS style)."
+        "Implementation Note: Help says recreate needed to add this style."
+
+        	self 
+        		baseStyleMask: SBARS_TOOLTIPS
+        		set: aBoolean
+        		recreateIfChanged: true
+    ]
+    indexOfItem: aStatusBarItem [
+        "Private - Answer the 1-based <integer> index of the <StatusBarItem> argument, or 0 if it is not one of the receiver's parts."
+        ^parts identityIndexOf: aStatusBarItem
+    ]
+    initialize [
+        "Private - Initialize the state of the receiver."
+        "Note that we ensure that an empty separator is included as the first part. This is because of an apparent common control bug when you remove the last part in a status view, the SB_SETPARTS will return an error."
+
+        	super initialize.
+        	(leftOverSeparator := StatusBarNullItem separator: 0) parentView: self.
+        	parts := { leftOverSeparator }
+    ]
+    invalidateItem: aStatusBarItem [
+        	self invalidateRect: (self getItemRect: (self indexOfItem: aStatusBarItem) - 1)
+    ]
+    itemAtIndex: anInteger [
+        "Answers the <StatusBarItem> at the specified 1-based <integer> in the receiver."
+        ^parts at: anInteger
+    ]
+    itemFromId: anInteger [
+        "Private - Answers the sub-item of the receiver with the specified 0-based <integer> item spec."
+        ^parts lookup: anInteger + 1
+    ]
+    items [
+        "Private - Answer the receiver's parts as an <OrderedCollection> of <StatusItem>s."
+        ^parts asOrderedCollection
+    ]
+    items: aCollection [
+        "Private - Sets the receiver's collection of <StatusItem>s to those in the <collection>, tools."
+        "Implementation Note: The items are stored as an <Array> for efficiency since they are generally not changed once the view has been created."
+
+        	aCollection size > 256 ifTrue: [self error: 'Too many items'].
+        	parts := aCollection asArray.
+        	self recreate
+    ]
+    layout: aLayoutContext [
+        "Private - Recalculate the geometry of the receiver."
+        "Implementation Note: After performing the normal layout operation we want to recalculate
+        	the widths of the automatically resizing items."
+
+        	super layout: aLayoutContext.
+        	self setRightEdges: (aLayoutContext clientRectangleOf: self) width
+    ]
+    layoutManager [
+        "Answer the layout manager for the receiver"
+        ^layoutManager
+    ]
+    layoutManager: aLayoutManager [
+        "Set the layout manager for the receiver to aLayoutManager"
+        layoutManager := aLayoutManager.
+        	self basicInvalidateLayout
+    ]
+    onDrawItem: drawItemStruct [
+        	| part | 
+        	part := parts at: drawItemStruct itemID + 1.
+        	part drawItem: ((Canvas withNonOwnedDC: drawItemStruct hDC dpi: self dpi)
+        				backcolor: self actualBackcolor;
+        				font: self actualFont;
+        				yourself)
+        		bounding: drawItemStruct rcItem asRectangle.
+        	^true
+    ]
+    onViewCreated [
+        "The receiver window has been created. Copy the info held
+        	in instance variables across to it."
+        super onViewCreated.
+        	self setControlBackcolor.
+        	self setRightEdges.
+        	1 to: parts size
+        		do: 
+        			[:i |
+        			| part |
+        			part := parts at: i.
+        			part parentView: self.
+        			self setItemText: part at: i]
+    ]
+    preferredHeight [
+        "Private - Answer the <integer> number of pels that would be the ideal height for the client area of the receiver."
+        | canvas fontHeight |
+        	canvas := self canvas.
+        	canvas font: self actualFont.
+        	fontHeight := canvas textMetrics tmHeight.
+        	canvas free.
+        	^self metrics smallIconExtent y max: fontHeight
+    ]
+    rectangleOfItem: aStatusBarItem [
+        	^self itemRect: (self indexOfItem: aStatusBarItem)
+    ]
+    removeItem: aStatusBarItem [
+        "Remove the specified <StatusBarItem> from the receiver's visible parts. Answer the argument."
+        "Note that we always ensure that there is one part, the leftOverSeparator, registered with the common control to get around a bug in the control."
+
+        	| index |
+        	index := self indexOfItem: aStatusBarItem.
+        	index == 0 ifTrue: [^self errorNotFound: aStatusBarItem].
+        	parts size == 1 ifTrue: [self addItem: leftOverSeparator].
+        	parts := parts copyWithoutIndex: index.
+        	aStatusBarItem parentView: nil.
+        	self setRightEdges.
+        	index to: parts size do: [:i | self setItemText: (parts at: i) at: i].
+        	^aStatusBarItem
+    ]
+    resolutionScaledBy: aPoint [
+        "Private - The receiver is being loaded and it has been determined that the pixel resolution has changed since the point at which the view was saved. Scale any internal pixels by the <Point> argument."
+        super resolutionScaledBy: aPoint.
+        	parts do: [:each | each resolutionScaledBy: aPoint]
+    ]
+    rightEdgesForWidth: anInteger [
+        	| edges width right fixedWidth numResizable numParts horizontalGap share |
+        	numParts := parts size.
+        	numParts < 1
+        		ifTrue: 
+        			["Control can't actually contain no parts, so we put a dummy one in."
+        			^Int32Array with: -1].
+        	numResizable := 0.
+        	fixedWidth := 0.
+        	edges := self sbGetBorders.
+        	1 to: numParts
+        		do: 
+        			[:i |
+        			width := (parts at: i) width.
+        			width == -1 ifTrue: [numResizable := numResizable + 1] ifFalse: [fixedWidth := fixedWidth + width]].
+        	right := edges at: 1.
+        	horizontalGap := edges at: 3.
+        	"Note `share` can be a Fraction. This is slow, but there are typically only a few parts (max 256), and avoids accumulating rounding error."
+        	share := numResizable == 0
+        				ifFalse: 
+        					[(anInteger - right - fixedWidth - self sizeGripWidth - ((numParts - 1) * horizontalGap))
+        						/ numResizable].
+        	edges := Int32Array new: numParts.
+        	1 to: numParts
+        		do: 
+        			[:i |
+        			width := (parts at: i) width.
+        			right := right + (width == -1 ifTrue: [share] ifFalse: [width]).
+        			edges at: i put: right truncated.
+        			right := right + horizontalGap].
+        	^edges
+    ]
+    sbGetBorders [
+        "Private - Answer a <sequencedReadableCollection> containing:
+
+        	 1	width of the horizontal border (width inset for the bar)
+        	 2	width of the vertical border (height inset for the bar)
+        	 3	gap between parts (i.e. width of gap between item rectangles)"
+        | answer |
+        	answer := Int32Array new: 3.
+        	self
+        		sendMessage: SB_GETBORDERS
+        		wParam: 0
+        		lpParam: answer.
+        	^answer
+    ]
+    sbGetTipText: anInteger [
+        	| buf |
+        	buf := Utf16String new: INFOTIPSIZE.
+        	self
+        		sendMessage: SB_GETTIPTEXT
+        		wParam: (anInteger bitOr: [INFOTIPSIZE << 16] value)
+        		lpParam: buf.
+        	^buf trimNulls
+    ]
+    setControlBackcolor: aColor [
+        	self 
+        		sendMessage: SB_SETBKCOLOR
+        		wParam: 0
+        		lParam: aColor asCOLORREF
+    ]
+    setItem: aStatusBarItem tipText: aString [
+        "Private - Set the tool-tip text of the specified <StatusBarItem> of the receiver, to the <readableString, aString."
+        "Note that tooltips are inoperative for owner-drawn items."
+
+        	self
+        		sendMessage: SB_SETTIPTEXT
+        		wParam: (self indexOfItem: aStatusBarItem) - 1
+        		lpParam: aString asUtf16String
+    ]
+    setItemText: aStatusBarItem at: anInteger [
+        "Private - Set the SB_SETTEXT of the receiver's common control for specified one of the receiver's <StatusBarItem>s."
+        "In the case of owner-drawn items, this amounts to an instruction to the control to request re-draw of the item, and we don't need to pass the text here."
+
+        	| style |
+        	style := aStatusBarItem style.
+        	(self
+        		sendMessage: SB_SETTEXT
+        		wParam: (style bitOr: anInteger - 1)
+        		lpParam: ((style allMask: SBT_OWNERDRAW) ifFalse: [aStatusBarItem getText asUtf16String])) == 0
+        		ifTrue: [self errorInCommonControlCall]
+    ]
+    setRightEdges [
+        "Private - Inform the common control of the right edge for each of the receiver's parts."
+        ^self setRightEdges: self clientWidth
+    ]
+    setRightEdges: anInteger [
+        	| edges |
+        	edges := self rightEdgesForWidth: anInteger.
+        	self
+        		sendMessageNz: SB_SETPARTS
+        		wParam: edges size
+        		lpParam: edges
+    ]
+    setWindowText: aString [
+        "Private - Sets the text of the receiver. There is a bug in
+        	the status common control which will fail if the first part has
+        	SBT_OWNERDRAW set."
+        ^self
+    ]
+    size [
+        "Answer the size of the receiver's contents."
+        ^self contents size
+    ]
+    sizeGripWidth [
+        	^self hasSizeGrip ifTrue: [self metrics scrollThumbExtent x] ifFalse: [0]
+    ]
+    updateItem: aStatusBarItem [
+        "Private - Update the controls knowledge of this part."
+        | index |
+        	index := self indexOfItem: aStatusBarItem.
+        	index == 0 ifTrue: [^self].
+        	self setRightEdges.
+        	self setItemText: aStatusBarItem at: index.
+        	self invalidateRect: (self getItemRect: index - 1)
+    ]
+    StatusBar class >> icon [
+        "Answers an Icon that can be used to represent this class"
+        ^[self] value defaultIcon
+    ]
+    StatusBar class >> themePartName [
+        	^'STATUS'
+    ]
+    StatusBar class >> winClassName [
+        "Private - Answer the name of the Windows window class to use when realizing the receiver."
+        ^'msctls_statusbar32'
+    ]
+]

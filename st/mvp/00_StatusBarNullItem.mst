@@ -1,0 +1,7 @@
+"`StatusBarNullItem` is a class of status bar items that occupy space, but are otherwise invisible."
+
+StatusBarItemAbstract subclass: StatusBarNullItem [
+    drawItem: aCanvas bounding: boundingRectangle [
+        "Private - A request to draw the receiver. As we are just a placeholder, we do nothing."
+    ]
+]

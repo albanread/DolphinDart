@@ -347,6 +347,31 @@ TARGETS = [
     # the first attempt named one and silently emitted nothing).
     "Core/Object Arts/Dolphin/MVP/Views/Buttons/UI.CommandButton.cls",
     "Core/Object Arts/Dolphin/MVP/Views/Buttons/UI.PushButton.cls",
+
+    # ── DD14: DOLPHIN'S OWN VIEWS, because that is the point ──────────────
+    #
+    # Everything below is referenced BY NAME from `Tools.ClassBrowserShell`'s
+    # `resource_Default_view` — the 31KB literal array that IS its window.
+    # Dolphin does not construct that window in code; it deserialises it. So
+    # the way to have Dolphin's browser is to translate the view classes and
+    # read the resource, NOT to hand-build a lookalike shell. 217 classes in
+    # the corpus carry such resources, 654 methods in all, 96 of them in MVP.
+    #
+    # Every one of these lives in MVP or Base, i.e. inside the scope DD1
+    # already set. They were simply never added.
+    "Core/Object Arts/Dolphin/MVP/Base/UI.ReferenceView.cls",
+    "Core/Object Arts/Dolphin/MVP/Views/Control Bars/UI.Toolbar.cls",
+    "Core/Object Arts/Dolphin/MVP/Views/Control Bars/UI.StatusBar.cls",
+    "Core/Object Arts/Dolphin/MVP/Views/Control Bars/UI.StatusBarItem.cls",
+    "Core/Object Arts/Dolphin/MVP/Views/Control Bars/UI.StatusBarNullItem.cls",
+    "Core/Object Arts/Dolphin/MVP/Views/Splitter/UI.Splitter.cls",
+    "Core/Object Arts/Dolphin/MVP/Views/Common Controls/UI.TabView.cls",
+    "Core/Object Arts/Dolphin/MVP/Views/Common Controls/UI.TabViewXP.cls",
+    "Core/Object Arts/Dolphin/MVP/Presenters/Radio/UI.RadioButton.cls",
+    "Core/Object Arts/Dolphin/MVP/Views/Static/Rectangle/UI.StaticRectangle.cls",
+    "Core/Object Arts/Dolphin/MVP/Views/Cards/UI.CardContainer.cls",
+    "Core/Object Arts/Dolphin/MVP/Views/Sliding Tray/UI.SlidingCardTray.cls",
+    "Core/Object Arts/Dolphin/MVP/Views/Sliding Tray/UI.SlideyInneyOuteyThing.cls",
     # Clipboard paste is a goal-gate item; the class is a thin wrapper over
     # User32 clipboard calls the generated floor already has.
     "Core/Object Arts/Dolphin/MVP/Base/UI.Clipboard.cls",

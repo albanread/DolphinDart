@@ -1,0 +1,72 @@
+"`StaticRectangle` is a simple `ControlView` class which wraps the Windows STATIC control for simple rectangles and frames.
+
+The rectangle styles paint a solid block of colour filling the client area. The frame styles draw a border/frame around the edge of the client area of the control allowing the background colour to show through.
+
+Apart from its uses for background rectangles and frames, StaticRectangle can also be used for horizontal and vertical lines by setting the width or height appropriately. When using in conjunction with a `ProportionalLayout` to add some kind of divider, set the arrangement to 0 to maintain the specified width/height.
+
+## Class Variables:
+  `StyleMap`		`LookupTable` of `Symbol` rectangle/frame style names Windows styles."
+
+ControlView subclass: StaticRectangle [
+    <classVars: StyleMap>
+    StaticRectangle class >> classVarStyleMap [ ^StyleMap ]
+    StaticRectangle class >> classVarStyleMap: v [ ^StyleMap := v ]
+    setStyle: rectangleStyleBits [
+        "Private - Sets the rectangle style of this static control."
+        self baseStyle: rectangleStyleBits maskedBy: 31 recreateIfChanged: true
+    ]
+    style [
+        "Answer the style of rectangle currently adopted by the receiver."
+        | styleFlags |
+        	styleFlags := self baseStyle bitAnd: 31.
+        	^StyleMap keyAtValue: styleFlags ifAbsent: #blackFrame
+    ]
+    style: rectangleStyleName [
+        "Set the style of rectangle required of the receiver to that identifier by the symbolic
+        	name, rectangleStyleName."
+        self setStyle: (StyleMap at: rectangleStyleName)
+    ]
+    StaticRectangle class >> initialize [
+        "Private - Initialise the receiver's class variables:
+
+        			self initialize"
+        StyleMap := (IdentityDictionary withAll: {
+        						#blackFrame -> 7.
+        						#blackRectangle -> 4.
+        						#grayFrame -> 8.
+        						#grayRectangle -> 5.
+        						#whiteFrame -> 9.
+        						#whiteRectangle -> 6.
+        						#etchedFrame -> 18.
+        						#etchedHorizontal -> 16.
+        						#etchedVertical -> 17
+        					})
+    ]
+    StaticRectangle class >> winClassName [
+        "Private - Answer the name of the Windows window class to use when realizing the receiver."
+        ^'STATIC'
+    ]
+    StaticRectangle class >> windowTitle [
+        "Answer the window title that is set/restored through WindowCreationParameters. Generally this is the window text."
+        "The Static control ignores the text passed as the window title for the CreateWindowEx call, and we don't need it in this case anyway, so don't store the text in the WindowCreationState"
+
+        	^nil
+    ]
+    StaticRectangle class >> initializeClassConstants [
+        "Private - Assign the `classConstants:` entries whose values are expressions. GENERATED: Dolphin holds these in its image, so no source assigns them and every read was a nil."
+        StyleMap := (IdentityDictionary withAll: {
+        								#blackFrame -> 16r7.
+        								#blackRectangle -> 16r4.
+        								#etchedFrame -> 16r12.
+        								#etchedHorizontal -> 16r10.
+        								#etchedVertical -> 16r11.
+        								#grayFrame -> 16r8.
+        								#grayRectangle -> 16r5.
+        								#whiteFrame -> 16r9.
+        								#whiteRectangle -> 16r6
+        							}).
+        ^self
+    ]
+]
+
+StaticRectangle initializeClassConstants.
