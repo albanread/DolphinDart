@@ -428,6 +428,26 @@ Object subclass: SequenceableCollection [
             ifTrue: [ nil ]
             ifFalse: [ self at: anIndex ]
     ]
+    copyFrom: start [
+        "The one-argument copyFrom:, i.e. `copyFrom: start to: self size`. An
+         out-of-range start answers EMPTY rather than erroring — oracle:
+         `(OrderedCollection withAll: #(1 2 3)) copyFrom: 4` -> (). The STx
+         filers use it as `readMap copyFrom: self lastPredefined + 1` to drop
+         the pre-registered slots, and that start is one past the end whenever
+         nothing else has been read yet."
+        ^start > self size
+            ifTrue: [ self copyFrom: 1 to: 0 ]
+            ifFalse: [ self copyFrom: start to: self size ]
+    ]
+    addAnsweringIndex: anObject [
+        "Append anObject, answering its 1-based INDEX rather than the object —
+         Dolphin's own idiom for building an identity map you later index into
+         (oracle: adding to a 2-element collection answers 3). `STxInFiler>>
+         register:` uses it so a deserialised object can be fixed up later by
+         the reference number the stream carries."
+        self addLast: anObject.
+        ^self size
+    ]
 ]
 
 "Two more from Dolphin's base, both reached the first time `MenuBar>>
@@ -660,6 +680,154 @@ nil subclass: Object [
             on: Error do: [ :e | ].
         ^aValue
     ]
+
+    "The two STx filer entry points every CLASS must answer. Dolphin declares
+     them on `Core.ClassDescription` — instance methods there, so they are
+     available on every class object — as loose methods in `Dolphin STx Filer
+     Core.pax`, which is why no .cls carries them and the translated wave has
+     neither. Here the shadow chain ends at `Object class`, so that is the
+     equivalent home.
+
+     The filers send the TWO-argument form (`class stbReadFrom: decorator
+     format: (converters lookup: class)`, STLInFiler>>readObjectWithPrefix:
+     and STBInFiler alike); D8 classes override the THREE-argument one. This
+     pair is the bridge: read the size, then forward. Without it every object
+     in a view resource dies as `Class '_Type' has no instance method
+     'stbReadFrom_format_'` the moment the filer reaches its first proxy."
+    Object class >> stbReadFrom: anSTxInFiler format: anSTxClassConversion [
+        ^self
+            stbReadFrom: anSTxInFiler
+            format: anSTxClassConversion
+            size: (anSTxInFiler readSizeOf: self)
+    ]
+
+    Object class >> stbReadFrom: anSTxInFiler format: anSTxClassConversion size: anInteger [
+        ^anSTxInFiler
+            readObjectOfClass: self
+            format: anSTxClassConversion
+            size: anInteger
+    ]
+
+    "Does the receiver's instances have INDEXED slots? The filers branch on it
+     to decide whether a size word is present in the stream — `readSizeOf:` is
+     `aClass isVariable ifTrue: [stream next] ifFalse: [0]` — so a wrong answer
+     does not raise, it DESYNCHRONISES the parse and every later object is
+     garbage. Default false; the variable classes override below.
+
+     This describes DOLPHIN's instance shape, which is what the stream encodes,
+     NOT ours. `OrderedCollection isVariable` is true in Dolphin (oracle) and
+     stays true here even though our OrderedCollection holds a named `array`
+     ivar instead of indexed slots — the size word is in the bytes either way."
+    Object class >> isVariable [
+        ^false
+    ]
+
+    "Are the receiver's instances POINTER objects (as against raw bytes)? The
+     filer branches on it to choose `instVarAt:put:` over `basicAt:put:`."
+    Object class >> isPointers [
+        ^true
+    ]
+
+    "The named instance-variable count, from the VM's own field walk — the same
+     one `instVarAt:` indexes, so the two cannot disagree. `instSizeOf:` takes
+     the class as an argument because a class-side <stprim:> passes only its
+     declared parameters, never the receiver."
+    Object class >> instSizeOf: aClass [
+        <stprim: stInstSize>
+    ]
+
+    Object class >> instSize [
+        ^self instSizeOf: self
+    ]
+
+    "Dolphin's `Behavior>>instanceSpec`, SYNTHESISED. The real one is an image
+     bitfield; the filers read exactly two fields out of it —
+     `instSpec bitAnd: 255` (the named-ivar count) and `instSpec anyMask: 8192`
+     (pointers) — so those two are what this reproduces, and the other bits are
+     deliberately absent rather than guessed. Checked against the oracle:
+     STBViewProxy 8200 (instSize 8, pointers), ContainerView 8207 (15,
+     pointers), String 20992 (bytes)."
+    Object class >> instanceSpec [
+        ^self instSize + (self isPointers ifTrue: [ 8192 ] ifFalse: [ 0 ])
+    ]
+
+    "Allocate with n INDEXED slots. `Object>>basicNew:` in 01_object.mst is a
+     bare `<primitive: 24>`, and a numbered primitive is not a dispatch
+     mechanism in this front-end (HOUSE_PRIMS.md, the DD8 correction) — the
+     body compiles to nothing and ANSWERS SELF, so `aClass basicNew: 0` handed
+     the filer the class itself and `instVarAt:put:` then failed with 'index
+     out of range', naming the symptom three layers from the cause.
+
+     A plain ST class has no indexed part, so n is ignored here; the variable
+     classes override below. `readObjectOfClass:size:` calls this for EVERY
+     object it deserialises."
+    Object class >> basicNew: n [
+        ^self basicNew
+    ]
+
+    "The STx format version of the receiver's instances. Dolphin's default is
+     0 and the translated wave carries its own overrides (STBViewProxy answers
+     11); this is the floor the BRIDGED classes need, since none of them has a
+     translated class side. String and Symbol answer 1 (oracle)."
+    Object class >> stbVersion [
+        ^0
+    ]
+]
+
+"WHICH CLASSES ARE VARIABLE — every one of these answers came from the oracle,
+ asked of the classes the translated resources actually name plus the rest of
+ the collection family. NOT guessed, because a wrong answer here does not
+ raise: `readSizeOf:` reads a size word only for a variable class, so a class
+ wrongly marked fixed leaves that word in the stream and EVERY later object is
+ read from the wrong offset. That is exactly how the first attempt failed —
+ `Core.IdentityDictionary` was missing from the list, its size word (a 0) was
+ then read as an object-reference prefix, and the filer reported 'object 0
+ referenced but not yet defined' 26 elements downstream of the real cause.
+
+ Dolphin says variable: Array, OrderedCollection, SortedCollection, Set,
+ IdentitySet, Dictionary, LookupTable, IdentityDictionary, Symbol, ByteArray,
+ String (and AnsiString/Utf16String).
+ Dolphin says fixed: Bag, Association, Message, MessageSend, MessageSequence,
+ Semaphore, ScaledDecimal — so they are deliberately absent, not overlooked."
+Array class extend [ isVariable [ ^true ] basicNew: n [ ^Array new: n ] ]
+Symbol class extend [ isVariable [ ^true ] stbVersion [ ^1 ] ]
+OrderedCollection class extend [
+    isVariable [ ^true ]
+    basicNew: n [ ^OrderedCollection new ]
+]
+SortedCollection class extend [
+    isVariable [ ^true ]
+    basicNew: n [ ^SortedCollection new ]
+]
+Set class extend [ isVariable [ ^true ] basicNew: n [ ^Set new ] ]
+IdentitySet class extend [ isVariable [ ^true ] basicNew: n [ ^IdentitySet new ] ]
+Dictionary class extend [ isVariable [ ^true ] basicNew: n [ ^Dictionary new ] ]
+LookupTable class extend [ isVariable [ ^true ] basicNew: n [ ^LookupTable new ] ]
+IdentityDictionary class extend [
+    isVariable [ ^true ]
+    basicNew: n [ ^IdentityDictionary new ]
+]
+String class extend [
+    isVariable [ ^true ]
+    isPointers [ ^false ]
+    basicNew: n [ ^String new: n ]
+    stbVersion [ ^1 ]
+]
+ByteArray class extend [
+    isVariable [ ^true ]
+    isPointers [ ^false ]
+    basicNew: n [ ^ByteArray new: n ]
+]
+
+"The indexed-slot accessors the filer uses for BYTE objects (`newObject
+ basicAt: i put: stream next`). In this port an indexed slot IS the bridged
+ collection's element, so these are at:/at:put: — kept as separate selectors
+ because Dolphin's own code distinguishes them and a subclass may override
+ at:put: without meaning to change the raw store."
+Object extend [
+    basicAt: i [ ^self at: i ]
+    basicAt: i put: v [ ^self at: i put: v ]
+    basicSize [ ^self size ]
 ]
 
 "`canUnderstand:` — Dolphin's 'do instances of me understand this selector'.
@@ -739,4 +907,55 @@ Object subclass: Boolean [
  sound scheme — including silence, if that is what they chose."
 Error subclass: Exception [
     beep [ ^Sound errorBeep ]
+]
+
+"`String>>#<<` — Dolphin's message-argument interpolation, the spelling every
+ STx error uses: `STBError signal: 'Unsupported <2s> format (version <1d>)'
+ << { anInteger. self stxFormatName }`.
+
+ Without it EVERY filer error raised `Class 'String' has no instance method
+ '<<'` INSTEAD of the message it was trying to report — so a legitimate,
+ well-worded diagnostic ('input stream is inconsistent (object 2 referenced
+ but not yet defined)') surfaced as a missing-selector error naming neither
+ the problem nor the stream. The formatter is on the diagnosis path, so it is
+ worth more than its size.
+
+ `<Ns>` and `<Nd>` insert the displayString of argument N, `<Np>` its
+ printString (oracle: `'<1p>' << #('abc')` answers `'abc'` WITH quotes, and
+ `'<2s>-<1s>' << #('a' 'b')` answers 'b-a' — the index selects, so arguments
+ may be used out of order or not at all). A `<` that does not begin a
+ well-formed field is copied through unchanged."
+String extend [
+    << anArray [
+        | out i size |
+        out := WriteStream on: String new.
+        i := 1.
+        size := self size.
+        [ i <= size ] whileTrue: [
+            | ch |
+            ch := self at: i.
+            (ch = $< and: [ i < size and: [ (self at: i + 1) isDigit ] ])
+                ifTrue: [
+                    | j num kind |
+                    j := i + 1.
+                    num := 0.
+                    [ j <= size and: [ (self at: j) isDigit ] ] whileTrue: [
+                        num := num * 10 + (self at: j) digitValue.
+                        j := j + 1 ].
+                    kind := j <= size ifTrue: [ self at: j ] ifFalse: [ nil ].
+                    (kind notNil and: [ (j + 1) <= size
+                                        and: [ (self at: j + 1) = $> ] ])
+                        ifTrue: [
+                            | arg |
+                            arg := (num >= 1 and: [ num <= anArray size ])
+                                ifTrue: [ anArray at: num ]
+                                ifFalse: [ nil ].
+                            kind = $p
+                                ifTrue: [ out nextPutAll: arg printString ]
+                                ifFalse: [ out nextPutAll: arg displayString ].
+                            i := j + 2 ]
+                        ifFalse: [ out nextPut: ch. i := i + 1 ] ]
+                ifFalse: [ out nextPut: ch. i := i + 1 ] ].
+        ^out contents
+    ]
 ]

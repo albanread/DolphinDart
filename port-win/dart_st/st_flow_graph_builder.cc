@@ -91,6 +91,11 @@ static const HelperRewrite kHelperRewrites[] = {
     {"asString", "stDisplayOf", 0},
     {"printOn:", "stPrintOn", 1},
     {"class", "stClassOf", 0},
+    // Dolphin's `basicClass` is `class` that a subclass cannot override (it is
+    // the primitive, not the message). Nothing here overrides `class`, so the
+    // two are the same lookup — and the filers use basicClass precisely
+    // because a deserialised object's `class` may be a proxy's.
+    {"basicClass", "stClassOf", 0},
     {"/", "stDivide", 1},
     // Smalltalk `//` and `\\` are FLOORED (toward -inf), and `\\` takes the
     // sign of the DIVISOR — Dart's `~/` (truncating) and `%` (Euclidean) are
@@ -125,6 +130,12 @@ static const HelperRewrite kHelperRewrites[] = {
     // Round two of the same audit: each of these was a bare <primitive: N>
     // with no fast path, so it answered its receiver.
     {"instVarAt:", "stInstVarAt", 1},
+    // `class class isMeta` is the corpus's "is this a Class?" test; a _Type
+    // receiver has no ST dispatch at all, so it must be answered here.
+    {"isMeta", "stIsMeta", 0},
+    // The filer sends `stbFixup:at:` to every object it reads, bridged ones
+    // included; Dolphin's Object default answers self and the proxies override.
+    {"stbFixup:at:", "stStbFixup", 2},
     {"basicByteAt:", "stBasicByteAt", 1},
     {"valueWithArguments:", "stValueWithArgs", 1},
     {"printDigits", "stPrintDigits", 0},
@@ -1614,7 +1625,30 @@ Fragment StGraphBuilder::TranslateMessage(MessageNode* node) {
       // the chain; an override anywhere below the definer can intercept.
       if (!fn.IsNull()) {
         const Class& definer = Class::Handle(zone_, pf_->function().Owner());
-        if (!AnySubclassOverridesStatic(zone_, definer, msel)) {
+        // `Object class` is the one shadow whose subclass subtree is KNOWN
+        // incomplete. A bridged core name (Array, String, …) keeps its
+        // world-file class-side methods on a separate `Foo ext class` HOLDER
+        // (see LookupClassSideMethod in st_natives.cc), which is not a subclass
+        // of anything and so can never appear in direct_subclasses — yet the
+        // runtime lookup does find it, and every class reaches `Object class`.
+        // Measured: `Object class >> instanceSpec` self-sending `isPointers`
+        // took the direct call and answered `true` for String, whose
+        // `String ext class` override answers false. So never CHA-prove a
+        // self-send whose definer is the root; the runtime send handles it.
+        // BOTH spellings: `Object` is itself a bridged core name, so a
+        // `nil subclass: Object [...]` in a world file is holder-ized and its
+        // class-side methods land on `Object ext class`. Checking only the
+        // bare form matched nothing and the bug stayed.
+        bool definer_is_root = false;
+        {
+          const String& dn = String::Handle(zone_, definer.Name());
+          if (!dn.IsNull()) {
+            definer_is_root =
+                dn.Equals("Object class") || dn.Equals("Object ext class");
+          }
+        }
+        if (!definer_is_root &&
+            !AnySubclassOverridesStatic(zone_, definer, msel)) {
           Fragment instructions = LoadLocal(locals_["self"]);  // thisCls arg 0
           instructions += PushArgument();
           for (size_t i = 0; i < node->args.size(); i++) {

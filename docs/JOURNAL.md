@@ -1513,3 +1513,110 @@ The filer now selects itself and reads its own header, so the next step is the
 BODY: `STxInFiler>>next` and the proxy classes it dispatches to
 (`UI.STBViewProxy`, `Kernel.STBClassProxy`), then instantiate one Dolphin view
 resource end to end and photograph it.
+
+---
+
+## DD15b — the filer BODY runs; it now stops on classes we have not translated
+
+Picking up where DD15 left the reader: the header parsed, so this sitting drove
+`STLInFiler on: (ReadStream on: ContainerView resource_Default_view)` and fixed
+whatever it hit, in order. Ten gaps, all in the same family — the class-object
+and object-shape protocol Dolphin's kernel provides and this port never needed
+until something asked a CLASS to describe its own instances.
+
+**Note the entry point.** `STxInFiler on:` is abstract and answers
+subclassResponsibility; `STLInFiler on:` is the one that works, and it only
+works because DD15 fixed inherited class-side dispatch — `on:` is defined on
+STxInFiler and every abstract it reaches (`peekForSignatureIn:`,
+`readVersionFrom:`, `stxFormatName`) resolves through the RECEIVER.
+
+What was added, and where:
+
+| gap | home | why there |
+|---|---|---|
+| `setSize:` | `OrderedCollection` | pads with nil / truncates in place; the filer reserves readMap slots with it |
+| `copyFrom:` (1-arg), `addAnsweringIndex:` | `SequenceableCollection` (compat) | Dolphin protocol, missing outright |
+| `stbReadFrom:format:` + the 3-arg form | `Object class` | Dolphin has them on `Core.ClassDescription` as LOOSE methods in `Dolphin STx Filer Core.pax`, so no .cls carries them and the wave had neither |
+| `isVariable`, `isPointers`, `instSize`, `instanceSpec`, `stbVersion`, `basicNew:` | `Object class` + per-class | the object-shape protocol; see below |
+| `instVarAt:`/`put:` INDEXED part | `st_natives.cc` | the native walked named fields only |
+| `isMeta`, `basicClass`, `stbFixup:at:` | helper table | receivers are `_Type`/`_List`/num, which have no ST dispatch at all |
+| `String>>#<<` | compat | see "the masked error" |
+
+**`instSize` needed a new native.** Nothing exposed a class's named-ivar count.
+`stInstSize` counts non-static fields over the SAME super-chain walk
+`ST_instVarAt` indexes, so the two cannot disagree. It takes the class as an
+ARGUMENT because a class-side `<stprim:>` passes only declared parameters —
+`this_var_` is NULL there, so the receiver is never pushed.
+
+`instanceSpec` is then synthesised as `instSize + (isPointers ifTrue: [8192])`.
+The filers read exactly two fields out of it (`bitAnd: 255`, `anyMask: 8192`)
+and those two now match Dolphin exactly: **STBViewProxy 8200, ContainerView
+8207** — which is also a real check that our ivar layout matches Dolphin's,
+class for class.
+
+### The CHA hole this exposed, and it was a genuine bug
+
+`Object class >> instanceSpec` self-sends `isPointers`; `String` overrides it.
+DD15's CHA said "no override" and emitted a direct call, so `String
+instanceSpec` answered pointers=true. The reason is structural: a BRIDGED core
+name keeps its world-file class-side methods on a separate **`Foo ext class`
+holder** (`LookupClassSideMethod`, st_natives.cc), which is not a subclass of
+anything and can never appear in `direct_subclasses` — yet the runtime lookup
+finds it. So CHA now refuses to prove any self-send whose definer is the ROOT
+shadow, and it checks BOTH spellings: `Object` is itself a bridged core name,
+so `nil subclass: Object [...]` is holder-ized and these methods actually live
+on `Object ext class`. Checking only the bare name matched nothing and the bug
+survived a rebuild.
+
+### The masked error
+
+Every STx diagnostic is written with Dolphin's `<<` interpolation, and
+`String>>#<<` did not exist — so a legitimate, well-worded message surfaced as
+`Class 'String' has no instance method '<<'`, naming neither the problem nor
+the stream. Implemented per the oracle (`<Ns>`/`<Nd>` displayString, `<Np>`
+printString, index selects so arguments may be reordered or unused), and the
+next run said what was actually wrong.
+
+### What it then said, and the bug it named
+
+    STL input stream is inconsistent (object 0 referenced but not yet defined)
+
+`isVariable` was wrong for `Core.IdentityDictionary`. A class wrongly marked
+fixed does not raise — `readSizeOf:` simply does not consume the size word, so
+that word is read as the next PREFIX and everything after it is garbage. The
+size word here was a 0, read as an object reference to slot 0, reported **26
+elements downstream of the cause**.
+
+So the variable set is no longer guessed: every entry was asked of the oracle,
+for the classes the resources actually name plus the rest of the collection
+family. Variable — Array, OrderedCollection, SortedCollection, Set, IdentitySet,
+Dictionary, LookupTable, IdentityDictionary, Symbol, ByteArray, String. Fixed,
+deliberately — Bag, Association, Message, MessageSend, MessageSequence,
+Semaphore.
+
+### Where it stops now, and it is no longer a mechanism problem
+
+The filer decodes prefixes, resolves class references, allocates, and fills
+instance variables. It stops because 16 classes the resources NAME do not
+exist in the image:
+
+    Core.MessageSend      Core.MessageSequence   Graphics.ThemeColor
+    Kernel.NeverSearchPolicy
+    UI.StaticText         UI.MultilineTextEdit   UI.CardLayout
+    UI.FlowLayout         UI.ButtonInteractor    UI.DraggableViewInteractor
+    UI.ToolbarIconButton  UI.ToolbarSeparator    UI.ToolbarTextButton
+    (+ ClassStub / Empty / MetaclassStub, which are OUR names, not Dolphin's)
+
+That is a translation-coverage list, not a filer defect — the next wave.
+
+25/25 gates throughout; cogbench flat (fib 164.9ms against the 164.1ms
+baseline) despite three new helper-table entries.
+
+### Next
+
+1. Translate or compat the 16 named classes above — `Core.MessageSend` and
+   `Core.MessageSequence` first, since the view resources use them for the
+   event wiring every view carries.
+2. Then `STLInFiler next` should complete a graph, and the STBViewProxy it
+   answers can be asked for its view.
+3. Instantiate one Dolphin view resource end to end and PHOTOGRAPH it.

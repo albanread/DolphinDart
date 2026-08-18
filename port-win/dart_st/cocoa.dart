@@ -1036,6 +1036,36 @@ stDo(c, f) {
 }
 _stDoSlow(c, f) => c.do_(f);
 
+/// Dolphin's `Core.Object>>stbFixup:at:` (a loose method in `Dolphin STx Filer
+/// Core.pax`): "answer the true object that must represent the receiver",
+/// defaulting to SELF and overridden by the proxies to answer what they proxy.
+/// The filer sends it to EVERY object it reads — including the bridged ones
+/// (`_List`, num, String), which have no ST dispatch at all — so the default
+/// has to live here. An ST receiver falls through, which is what keeps
+/// STBViewProxy's override reachable.
+stStbFixup(r, filer, idx) {
+  if (r is bool || r is num || r is String || r is List || r is Map) return r;
+  return _stStbFixupSlow(r, filer, idx);
+}
+_stStbFixupSlow(r, filer, idx) {
+  try { return r.stbFixup_at_(filer, idx); } catch (e) { return r; }
+}
+
+/// Dolphin's `Behavior>>isMeta`. The corpus tests `class class isMeta` to ask
+/// "is this value a Class" (STxInFiler>>classAt: validates every class
+/// reference that way). Here `X class` answers the one canonical `_Type` for
+/// EVERY class — `3 class class` and `ContainerView class` are the same object
+/// — so `receiver is Type` is exactly that predicate, and nothing else can
+/// answer true. An ST receiver falls through so a class may still define it.
+stIsMeta(r) {
+  if (r is Type) return true;
+  if (r is bool || r is num || r is String || r is List || r is Map) return false;
+  return _stIsMetaSlow(r);
+}
+_stIsMetaSlow(r) {
+  try { return r.isMeta(); } catch (e) { return false; }
+}
+
 stIsEmptyU(c) {
   if (c is StMutableString) return c.units.isEmpty;
   if (c is StSymbol) return c.name.isEmpty;
@@ -1853,6 +1883,11 @@ stBecomeForward(a, b) native "ST_becomeForward";
 
 /// Two-way identity swap via shallow copies (identity hashes are the copies').
 stBecome(a, b) native "ST_become";
+
+/// Dolphin's Behavior>>instSize: the count of NAMED instance variables, over
+/// the same super-chain walk stInstVarAt indexes. Takes the class as an
+/// argument because a class-side <stprim:> passes no receiver.
+stInstSize(t) native "ST_instSize";
 
 /// The world's Object>>instVarAt: — 1-based, super-chain-first. Declared as a
 /// bare <primitive: 25> with nothing behind it, so it used to answer the

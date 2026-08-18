@@ -94,6 +94,7 @@ void ST_check(Dart_NativeArguments args);
 void ST_becomeForward(Dart_NativeArguments args);
 void ST_become(Dart_NativeArguments args);
 void ST_shallowCopy(Dart_NativeArguments args);
+void ST_instSize(Dart_NativeArguments args);
 void ST_instVarAt(Dart_NativeArguments args);
 void ST_instVarAtPut(Dart_NativeArguments args);
 void ST_eq(Dart_NativeArguments args);          // cached `=` dispatch (perf arc)
@@ -169,6 +170,7 @@ void ST_symbolFor(Dart_NativeArguments args);   // interned symbol lookup (perf 
   V(ST_becomeForward, 2)                                                       \
   V(ST_become, 2)                                                              \
   V(ST_shallowCopy, 1)                                                         \
+  V(ST_instSize, 1)                                                            \
   V(ST_instVarAt, 2)                                                           \
   V(ST_instVarAtPut, 3)                                                        \
   V(ST_eq, 2)                                                                  \

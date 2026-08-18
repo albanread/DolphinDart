@@ -2198,6 +2198,52 @@ void ST_becomeForward(Dart_NativeArguments args) {
   Dart_SetReturnValue(args, b_h);
 }
 
+// stInstSize(type): the number of NAMED instance variables of a class, i.e.
+// Dolphin's `Behavior>>instSize`, counted over the same super-chain field walk
+// ST_instVarAt indexes into — so `instSize` and `instVarAt:` always agree.
+//
+// The STx filers need it: `readObjectOfClass:size:` reads exactly
+// `(instSpec bitAnd: 255) + size` instance variables off the stream, and that
+// low byte IS instSize (oracle: STBViewProxy instanceSpec 8200, instSize 8;
+// ContainerView 8207, 15). Nothing else in the port exposed a class's ivar
+// count, so `instanceSpec` had nothing to build on.
+//
+// Takes the class as an ARGUMENT rather than a receiver: a `<stprim:>` in a
+// class-side method passes only the declared parameters (this_var_ is NULL
+// there), so `Object class >> instSize [ ^self instSizeOf: self ]` is how the
+// class reaches it.
+void ST_instSize(Dart_NativeArguments args) {
+  Dart_Handle type_h = Dart_GetNativeArgument(args, 0);
+  Thread* thread = Thread::Current();
+  int64_t count = 0;
+  {
+    TransitionNativeToVM transition(thread);
+    HANDLESCOPE(thread);
+    Zone* zone = thread->zone();
+    const Object& t = Object::Handle(zone, Api::UnwrapHandle(type_h));
+    Class& c = Class::Handle(zone);
+    if (t.IsType()) {
+      c = Type::Cast(t).type_class();
+    } else if (t.IsInstance()) {
+      c = Instance::Cast(t).clazz();   // tolerate being handed an instance
+    }
+    Array& fields = Array::Handle(zone);
+    Field& f = Field::Handle(zone);
+    while (!c.IsNull()) {
+      if (!c.is_finalized()) ClassFinalizer::FinalizeClass(c);
+      fields = c.fields();
+      if (!fields.IsNull()) {
+        for (intptr_t i = 0; i < fields.Length(); i++) {
+          f ^= fields.At(i);
+          if (!f.is_static()) count++;
+        }
+      }
+      c ^= c.SuperClass();
+    }
+  }
+  Dart_SetReturnValue(args, Dart_NewInteger(count));
+}
+
 // stInstVarAt(obj, i): the world's Object>>instVarAt: — the i-th instance
 // variable, 1-BASED, in declaration order with the super chain walked outermost
 // first. There was no implementation at all: the world declares it as a bare
@@ -2213,6 +2259,7 @@ void ST_instVarAt(Dart_NativeArguments args) {
   Thread* thread = Thread::Current();
   Dart_Handle result = Dart_Null();
   std::string err;
+  int64_t indexed = 0;   // >0: the index fell past the named fields
   {
     TransitionNativeToVM transition(thread);
     HANDLESCOPE(thread);
@@ -2247,8 +2294,25 @@ void ST_instVarAt(Dart_NativeArguments args) {
           }
         }
       }
-      if (!found) err = "instVarAt: index out of range";
+      if (!found) indexed = idx - seen;   // past the named fields
     }
+  }
+  // INDEXED part. Dolphin's instVarAt: addresses named instance variables and
+  // THEN the indexed slots, which is how the STx filers read a variable
+  // pointer object: `1 to: instSize + size do: [:i | obj instVarAt: i put: …]`.
+  // An Array has instSize 0, so every one of those indices is indexed — and
+  // the field walk alone answered "index out of range" for all of them.
+  // Done outside the VM transition because it goes through the list API.
+  if (indexed > 0) {
+    if (Dart_IsList(obj_h)) {
+      intptr_t len = 0;
+      Dart_ListLength(obj_h, &len);
+      if (indexed <= len) {
+        Dart_SetReturnValue(args, Dart_ListGetAt(obj_h, indexed - 1));
+        return;
+      }
+    }
+    err = "instVarAt: index out of range";
   }
   if (!err.empty()) { STThrow(err.c_str()); return; }
   Dart_SetReturnValue(args, result);
@@ -2267,6 +2331,7 @@ void ST_instVarAtPut(Dart_NativeArguments args) {
   }
   Thread* thread = Thread::Current();
   std::string err;
+  int64_t indexed = 0;   // >0: the index fell past the named fields
   {
     TransitionNativeToVM transition(thread);
     HANDLESCOPE(thread);
@@ -2300,8 +2365,25 @@ void ST_instVarAtPut(Dart_NativeArguments args) {
           }
         }
       }
-      if (!found) err = "instVarAt:put: index out of range";
+      if (!found) indexed = idx - seen;   // past the named fields
     }
+  }
+  // INDEXED part — the store twin of the read above; see its comment. This is
+  // the path that actually fills a deserialised Array: instSize 0, so every
+  // element the filer writes goes through here.
+  if (indexed > 0) {
+    if (Dart_IsList(obj_h)) {
+      intptr_t len = 0;
+      Dart_ListLength(obj_h, &len);
+      if (indexed <= len) {
+        Dart_Handle set = Dart_ListSetAt(obj_h, indexed - 1, val_h);
+        if (!Dart_IsError(set)) {
+          Dart_SetReturnValue(args, val_h);
+          return;
+        }
+      }
+    }
+    err = "instVarAt:put: index out of range";
   }
   if (!err.empty()) { STThrow(err.c_str()); return; }
   Dart_SetReturnValue(args, val_h);   // answers the stored value

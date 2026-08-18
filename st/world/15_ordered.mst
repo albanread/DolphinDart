@@ -58,6 +58,17 @@ SequenceableCollection subclass: OrderedCollection [
         array at: lastIndex put: v.
         ^v
     ]
+    setSize: n <Integer> ^ <Self> [
+        "Force the size to n IN PLACE, padding with nil or truncating (oracle:
+         `(OrderedCollection withAll: #(1 2 3)) setSize: 5` -> (1 2 3 nil nil),
+         `setSize: 2` -> (1 2)). Dolphin's STx filers use it to reserve the
+         pre-registered class slots in the readMap, which the object references
+         in the stream then index by position — so the nil padding is the
+         point, not a side effect."
+        [ self size < n ] whileTrue: [ self addLast: nil ].
+        self size > n ifTrue: [ lastIndex := firstIndex + n - 1 ].
+        ^self
+    ]
     add: v <Object> ^ <Object> [
         "addLast:'s body inlined by hand: the forwarding send cost more than
          the append itself (51ns vs 15ns) once add: reached here as a plain
