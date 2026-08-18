@@ -19,6 +19,26 @@ alignment rules that the metadata already knows.
         left: v [ ^self uint32At: 1 put: v ]
         ...
     ]
+
+SIZES COME FROM WINKB TOO (`types.size_bits`), not from adding up the last
+field's offset and width. The arithmetic cannot size a struct that ends in a
+fixed inline array — `char szDevice[32]` has no width in the metadata — and
+its fallback (last offset + a pointer width) made MONITORINFOEXW 48 bytes
+instead of 104 and LOGFONTW 36 instead of 92.
+
+BISECTING A SIZE REGRESSION. Correcting 90 sizes at once regressed five
+gates, because code had grown up against the wrong numbers: LOGFONTW at 36
+made `SystemParametersInfoForDpi` FAIL, so `getIconTitleFont` always took its
+`ifError:` path and never exercised the line after it. Two environment
+variables exist for finding that kind of thing again, and
+`tools/bisect_sizes.sh` drives them:
+
+    GENSTRUCTS_NO_WINKB_SIZE=1     fall back to the old arithmetic entirely
+    GENSTRUCTS_SIZE_SKIP=A,B,C     hold just these structs at the old size
+
+Neither is used by any build. They are debugging instruments, and the reason
+they are checked in rather than retyped is that the bisection took eight
+runs to find one struct out of ninety.
 """
 from __future__ import annotations
 
@@ -299,6 +319,9 @@ def main(argv: List[str]) -> int:
     alias = {"RECTL": "RECT", "POINTL": "POINT", "SIZEL": "SIZE"}
 
     sizes: Dict[str, int] = {}
+    # winkb's own sizeof/alignof, per struct — authoritative, see `load`.
+    winkb_size: Dict[str, int] = {}
+    winkb_align: Dict[str, int] = {}
     fields: Dict[str, List[Tuple[int, str, str, int]]] = {}
     unknown: List[str] = []
     # winkb's name for a struct is not always the corpus's: Dolphin spells the
@@ -317,6 +340,24 @@ def main(argv: List[str]) -> int:
             if rows:
                 fields[name] = rows
                 winkb_to_corpus[candidate] = name
+                # THE SIZE COMES FROM WINKB TOO. `types.size_bits` is the
+                # metadata's own sizeof for the 64-bit ABI, present for all
+                # 15,764 structs it describes, and it is right where the
+                # arithmetic below cannot be: a struct ending in a fixed inline
+                # array (`char szDevice[32]`) has no field width to add, and
+                # the fallback (`last offset + pointer width`) made
+                # MONITORINFOEXW 48 bytes instead of 104. GetMonitorInfo
+                # rejects a wrong cbSize outright, so DisplayMonitor>>cacheInfo
+                # signalled a bare Win32Error and every window-positioning path
+                # above it -- including DialogView>>showModal -- died there.
+                for (sb, ab) in db.execute(
+                        "select size_bits, align_bits from types "
+                        "where type_name=? and kind='struct' "
+                        "and size_bits is not null", (candidate,)):
+                    winkb_size[name] = sb // 8
+                    if ab:
+                        winkb_align[name] = ab // 8
+                    break
                 return True
         return False
 
@@ -365,9 +406,19 @@ def main(argv: List[str]) -> int:
                     a = max(a, alignment_of(fields[nested]))
         return a
 
+    # Seed with the metadata's own sizeof. The arithmetic below then only ever
+    # runs for a struct winkb did not size, and can no longer overwrite a
+    # known-good answer with a derived one.
+    if not os.environ.get("GENSTRUCTS_NO_WINKB_SIZE"):
+        _skip = {s.strip() for s in
+                 os.environ.get("GENSTRUCTS_SIZE_SKIP", "").split(",") if s.strip()}
+        sizes.update({k: v for k, v in winkb_size.items() if k not in _skip})
+
     for _ in range(8):
         changed = False
         for name, rows in fields.items():
+            if name in winkb_size:
+                continue
             last = rows[-1]
             w = width_of(last[2])
             if w == 0:
@@ -420,6 +471,38 @@ def main(argv: List[str]) -> int:
                  f"    byteSize [ ^{sizes[name]} ]",
                  f"    {name} class >> new [ ^self new: {sizes[name]} ]",
                  ""]
+        # SIZED STRUCTURES stamp their own size into their first field.
+        #
+        # A large family of Win32 structs carry their length as the leading
+        # DWORD so the API can version them, and the API REJECTS a buffer
+        # whose field does not match a size it knows. Dolphin models the
+        # family with `OS.SizedStructure`, whose entire content is one line:
+        #
+        #     initialize: anInteger
+        #         super initialize: anInteger.
+        #         self dwSize: anInteger
+        #
+        # That is behaviour, not layout, so it does not come from winkb — and
+        # without it `GetMonitorInfo` failed on every call, `Win32Error signal`
+        # with no message text, which is what `DisplayMonitor>>cacheInfo`
+        # raised and what stopped `showModal`.
+        #
+        # Emitted here rather than by porting SizedStructure, because the
+        # generated classes descend from `ExternalMemory` (winkb has no
+        # SizedStructure) and one emitted method is the whole of it. The
+        # corpus's own declared superclass is the source of truth for who is
+        # in the family — no name list here.
+        if DECLARED_SUPER.get(name) == "SizedStructure":
+            lines[-1:] = [
+                f"    {name} class >> newBuffer [",
+                f"        \"SizedStructure: the leading UInt32 is the struct's",
+                f"         own size, and the API rejects a buffer without it.\"",
+                f"        | b |",
+                f"        b := self new: {sizes[name]}.",
+                f"        b uint32At: 1 put: {sizes[name]}.",
+                f"        ^b",
+                f"    ]",
+                ""]
         # The corpus's OWN instance variables for this struct, if it declares
         # any. They belong on the generated class because a `--reopen` cannot
         # add them without redefining the class — see DECLARED_IVARS above.
@@ -452,9 +535,39 @@ def main(argv: List[str]) -> int:
         # exactly ONE field matches, emitted as an alias carrying the SAME
         # x64 offset. An ambiguous or unmatchable name is emitted as a comment
         # — a loud refusal at the reopen's first send, never a guess.
-        _fields = {r[1]: r[3] for r in rows}
+        # FLATTENED, because a corpus constant can name a field that winkb puts
+        # inside a NESTED struct. `MONITORINFOEXW` is the case that mattered:
+        # winkb models it as `{ MONITORINFO monitorInfo; char szDevice[]; }`,
+        # so `rcMonitor`, `rcWork` and `dwFlags` are fields of MONITORINFO and
+        # matched nothing here — all three came out as "no unambiguous winkb
+        # field (candidates: [])" comments, and Dolphin's own reopened
+        # `rectangle`/`workArea`/`isPrimary` then read at nil offsets.
+        # Flattening resolves them at base + inner offset, which reproduces
+        # Dolphin's own numbers exactly (rcMonitor 4, rcWork 20, dwFlags 36).
+        def _flatten(rws, base=0, depth=0):
+            out = {}
+            if depth > 3:
+                return out
+            for _o, _fn, _ft, _of in rws:
+                out.setdefault(_fn, base + _of)
+                _inner = winkb_to_corpus.get(_ft.rsplit(".", 1)[-1],
+                                             _ft.rsplit(".", 1)[-1])
+                if _inner in fields and _inner != name:
+                    for _k, _v in _flatten(fields[_inner], base + _of,
+                                           depth + 1).items():
+                        out.setdefault(_k, _v)
+            return out
+
+        _fields = _flatten(rows)
+        _top = {r[1]: r[3] for r in rows}
         for _cname in sorted(DECLARED_CONSTANTS.get(name, ())):
+            if _cname in _top:
+                continue                      # already emitted from `rows`
             if _cname in _fields:
+                # Named exactly, but nested one or more structs down.
+                lines.append(f"    {name} class >> _OffsetOf_{_cname} "
+                             f"[ ^{_fields[_cname]} ]  "
+                             f"\"nested field, flattened\"")
                 continue
             _cands = [c for c in _dehungarian(_cname) if c in _fields]
             if len(_cands) == 1:
@@ -467,10 +580,55 @@ def main(argv: List[str]) -> int:
                              f"{_cands}) — not aliased\"")
         lines.append(f"    {name} class >> _{name}_Size [ ^{sizes[name]} ]")
         lines.append("")
-        for ordinal, fname, ftype, off in rows:
+        # Where each field ENDS: the next field's offset, or the struct's own
+        # size for the last one. This is how a FIXED INLINE ARRAY gets its
+        # length back — winkb types it `char[]` with no count and gives the
+        # array type no size_bits, but the span is pinned exactly by the
+        # neighbouring offset and the authoritative struct size.
+        _ends = {}
+        for _i, (_o, _fn, _ft, _off) in enumerate(rows):
+            _ends[_i] = rows[_i + 1][3] if _i + 1 < len(rows) else sizes[name]
+
+        for _idx, (ordinal, fname, ftype, off) in enumerate(rows):
             acc, width = field_accessor(ftype, sizes, enum_bits, handle_types)
             sel = fname[0].lower() + fname[1:]
             nested = winkb_to_corpus.get(ftype.rsplit(".", 1)[-1])
+            span = _ends[_idx] - off
+            if acc is None and ftype.endswith("[]") and span > 0:
+                elem = ftype[:-2].rsplit(".", 1)[-1]
+                # `char[]` in a Win32 metadata struct is WCHAR — the W structs
+                # are the ones that carry them. A caller wants the STRING, not
+                # the bytes: `DisplayMonitor>>cacheInfo` does
+                # `deviceName := monitorInfo szDevice`, and Dolphin answers a
+                # String there.
+                if elem in ("char", "u16", "CHAR"):
+                    unit = 1 if elem == "CHAR" else 2
+                    rd = "byteAt" if unit == 1 else "uint16At"
+                    lines.append(
+                        f"    {sel} [ \"{elem}[{span // unit}] at {off}\"\n"
+                        f"        | s i c |\n"
+                        f"        s := WriteStream on: String new.\n"
+                        f"        i := {off}.\n"
+                        f"        [ i < {off + span} and: [ (c := self {rd}: i + 1) ~= 0 ] ]\n"
+                        f"            whileTrue: [ s nextPut: (Character value: c). i := i + {unit} ].\n"
+                        f"        ^s contents\n"
+                        f"    ]")
+                    lines.append(
+                        f"    {sel}: aString [\n"
+                        f"        | i c |\n"
+                        f"        i := {off}.\n"
+                        f"        1 to: ((aString size min: {span // unit - 1})) do: [ :k |\n"
+                        f"            c := (aString at: k) value.\n"
+                        f"            self {rd}: i + 1 put: c. i := i + {unit} ].\n"
+                        f"        self {rd}: i + 1 put: 0.\n"
+                        f"        ^aString\n"
+                        f"    ]")
+                else:
+                    skipped.append(f"{name}.{fname} ({ftype})")
+                    lines.append(f"    \"{sel}: {ftype} at {off}, {span} bytes "
+                                 f"— element width unknown; use byteAt: directly\"")
+                lines.append(f"    {name} class >> _SpanOf_{fname} [ ^{span} ]")
+                continue
             if acc is None and nested and nested in sizes:
                 # A TYPED view: an instance of the nested struct's own class, so
                 # its accessors are reachable. A generic view would answer raw

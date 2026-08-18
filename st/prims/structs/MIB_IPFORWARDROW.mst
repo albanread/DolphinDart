@@ -2,10 +2,10 @@
  winkb (Win32Metadata), not computed here. Do not hand-edit."
 
 ExternalMemory subclass: MIB_IPFORWARDROW [
-    MIB_IPFORWARDROW class >> sizeInBytes [ ^116 ]
-    MIB_IPFORWARDROW class >> byteSize [ ^116 ]
-    byteSize [ ^116 ]
-    MIB_IPFORWARDROW class >> new [ ^self new: 116 ]
+    MIB_IPFORWARDROW class >> sizeInBytes [ ^120 ]
+    MIB_IPFORWARDROW class >> byteSize [ ^120 ]
+    byteSize [ ^120 ]
+    MIB_IPFORWARDROW class >> new [ ^self new: 120 ]
 
     MIB_IPFORWARDROW class >> _OffsetOf_dwForwardDest [ ^0 ]
     MIB_IPFORWARDROW class >> _OffsetOf_dwForwardMask [ ^4 ]
@@ -23,7 +23,7 @@ ExternalMemory subclass: MIB_IPFORWARDROW [
     MIB_IPFORWARDROW class >> _OffsetOf_dwForwardMetric5 [ ^112 ]
     "corpus constant _OffsetOf_dwForwardProto: no unambiguous winkb field (candidates: []) — not aliased"
     "corpus constant _OffsetOf_dwForwardType: no unambiguous winkb field (candidates: []) — not aliased"
-    MIB_IPFORWARDROW class >> _MIB_IPFORWARDROW_Size [ ^116 ]
+    MIB_IPFORWARDROW class >> _MIB_IPFORWARDROW_Size [ ^120 ]
 
     dwForwardDest [ ^self uint32At: 1 ]
     dwForwardDest: v [ ^self uint32At: 1 put: v ]

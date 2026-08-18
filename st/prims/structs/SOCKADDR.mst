@@ -2,16 +2,33 @@
  winkb (Win32Metadata), not computed here. Do not hand-edit."
 
 ExternalMemory subclass: SOCKADDR [
-    SOCKADDR class >> sizeInBytes [ ^10 ]
-    SOCKADDR class >> byteSize [ ^10 ]
-    byteSize [ ^10 ]
-    SOCKADDR class >> new [ ^self new: 10 ]
+    SOCKADDR class >> sizeInBytes [ ^16 ]
+    SOCKADDR class >> byteSize [ ^16 ]
+    byteSize [ ^16 ]
+    SOCKADDR class >> new [ ^self new: 16 ]
 
     SOCKADDR class >> _OffsetOf_sa_family [ ^0 ]
     SOCKADDR class >> _OffsetOf_sa_data [ ^2 ]
-    SOCKADDR class >> _SOCKADDR_Size [ ^10 ]
+    SOCKADDR class >> _SOCKADDR_Size [ ^16 ]
 
     sa_family [ ^self uint16At: 1 ]
     sa_family: v [ ^self uint16At: 1 put: v ]
-    "sa_data: Windows.Win32.Foundation.CHAR[] at 2 — no accessor (width unknown); use byteAt: directly"
+    sa_data [ "CHAR[14] at 2"
+        | s i c |
+        s := WriteStream on: String new.
+        i := 2.
+        [ i < 16 and: [ (c := self byteAt: i + 1) ~= 0 ] ]
+            whileTrue: [ s nextPut: (Character value: c). i := i + 1 ].
+        ^s contents
+    ]
+    sa_data: aString [
+        | i c |
+        i := 2.
+        1 to: ((aString size min: 13)) do: [ :k |
+            c := (aString at: k) value.
+            self byteAt: i + 1 put: c. i := i + 1 ].
+        self byteAt: i + 1 put: 0.
+        ^aString
+    ]
+    SOCKADDR class >> _SpanOf_sa_data [ ^14 ]
 ]

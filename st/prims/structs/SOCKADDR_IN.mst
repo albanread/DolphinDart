@@ -17,6 +17,23 @@ SOCKADDR subclass: SOCKADDR_IN [
     sin_family: v [ ^self uint16At: 1 put: v ]
     sin_port [ ^self uint16At: 3 ]
     sin_port: v [ ^self uint16At: 3 put: v ]
-    sin_addr [ ^IN_ADDR viewOn: self at: 4 size: 8 ]
-    "sin_zero: Windows.Win32.Foundation.CHAR[] at 8 — no accessor (width unknown); use byteAt: directly"
+    sin_addr [ ^IN_ADDR viewOn: self at: 4 size: 4 ]
+    sin_zero [ "CHAR[8] at 8"
+        | s i c |
+        s := WriteStream on: String new.
+        i := 8.
+        [ i < 16 and: [ (c := self byteAt: i + 1) ~= 0 ] ]
+            whileTrue: [ s nextPut: (Character value: c). i := i + 1 ].
+        ^s contents
+    ]
+    sin_zero: aString [
+        | i c |
+        i := 8.
+        1 to: ((aString size min: 7)) do: [ :k |
+            c := (aString at: k) value.
+            self byteAt: i + 1 put: c. i := i + 1 ].
+        self byteAt: i + 1 put: 0.
+        ^aString
+    ]
+    SOCKADDR_IN class >> _SpanOf_sin_zero [ ^8 ]
 ]

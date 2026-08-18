@@ -25,5 +25,6 @@ ExternalMemory subclass: SAFEARRAY [
     cLocks [ ^self uint32At: 9 ]
     cLocks: v [ ^self uint32At: 9 put: v ]
     "pvData: void* at 16 — no accessor (width unknown); use byteAt: directly"
-    "rgsabound: Windows.Win32.System.Com.SAFEARRAYBOUND[] at 24 — no accessor (width unknown); use byteAt: directly"
+    "rgsabound: Windows.Win32.System.Com.SAFEARRAYBOUND[] at 24, 8 bytes — element width unknown; use byteAt: directly"
+    SAFEARRAY class >> _SpanOf_rgsabound [ ^8 ]
 ]

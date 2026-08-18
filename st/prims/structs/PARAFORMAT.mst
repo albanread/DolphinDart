@@ -2,10 +2,18 @@
  winkb (Win32Metadata), not computed here. Do not hand-edit."
 
 ExternalMemory subclass: PARAFORMAT [
-    PARAFORMAT class >> sizeInBytes [ ^48 ]
-    PARAFORMAT class >> byteSize [ ^48 ]
-    byteSize [ ^48 ]
-    PARAFORMAT class >> new [ ^self new: 48 ]
+    PARAFORMAT class >> sizeInBytes [ ^168 ]
+    PARAFORMAT class >> byteSize [ ^168 ]
+    byteSize [ ^168 ]
+    PARAFORMAT class >> new [ ^self new: 168 ]
+    PARAFORMAT class >> newBuffer [
+        "SizedStructure: the leading UInt32 is the struct's
+         own size, and the API rejects a buffer without it."
+        | b |
+        b := self new: 168.
+        b uint32At: 1 put: 168.
+        ^b
+    ]
 
     PARAFORMAT class >> _OffsetOf_cbSize [ ^0 ]
     PARAFORMAT class >> _OffsetOf_dwMask [ ^4 ]
@@ -18,7 +26,7 @@ ExternalMemory subclass: PARAFORMAT [
     PARAFORMAT class >> _OffsetOf_cTabCount [ ^38 ]
     PARAFORMAT class >> _OffsetOf_rgxTabs [ ^40 ]
     "corpus constant _OffsetOf_wEffects: no unambiguous winkb field (candidates: []) — not aliased"
-    PARAFORMAT class >> _PARAFORMAT_Size [ ^48 ]
+    PARAFORMAT class >> _PARAFORMAT_Size [ ^168 ]
 
     cbSize [ ^self uint32At: 1 ]
     cbSize: v [ ^self uint32At: 1 put: v ]
@@ -37,5 +45,6 @@ ExternalMemory subclass: PARAFORMAT [
     wAlignment: v [ ^self uint16At: 37 put: v ]
     cTabCount [ ^self int16At: 39 ]
     cTabCount: v [ ^self int16At: 39 put: v ]
-    "rgxTabs: u32[] at 40 — no accessor (width unknown); use byteAt: directly"
+    "rgxTabs: u32[] at 40, 128 bytes — element width unknown; use byteAt: directly"
+    PARAFORMAT class >> _SpanOf_rgxTabs [ ^128 ]
 ]

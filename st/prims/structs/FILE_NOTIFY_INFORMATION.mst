@@ -2,16 +2,16 @@
  winkb (Win32Metadata), not computed here. Do not hand-edit."
 
 ExternalMemory subclass: FILE_NOTIFY_INFORMATION [
-    FILE_NOTIFY_INFORMATION class >> sizeInBytes [ ^20 ]
-    FILE_NOTIFY_INFORMATION class >> byteSize [ ^20 ]
-    byteSize [ ^20 ]
-    FILE_NOTIFY_INFORMATION class >> new [ ^self new: 20 ]
+    FILE_NOTIFY_INFORMATION class >> sizeInBytes [ ^16 ]
+    FILE_NOTIFY_INFORMATION class >> byteSize [ ^16 ]
+    byteSize [ ^16 ]
+    FILE_NOTIFY_INFORMATION class >> new [ ^self new: 16 ]
 
     FILE_NOTIFY_INFORMATION class >> _OffsetOf_NextEntryOffset [ ^0 ]
     FILE_NOTIFY_INFORMATION class >> _OffsetOf_Action [ ^4 ]
     FILE_NOTIFY_INFORMATION class >> _OffsetOf_FileNameLength [ ^8 ]
     FILE_NOTIFY_INFORMATION class >> _OffsetOf_FileName [ ^12 ]
-    FILE_NOTIFY_INFORMATION class >> _FILE_NOTIFY_INFORMATION_Size [ ^20 ]
+    FILE_NOTIFY_INFORMATION class >> _FILE_NOTIFY_INFORMATION_Size [ ^16 ]
 
     nextEntryOffset [ ^self uint32At: 1 ]
     nextEntryOffset: v [ ^self uint32At: 1 put: v ]
@@ -19,5 +19,22 @@ ExternalMemory subclass: FILE_NOTIFY_INFORMATION [
     action: v [ ^self uint32At: 5 put: v ]
     fileNameLength [ ^self uint32At: 9 ]
     fileNameLength: v [ ^self uint32At: 9 put: v ]
-    "fileName: char[] at 12 — no accessor (width unknown); use byteAt: directly"
+    fileName [ "char[2] at 12"
+        | s i c |
+        s := WriteStream on: String new.
+        i := 12.
+        [ i < 16 and: [ (c := self uint16At: i + 1) ~= 0 ] ]
+            whileTrue: [ s nextPut: (Character value: c). i := i + 2 ].
+        ^s contents
+    ]
+    fileName: aString [
+        | i c |
+        i := 12.
+        1 to: ((aString size min: 1)) do: [ :k |
+            c := (aString at: k) value.
+            self uint16At: i + 1 put: c. i := i + 2 ].
+        self uint16At: i + 1 put: 0.
+        ^aString
+    ]
+    FILE_NOTIFY_INFORMATION class >> _SpanOf_FileName [ ^4 ]
 ]

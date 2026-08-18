@@ -6,6 +6,14 @@ ExternalMemory subclass: OSVERSIONINFOEXW [
     OSVERSIONINFOEXW class >> byteSize [ ^284 ]
     byteSize [ ^284 ]
     OSVERSIONINFOEXW class >> new [ ^self new: 284 ]
+    OSVERSIONINFOEXW class >> newBuffer [
+        "SizedStructure: the leading UInt32 is the struct's
+         own size, and the API rejects a buffer without it."
+        | b |
+        b := self new: 284.
+        b uint32At: 1 put: 284.
+        ^b
+    ]
 
     OSVERSIONINFOEXW class >> _OffsetOf_dwOSVersionInfoSize [ ^0 ]
     OSVERSIONINFOEXW class >> _OffsetOf_dwMajorVersion [ ^4 ]
@@ -30,7 +38,24 @@ ExternalMemory subclass: OSVERSIONINFOEXW [
     dwBuildNumber: v [ ^self uint32At: 13 put: v ]
     dwPlatformId [ ^self uint32At: 17 ]
     dwPlatformId: v [ ^self uint32At: 17 put: v ]
-    "szCSDVersion: char[] at 20 — no accessor (width unknown); use byteAt: directly"
+    szCSDVersion [ "char[128] at 20"
+        | s i c |
+        s := WriteStream on: String new.
+        i := 20.
+        [ i < 276 and: [ (c := self uint16At: i + 1) ~= 0 ] ]
+            whileTrue: [ s nextPut: (Character value: c). i := i + 2 ].
+        ^s contents
+    ]
+    szCSDVersion: aString [
+        | i c |
+        i := 20.
+        1 to: ((aString size min: 127)) do: [ :k |
+            c := (aString at: k) value.
+            self uint16At: i + 1 put: c. i := i + 2 ].
+        self uint16At: i + 1 put: 0.
+        ^aString
+    ]
+    OSVERSIONINFOEXW class >> _SpanOf_szCSDVersion [ ^256 ]
     wServicePackMajor [ ^self uint16At: 277 ]
     wServicePackMajor: v [ ^self uint16At: 277 put: v ]
     wServicePackMinor [ ^self uint16At: 279 ]

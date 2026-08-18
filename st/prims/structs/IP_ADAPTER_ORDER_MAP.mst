@@ -2,17 +2,18 @@
  winkb (Win32Metadata), not computed here. Do not hand-edit."
 
 ExternalMemory subclass: IP_ADAPTER_ORDER_MAP [
-    IP_ADAPTER_ORDER_MAP class >> sizeInBytes [ ^12 ]
-    IP_ADAPTER_ORDER_MAP class >> byteSize [ ^12 ]
-    byteSize [ ^12 ]
-    IP_ADAPTER_ORDER_MAP class >> new [ ^self new: 12 ]
+    IP_ADAPTER_ORDER_MAP class >> sizeInBytes [ ^8 ]
+    IP_ADAPTER_ORDER_MAP class >> byteSize [ ^8 ]
+    byteSize [ ^8 ]
+    IP_ADAPTER_ORDER_MAP class >> new [ ^self new: 8 ]
 
     IP_ADAPTER_ORDER_MAP class >> _OffsetOf_NumAdapters [ ^0 ]
     IP_ADAPTER_ORDER_MAP class >> _OffsetOf_AdapterOrder [ ^4 ]
     "corpus constant _OffsetOf_table: no unambiguous winkb field (candidates: []) — not aliased"
-    IP_ADAPTER_ORDER_MAP class >> _IP_ADAPTER_ORDER_MAP_Size [ ^12 ]
+    IP_ADAPTER_ORDER_MAP class >> _IP_ADAPTER_ORDER_MAP_Size [ ^8 ]
 
     numAdapters [ ^self uint32At: 1 ]
     numAdapters: v [ ^self uint32At: 1 put: v ]
-    "adapterOrder: u32[] at 4 — no accessor (width unknown); use byteAt: directly"
+    "adapterOrder: u32[] at 4, 4 bytes — element width unknown; use byteAt: directly"
+    IP_ADAPTER_ORDER_MAP class >> _SpanOf_AdapterOrder [ ^4 ]
 ]

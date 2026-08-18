@@ -2,22 +2,24 @@
  winkb (Win32Metadata), not computed here. Do not hand-edit."
 
 ENHMETARECORD subclass: EMRPOLYDRAW [
-    EMRPOLYDRAW class >> sizeInBytes [ ^44 ]
-    EMRPOLYDRAW class >> byteSize [ ^44 ]
-    byteSize [ ^44 ]
-    EMRPOLYDRAW class >> new [ ^self new: 44 ]
+    EMRPOLYDRAW class >> sizeInBytes [ ^40 ]
+    EMRPOLYDRAW class >> byteSize [ ^40 ]
+    byteSize [ ^40 ]
+    EMRPOLYDRAW class >> new [ ^self new: 40 ]
 
     EMRPOLYDRAW class >> _OffsetOf_emr [ ^0 ]
     EMRPOLYDRAW class >> _OffsetOf_rclBounds [ ^8 ]
     EMRPOLYDRAW class >> _OffsetOf_cptl [ ^24 ]
     EMRPOLYDRAW class >> _OffsetOf_aptl [ ^28 ]
     EMRPOLYDRAW class >> _OffsetOf_abTypes [ ^36 ]
-    EMRPOLYDRAW class >> _EMRPOLYDRAW_Size [ ^44 ]
+    EMRPOLYDRAW class >> _EMRPOLYDRAW_Size [ ^40 ]
 
     emr [ ^EMR viewOn: self at: 0 size: 8 ]
     rclBounds [ ^RECTL viewOn: self at: 8 size: 16 ]
     cptl [ ^self uint32At: 25 ]
     cptl: v [ ^self uint32At: 25 put: v ]
-    "aptl: Windows.Win32.Foundation.POINTL[] at 28 — no accessor (width unknown); use byteAt: directly"
-    "abTypes: u8[] at 36 — no accessor (width unknown); use byteAt: directly"
+    "aptl: Windows.Win32.Foundation.POINTL[] at 28, 8 bytes — element width unknown; use byteAt: directly"
+    EMRPOLYDRAW class >> _SpanOf_aptl [ ^8 ]
+    "abTypes: u8[] at 36, 4 bytes — element width unknown; use byteAt: directly"
+    EMRPOLYDRAW class >> _SpanOf_abTypes [ ^4 ]
 ]

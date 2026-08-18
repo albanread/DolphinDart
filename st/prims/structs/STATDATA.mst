@@ -2,18 +2,18 @@
  winkb (Win32Metadata), not computed here. Do not hand-edit."
 
 ExternalMemory subclass: STATDATA [
-    STATDATA class >> sizeInBytes [ ^52 ]
-    STATDATA class >> byteSize [ ^52 ]
-    byteSize [ ^52 ]
-    STATDATA class >> new [ ^self new: 52 ]
+    STATDATA class >> sizeInBytes [ ^56 ]
+    STATDATA class >> byteSize [ ^56 ]
+    byteSize [ ^56 ]
+    STATDATA class >> new [ ^self new: 56 ]
 
     STATDATA class >> _OffsetOf_formatetc [ ^0 ]
     STATDATA class >> _OffsetOf_advf [ ^32 ]
     STATDATA class >> _OffsetOf_pAdvSink [ ^40 ]
     STATDATA class >> _OffsetOf_dwConnection [ ^48 ]
-    STATDATA class >> _STATDATA_Size [ ^52 ]
+    STATDATA class >> _STATDATA_Size [ ^56 ]
 
-    formatetc [ ^FORMATETC viewOn: self at: 0 size: 28 ]
+    formatetc [ ^FORMATETC viewOn: self at: 0 size: 32 ]
     advf [ ^self uint32At: 33 ]
     advf: v [ ^self uint32At: 33 put: v ]
     "pAdvSink: Windows.Win32.System.Com.IAdviseSink at 40 — no accessor (width unknown); use byteAt: directly"

@@ -2,20 +2,20 @@
  winkb (Win32Metadata), not computed here. Do not hand-edit."
 
 ExternalMemory subclass: IP_ADDR_STRING [
-    IP_ADDR_STRING class >> sizeInBytes [ ^44 ]
-    IP_ADDR_STRING class >> byteSize [ ^44 ]
-    byteSize [ ^44 ]
-    IP_ADDR_STRING class >> new [ ^self new: 44 ]
+    IP_ADDR_STRING class >> sizeInBytes [ ^48 ]
+    IP_ADDR_STRING class >> byteSize [ ^48 ]
+    byteSize [ ^48 ]
+    IP_ADDR_STRING class >> new [ ^self new: 48 ]
 
     IP_ADDR_STRING class >> _OffsetOf_Next [ ^0 ]
     IP_ADDR_STRING class >> _OffsetOf_IpAddress [ ^8 ]
     IP_ADDR_STRING class >> _OffsetOf_IpMask [ ^24 ]
     IP_ADDR_STRING class >> _OffsetOf_Context [ ^40 ]
-    IP_ADDR_STRING class >> _IP_ADDR_STRING_Size [ ^44 ]
+    IP_ADDR_STRING class >> _IP_ADDR_STRING_Size [ ^48 ]
 
     "next: Windows.Win32.NetworkManagement.IpHelper.IP_ADDR_STRING* at 0 — no accessor (width unknown); use byteAt: directly"
-    ipAddress [ ^IP_ADDRESS_STRING viewOn: self at: 8 size: 8 ]
-    ipMask [ ^IP_ADDRESS_STRING viewOn: self at: 24 size: 8 ]
+    ipAddress [ ^IP_ADDRESS_STRING viewOn: self at: 8 size: 16 ]
+    ipMask [ ^IP_ADDRESS_STRING viewOn: self at: 24 size: 16 ]
     context [ ^self uint32At: 41 ]
     context: v [ ^self uint32At: 41 put: v ]
 ]

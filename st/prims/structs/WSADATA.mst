@@ -20,8 +20,42 @@ ExternalMemory subclass: WSADATA [
     wVersion: v [ ^self uint16At: 1 put: v ]
     wHighVersion [ ^self uint16At: 3 ]
     wHighVersion: v [ ^self uint16At: 3 put: v ]
-    "szDescription: Windows.Win32.Foundation.CHAR[] at 4 — no accessor (width unknown); use byteAt: directly"
-    "szSystemStatus: Windows.Win32.Foundation.CHAR[] at 261 — no accessor (width unknown); use byteAt: directly"
+    szDescription [ "CHAR[257] at 4"
+        | s i c |
+        s := WriteStream on: String new.
+        i := 4.
+        [ i < 261 and: [ (c := self byteAt: i + 1) ~= 0 ] ]
+            whileTrue: [ s nextPut: (Character value: c). i := i + 1 ].
+        ^s contents
+    ]
+    szDescription: aString [
+        | i c |
+        i := 4.
+        1 to: ((aString size min: 256)) do: [ :k |
+            c := (aString at: k) value.
+            self byteAt: i + 1 put: c. i := i + 1 ].
+        self byteAt: i + 1 put: 0.
+        ^aString
+    ]
+    WSADATA class >> _SpanOf_szDescription [ ^257 ]
+    szSystemStatus [ "CHAR[129] at 261"
+        | s i c |
+        s := WriteStream on: String new.
+        i := 261.
+        [ i < 390 and: [ (c := self byteAt: i + 1) ~= 0 ] ]
+            whileTrue: [ s nextPut: (Character value: c). i := i + 1 ].
+        ^s contents
+    ]
+    szSystemStatus: aString [
+        | i c |
+        i := 261.
+        1 to: ((aString size min: 128)) do: [ :k |
+            c := (aString at: k) value.
+            self byteAt: i + 1 put: c. i := i + 1 ].
+        self byteAt: i + 1 put: 0.
+        ^aString
+    ]
+    WSADATA class >> _SpanOf_szSystemStatus [ ^129 ]
     iMaxSockets [ ^self uint16At: 391 ]
     iMaxSockets: v [ ^self uint16At: 391 put: v ]
     iMaxUdpDg [ ^self uint16At: 393 ]

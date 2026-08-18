@@ -2,19 +2,20 @@
  winkb (Win32Metadata), not computed here. Do not hand-edit."
 
 ExternalMemory subclass: ENHMETARECORD [
-    ENHMETARECORD class >> sizeInBytes [ ^16 ]
-    ENHMETARECORD class >> byteSize [ ^16 ]
-    byteSize [ ^16 ]
-    ENHMETARECORD class >> new [ ^self new: 16 ]
+    ENHMETARECORD class >> sizeInBytes [ ^12 ]
+    ENHMETARECORD class >> byteSize [ ^12 ]
+    byteSize [ ^12 ]
+    ENHMETARECORD class >> new [ ^self new: 12 ]
 
     ENHMETARECORD class >> _OffsetOf_iType [ ^0 ]
     ENHMETARECORD class >> _OffsetOf_nSize [ ^4 ]
     ENHMETARECORD class >> _OffsetOf_dParm [ ^8 ]
-    ENHMETARECORD class >> _ENHMETARECORD_Size [ ^16 ]
+    ENHMETARECORD class >> _ENHMETARECORD_Size [ ^12 ]
 
     iType [ ^self uint32At: 1 ]
     iType: v [ ^self uint32At: 1 put: v ]
     nSize [ ^self uint32At: 5 ]
     nSize: v [ ^self uint32At: 5 put: v ]
-    "dParm: u32[] at 8 — no accessor (width unknown); use byteAt: directly"
+    "dParm: u32[] at 8, 4 bytes — element width unknown; use byteAt: directly"
+    ENHMETARECORD class >> _SpanOf_dParm [ ^4 ]
 ]

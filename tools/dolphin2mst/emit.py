@@ -209,7 +209,45 @@ def rewrite_nmhdr_code(body: str) -> str:
     for how these are found and `docs/LOOSE_ENDS.md` for the standing rule.
     """
     body = _NMHDR_CODE.sub(r"\1 \2 NMHDR _OffsetOf_code", body)
-    return _NMHDR_PAST.sub(r"\1 \2 NMHDR sizeInBytes", body)
+    body = _NMHDR_PAST.sub(r"\1 \2 NMHDR sizeInBytes", body)
+    return _rewrite_nmcustomdraw_rc(body)
+
+
+# NMCUSTOMDRAW's `rc` RECTANGLE, the same defect one struct further in.
+#
+# `TreeView>>wantCustomDrawItemNotifications:` is handed an NMTVCUSTOMDRAW as
+# `pNMHDR` and reads the paint rectangle out of it directly:
+#
+#     (pNMHDR int32AtOffset: 28) - (pNMHDR int32AtOffset: 20) > 0
+#         and: [(pNMHDR int32AtOffset: 32) - (pNMHDR int32AtOffset: 24) > 0]
+#
+# — an is-the-rect-empty test. On Win32 NMCUSTOMDRAW is NMHDR(12) +
+# dwDrawStage(4) + hdc(4), so `rc` starts at 20 and those four numbers are
+# left/top/right/bottom. On x64 the header is 24, hdc is a pointer, and there
+# is padding: `rc` starts at **40** (winkb, and the generated
+# `NMCUSTOMDRAW _OffsetOf_rc`). Reading 20..32 there lands inside `hdc` and
+# `rc.left`/`rc.top`, so the test compares unrelated numbers and answers
+# whatever they happen to be — the exact silent-wrong-offset failure mode of
+# rule 1, and the reason `tools/audit_offsets.py` exists.
+#
+# Rewritten rather than overridden so the corpus's own logic survives: each
+# literal becomes `NMCUSTOMDRAW _OffsetOf_rc + <field offset within RECT>`.
+_NMCD_RC = re.compile(
+    r"(?<![\w.])([A-Za-z_]\w*NMHDR\w*)\s+"
+    r"(u?int(?:8|16|32|ptr)?AtOffset:)\s*(20|24|28|32)(?![\d])",
+    re.I)
+
+# Win32 offset of each RECT member, relative to the start of `rc` at 20.
+_RC_MEMBER = {"20": 0, "24": 4, "28": 8, "32": 12}
+
+
+def _rewrite_nmcustomdraw_rc(body: str) -> str:
+    def sub(m):
+        delta = _RC_MEMBER[m.group(3)]
+        tail = "" if delta == 0 else " + %d" % delta
+        return "%s %s NMCUSTOMDRAW _OffsetOf_rc%s" % (
+            m.group(1), m.group(2), tail)
+    return _NMCD_RC.sub(sub, body)
 
 
 def rewrite_cascades(body: str, where: str) -> Tuple[str, List[Refusal]]:

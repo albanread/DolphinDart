@@ -2,13 +2,13 @@
  winkb (Win32Metadata), not computed here. Do not hand-edit."
 
 ExternalMemory subclass: HTTP_SERVICE_CONFIG_SSL_CCS_KEY [
-    HTTP_SERVICE_CONFIG_SSL_CCS_KEY class >> sizeInBytes [ ^8 ]
-    HTTP_SERVICE_CONFIG_SSL_CCS_KEY class >> byteSize [ ^8 ]
-    byteSize [ ^8 ]
-    HTTP_SERVICE_CONFIG_SSL_CCS_KEY class >> new [ ^self new: 8 ]
+    HTTP_SERVICE_CONFIG_SSL_CCS_KEY class >> sizeInBytes [ ^128 ]
+    HTTP_SERVICE_CONFIG_SSL_CCS_KEY class >> byteSize [ ^128 ]
+    byteSize [ ^128 ]
+    HTTP_SERVICE_CONFIG_SSL_CCS_KEY class >> new [ ^self new: 128 ]
 
     HTTP_SERVICE_CONFIG_SSL_CCS_KEY class >> _OffsetOf_LocalAddress [ ^0 ]
-    HTTP_SERVICE_CONFIG_SSL_CCS_KEY class >> _HTTP_SERVICE_CONFIG_SSL_CCS_KEY_Size [ ^8 ]
+    HTTP_SERVICE_CONFIG_SSL_CCS_KEY class >> _HTTP_SERVICE_CONFIG_SSL_CCS_KEY_Size [ ^128 ]
 
-    localAddress [ ^SOCKADDR_STORAGE viewOn: self at: 0 size: 24 ]
+    localAddress [ ^SOCKADDR_STORAGE viewOn: self at: 0 size: 128 ]
 ]

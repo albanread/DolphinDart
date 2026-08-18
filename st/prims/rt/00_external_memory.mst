@@ -283,6 +283,38 @@ Object subclass: ExternalMemory [
  outside the BMP are already surrogate PAIRS in the source string, so copying
  unit by unit preserves them with no special case."
 ExternalMemory subclass: Utf16Buffer [
+    "A C wide string coming BACK from Windows has no length but its
+     terminator, so a view onto one must find its own extent.
+
+     `ExternalMemory class >> fromAddress:` deliberately makes a view of
+     UNKNOWN size — it does not pretend to know an extent — and for an
+     arbitrary struct that is right. For a NUL-terminated string it is not:
+     `stringValue` stops as soon as `i * 2 + 2 > size`, so a zero-sized view
+     answers the empty string for every input.
+
+     That is what `MONITORINFOEXW>>szDevice` hit. Dolphin's own accessor is
+
+         ^Utf16String fromAddress: self bytes yourAddress + _OffsetOf_szDevice
+
+     and it answered '' for the primary monitor where Dolphin answers
+     '\\.\DISPLAY1' — no error, no clue, just an empty name. Scanning to the
+     NUL here is not a special case bolted on; it is the only length a
+     wide string HAS."
+    Utf16Buffer class >> fromAddress: anAddressOrMemory [
+        | base n |
+        base := (anAddressOrMemory isKindOf: ExternalMemory)
+            ifTrue: [ anAddressOrMemory address ]
+            ifFalse: [ anAddressOrMemory ].
+        (base isNil or: [ base = 0 ]) ifTrue: [ ^nil ].
+        "Bounded: a missing terminator must not walk the address space. 32k
+         characters is far past any Win32 buffer that arrives this way."
+        n := 0.
+        [ n < 32768 and: [ ((Win32 peek: base + (n * 2)) bitOr:
+              ((Win32 peek: base + (n * 2) + 1) bitShift: 8)) ~= 0 ] ]
+            whileTrue: [ n := n + 1 ].
+        ^self basicNew setAddress: base size: (n + 1) * 2 owned: false
+    ]
+
     Utf16Buffer class >> fromString: aString [
         | n buf cu |
         n := aString size.

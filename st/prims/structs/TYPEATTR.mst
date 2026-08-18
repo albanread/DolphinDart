@@ -59,6 +59,6 @@ ExternalMemory subclass: TYPEATTR [
     wMajorVerNum: v [ ^self uint16At: 53 put: v ]
     wMinorVerNum [ ^self uint16At: 55 ]
     wMinorVerNum: v [ ^self uint16At: 55 put: v ]
-    tdescAlias [ ^TYPEDESC viewOn: self at: 56 size: 10 ]
+    tdescAlias [ ^TYPEDESC viewOn: self at: 56 size: 16 ]
     idldescType [ ^IDLDESC viewOn: self at: 72 size: 16 ]
 ]

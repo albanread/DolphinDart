@@ -2,10 +2,18 @@
  winkb (Win32Metadata), not computed here. Do not hand-edit."
 
 ExternalMemory subclass: DISPLAY_DEVICEW [
-    DISPLAY_DEVICEW class >> sizeInBytes [ ^592 ]
-    DISPLAY_DEVICEW class >> byteSize [ ^592 ]
-    byteSize [ ^592 ]
-    DISPLAY_DEVICEW class >> new [ ^self new: 592 ]
+    DISPLAY_DEVICEW class >> sizeInBytes [ ^840 ]
+    DISPLAY_DEVICEW class >> byteSize [ ^840 ]
+    byteSize [ ^840 ]
+    DISPLAY_DEVICEW class >> new [ ^self new: 840 ]
+    DISPLAY_DEVICEW class >> newBuffer [
+        "SizedStructure: the leading UInt32 is the struct's
+         own size, and the API rejects a buffer without it."
+        | b |
+        b := self new: 840.
+        b uint32At: 1 put: 840.
+        ^b
+    ]
 
     DISPLAY_DEVICEW class >> _OffsetOf_cb [ ^0 ]
     DISPLAY_DEVICEW class >> _OffsetOf_DeviceName [ ^4 ]
@@ -13,14 +21,82 @@ ExternalMemory subclass: DISPLAY_DEVICEW [
     DISPLAY_DEVICEW class >> _OffsetOf_StateFlags [ ^324 ]
     DISPLAY_DEVICEW class >> _OffsetOf_DeviceID [ ^328 ]
     DISPLAY_DEVICEW class >> _OffsetOf_DeviceKey [ ^584 ]
-    DISPLAY_DEVICEW class >> _DISPLAY_DEVICEW_Size [ ^592 ]
+    DISPLAY_DEVICEW class >> _DISPLAY_DEVICEW_Size [ ^840 ]
 
     cb [ ^self uint32At: 1 ]
     cb: v [ ^self uint32At: 1 put: v ]
-    "deviceName: char[] at 4 — no accessor (width unknown); use byteAt: directly"
-    "deviceString: char[] at 68 — no accessor (width unknown); use byteAt: directly"
+    deviceName [ "char[32] at 4"
+        | s i c |
+        s := WriteStream on: String new.
+        i := 4.
+        [ i < 68 and: [ (c := self uint16At: i + 1) ~= 0 ] ]
+            whileTrue: [ s nextPut: (Character value: c). i := i + 2 ].
+        ^s contents
+    ]
+    deviceName: aString [
+        | i c |
+        i := 4.
+        1 to: ((aString size min: 31)) do: [ :k |
+            c := (aString at: k) value.
+            self uint16At: i + 1 put: c. i := i + 2 ].
+        self uint16At: i + 1 put: 0.
+        ^aString
+    ]
+    DISPLAY_DEVICEW class >> _SpanOf_DeviceName [ ^64 ]
+    deviceString [ "char[128] at 68"
+        | s i c |
+        s := WriteStream on: String new.
+        i := 68.
+        [ i < 324 and: [ (c := self uint16At: i + 1) ~= 0 ] ]
+            whileTrue: [ s nextPut: (Character value: c). i := i + 2 ].
+        ^s contents
+    ]
+    deviceString: aString [
+        | i c |
+        i := 68.
+        1 to: ((aString size min: 127)) do: [ :k |
+            c := (aString at: k) value.
+            self uint16At: i + 1 put: c. i := i + 2 ].
+        self uint16At: i + 1 put: 0.
+        ^aString
+    ]
+    DISPLAY_DEVICEW class >> _SpanOf_DeviceString [ ^256 ]
     stateFlags [ ^self uint32At: 325 ]
     stateFlags: v [ ^self uint32At: 325 put: v ]
-    "deviceID: char[] at 328 — no accessor (width unknown); use byteAt: directly"
-    "deviceKey: char[] at 584 — no accessor (width unknown); use byteAt: directly"
+    deviceID [ "char[128] at 328"
+        | s i c |
+        s := WriteStream on: String new.
+        i := 328.
+        [ i < 584 and: [ (c := self uint16At: i + 1) ~= 0 ] ]
+            whileTrue: [ s nextPut: (Character value: c). i := i + 2 ].
+        ^s contents
+    ]
+    deviceID: aString [
+        | i c |
+        i := 328.
+        1 to: ((aString size min: 127)) do: [ :k |
+            c := (aString at: k) value.
+            self uint16At: i + 1 put: c. i := i + 2 ].
+        self uint16At: i + 1 put: 0.
+        ^aString
+    ]
+    DISPLAY_DEVICEW class >> _SpanOf_DeviceID [ ^256 ]
+    deviceKey [ "char[128] at 584"
+        | s i c |
+        s := WriteStream on: String new.
+        i := 584.
+        [ i < 840 and: [ (c := self uint16At: i + 1) ~= 0 ] ]
+            whileTrue: [ s nextPut: (Character value: c). i := i + 2 ].
+        ^s contents
+    ]
+    deviceKey: aString [
+        | i c |
+        i := 584.
+        1 to: ((aString size min: 127)) do: [ :k |
+            c := (aString at: k) value.
+            self uint16At: i + 1 put: c. i := i + 2 ].
+        self uint16At: i + 1 put: 0.
+        ^aString
+    ]
+    DISPLAY_DEVICEW class >> _SpanOf_DeviceKey [ ^256 ]
 ]

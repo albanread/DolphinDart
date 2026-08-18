@@ -6,6 +6,14 @@ ExternalMemory subclass: TBMETRICS [
     TBMETRICS class >> byteSize [ ^32 ]
     byteSize [ ^32 ]
     TBMETRICS class >> new [ ^self new: 32 ]
+    TBMETRICS class >> newBuffer [
+        "SizedStructure: the leading UInt32 is the struct's
+         own size, and the API rejects a buffer without it."
+        | b |
+        b := self new: 32.
+        b uint32At: 1 put: 32.
+        ^b
+    ]
 
     TBMETRICS class >> _OffsetOf_cbSize [ ^0 ]
     TBMETRICS class >> _OffsetOf_dwMask [ ^4 ]

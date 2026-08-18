@@ -14,7 +14,7 @@ ENHMETARECORD subclass: EMRMODIFYWORLDTRANSFORM [
     EMRMODIFYWORLDTRANSFORM class >> _EMRMODIFYWORLDTRANSFORM_Size [ ^36 ]
 
     emr [ ^EMR viewOn: self at: 0 size: 8 ]
-    xform [ ^XFORM viewOn: self at: 8 size: 28 ]
+    xform [ ^XFORM viewOn: self at: 8 size: 24 ]
     iMode [ ^self uint32At: 33 ]
     iMode: v [ ^self uint32At: 33 put: v ]
 ]

@@ -1,11 +1,11 @@
 # dolphin2mst run report
 
-- inputs: **117** source files (`.cls` + `.pax`)
+- inputs: **120** source files (`.cls` + `.pax`)
 - shared-pool constants available: **7856** from **209** pools
 - loose methods adopted from `.pax`: **1**
-- parsed: **117**  (unbalanced/skipped: 0)
-- emitted: **118** `.mst`
-- methods: **4708**
+- parsed: **120**  (unbalanced/skipped: 0)
+- emitted: **121** `.mst`
+- methods: **4748**
 - refusals: **223**
 
 ## Refusals by rewrite class
@@ -48,6 +48,7 @@
 | `ContainerView` | 37 | 3 |
 | `ControlView` | 61 | 3 |
 | `CreateDialog` | 3 | 0 |
+| `CreateInDpiAwarenessContext` | 5 | 0 |
 | `CreateWindow` | 11 | 0 |
 | `CreateWindowApiCall` | 10 | 0 |
 | `CreateWindowFunction` | 12 | 0 |
@@ -57,6 +58,7 @@
 | `DialogView` | 57 | 5 |
 | `DisplayMonitor` | 49 | 3 |
 | `DividerMenuItem` | 26 | 1 |
+| `DpiAwareness` | 27 | 0 |
 | `DpiChangedEvent` | 5 | 0 |
 | `Event` | 5 | 2 |
 | `FileDialog` | 40 | 4 |
@@ -87,6 +89,7 @@
 | `ListViewStaticUpdateMode` | 11 | 1 |
 | `ListViewUpdateMode` | 8 | 0 |
 | `ListViewVirtualUpdateMode` | 11 | 0 |
+| `MONITORINFOEXW (reopen)` | 8 | 0 |
 | `Menu` | 101 | 2 |
 | `MenuBar` | 7 | 1 |
 | `MenuItem` | 35 | 0 |

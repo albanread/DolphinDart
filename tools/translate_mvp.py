@@ -298,6 +298,30 @@ TARGETS = [
     # dialog on its owner through it. Untranslated it was a nil
     # `nearestPoint:` INSIDE showModal, so the modal never opened.
     "Core/Object Arts/Dolphin/MVP/Base/UI.DisplayMonitor.cls",
+    # `DisplayMonitor` DEPENDS ON THESE THREE, and each was an unbound global —
+    # nil — until named here. Every one of them presented as the house failure
+    # mode (rule 3): a send to nil deep inside a contained handler, far from
+    # the class that was actually missing.
+    #
+    #   * `DpiAwareness` — `cacheInfo` opens with
+    #     `UserLibrary dpiAwareness inContextDo: [...]`, and
+    #     `UserLibrary class >> dpiAwareness` answers
+    #     `DpiAwareness fromHandle: DpiAwarenessContext`. With the class
+    #     absent that is `nil fromHandle:`, so cacheInfo raised before it ever
+    #     called GetMonitorInfo — and cacheInfo is what `rectangle`,
+    #     `workArea`, `deviceName`, `isPrimary` and `printOn:` all go through.
+    #   * `CreateInDpiAwarenessContext` — the create function
+    #     `dpiAwareness inContextDo:` uses to build a window in a chosen
+    #     awareness context.
+    #   * `MONITORINFOEXW` — Dolphin's OWN struct class, which adds to the
+    #     generated winkb layout the things cacheInfo asks for by name:
+    #     `rectangle`, `workArea`, `isPrimary`, and a `newBuffer` that stamps
+    #     cbSize. The generated class carries the LAYOUT (and is now the right
+    #     104 bytes); this carries the PROTOCOL. Reopening rather than
+    #     replacing is why it must load after `st/prims/structs`.
+    "Core/Object Arts/Dolphin/MVP/Base/UI.DpiAwareness.cls",
+    "Core/Object Arts/Dolphin/MVP/Base/UI.CreateInDpiAwarenessContext.cls",
+    "Core/Object Arts/Dolphin/MVP/Base/OS.MONITORINFOEXW.cls",
     # The prompter presenter: prompt + reply TextPresenters over the buffered
     # model. Its VIEW comes from an STB resource in Dolphin; here it is built
     # programmatically in the probe (same rule as above).
@@ -492,7 +516,16 @@ def main(argv):
            "--reopen", "OS.LVCOLUMNW",
            "--reopen", "OS.LVITEMW",
            "--reopen", "OS.TVITEMW",
-           "--reopen", "OS.TVITEMEXW"]
+           "--reopen", "OS.TVITEMEXW",
+           # MONITORINFOEXW for the same reason: the corpus declares it
+           # `SizedStructure subclass: #MONITORINFOEXW` with its own ivars, so
+           # emitted as a declaration it REPLACES the generated class outright
+           # — taking with it the winkb layout, the corrected 104-byte size and
+           # the `szDevice` accessor, and leaving `getMonitorInfo:` writing
+           # into a class that knows nothing about where its fields are.
+           # Reopened, the two halves compose: winkb supplies the layout,
+           # Dolphin supplies `rectangle`/`workArea`/`isPrimary`/`newBuffer`.
+           "--reopen", "OS.MONITORINFOEXW"]
     for r in refs:
         cmd += ["--reference", r]
     cmd += targets

@@ -2,10 +2,10 @@
  winkb (Win32Metadata), not computed here. Do not hand-edit."
 
 ENHMETARECORD subclass: EMRPOLYPOLYLINE16 [
-    EMRPOLYPOLYLINE16 class >> sizeInBytes [ ^44 ]
-    EMRPOLYPOLYLINE16 class >> byteSize [ ^44 ]
-    byteSize [ ^44 ]
-    EMRPOLYPOLYLINE16 class >> new [ ^self new: 44 ]
+    EMRPOLYPOLYLINE16 class >> sizeInBytes [ ^40 ]
+    EMRPOLYPOLYLINE16 class >> byteSize [ ^40 ]
+    byteSize [ ^40 ]
+    EMRPOLYPOLYLINE16 class >> new [ ^self new: 40 ]
 
     EMRPOLYPOLYLINE16 class >> _OffsetOf_emr [ ^0 ]
     EMRPOLYPOLYLINE16 class >> _OffsetOf_rclBounds [ ^8 ]
@@ -13,7 +13,7 @@ ENHMETARECORD subclass: EMRPOLYPOLYLINE16 [
     EMRPOLYPOLYLINE16 class >> _OffsetOf_cpts [ ^28 ]
     EMRPOLYPOLYLINE16 class >> _OffsetOf_aPolyCounts [ ^32 ]
     EMRPOLYPOLYLINE16 class >> _OffsetOf_apts [ ^36 ]
-    EMRPOLYPOLYLINE16 class >> _EMRPOLYPOLYLINE16_Size [ ^44 ]
+    EMRPOLYPOLYLINE16 class >> _EMRPOLYPOLYLINE16_Size [ ^40 ]
 
     emr [ ^EMR viewOn: self at: 0 size: 8 ]
     rclBounds [ ^RECTL viewOn: self at: 8 size: 16 ]
@@ -21,6 +21,8 @@ ENHMETARECORD subclass: EMRPOLYPOLYLINE16 [
     nPolys: v [ ^self uint32At: 25 put: v ]
     cpts [ ^self uint32At: 29 ]
     cpts: v [ ^self uint32At: 29 put: v ]
-    "aPolyCounts: u32[] at 32 — no accessor (width unknown); use byteAt: directly"
-    "apts: Windows.Win32.Foundation.POINTS[] at 36 — no accessor (width unknown); use byteAt: directly"
+    "aPolyCounts: u32[] at 32, 4 bytes — element width unknown; use byteAt: directly"
+    EMRPOLYPOLYLINE16 class >> _SpanOf_aPolyCounts [ ^4 ]
+    "apts: Windows.Win32.Foundation.POINTS[] at 36, 4 bytes — element width unknown; use byteAt: directly"
+    EMRPOLYPOLYLINE16 class >> _SpanOf_apts [ ^4 ]
 ]

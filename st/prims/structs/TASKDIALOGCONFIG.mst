@@ -7,6 +7,14 @@ ExternalMemory subclass: TASKDIALOGCONFIG [
     TASKDIALOGCONFIG class >> byteSize [ ^224 ]
     byteSize [ ^224 ]
     TASKDIALOGCONFIG class >> new [ ^self new: 224 ]
+    TASKDIALOGCONFIG class >> newBuffer [
+        "SizedStructure: the leading UInt32 is the struct's
+         own size, and the API rejects a buffer without it."
+        | b |
+        b := self new: 224.
+        b uint32At: 1 put: 224.
+        ^b
+    ]
 
     TASKDIALOGCONFIG class >> _OffsetOf_cbSize [ ^0 ]
     TASKDIALOGCONFIG class >> _OffsetOf_hwndParent [ ^8 ]

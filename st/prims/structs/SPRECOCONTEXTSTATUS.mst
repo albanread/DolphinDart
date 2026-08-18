@@ -15,7 +15,24 @@ ExternalMemory subclass: SPRECOCONTEXTSTATUS [
 
     eInterference [ ^self uint32At: 1 ]
     eInterference: v [ ^self uint32At: 1 put: v ]
-    "szRequestTypeOfUI: char[] at 4 — no accessor (width unknown); use byteAt: directly"
+    szRequestTypeOfUI [ "char[256] at 4"
+        | s i c |
+        s := WriteStream on: String new.
+        i := 4.
+        [ i < 516 and: [ (c := self uint16At: i + 1) ~= 0 ] ]
+            whileTrue: [ s nextPut: (Character value: c). i := i + 2 ].
+        ^s contents
+    ]
+    szRequestTypeOfUI: aString [
+        | i c |
+        i := 4.
+        1 to: ((aString size min: 255)) do: [ :k |
+            c := (aString at: k) value.
+            self uint16At: i + 1 put: c. i := i + 2 ].
+        self uint16At: i + 1 put: 0.
+        ^aString
+    ]
+    SPRECOCONTEXTSTATUS class >> _SpanOf_szRequestTypeOfUI [ ^512 ]
     dwReserved1 [ ^self uint32At: 517 ]
     dwReserved1: v [ ^self uint32At: 517 put: v ]
     dwReserved2 [ ^self uint32At: 521 ]

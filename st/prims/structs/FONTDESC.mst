@@ -7,6 +7,14 @@ ExternalMemory subclass: FONTDESC [
     FONTDESC class >> byteSize [ ^64 ]
     byteSize [ ^64 ]
     FONTDESC class >> new [ ^self new: 64 ]
+    FONTDESC class >> newBuffer [
+        "SizedStructure: the leading UInt32 is the struct's
+         own size, and the API rejects a buffer without it."
+        | b |
+        b := self new: 64.
+        b uint32At: 1 put: 64.
+        ^b
+    ]
 
     FONTDESC class >> _OffsetOf_cbSizeofstruct [ ^0 ]
     FONTDESC class >> _OffsetOf_lpstrName [ ^8 ]
@@ -22,7 +30,7 @@ ExternalMemory subclass: FONTDESC [
     cbSizeofstruct: v [ ^self uint32At: 1 put: v ]
     lpstrName [ ^self intptrAt: 9 ]
     lpstrName: v [ ^self intptrAt: 9 put: v ]
-    cySize [ ^CY viewOn: self at: 16 size: 8 ]
+    cySize [ ^CY viewOn: self at: 16 size: 32 ]
     sWeight [ ^self int16At: 49 ]
     sWeight: v [ ^self int16At: 49 put: v ]
     sCharset [ ^self int16At: 51 ]

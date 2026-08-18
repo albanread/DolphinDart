@@ -6,6 +6,14 @@ ExternalMemory subclass: DTBGOPTS [
     DTBGOPTS class >> byteSize [ ^24 ]
     byteSize [ ^24 ]
     DTBGOPTS class >> new [ ^self new: 24 ]
+    DTBGOPTS class >> newBuffer [
+        "SizedStructure: the leading UInt32 is the struct's
+         own size, and the API rejects a buffer without it."
+        | b |
+        b := self new: 24.
+        b uint32At: 1 put: 24.
+        ^b
+    ]
 
     DTBGOPTS class >> _OffsetOf_dwSize [ ^0 ]
     DTBGOPTS class >> _OffsetOf_dwFlags [ ^4 ]

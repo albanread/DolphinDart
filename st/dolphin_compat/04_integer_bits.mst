@@ -67,4 +67,42 @@ Object subclass: Integer [
         w := (self bitShift: -16) bitAnd: 16rFFFF.
         ^w > 16r7FFF ifTrue: [ w - 16r10000 ] ifFalse: [ w ]
     ]
+
+    "── lowPart / highPart: 16 BITS HERE, AND THAT IS A DECISION ─────────
+     Dolphin spells these in HALF-POINTER width:
+
+         lowPart        ^self bitAnd: VMConstants.HalfPtrMask
+         lowPartSigned  | part | part := self lowPart.
+                        ^part > VMConstants.HalfPtrMax
+                            ifTrue: [(part bitXor: VMConstants.HalfPtrMask) bitInvert]
+                            ifFalse: [part]
+         highPartSigned ^(self bitShift: ##(VMConstants.HalfPtrBits negated)) lowPartSigned
+
+     On its 32-bit build half-a-pointer IS 16 bits, so these ARE LOWORD and
+     HIWORD, and every use of them in this corpus is Win32 message cracking:
+     `wmSetCursor:` indexes a hit-test table with `lParam lowPartSigned + 2`
+     (HTERROR is -2), `WindowsEvent>>x`/`>>y` take the mouse position out of
+     lParam, `ShellView` tests `lParam lowPartSigned == -2`.
+
+     Rule 1 says re-derive the width rather than carry the literal over — and
+     re-deriving it gives 16, not 32. WM_ message parameters are packed with
+     MAKELPARAM/LOWORD/HIWORD, which are 16-bit macros on x64 exactly as on
+     Win32; the pointer got wider but the packing did not. Widening these to
+     half of 64 would read a mouse x of 100 and a y of 200 as the single
+     number 13107300, and the hit-test lookup would run off the end of its
+     table for every value.
+
+     So: the same 16 bits Dolphin gets, reached deliberately instead of by
+     inheritance. `lowSWord`/`highSWord` above already are these; the corpus
+     asks for them under Dolphin's names, so those names answer."
+    lowPart [ ^self lowWord ]
+    highPart [ ^self highWord ]
+    lowPartSigned [ ^self lowSWord ]
+    highPartSigned [ ^self highSWord ]
+
+    "`asUIntPtr` is the one that genuinely IS pointer-width: Dolphin masks
+     with VMConstants.IntPtrMask to force a value into an unsigned machine
+     word before handing it to an API. Here that mask is 64 bits wide.
+     `DialogView>>endDialog:` sends it to a plain 0."
+    asUIntPtr [ ^self bitAnd: 16rFFFFFFFFFFFFFFFF ]
 ]

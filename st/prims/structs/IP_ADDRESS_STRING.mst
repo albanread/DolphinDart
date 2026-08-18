@@ -2,13 +2,30 @@
  winkb (Win32Metadata), not computed here. Do not hand-edit."
 
 ExternalMemory subclass: IP_ADDRESS_STRING [
-    IP_ADDRESS_STRING class >> sizeInBytes [ ^8 ]
-    IP_ADDRESS_STRING class >> byteSize [ ^8 ]
-    byteSize [ ^8 ]
-    IP_ADDRESS_STRING class >> new [ ^self new: 8 ]
+    IP_ADDRESS_STRING class >> sizeInBytes [ ^16 ]
+    IP_ADDRESS_STRING class >> byteSize [ ^16 ]
+    byteSize [ ^16 ]
+    IP_ADDRESS_STRING class >> new [ ^self new: 16 ]
 
     IP_ADDRESS_STRING class >> _OffsetOf_String [ ^0 ]
-    IP_ADDRESS_STRING class >> _IP_ADDRESS_STRING_Size [ ^8 ]
+    IP_ADDRESS_STRING class >> _IP_ADDRESS_STRING_Size [ ^16 ]
 
-    "string: Windows.Win32.Foundation.CHAR[] at 0 — no accessor (width unknown); use byteAt: directly"
+    string [ "CHAR[16] at 0"
+        | s i c |
+        s := WriteStream on: String new.
+        i := 0.
+        [ i < 16 and: [ (c := self byteAt: i + 1) ~= 0 ] ]
+            whileTrue: [ s nextPut: (Character value: c). i := i + 1 ].
+        ^s contents
+    ]
+    string: aString [
+        | i c |
+        i := 0.
+        1 to: ((aString size min: 15)) do: [ :k |
+            c := (aString at: k) value.
+            self byteAt: i + 1 put: c. i := i + 1 ].
+        self byteAt: i + 1 put: 0.
+        ^aString
+    ]
+    IP_ADDRESS_STRING class >> _SpanOf_String [ ^16 ]
 ]

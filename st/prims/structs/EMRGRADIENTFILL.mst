@@ -2,10 +2,10 @@
  winkb (Win32Metadata), not computed here. Do not hand-edit."
 
 ENHMETARECORD subclass: EMRGRADIENTFILL [
-    EMRGRADIENTFILL class >> sizeInBytes [ ^44 ]
-    EMRGRADIENTFILL class >> byteSize [ ^44 ]
-    byteSize [ ^44 ]
-    EMRGRADIENTFILL class >> new [ ^self new: 44 ]
+    EMRGRADIENTFILL class >> sizeInBytes [ ^52 ]
+    EMRGRADIENTFILL class >> byteSize [ ^52 ]
+    byteSize [ ^52 ]
+    EMRGRADIENTFILL class >> new [ ^self new: 52 ]
 
     EMRGRADIENTFILL class >> _OffsetOf_emr [ ^0 ]
     EMRGRADIENTFILL class >> _OffsetOf_rclBounds [ ^8 ]
@@ -13,7 +13,7 @@ ENHMETARECORD subclass: EMRGRADIENTFILL [
     EMRGRADIENTFILL class >> _OffsetOf_nTri [ ^28 ]
     EMRGRADIENTFILL class >> _OffsetOf_ulMode [ ^32 ]
     EMRGRADIENTFILL class >> _OffsetOf_Ver [ ^36 ]
-    EMRGRADIENTFILL class >> _EMRGRADIENTFILL_Size [ ^44 ]
+    EMRGRADIENTFILL class >> _EMRGRADIENTFILL_Size [ ^52 ]
 
     emr [ ^EMR viewOn: self at: 0 size: 8 ]
     rclBounds [ ^RECTL viewOn: self at: 8 size: 16 ]
@@ -23,5 +23,6 @@ ENHMETARECORD subclass: EMRGRADIENTFILL [
     nTri: v [ ^self uint32At: 29 put: v ]
     ulMode [ ^self uint32At: 33 ]
     ulMode: v [ ^self uint32At: 33 put: v ]
-    "ver: Windows.Win32.Graphics.Gdi.TRIVERTEX[] at 36 — no accessor (width unknown); use byteAt: directly"
+    "ver: Windows.Win32.Graphics.Gdi.TRIVERTEX[] at 36, 16 bytes — element width unknown; use byteAt: directly"
+    EMRGRADIENTFILL class >> _SpanOf_Ver [ ^16 ]
 ]

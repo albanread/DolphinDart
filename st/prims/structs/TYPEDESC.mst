@@ -3,17 +3,17 @@
 
 ExternalMemory subclass: TYPEDESC [
     | owner classDesc typeInfo |
-    TYPEDESC class >> sizeInBytes [ ^10 ]
-    TYPEDESC class >> byteSize [ ^10 ]
-    byteSize [ ^10 ]
-    TYPEDESC class >> new [ ^self new: 10 ]
+    TYPEDESC class >> sizeInBytes [ ^16 ]
+    TYPEDESC class >> byteSize [ ^16 ]
+    byteSize [ ^16 ]
+    TYPEDESC class >> new [ ^self new: 16 ]
 
     TYPEDESC class >> _OffsetOf_Anonymous [ ^0 ]
     TYPEDESC class >> _OffsetOf_vt [ ^8 ]
     "corpus constant _OffsetOf_hreftype: no unambiguous winkb field (candidates: []) — not aliased"
     "corpus constant _OffsetOf_lpadesc: no unambiguous winkb field (candidates: []) — not aliased"
     "corpus constant _OffsetOf_lptdesc: no unambiguous winkb field (candidates: []) — not aliased"
-    TYPEDESC class >> _TYPEDESC_Size [ ^10 ]
+    TYPEDESC class >> _TYPEDESC_Size [ ^16 ]
 
     "anonymous: _Anonymous_e__Union at 0 — no accessor (width unknown); use byteAt: directly"
     vt [ ^self uint16At: 9 ]

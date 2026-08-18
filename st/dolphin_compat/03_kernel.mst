@@ -617,6 +617,35 @@ Object subclass: Dictionary [
  one `Behavior>>bindingFor:` waits on."
 nil subclass: Object [
     Object class >> addClassVariable: aName value: aValue [ ^aValue ]
+
+    "`addClassConstant:value:` is the same family, and here the no-op answer
+     is NOT good enough — these values are read back.
+
+     `DpiAwareness class >> initialize` builds the five awareness levels and
+     files each one under its own name:
+
+         inst := self new handle: each value.
+         self addClassConstant: each key value: inst.
+
+     and `DpiAwareness perMonitor`/`system`/`unaware`/`gdiScaled` are simply
+     `^PerMonitor` and friends. With the selector absent, `initialize` raised
+     at the first element, `Awarenesses` never got assigned, and
+     `fromHandle:` answered `lookup:` sent to nil — the failure that stopped
+     `DisplayMonitor>>cacheInfo` dead and, through it, every window-positioning
+     path including `showModal`.
+
+     The translator already emits a `classVar<Name>:` setter for every class
+     variable it sees, so the dynamic assignment Dolphin does with a
+     metaprogramming call is reachable here as an ordinary perform. Contained,
+     because a class constant with no generated setter is a translator gap
+     rather than a reason to abort a class's whole initializer — which is the
+     specific way this bug did its damage."
+    Object class >> addClassConstant: aName value: aValue [
+        [ self perform: ('classVar' , aName , ':') asSymbol
+               withArguments: (Array with: aValue) ]
+            on: Error do: [ :e | ].
+        ^aValue
+    ]
 ]
 
 "`canUnderstand:` — Dolphin's 'do instances of me understand this selector'.

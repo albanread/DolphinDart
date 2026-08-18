@@ -2,15 +2,15 @@
  winkb (Win32Metadata), not computed here. Do not hand-edit."
 
 ExternalMemory subclass: CONNECTDATA [
-    CONNECTDATA class >> sizeInBytes [ ^12 ]
-    CONNECTDATA class >> byteSize [ ^12 ]
-    byteSize [ ^12 ]
-    CONNECTDATA class >> new [ ^self new: 12 ]
+    CONNECTDATA class >> sizeInBytes [ ^16 ]
+    CONNECTDATA class >> byteSize [ ^16 ]
+    byteSize [ ^16 ]
+    CONNECTDATA class >> new [ ^self new: 16 ]
 
     CONNECTDATA class >> _OffsetOf_pUnk [ ^0 ]
     CONNECTDATA class >> _OffsetOf_dwCookie [ ^8 ]
     "corpus constant _OffsetOf_punk: no unambiguous winkb field (candidates: []) — not aliased"
-    CONNECTDATA class >> _CONNECTDATA_Size [ ^12 ]
+    CONNECTDATA class >> _CONNECTDATA_Size [ ^16 ]
 
     "pUnk: Windows.Win32.System.Com.IUnknown at 0 — no accessor (width unknown); use byteAt: directly"
     dwCookie [ ^self uint32At: 9 ]

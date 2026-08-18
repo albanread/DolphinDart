@@ -43,6 +43,38 @@ ComDlg32 := ComDlgLibrary.
 Shlwapi  := ShlwapiLibrary.
 Version  := VersionLibrary.
 
+"── the four that were MISSING, and how they were found ─────────────────────
+
+ The table above was assembled from a census of call sites, which finds the
+ names the corpus uses OFTEN and silently omits the ones it uses once. Each
+ omission is an unbound global — nil — and a send to nil inside a contained
+ handler, which is the hardest failure in this port to trace back to its
+ cause. `SHCore` cost a sitting: `DisplayMonitor>>getDpi:` is
+ `SHCore getDpiForMonitor: handle ...`, reached from `effectiveDpi`, which is
+ the first statement of `cacheInfo` — so no monitor could report its
+ rectangle, and every window-positioning path above it failed, `showModal`
+ included.
+
+ So this half is not a census. Dolphin states the mapping itself: every
+ library class answers `sharedVariableName` with the global it binds to
+ (`OS.SHCoreLibrary` answers `#{SHCore}`), and these four are the ones where
+ that declaration names a global this port had not bound and the translated
+ wave actually sends to:
+
+     VM       17 sends    Kernel.VMLibrary
+     Dwmapi    2 sends    OS.DwmApiLibrary
+     Ucrt      1 send     OS.CRTLibrary
+     SHCore    1 send     OS.SHCoreLibrary
+
+ The remaining declared globals (BCrypt, Crypt32, Gdip, ICU, Odbc32, PathCch,
+ Rpcrt4, Ws2_32) have zero sends in this wave and stay unbound, for the reason
+ the header gives: an unresolvable module is better as a loud failure at the
+ call than as a nil global."
+SHCore   := SHCoreLibrary.
+Dwmapi   := DwmApiLibrary.
+Ucrt     := CRTLibrary.
+VM       := VMLibrary.
+
 "── NtDll, and the Wine check (DD10) ────────────────────────────────────────
 
  `SystemMetrics class >> cacheDpiIndependentSettings` is `IsNotWine := NtDll

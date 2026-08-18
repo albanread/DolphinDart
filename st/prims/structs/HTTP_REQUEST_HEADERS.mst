@@ -2,17 +2,17 @@
  winkb (Win32Metadata), not computed here. Do not hand-edit."
 
 ExternalMemory subclass: HTTP_REQUEST_HEADERS [
-    HTTP_REQUEST_HEADERS class >> sizeInBytes [ ^40 ]
-    HTTP_REQUEST_HEADERS class >> byteSize [ ^40 ]
-    byteSize [ ^40 ]
-    HTTP_REQUEST_HEADERS class >> new [ ^self new: 40 ]
+    HTTP_REQUEST_HEADERS class >> sizeInBytes [ ^688 ]
+    HTTP_REQUEST_HEADERS class >> byteSize [ ^688 ]
+    byteSize [ ^688 ]
+    HTTP_REQUEST_HEADERS class >> new [ ^self new: 688 ]
 
     HTTP_REQUEST_HEADERS class >> _OffsetOf_UnknownHeaderCount [ ^0 ]
     HTTP_REQUEST_HEADERS class >> _OffsetOf_pUnknownHeaders [ ^8 ]
     HTTP_REQUEST_HEADERS class >> _OffsetOf_TrailerCount [ ^16 ]
     HTTP_REQUEST_HEADERS class >> _OffsetOf_pTrailers [ ^24 ]
     HTTP_REQUEST_HEADERS class >> _OffsetOf_KnownHeaders [ ^32 ]
-    HTTP_REQUEST_HEADERS class >> _HTTP_REQUEST_HEADERS_Size [ ^40 ]
+    HTTP_REQUEST_HEADERS class >> _HTTP_REQUEST_HEADERS_Size [ ^688 ]
 
     unknownHeaderCount [ ^self uint16At: 1 ]
     unknownHeaderCount: v [ ^self uint16At: 1 put: v ]
@@ -20,5 +20,6 @@ ExternalMemory subclass: HTTP_REQUEST_HEADERS [
     trailerCount [ ^self uint16At: 17 ]
     trailerCount: v [ ^self uint16At: 17 put: v ]
     "pTrailers: Windows.Win32.Networking.HttpServer.HTTP_UNKNOWN_HEADER* at 24 — no accessor (width unknown); use byteAt: directly"
-    "knownHeaders: Windows.Win32.Networking.HttpServer.HTTP_KNOWN_HEADER[] at 32 — no accessor (width unknown); use byteAt: directly"
+    "knownHeaders: Windows.Win32.Networking.HttpServer.HTTP_KNOWN_HEADER[] at 32, 656 bytes — element width unknown; use byteAt: directly"
+    HTTP_REQUEST_HEADERS class >> _SpanOf_KnownHeaders [ ^656 ]
 ]

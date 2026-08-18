@@ -6,6 +6,14 @@ ExternalMemory subclass: BINDINFO [
     BINDINFO class >> byteSize [ ^128 ]
     byteSize [ ^128 ]
     BINDINFO class >> new [ ^self new: 128 ]
+    BINDINFO class >> newBuffer [
+        "SizedStructure: the leading UInt32 is the struct's
+         own size, and the API rejects a buffer without it."
+        | b |
+        b := self new: 128.
+        b uint32At: 1 put: 128.
+        ^b
+    ]
 
     BINDINFO class >> _OffsetOf_cbSize [ ^0 ]
     BINDINFO class >> _OffsetOf_szExtraInfo [ ^8 ]
@@ -42,7 +50,7 @@ ExternalMemory subclass: BINDINFO [
     dwOptionsFlags: v [ ^self uint32At: 73 put: v ]
     dwCodePage [ ^self uint32At: 77 ]
     dwCodePage: v [ ^self uint32At: 77 put: v ]
-    securityAttributes [ ^SECURITY_ATTRIBUTES viewOn: self at: 80 size: 20 ]
+    securityAttributes [ ^SECURITY_ATTRIBUTES viewOn: self at: 80 size: 24 ]
     "iid: System.Guid at 104 — no accessor (width unknown); use byteAt: directly"
     "pUnk: Windows.Win32.System.Com.IUnknown at 112 — no accessor (width unknown); use byteAt: directly"
     dwReserved [ ^self uint32At: 121 ]

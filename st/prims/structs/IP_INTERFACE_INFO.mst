@@ -2,17 +2,18 @@
  winkb (Win32Metadata), not computed here. Do not hand-edit."
 
 ExternalMemory subclass: IP_INTERFACE_INFO [
-    IP_INTERFACE_INFO class >> sizeInBytes [ ^12 ]
-    IP_INTERFACE_INFO class >> byteSize [ ^12 ]
-    byteSize [ ^12 ]
-    IP_INTERFACE_INFO class >> new [ ^self new: 12 ]
+    IP_INTERFACE_INFO class >> sizeInBytes [ ^264 ]
+    IP_INTERFACE_INFO class >> byteSize [ ^264 ]
+    byteSize [ ^264 ]
+    IP_INTERFACE_INFO class >> new [ ^self new: 264 ]
 
     IP_INTERFACE_INFO class >> _OffsetOf_NumAdapters [ ^0 ]
     IP_INTERFACE_INFO class >> _OffsetOf_Adapter [ ^4 ]
     "corpus constant _OffsetOf_table: no unambiguous winkb field (candidates: []) — not aliased"
-    IP_INTERFACE_INFO class >> _IP_INTERFACE_INFO_Size [ ^12 ]
+    IP_INTERFACE_INFO class >> _IP_INTERFACE_INFO_Size [ ^264 ]
 
     numAdapters [ ^self int32At: 1 ]
     numAdapters: v [ ^self int32At: 1 put: v ]
-    "adapter: Windows.Win32.NetworkManagement.IpHelper.IP_ADAPTER_INDEX_MAP[] at 4 — no accessor (width unknown); use byteAt: directly"
+    "adapter: Windows.Win32.NetworkManagement.IpHelper.IP_ADAPTER_INDEX_MAP[] at 4, 260 bytes — element width unknown; use byteAt: directly"
+    IP_INTERFACE_INFO class >> _SpanOf_Adapter [ ^260 ]
 ]

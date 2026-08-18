@@ -2,18 +2,35 @@
  winkb (Win32Metadata), not computed here. Do not hand-edit."
 
 ExternalMemory subclass: CATEGORYINFO [
-    CATEGORYINFO class >> sizeInBytes [ ^20 ]
-    CATEGORYINFO class >> byteSize [ ^20 ]
-    byteSize [ ^20 ]
-    CATEGORYINFO class >> new [ ^self new: 20 ]
+    CATEGORYINFO class >> sizeInBytes [ ^272 ]
+    CATEGORYINFO class >> byteSize [ ^272 ]
+    byteSize [ ^272 ]
+    CATEGORYINFO class >> new [ ^self new: 272 ]
 
     CATEGORYINFO class >> _OffsetOf_catid [ ^0 ]
     CATEGORYINFO class >> _OffsetOf_lcid [ ^8 ]
     CATEGORYINFO class >> _OffsetOf_szDescription [ ^12 ]
-    CATEGORYINFO class >> _CATEGORYINFO_Size [ ^20 ]
+    CATEGORYINFO class >> _CATEGORYINFO_Size [ ^272 ]
 
     "catid: System.Guid at 0 — no accessor (width unknown); use byteAt: directly"
     lcid [ ^self uint32At: 9 ]
     lcid: v [ ^self uint32At: 9 put: v ]
-    "szDescription: char[] at 12 — no accessor (width unknown); use byteAt: directly"
+    szDescription [ "char[130] at 12"
+        | s i c |
+        s := WriteStream on: String new.
+        i := 12.
+        [ i < 272 and: [ (c := self uint16At: i + 1) ~= 0 ] ]
+            whileTrue: [ s nextPut: (Character value: c). i := i + 2 ].
+        ^s contents
+    ]
+    szDescription: aString [
+        | i c |
+        i := 12.
+        1 to: ((aString size min: 129)) do: [ :k |
+            c := (aString at: k) value.
+            self uint16At: i + 1 put: c. i := i + 2 ].
+        self uint16At: i + 1 put: 0.
+        ^aString
+    ]
+    CATEGORYINFO class >> _SpanOf_szDescription [ ^260 ]
 ]

@@ -2,10 +2,10 @@
  winkb (Win32Metadata), not computed here. Do not hand-edit."
 
 ExternalMemory subclass: DVTARGETDEVICE [
-    DVTARGETDEVICE class >> sizeInBytes [ ^20 ]
-    DVTARGETDEVICE class >> byteSize [ ^20 ]
-    byteSize [ ^20 ]
-    DVTARGETDEVICE class >> new [ ^self new: 20 ]
+    DVTARGETDEVICE class >> sizeInBytes [ ^16 ]
+    DVTARGETDEVICE class >> byteSize [ ^16 ]
+    byteSize [ ^16 ]
+    DVTARGETDEVICE class >> new [ ^self new: 16 ]
 
     DVTARGETDEVICE class >> _OffsetOf_tdSize [ ^0 ]
     DVTARGETDEVICE class >> _OffsetOf_tdDriverNameOffset [ ^4 ]
@@ -13,7 +13,7 @@ ExternalMemory subclass: DVTARGETDEVICE [
     DVTARGETDEVICE class >> _OffsetOf_tdPortNameOffset [ ^8 ]
     DVTARGETDEVICE class >> _OffsetOf_tdExtDevmodeOffset [ ^10 ]
     DVTARGETDEVICE class >> _OffsetOf_tdData [ ^12 ]
-    DVTARGETDEVICE class >> _DVTARGETDEVICE_Size [ ^20 ]
+    DVTARGETDEVICE class >> _DVTARGETDEVICE_Size [ ^16 ]
 
     tdSize [ ^self uint32At: 1 ]
     tdSize: v [ ^self uint32At: 1 put: v ]
@@ -25,5 +25,6 @@ ExternalMemory subclass: DVTARGETDEVICE [
     tdPortNameOffset: v [ ^self uint16At: 9 put: v ]
     tdExtDevmodeOffset [ ^self uint16At: 11 ]
     tdExtDevmodeOffset: v [ ^self uint16At: 11 put: v ]
-    "tdData: u8[] at 12 — no accessor (width unknown); use byteAt: directly"
+    "tdData: u8[] at 12, 4 bytes — element width unknown; use byteAt: directly"
+    DVTARGETDEVICE class >> _SpanOf_tdData [ ^4 ]
 ]

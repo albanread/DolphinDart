@@ -3,13 +3,13 @@
 
 ExternalMemory subclass: ITEMIDLIST [
     | back |
-    ITEMIDLIST class >> sizeInBytes [ ^8 ]
-    ITEMIDLIST class >> byteSize [ ^8 ]
-    byteSize [ ^8 ]
-    ITEMIDLIST class >> new [ ^self new: 8 ]
+    ITEMIDLIST class >> sizeInBytes [ ^4 ]
+    ITEMIDLIST class >> byteSize [ ^4 ]
+    byteSize [ ^4 ]
+    ITEMIDLIST class >> new [ ^self new: 4 ]
 
     ITEMIDLIST class >> _OffsetOf_mkid [ ^0 ]
-    ITEMIDLIST class >> _ITEMIDLIST_Size [ ^8 ]
+    ITEMIDLIST class >> _ITEMIDLIST_Size [ ^4 ]
 
-    mkid [ ^SHITEMID viewOn: self at: 0 size: 10 ]
+    mkid [ ^SHITEMID viewOn: self at: 0 size: 4 ]
 ]

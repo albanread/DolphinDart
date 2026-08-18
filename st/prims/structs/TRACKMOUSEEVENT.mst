@@ -6,6 +6,14 @@ ExternalMemory subclass: TRACKMOUSEEVENT [
     TRACKMOUSEEVENT class >> byteSize [ ^24 ]
     byteSize [ ^24 ]
     TRACKMOUSEEVENT class >> new [ ^self new: 24 ]
+    TRACKMOUSEEVENT class >> newBuffer [
+        "SizedStructure: the leading UInt32 is the struct's
+         own size, and the API rejects a buffer without it."
+        | b |
+        b := self new: 24.
+        b uint32At: 1 put: 24.
+        ^b
+    ]
 
     TRACKMOUSEEVENT class >> _OffsetOf_cbSize [ ^0 ]
     TRACKMOUSEEVENT class >> _OffsetOf_dwFlags [ ^4 ]

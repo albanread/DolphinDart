@@ -48,7 +48,7 @@ ExternalMemory subclass: HTTP_REQUEST_V1 [
     pRawUrl: v [ ^self intptrAt: 57 put: v ]
     cookedUrl [ ^HTTP_COOKED_URL viewOn: self at: 64 size: 40 ]
     address [ ^HTTP_TRANSPORT_ADDRESS viewOn: self at: 104 size: 16 ]
-    headers [ ^HTTP_REQUEST_HEADERS viewOn: self at: 120 size: 40 ]
+    headers [ ^HTTP_REQUEST_HEADERS viewOn: self at: 120 size: 688 ]
     bytesReceived [ ^self intptrAt: 809 ]
     bytesReceived: v [ ^self intptrAt: 809 put: v ]
     entityChunkCount [ ^self uint16At: 817 ]

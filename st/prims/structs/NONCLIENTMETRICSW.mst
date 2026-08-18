@@ -6,6 +6,14 @@ ExternalMemory subclass: NONCLIENTMETRICSW [
     NONCLIENTMETRICSW class >> byteSize [ ^504 ]
     byteSize [ ^504 ]
     NONCLIENTMETRICSW class >> new [ ^self new: 504 ]
+    NONCLIENTMETRICSW class >> newBuffer [
+        "SizedStructure: the leading UInt32 is the struct's
+         own size, and the API rejects a buffer without it."
+        | b |
+        b := self new: 504.
+        b uint32At: 1 put: 504.
+        ^b
+    ]
 
     NONCLIENTMETRICSW class >> _OffsetOf_cbSize [ ^0 ]
     NONCLIENTMETRICSW class >> _OffsetOf_iBorderWidth [ ^4 ]
@@ -37,19 +45,19 @@ ExternalMemory subclass: NONCLIENTMETRICSW [
     iCaptionWidth: v [ ^self int32At: 17 put: v ]
     iCaptionHeight [ ^self int32At: 21 ]
     iCaptionHeight: v [ ^self int32At: 21 put: v ]
-    lfCaptionFont [ ^LOGFONTW viewOn: self at: 24 size: 36 ]
+    lfCaptionFont [ ^LOGFONTW viewOn: self at: 24 size: 92 ]
     iSmCaptionWidth [ ^self int32At: 117 ]
     iSmCaptionWidth: v [ ^self int32At: 117 put: v ]
     iSmCaptionHeight [ ^self int32At: 121 ]
     iSmCaptionHeight: v [ ^self int32At: 121 put: v ]
-    lfSmCaptionFont [ ^LOGFONTW viewOn: self at: 124 size: 36 ]
+    lfSmCaptionFont [ ^LOGFONTW viewOn: self at: 124 size: 92 ]
     iMenuWidth [ ^self int32At: 217 ]
     iMenuWidth: v [ ^self int32At: 217 put: v ]
     iMenuHeight [ ^self int32At: 221 ]
     iMenuHeight: v [ ^self int32At: 221 put: v ]
-    lfMenuFont [ ^LOGFONTW viewOn: self at: 224 size: 36 ]
-    lfStatusFont [ ^LOGFONTW viewOn: self at: 316 size: 36 ]
-    lfMessageFont [ ^LOGFONTW viewOn: self at: 408 size: 36 ]
+    lfMenuFont [ ^LOGFONTW viewOn: self at: 224 size: 92 ]
+    lfStatusFont [ ^LOGFONTW viewOn: self at: 316 size: 92 ]
+    lfMessageFont [ ^LOGFONTW viewOn: self at: 408 size: 92 ]
     iPaddedBorderWidth [ ^self int32At: 501 ]
     iPaddedBorderWidth: v [ ^self int32At: 501 put: v ]
 ]

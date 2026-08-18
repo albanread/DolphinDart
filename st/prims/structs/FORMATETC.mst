@@ -2,17 +2,17 @@
  winkb (Win32Metadata), not computed here. Do not hand-edit."
 
 ExternalMemory subclass: FORMATETC [
-    FORMATETC class >> sizeInBytes [ ^28 ]
-    FORMATETC class >> byteSize [ ^28 ]
-    byteSize [ ^28 ]
-    FORMATETC class >> new [ ^self new: 28 ]
+    FORMATETC class >> sizeInBytes [ ^32 ]
+    FORMATETC class >> byteSize [ ^32 ]
+    byteSize [ ^32 ]
+    FORMATETC class >> new [ ^self new: 32 ]
 
     FORMATETC class >> _OffsetOf_cfFormat [ ^0 ]
     FORMATETC class >> _OffsetOf_ptd [ ^8 ]
     FORMATETC class >> _OffsetOf_dwAspect [ ^16 ]
     FORMATETC class >> _OffsetOf_lindex [ ^20 ]
     FORMATETC class >> _OffsetOf_tymed [ ^24 ]
-    FORMATETC class >> _FORMATETC_Size [ ^28 ]
+    FORMATETC class >> _FORMATETC_Size [ ^32 ]
 
     cfFormat [ ^self uint16At: 1 ]
     cfFormat: v [ ^self uint16At: 1 put: v ]

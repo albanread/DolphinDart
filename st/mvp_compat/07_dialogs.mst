@@ -103,15 +103,26 @@ DialogView extend [
             title: self windowTitle
     ]
 
-    "`endDialog:` is EndDialog(), which only destroys a window DialogBox
-     created — ours it does not, and Dolphin's `destroy` then deliberately
-     skips `super destroy` on the modal path, leaving the window on screen
-     forever. Here the dialog IS an ordinary window and there is no second
-     process to hand destruction to, so it always destroys."
-    destroy [
-        self isModal: false.
-        ^super destroy
-    ]
+    "NO `destroy` OVERRIDE, AND THAT IS THE FIX.
+     There was one here, on the reasoning that `endDialog:` is EndDialog(),
+     which only destroys a window DialogBox created — ours it does not — so
+     Dolphin's `destroy` skipping `super destroy` on the modal path would
+     leave the window up forever. That reasoning was wrong, and reading
+     Dolphin's code rather than reasoning about it is what settled it:
+
+       * `showModal`'s ensure block ALREADY ends `self basicDestroy`, and its
+         comment says why the modal path defers to it — the owner must be
+         re-enabled FIRST or activation goes to some other top-level window.
+       * `destroy` sets `isModal: false` before anything else, which is the
+         condition `loopWhile:` tests, so the nested loop ends and the ensure
+         runs. The modeless path does `super destroy` itself.
+       * `endDialog:` is `User32 endDialog:nResult:` with NO error check. On an
+         ordinary window it returns FALSE and nothing happens — which is
+         precisely the case Dolphin's own comment calls out.
+
+     So both paths were already correct here and the override only broke the
+     modal one: it destroyed the window early, and the ensure then ran
+     `basicDestroy` on a dead handle with the owner still disabled."
 ]
 
 "── MonitorFromPoint: a POINT passed BY VALUE ───────────────────────────

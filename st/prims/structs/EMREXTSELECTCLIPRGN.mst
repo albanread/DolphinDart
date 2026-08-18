@@ -2,22 +2,23 @@
  winkb (Win32Metadata), not computed here. Do not hand-edit."
 
 ENHMETARECORD subclass: EMREXTSELECTCLIPRGN [
-    EMREXTSELECTCLIPRGN class >> sizeInBytes [ ^24 ]
-    EMREXTSELECTCLIPRGN class >> byteSize [ ^24 ]
-    byteSize [ ^24 ]
-    EMREXTSELECTCLIPRGN class >> new [ ^self new: 24 ]
+    EMREXTSELECTCLIPRGN class >> sizeInBytes [ ^20 ]
+    EMREXTSELECTCLIPRGN class >> byteSize [ ^20 ]
+    byteSize [ ^20 ]
+    EMREXTSELECTCLIPRGN class >> new [ ^self new: 20 ]
 
     EMREXTSELECTCLIPRGN class >> _OffsetOf_emr [ ^0 ]
     EMREXTSELECTCLIPRGN class >> _OffsetOf_cbRgnData [ ^8 ]
     EMREXTSELECTCLIPRGN class >> _OffsetOf_iMode [ ^12 ]
     EMREXTSELECTCLIPRGN class >> _OffsetOf_RgnData [ ^16 ]
     "corpus constant _OffsetOf_RGNDATA: no unambiguous winkb field (candidates: []) — not aliased"
-    EMREXTSELECTCLIPRGN class >> _EMREXTSELECTCLIPRGN_Size [ ^24 ]
+    EMREXTSELECTCLIPRGN class >> _EMREXTSELECTCLIPRGN_Size [ ^20 ]
 
     emr [ ^EMR viewOn: self at: 0 size: 8 ]
     cbRgnData [ ^self uint32At: 9 ]
     cbRgnData: v [ ^self uint32At: 9 put: v ]
     iMode [ ^self uint32At: 13 ]
     iMode: v [ ^self uint32At: 13 put: v ]
-    "rgnData: u8[] at 16 — no accessor (width unknown); use byteAt: directly"
+    "rgnData: u8[] at 16, 4 bytes — element width unknown; use byteAt: directly"
+    EMREXTSELECTCLIPRGN class >> _SpanOf_RgnData [ ^4 ]
 ]

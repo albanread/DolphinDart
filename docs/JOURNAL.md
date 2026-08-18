@@ -992,3 +992,181 @@ CALL the method.
    define the identical method on a fresh class and call it.
 
 24/24 gates stay green — the modal work remains additive compat.
+
+---
+
+## DD12 — a real Dolphin 8 image becomes the ORACLE
+
+Both hypotheses from the previous entry were WRONG, and the way they were
+wrong is the point of this entry. `fromHandle:` was never broken:
+`(DisplayMonitor fromHandle: 65537) class name` answers `'DisplayMonitor'`.
+What failed was `printString` on the result, several classes away — and
+because the probe printed its answer, the reported failure named the wrong
+method. Both hypotheses were about a method that worked.
+
+That is the second time in three sittings that careful reading of the corpus
+produced a confident, wrong conclusion. So this sitting stopped inferring and
+started ASKING.
+
+### The oracle
+
+`C:\projects\dolphin-oracle` is a booted **Dolphin Professional 8.2.3**
+image, isolated from `dsfork` so running it dirties no repo.
+`tools/oracle.py` drives it:
+
+    Dolphin8.exe DPRO.img8 -u -q -f <chunkfile> -x
+
+`-f` and `-x` both QUEUE DEFERRED ACTIONS, in the order the option table in
+`Tools.DevelopmentSessionManager class >> commandLineParser` declares them, so
+the image files in a script and only then quits. The script compiles each
+expression with `Compiler evaluate:` and writes `index<TAB>printString`.
+Four traps are recorded in the tool's header; the one that cost most is that
+a chunk which fails part-way leaves the file it opened EMPTY, because `close`
+never runs — an empty results file means the RUN died, not that the
+expressions answered nothing.
+
+**The oracle is 32-BIT.** `VMConstants.IntPtrMask` answers `16rFFFFFFFF` and
+`HalfPtrBits` answers `16`. It is therefore authoritative about SEMANTICS
+always, and about LAYOUT only where no pointer is involved. That is rule 1
+restated as a working procedure rather than a warning.
+
+It also settled the `lowPartSigned` decision made last sitting on reasoning
+alone: `16rFFFE lowPartSigned` answers **-2**. The corpus was written where
+half-a-pointer IS 16 bits, so keeping these 16-bit here — rather than
+widening them to half of 64 — reproduces what every call site expects.
+
+### What the differential sweep found
+
+`tools/conform_structs.py` asks Dolphin for every generated struct's
+`byteSize` and classifies the disagreements, because on a 32-bit oracle a
+raw diff is mostly noise:
+
+    agree, byte for byte ......................... 141
+    differ, POINTER-BEARING (expected 32 vs 64) ..  81
+    differ, pointer-free — REVIEW ................  24
+    not defined by Dolphin ....................... 141
+
+Pointer-bearing is detected TRANSITIVELY from winkb, and that detail is the
+tool: every `NM*` notification struct embeds `NMHDR`, whose `hwndFrom` is a
+pointer, so a top-level-only scan files nine false alarms. In all 24 review
+cases ours agrees with winkb, so there is no struct where we disagree with
+both opinions.
+
+**MONITORINFOEXW = 104**, straight from Dolphin, independently confirming the
+size the generator now takes from winkb's `types.size_bits` — and confirming
+that the previous 48 (last field's offset + a pointer width, because a
+trailing `char[]` has no width in the metadata) was a real defect. Dolphin's
+own `defineFields` says `self byteSize: 104` too, so three sources agree.
+
+**A genuine finding: `BITMAPFILEHEADER`.** Dolphin says 14, we say 16.
+Dolphin is right — the struct is `#pragma pack(2)`, `bfOffBits` sits at 10,
+and we put it at 12. **winkb does not model `#pragma pack`; Dolphin does.**
+Nothing in `st/mvp` reads it yet, so this is latent rather than live, but it
+is a whole CLASS of defect that the winkb-is-authoritative rule cannot see,
+and the oracle is the only thing here that can.
+
+### DisplayMonitor now matches Dolphin
+
+The chain `cacheInfo` → `rectangle`/`workArea`/`deviceName`/`isPrimary` was
+dead at every link. Six causes, each hiding the next:
+
+  * `ByteArray class >> newFixed:` did not exist (5 call sites; Dolphin's
+    primitive 76, the fixed-heap allocation an API out-parameter needs).
+  * `SHCore`, `Dwmapi`, `Ucrt` and `VM` were unbound library globals — `VM`
+    with 17 sends. Sourced now from each library's own
+    `sharedVariableName`, not from a call-site census, which is what missed
+    them.
+  * `DpiAwareness` and `CreateInDpiAwarenessContext` were never translated.
+  * `UserLibrary class >> initialize` — Dolphin's own, setting
+    `DpiAwarenessContext` — was never called.
+  * `addClassConstant:value:` did not exist, so `DpiAwareness initialize`
+    aborted at its first element and `Awarenesses` stayed nil.
+  * `MONITORINFOEXW` needed `SizedStructure`'s size stamping (emitted by the
+    generator now, from the corpus's own declared superclass) and
+    `MONITORINFOF_PRIMARY` bound.
+
+Side by side, ours against the oracle:
+
+    deviceName    '\.\DISPLAY1'   ==  '\.\DISPLAY1'
+    isPrimary     true             ==  true
+    rectangle     0@0..2560@1440   vs  0@0..3840@2160   (dpi 96 vs 144)
+
+The rectangle difference is NOT a defect: 3840/1.5 = 2560 exactly. Dolphin
+runs per-monitor DPI aware; this port currently runs DPI-UNAWARE, so Windows
+virtualises the desktop for it. Recorded as an open item rather than papered
+over — `UserLibrary initialize` runs too late to take effect.
+
+`Utf16Buffer class >> fromAddress:` now scans to the NUL. A view of unknown
+size answered '' for every wide string Windows handed back, which is how
+`szDevice` produced an empty monitor name with no error at all.
+
+### Still open
+
+`st_modal` is not green. With the monitor chain fixed the failure moved to
+view construction, where the oracle again disagrees with us: Dolphin accepts
+`aTextEdit parentView: aShell` on an UNCREATED view and creates the subview
+inside `addSubView:`, while ours raises a bare `Win32Error` from
+`parentView:` and `does not understand value` from `basicAddSubView:`.
+`ShellView new create` also raises `defaultIcon` once the containment is
+removed — previously swallowed. Three more latent defects, all now visible
+because the probe stopped swallowing them.
+
+---
+
+## DD12 — correcting 90 struct sizes regressed five gates; the oracle found why
+
+Taking sizes from winkb rather than from arithmetic changed 90 of them, and
+the next full sweep went **24/24 -> 19/25**. Five gates that had passed for
+weeks — st_browser, st_classbrowser, st_controls, st_dolphinapp, st_textedit —
+all failed the same way: `does not understand value`.
+
+**Bisected to one struct.** `tools/bisect_sizes.sh` applies the winkb size to
+a named subset and holds the rest at the old arithmetic, so the culprit falls
+out in eight runs instead of ninety: **`LOGFONTW`, 36 -> 92**. Dolphin 8
+answers `OS.LOGFONTW byteSize` -> `92`, so 92 is right on both architectures
+and 36 was the trailing-`char[]` fallback again.
+
+**The regression was a latent bug being UNCOVERED, not created.** At 36 bytes
+`SystemParametersInfoForDpi` was handed a too-small buffer and FAILED, so
+`SystemMetrics>>getIconTitleFont` always took its `ifError:` path. At 92 the
+call SUCCEEDS, and control reaches the last line of
+`getSysParamForDpi:type:ifError:` — Dolphin's own `^struct value` — for the
+first time. That line had never executed in this port.
+
+`value` is a universal helper (rule 2), and its slow path already implements
+`Object>>value ^self` by ATTEMPTING the send and catching the miss. It caught
+only Dart's `NoSuchMethodError` — which is what a NATIVE receiver raises. An
+ST receiver takes the reify path instead, because the world defines
+`Object>>doesNotUnderstand:`, and that signals a real ST
+`MessageNotUnderstood`: an ST object, not a Dart error, so the existing
+`on NoSuchMethodError` clause could not see it. Two halves of one rule, with
+only one of them implemented.
+
+Fixed in the slow path (`_stValue0Slow`, cocoa.dart), matching on the exact
+text `Object>>doesNotUnderstand:` builds — narrower than a class check, and
+robust in a way a class check is not, since asking the caught object for its
+`class` is itself a send. **Asked of the oracle rather than assumed:**
+`aLOGFONTW value == aLOGFONTW` answers `true` in Dolphin 8, so self is the
+right answer.
+
+All five recovered. The lesson is the one this port keeps re-learning from a
+new angle: a wrong number does not fail, it takes a different branch, and the
+branch it takes can be green for weeks.
+
+### Open: this port runs DPI-UNAWARE, and should not
+
+The oracle comparison turned up something no gate asserts. Dolphin reports
+the primary monitor as `0@0 corner: 3840@2160` at 144 dpi; this port reports
+`0@0 corner: 2560@1440` at 96. 3840/1.5 = 2560 exactly — Windows is
+virtualising the desktop for us, which it only does for a DPI-unaware
+process.
+
+That is not for want of asking: `dartui.exe` carries an embedded manifest
+declaring `PerMonitorV2`, and `win_host.cpp:482` calls
+`SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2)`.
+Something is defeating both, and `UserLibrary dpiAwareness` answering
+`DpiAwareness unaware` is consistent with `GetThreadDpiAwarenessContext`
+coming back as an unsigned pseudo-handle that `fromHandle:` cannot map
+(`Awarenesses lookup: anInteger asInteger negated` wants -1..-5). Unresolved;
+recorded because every coordinate in the port is wrong by a factor of 1.5
+until it is, and nothing currently notices.

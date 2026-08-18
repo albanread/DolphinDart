@@ -2,10 +2,10 @@
  winkb (Win32Metadata), not computed here. Do not hand-edit."
 
 ExternalMemory subclass: EXTLOGPEN32 [
-    EXTLOGPEN32 class >> sizeInBytes [ ^32 ]
-    EXTLOGPEN32 class >> byteSize [ ^32 ]
-    byteSize [ ^32 ]
-    EXTLOGPEN32 class >> new [ ^self new: 32 ]
+    EXTLOGPEN32 class >> sizeInBytes [ ^28 ]
+    EXTLOGPEN32 class >> byteSize [ ^28 ]
+    byteSize [ ^28 ]
+    EXTLOGPEN32 class >> new [ ^self new: 28 ]
 
     EXTLOGPEN32 class >> _OffsetOf_elpPenStyle [ ^0 ]
     EXTLOGPEN32 class >> _OffsetOf_elpWidth [ ^4 ]
@@ -14,7 +14,7 @@ ExternalMemory subclass: EXTLOGPEN32 [
     EXTLOGPEN32 class >> _OffsetOf_elpHatch [ ^16 ]
     EXTLOGPEN32 class >> _OffsetOf_elpNumEntries [ ^20 ]
     EXTLOGPEN32 class >> _OffsetOf_elpStyleEntry [ ^24 ]
-    EXTLOGPEN32 class >> _EXTLOGPEN32_Size [ ^32 ]
+    EXTLOGPEN32 class >> _EXTLOGPEN32_Size [ ^28 ]
 
     elpPenStyle [ ^self uint32At: 1 ]
     elpPenStyle: v [ ^self uint32At: 1 put: v ]
@@ -27,5 +27,6 @@ ExternalMemory subclass: EXTLOGPEN32 [
     elpHatch: v [ ^self uint32At: 17 put: v ]
     elpNumEntries [ ^self uint32At: 21 ]
     elpNumEntries: v [ ^self uint32At: 21 put: v ]
-    "elpStyleEntry: u32[] at 24 — no accessor (width unknown); use byteAt: directly"
+    "elpStyleEntry: u32[] at 24, 4 bytes — element width unknown; use byteAt: directly"
+    EXTLOGPEN32 class >> _SpanOf_elpStyleEntry [ ^4 ]
 ]

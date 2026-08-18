@@ -11,7 +11,7 @@ ExternalMemory subclass: HTTP_SERVICE_CONFIG_SSL_SNI_KEY [
     HTTP_SERVICE_CONFIG_SSL_SNI_KEY class >> _OffsetOf_Host [ ^128 ]
     HTTP_SERVICE_CONFIG_SSL_SNI_KEY class >> _HTTP_SERVICE_CONFIG_SSL_SNI_KEY_Size [ ^136 ]
 
-    ipPort [ ^SOCKADDR_STORAGE viewOn: self at: 0 size: 24 ]
+    ipPort [ ^SOCKADDR_STORAGE viewOn: self at: 0 size: 128 ]
     host [ ^self intptrAt: 129 ]
     host: v [ ^self intptrAt: 129 put: v ]
 ]

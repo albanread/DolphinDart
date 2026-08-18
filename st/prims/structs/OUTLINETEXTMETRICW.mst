@@ -6,6 +6,14 @@ ExternalMemory subclass: OUTLINETEXTMETRICW [
     OUTLINETEXTMETRICW class >> byteSize [ ^232 ]
     byteSize [ ^232 ]
     OUTLINETEXTMETRICW class >> new [ ^self new: 232 ]
+    OUTLINETEXTMETRICW class >> newBuffer [
+        "SizedStructure: the leading UInt32 is the struct's
+         own size, and the API rejects a buffer without it."
+        | b |
+        b := self new: 232.
+        b uint32At: 1 put: 232.
+        ^b
+    ]
 
     OUTLINETEXTMETRICW class >> _OffsetOf_otmSize [ ^0 ]
     OUTLINETEXTMETRICW class >> _OffsetOf_otmTextMetrics [ ^4 ]

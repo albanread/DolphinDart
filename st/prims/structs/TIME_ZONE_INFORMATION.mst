@@ -26,11 +26,45 @@ ExternalMemory subclass: TIME_ZONE_INFORMATION [
 
     bias [ ^self int32At: 1 ]
     bias: v [ ^self int32At: 1 put: v ]
-    "standardName: char[] at 4 — no accessor (width unknown); use byteAt: directly"
+    standardName [ "char[32] at 4"
+        | s i c |
+        s := WriteStream on: String new.
+        i := 4.
+        [ i < 68 and: [ (c := self uint16At: i + 1) ~= 0 ] ]
+            whileTrue: [ s nextPut: (Character value: c). i := i + 2 ].
+        ^s contents
+    ]
+    standardName: aString [
+        | i c |
+        i := 4.
+        1 to: ((aString size min: 31)) do: [ :k |
+            c := (aString at: k) value.
+            self uint16At: i + 1 put: c. i := i + 2 ].
+        self uint16At: i + 1 put: 0.
+        ^aString
+    ]
+    TIME_ZONE_INFORMATION class >> _SpanOf_StandardName [ ^64 ]
     standardDate [ ^SYSTEMTIME viewOn: self at: 68 size: 16 ]
     standardBias [ ^self int32At: 85 ]
     standardBias: v [ ^self int32At: 85 put: v ]
-    "daylightName: char[] at 88 — no accessor (width unknown); use byteAt: directly"
+    daylightName [ "char[32] at 88"
+        | s i c |
+        s := WriteStream on: String new.
+        i := 88.
+        [ i < 152 and: [ (c := self uint16At: i + 1) ~= 0 ] ]
+            whileTrue: [ s nextPut: (Character value: c). i := i + 2 ].
+        ^s contents
+    ]
+    daylightName: aString [
+        | i c |
+        i := 88.
+        1 to: ((aString size min: 31)) do: [ :k |
+            c := (aString at: k) value.
+            self uint16At: i + 1 put: c. i := i + 2 ].
+        self uint16At: i + 1 put: 0.
+        ^aString
+    ]
+    TIME_ZONE_INFORMATION class >> _SpanOf_DaylightName [ ^64 ]
     daylightDate [ ^SYSTEMTIME viewOn: self at: 152 size: 16 ]
     daylightBias [ ^self int32At: 169 ]
     daylightBias: v [ ^self int32At: 169 put: v ]

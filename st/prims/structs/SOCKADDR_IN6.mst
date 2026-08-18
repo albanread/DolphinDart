@@ -25,6 +25,6 @@ SOCKADDR subclass: SOCKADDR_IN6 [
     sin6_port: v [ ^self uint16At: 3 put: v ]
     sin6_flowinfo [ ^self uint32At: 5 ]
     sin6_flowinfo: v [ ^self uint32At: 5 put: v ]
-    sin6_addr [ ^IN6_ADDR viewOn: self at: 8 size: 8 ]
+    sin6_addr [ ^IN6_ADDR viewOn: self at: 8 size: 16 ]
     "anonymous: _Anonymous_e__Union at 24 — no accessor (width unknown); use byteAt: directly"
 ]

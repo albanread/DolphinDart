@@ -2,15 +2,15 @@
  winkb (Win32Metadata), not computed here. Do not hand-edit."
 
 ExternalMemory subclass: HTTP_SERVICE_CONFIG_SSL_QUERY [
-    HTTP_SERVICE_CONFIG_SSL_QUERY class >> sizeInBytes [ ^20 ]
-    HTTP_SERVICE_CONFIG_SSL_QUERY class >> byteSize [ ^20 ]
-    byteSize [ ^20 ]
-    HTTP_SERVICE_CONFIG_SSL_QUERY class >> new [ ^self new: 20 ]
+    HTTP_SERVICE_CONFIG_SSL_QUERY class >> sizeInBytes [ ^24 ]
+    HTTP_SERVICE_CONFIG_SSL_QUERY class >> byteSize [ ^24 ]
+    byteSize [ ^24 ]
+    HTTP_SERVICE_CONFIG_SSL_QUERY class >> new [ ^self new: 24 ]
 
     HTTP_SERVICE_CONFIG_SSL_QUERY class >> _OffsetOf_QueryDesc [ ^0 ]
     HTTP_SERVICE_CONFIG_SSL_QUERY class >> _OffsetOf_KeyDesc [ ^8 ]
     HTTP_SERVICE_CONFIG_SSL_QUERY class >> _OffsetOf_dwToken [ ^16 ]
-    HTTP_SERVICE_CONFIG_SSL_QUERY class >> _HTTP_SERVICE_CONFIG_SSL_QUERY_Size [ ^20 ]
+    HTTP_SERVICE_CONFIG_SSL_QUERY class >> _HTTP_SERVICE_CONFIG_SSL_QUERY_Size [ ^24 ]
 
     queryDesc [ ^self uint32At: 1 ]
     queryDesc: v [ ^self uint32At: 1 put: v ]

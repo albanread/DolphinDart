@@ -27,7 +27,24 @@ ExternalMemory subclass: SPRECOGNIZERSTATUS [
     "clsidEngine: System.Guid at 56 — no accessor (width unknown); use byteAt: directly"
     cLangIDs [ ^self uint32At: 65 ]
     cLangIDs: v [ ^self uint32At: 65 put: v ]
-    "aLangID: u16[] at 68 — no accessor (width unknown); use byteAt: directly"
+    aLangID [ "u16[22] at 68"
+        | s i c |
+        s := WriteStream on: String new.
+        i := 68.
+        [ i < 112 and: [ (c := self uint16At: i + 1) ~= 0 ] ]
+            whileTrue: [ s nextPut: (Character value: c). i := i + 2 ].
+        ^s contents
+    ]
+    aLangID: aString [
+        | i c |
+        i := 68.
+        1 to: ((aString size min: 21)) do: [ :k |
+            c := (aString at: k) value.
+            self uint16At: i + 1 put: c. i := i + 2 ].
+        self uint16At: i + 1 put: 0.
+        ^aString
+    ]
+    SPRECOGNIZERSTATUS class >> _SpanOf_aLangID [ ^44 ]
     ullRecognitionStreamTime [ ^self intptrAt: 113 ]
     ullRecognitionStreamTime: v [ ^self intptrAt: 113 put: v ]
 ]

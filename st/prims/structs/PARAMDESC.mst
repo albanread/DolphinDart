@@ -2,14 +2,14 @@
  winkb (Win32Metadata), not computed here. Do not hand-edit."
 
 ExternalMemory subclass: PARAMDESC [
-    PARAMDESC class >> sizeInBytes [ ^10 ]
-    PARAMDESC class >> byteSize [ ^10 ]
-    byteSize [ ^10 ]
-    PARAMDESC class >> new [ ^self new: 10 ]
+    PARAMDESC class >> sizeInBytes [ ^16 ]
+    PARAMDESC class >> byteSize [ ^16 ]
+    byteSize [ ^16 ]
+    PARAMDESC class >> new [ ^self new: 16 ]
 
     PARAMDESC class >> _OffsetOf_pparamdescex [ ^0 ]
     PARAMDESC class >> _OffsetOf_wParamFlags [ ^8 ]
-    PARAMDESC class >> _PARAMDESC_Size [ ^10 ]
+    PARAMDESC class >> _PARAMDESC_Size [ ^16 ]
 
     "pparamdescex: Windows.Win32.System.Ole.PARAMDESCEX* at 0 — no accessor (width unknown); use byteAt: directly"
     wParamFlags [ ^self uint16At: 9 ]

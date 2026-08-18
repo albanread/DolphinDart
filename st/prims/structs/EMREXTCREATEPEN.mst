@@ -2,10 +2,10 @@
  winkb (Win32Metadata), not computed here. Do not hand-edit."
 
 ENHMETARECORD subclass: EMREXTCREATEPEN [
-    EMREXTCREATEPEN class >> sizeInBytes [ ^36 ]
-    EMREXTCREATEPEN class >> byteSize [ ^36 ]
-    byteSize [ ^36 ]
-    EMREXTCREATEPEN class >> new [ ^self new: 36 ]
+    EMREXTCREATEPEN class >> sizeInBytes [ ^56 ]
+    EMREXTCREATEPEN class >> byteSize [ ^56 ]
+    byteSize [ ^56 ]
+    EMREXTCREATEPEN class >> new [ ^self new: 56 ]
 
     EMREXTCREATEPEN class >> _OffsetOf_emr [ ^0 ]
     EMREXTCREATEPEN class >> _OffsetOf_ihPen [ ^8 ]
@@ -14,7 +14,7 @@ ENHMETARECORD subclass: EMREXTCREATEPEN [
     EMREXTCREATEPEN class >> _OffsetOf_offBits [ ^20 ]
     EMREXTCREATEPEN class >> _OffsetOf_cbBits [ ^24 ]
     EMREXTCREATEPEN class >> _OffsetOf_elp [ ^28 ]
-    EMREXTCREATEPEN class >> _EMREXTCREATEPEN_Size [ ^36 ]
+    EMREXTCREATEPEN class >> _EMREXTCREATEPEN_Size [ ^56 ]
 
     emr [ ^EMR viewOn: self at: 0 size: 8 ]
     ihPen [ ^self uint32At: 9 ]
@@ -27,5 +27,5 @@ ENHMETARECORD subclass: EMREXTCREATEPEN [
     offBits: v [ ^self uint32At: 21 put: v ]
     cbBits [ ^self uint32At: 25 ]
     cbBits: v [ ^self uint32At: 25 put: v ]
-    elp [ ^EXTLOGPEN32 viewOn: self at: 28 size: 32 ]
+    elp [ ^EXTLOGPEN32 viewOn: self at: 28 size: 28 ]
 ]

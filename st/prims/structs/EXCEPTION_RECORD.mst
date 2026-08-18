@@ -3,10 +3,10 @@
 
 ExternalMemory subclass: EXCEPTION_RECORD [
     | info |
-    EXCEPTION_RECORD class >> sizeInBytes [ ^40 ]
-    EXCEPTION_RECORD class >> byteSize [ ^40 ]
-    byteSize [ ^40 ]
-    EXCEPTION_RECORD class >> new [ ^self new: 40 ]
+    EXCEPTION_RECORD class >> sizeInBytes [ ^152 ]
+    EXCEPTION_RECORD class >> byteSize [ ^152 ]
+    byteSize [ ^152 ]
+    EXCEPTION_RECORD class >> new [ ^self new: 152 ]
 
     EXCEPTION_RECORD class >> _OffsetOf_ExceptionCode [ ^0 ]
     EXCEPTION_RECORD class >> _OffsetOf_ExceptionFlags [ ^4 ]
@@ -14,7 +14,7 @@ ExternalMemory subclass: EXCEPTION_RECORD [
     EXCEPTION_RECORD class >> _OffsetOf_ExceptionAddress [ ^16 ]
     EXCEPTION_RECORD class >> _OffsetOf_NumberParameters [ ^24 ]
     EXCEPTION_RECORD class >> _OffsetOf_ExceptionInformation [ ^32 ]
-    EXCEPTION_RECORD class >> _EXCEPTION_RECORD_Size [ ^40 ]
+    EXCEPTION_RECORD class >> _EXCEPTION_RECORD_Size [ ^152 ]
 
     exceptionCode [ ^NTSTATUS viewOn: self at: 0 size: 4 ]
     exceptionFlags [ ^self uint32At: 5 ]
@@ -23,5 +23,6 @@ ExternalMemory subclass: EXCEPTION_RECORD [
     "exceptionAddress: void* at 16 — no accessor (width unknown); use byteAt: directly"
     numberParameters [ ^self uint32At: 25 ]
     numberParameters: v [ ^self uint32At: 25 put: v ]
-    "exceptionInformation: usize[] at 32 — no accessor (width unknown); use byteAt: directly"
+    "exceptionInformation: usize[] at 32, 120 bytes — element width unknown; use byteAt: directly"
+    EXCEPTION_RECORD class >> _SpanOf_ExceptionInformation [ ^120 ]
 ]

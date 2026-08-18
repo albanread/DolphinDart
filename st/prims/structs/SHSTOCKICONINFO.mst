@@ -2,17 +2,25 @@
  winkb (Win32Metadata), not computed here. Do not hand-edit."
 
 ExternalMemory subclass: SHSTOCKICONINFO [
-    SHSTOCKICONINFO class >> sizeInBytes [ ^32 ]
-    SHSTOCKICONINFO class >> byteSize [ ^32 ]
-    byteSize [ ^32 ]
-    SHSTOCKICONINFO class >> new [ ^self new: 32 ]
+    SHSTOCKICONINFO class >> sizeInBytes [ ^544 ]
+    SHSTOCKICONINFO class >> byteSize [ ^544 ]
+    byteSize [ ^544 ]
+    SHSTOCKICONINFO class >> new [ ^self new: 544 ]
+    SHSTOCKICONINFO class >> newBuffer [
+        "SizedStructure: the leading UInt32 is the struct's
+         own size, and the API rejects a buffer without it."
+        | b |
+        b := self new: 544.
+        b uint32At: 1 put: 544.
+        ^b
+    ]
 
     SHSTOCKICONINFO class >> _OffsetOf_cbSize [ ^0 ]
     SHSTOCKICONINFO class >> _OffsetOf_hIcon [ ^8 ]
     SHSTOCKICONINFO class >> _OffsetOf_iSysImageIndex [ ^16 ]
     SHSTOCKICONINFO class >> _OffsetOf_iIcon [ ^20 ]
     SHSTOCKICONINFO class >> _OffsetOf_szPath [ ^24 ]
-    SHSTOCKICONINFO class >> _SHSTOCKICONINFO_Size [ ^32 ]
+    SHSTOCKICONINFO class >> _SHSTOCKICONINFO_Size [ ^544 ]
 
     cbSize [ ^self uint32At: 1 ]
     cbSize: v [ ^self uint32At: 1 put: v ]
@@ -22,5 +30,22 @@ ExternalMemory subclass: SHSTOCKICONINFO [
     iSysImageIndex: v [ ^self int32At: 17 put: v ]
     iIcon [ ^self int32At: 21 ]
     iIcon: v [ ^self int32At: 21 put: v ]
-    "szPath: char[] at 24 — no accessor (width unknown); use byteAt: directly"
+    szPath [ "char[260] at 24"
+        | s i c |
+        s := WriteStream on: String new.
+        i := 24.
+        [ i < 544 and: [ (c := self uint16At: i + 1) ~= 0 ] ]
+            whileTrue: [ s nextPut: (Character value: c). i := i + 2 ].
+        ^s contents
+    ]
+    szPath: aString [
+        | i c |
+        i := 24.
+        1 to: ((aString size min: 259)) do: [ :k |
+            c := (aString at: k) value.
+            self uint16At: i + 1 put: c. i := i + 2 ].
+        self uint16At: i + 1 put: 0.
+        ^aString
+    ]
+    SHSTOCKICONINFO class >> _SpanOf_szPath [ ^520 ]
 ]

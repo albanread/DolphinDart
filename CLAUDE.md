@@ -23,6 +23,28 @@ every WM_NOTIFY handler in the port.
 - **Fix in the translator** (`rewrite_nmhdr_code` is the model), not by
   overriding — the corpus's own logic stays intact that way.
 
+## 1b. There is an ORACLE — ask it instead of inferring
+
+A booted **Dolphin Professional 8.2.3** lives at `C:\projects\dolphin-oracle`
+(isolated, so running it dirties no repo). `tools/oracle.py` evaluates
+expressions in it:
+
+    python tools/oracle.py "OS.MONITORINFOEXW byteSize" "16rFFFE lowPartSigned"
+
+Reading the corpus and reasoning about what it must evaluate to has now
+produced a confident WRONG conclusion twice — most recently a whole sitting
+spent on `fromHandle:`, which was never broken; `printString` on its result
+was. Where a question has a factual answer, ask.
+
+- **Authoritative about SEMANTICS always** — what a method answers, whether a
+  selector exists, what Dolphin's own flow permits (`parentView:` on an
+  uncreated view is legal; `addSubView:` is what realizes it).
+- **32-BIT** (`IntPtrMask` = `16rFFFFFFFF`, `HalfPtrBits` = 16), so for
+  LAYOUT it is authoritative only where no pointer is involved — which is
+  exactly the split `tools/conform_structs.py` automates. Run that after
+  touching `genstructs.py`.
+- It sees what winkb cannot: `#pragma pack` (LOOSE_ENDS 3.22).
+
 ## 2. Universal helpers — a method with one of these names may be DEAD
 
 The IL builder rewrites ~51 selectors AT THE CALL SITE (`at:`, `size`, `do:`,

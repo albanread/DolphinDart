@@ -2,15 +2,15 @@
  winkb (Win32Metadata), not computed here. Do not hand-edit."
 
 ExternalMemory subclass: SQL_INTERVAL_STRUCT [
-    SQL_INTERVAL_STRUCT class >> sizeInBytes [ ^16 ]
-    SQL_INTERVAL_STRUCT class >> byteSize [ ^16 ]
-    byteSize [ ^16 ]
-    SQL_INTERVAL_STRUCT class >> new [ ^self new: 16 ]
+    SQL_INTERVAL_STRUCT class >> sizeInBytes [ ^28 ]
+    SQL_INTERVAL_STRUCT class >> byteSize [ ^28 ]
+    byteSize [ ^28 ]
+    SQL_INTERVAL_STRUCT class >> new [ ^self new: 28 ]
 
     SQL_INTERVAL_STRUCT class >> _OffsetOf_interval_type [ ^0 ]
     SQL_INTERVAL_STRUCT class >> _OffsetOf_interval_sign [ ^4 ]
     SQL_INTERVAL_STRUCT class >> _OffsetOf_intval [ ^8 ]
-    SQL_INTERVAL_STRUCT class >> _SQL_INTERVAL_STRUCT_Size [ ^16 ]
+    SQL_INTERVAL_STRUCT class >> _SQL_INTERVAL_STRUCT_Size [ ^28 ]
 
     interval_type [ ^self uint32At: 1 ]
     interval_type: v [ ^self uint32At: 1 put: v ]

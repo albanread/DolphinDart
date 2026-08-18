@@ -32,7 +32,8 @@ ENHMETARECORD subclass: EMRPLGBLT [
 
     emr [ ^EMR viewOn: self at: 0 size: 8 ]
     rclBounds [ ^RECTL viewOn: self at: 8 size: 16 ]
-    "aptlDest: Windows.Win32.Foundation.POINTL[] at 24 — no accessor (width unknown); use byteAt: directly"
+    "aptlDest: Windows.Win32.Foundation.POINTL[] at 24, 24 bytes — element width unknown; use byteAt: directly"
+    EMRPLGBLT class >> _SpanOf_aptlDest [ ^24 ]
     xSrc [ ^self int32At: 49 ]
     xSrc: v [ ^self int32At: 49 put: v ]
     ySrc [ ^self int32At: 53 ]
@@ -41,7 +42,7 @@ ENHMETARECORD subclass: EMRPLGBLT [
     cxSrc: v [ ^self int32At: 57 put: v ]
     cySrc [ ^self int32At: 61 ]
     cySrc: v [ ^self int32At: 61 put: v ]
-    xformSrc [ ^XFORM viewOn: self at: 64 size: 28 ]
+    xformSrc [ ^XFORM viewOn: self at: 64 size: 24 ]
     crBkColorSrc [ ^COLORREF viewOn: self at: 88 size: 4 ]
     iUsageSrc [ ^self uint32At: 93 ]
     iUsageSrc: v [ ^self uint32At: 93 put: v ]

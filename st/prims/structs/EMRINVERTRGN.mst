@@ -2,21 +2,22 @@
  winkb (Win32Metadata), not computed here. Do not hand-edit."
 
 ENHMETARECORD subclass: EMRINVERTRGN [
-    EMRINVERTRGN class >> sizeInBytes [ ^36 ]
-    EMRINVERTRGN class >> byteSize [ ^36 ]
-    byteSize [ ^36 ]
-    EMRINVERTRGN class >> new [ ^self new: 36 ]
+    EMRINVERTRGN class >> sizeInBytes [ ^32 ]
+    EMRINVERTRGN class >> byteSize [ ^32 ]
+    byteSize [ ^32 ]
+    EMRINVERTRGN class >> new [ ^self new: 32 ]
 
     EMRINVERTRGN class >> _OffsetOf_emr [ ^0 ]
     EMRINVERTRGN class >> _OffsetOf_rclBounds [ ^8 ]
     EMRINVERTRGN class >> _OffsetOf_cbRgnData [ ^24 ]
     EMRINVERTRGN class >> _OffsetOf_RgnData [ ^28 ]
     "corpus constant _OffsetOf_RGNDATA: no unambiguous winkb field (candidates: []) — not aliased"
-    EMRINVERTRGN class >> _EMRINVERTRGN_Size [ ^36 ]
+    EMRINVERTRGN class >> _EMRINVERTRGN_Size [ ^32 ]
 
     emr [ ^EMR viewOn: self at: 0 size: 8 ]
     rclBounds [ ^RECTL viewOn: self at: 8 size: 16 ]
     cbRgnData [ ^self uint32At: 25 ]
     cbRgnData: v [ ^self uint32At: 25 put: v ]
-    "rgnData: u8[] at 28 — no accessor (width unknown); use byteAt: directly"
+    "rgnData: u8[] at 28, 4 bytes — element width unknown; use byteAt: directly"
+    EMRINVERTRGN class >> _SpanOf_RgnData [ ^4 ]
 ]

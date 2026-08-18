@@ -21,6 +21,8 @@ ENHMETARECORD subclass: EMRPOLYPOLYLINE [
     nPolys: v [ ^self uint32At: 25 put: v ]
     cptl [ ^self uint32At: 29 ]
     cptl: v [ ^self uint32At: 29 put: v ]
-    "aPolyCounts: u32[] at 32 — no accessor (width unknown); use byteAt: directly"
-    "aptl: Windows.Win32.Foundation.POINTL[] at 36 — no accessor (width unknown); use byteAt: directly"
+    "aPolyCounts: u32[] at 32, 4 bytes — element width unknown; use byteAt: directly"
+    EMRPOLYPOLYLINE class >> _SpanOf_aPolyCounts [ ^4 ]
+    "aptl: Windows.Win32.Foundation.POINTL[] at 36, 8 bytes — element width unknown; use byteAt: directly"
+    EMRPOLYPOLYLINE class >> _SpanOf_aptl [ ^8 ]
 ]

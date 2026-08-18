@@ -2,16 +2,17 @@
  winkb (Win32Metadata), not computed here. Do not hand-edit."
 
 ExternalMemory subclass: MIB_TCPTABLE [
-    MIB_TCPTABLE class >> sizeInBytes [ ^16 ]
-    MIB_TCPTABLE class >> byteSize [ ^16 ]
-    byteSize [ ^16 ]
-    MIB_TCPTABLE class >> new [ ^self new: 16 ]
+    MIB_TCPTABLE class >> sizeInBytes [ ^32 ]
+    MIB_TCPTABLE class >> byteSize [ ^32 ]
+    byteSize [ ^32 ]
+    MIB_TCPTABLE class >> new [ ^self new: 32 ]
 
     MIB_TCPTABLE class >> _OffsetOf_dwNumEntries [ ^0 ]
     MIB_TCPTABLE class >> _OffsetOf_table [ ^8 ]
-    MIB_TCPTABLE class >> _MIB_TCPTABLE_Size [ ^16 ]
+    MIB_TCPTABLE class >> _MIB_TCPTABLE_Size [ ^32 ]
 
     dwNumEntries [ ^self uint32At: 1 ]
     dwNumEntries: v [ ^self uint32At: 1 put: v ]
-    "table: Windows.Win32.NetworkManagement.IpHelper.MIB_TCPROW_LH[] at 8 — no accessor (width unknown); use byteAt: directly"
+    "table: Windows.Win32.NetworkManagement.IpHelper.MIB_TCPROW_LH[] at 8, 24 bytes — element width unknown; use byteAt: directly"
+    MIB_TCPTABLE class >> _SpanOf_table [ ^24 ]
 ]

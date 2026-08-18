@@ -11,6 +11,7 @@ ExternalMemory subclass: NCCALCSIZE_PARAMS [
     NCCALCSIZE_PARAMS class >> _OffsetOf_lppos [ ^48 ]
     NCCALCSIZE_PARAMS class >> _NCCALCSIZE_PARAMS_Size [ ^56 ]
 
-    "rgrc: Windows.Win32.Foundation.RECT[] at 0 — no accessor (width unknown); use byteAt: directly"
+    "rgrc: Windows.Win32.Foundation.RECT[] at 0, 48 bytes — element width unknown; use byteAt: directly"
+    NCCALCSIZE_PARAMS class >> _SpanOf_rgrc [ ^48 ]
     "lppos: Windows.Win32.UI.WindowsAndMessaging.WINDOWPOS* at 48 — no accessor (width unknown); use byteAt: directly"
 ]

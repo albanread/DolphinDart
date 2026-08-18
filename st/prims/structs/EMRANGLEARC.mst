@@ -2,17 +2,17 @@
  winkb (Win32Metadata), not computed here. Do not hand-edit."
 
 ENHMETARECORD subclass: EMRANGLEARC [
-    EMRANGLEARC class >> sizeInBytes [ ^32 ]
-    EMRANGLEARC class >> byteSize [ ^32 ]
-    byteSize [ ^32 ]
-    EMRANGLEARC class >> new [ ^self new: 32 ]
+    EMRANGLEARC class >> sizeInBytes [ ^28 ]
+    EMRANGLEARC class >> byteSize [ ^28 ]
+    byteSize [ ^28 ]
+    EMRANGLEARC class >> new [ ^self new: 28 ]
 
     EMRANGLEARC class >> _OffsetOf_emr [ ^0 ]
     EMRANGLEARC class >> _OffsetOf_ptlCenter [ ^8 ]
     EMRANGLEARC class >> _OffsetOf_nRadius [ ^16 ]
     EMRANGLEARC class >> _OffsetOf_eStartAngle [ ^20 ]
     EMRANGLEARC class >> _OffsetOf_eSweepAngle [ ^24 ]
-    EMRANGLEARC class >> _EMRANGLEARC_Size [ ^32 ]
+    EMRANGLEARC class >> _EMRANGLEARC_Size [ ^28 ]
 
     emr [ ^EMR viewOn: self at: 0 size: 8 ]
     ptlCenter [ ^POINTL viewOn: self at: 8 size: 8 ]

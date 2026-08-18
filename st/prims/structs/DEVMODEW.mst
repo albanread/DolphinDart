@@ -2,10 +2,10 @@
  winkb (Win32Metadata), not computed here. Do not hand-edit."
 
 ExternalMemory subclass: DEVMODEW [
-    DEVMODEW class >> sizeInBytes [ ^268 ]
-    DEVMODEW class >> byteSize [ ^268 ]
-    byteSize [ ^268 ]
-    DEVMODEW class >> new [ ^self new: 268 ]
+    DEVMODEW class >> sizeInBytes [ ^272 ]
+    DEVMODEW class >> byteSize [ ^272 ]
+    byteSize [ ^272 ]
+    DEVMODEW class >> new [ ^self new: 272 ]
 
     DEVMODEW class >> _OffsetOf_dmDeviceName [ ^0 ]
     DEVMODEW class >> _OffsetOf_dmSpecVersion [ ^64 ]
@@ -47,9 +47,26 @@ ExternalMemory subclass: DEVMODEW [
     "corpus constant _OffsetOf_dmPosition: no unambiguous winkb field (candidates: []) — not aliased"
     "corpus constant _OffsetOf_dmPrintQuality: no unambiguous winkb field (candidates: []) — not aliased"
     "corpus constant _OffsetOf_dmScale: no unambiguous winkb field (candidates: []) — not aliased"
-    DEVMODEW class >> _DEVMODEW_Size [ ^268 ]
+    DEVMODEW class >> _DEVMODEW_Size [ ^272 ]
 
-    "dmDeviceName: char[] at 0 — no accessor (width unknown); use byteAt: directly"
+    dmDeviceName [ "char[32] at 0"
+        | s i c |
+        s := WriteStream on: String new.
+        i := 0.
+        [ i < 64 and: [ (c := self uint16At: i + 1) ~= 0 ] ]
+            whileTrue: [ s nextPut: (Character value: c). i := i + 2 ].
+        ^s contents
+    ]
+    dmDeviceName: aString [
+        | i c |
+        i := 0.
+        1 to: ((aString size min: 31)) do: [ :k |
+            c := (aString at: k) value.
+            self uint16At: i + 1 put: c. i := i + 2 ].
+        self uint16At: i + 1 put: 0.
+        ^aString
+    ]
+    DEVMODEW class >> _SpanOf_dmDeviceName [ ^64 ]
     dmSpecVersion [ ^self uint16At: 65 ]
     dmSpecVersion: v [ ^self uint16At: 65 put: v ]
     dmDriverVersion [ ^self uint16At: 67 ]
@@ -71,7 +88,24 @@ ExternalMemory subclass: DEVMODEW [
     dmTTOption: v [ ^self uint16At: 119 put: v ]
     dmCollate [ ^self uint16At: 121 ]
     dmCollate: v [ ^self uint16At: 121 put: v ]
-    "dmFormName: char[] at 122 — no accessor (width unknown); use byteAt: directly"
+    dmFormName [ "char[32] at 122"
+        | s i c |
+        s := WriteStream on: String new.
+        i := 122.
+        [ i < 186 and: [ (c := self uint16At: i + 1) ~= 0 ] ]
+            whileTrue: [ s nextPut: (Character value: c). i := i + 2 ].
+        ^s contents
+    ]
+    dmFormName: aString [
+        | i c |
+        i := 122.
+        1 to: ((aString size min: 31)) do: [ :k |
+            c := (aString at: k) value.
+            self uint16At: i + 1 put: c. i := i + 2 ].
+        self uint16At: i + 1 put: 0.
+        ^aString
+    ]
+    DEVMODEW class >> _SpanOf_dmFormName [ ^64 ]
     dmLogPixels [ ^self uint16At: 187 ]
     dmLogPixels: v [ ^self uint16At: 187 put: v ]
     dmBitsPerPel [ ^self uint32At: 189 ]

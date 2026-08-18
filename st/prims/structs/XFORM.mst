@@ -2,10 +2,10 @@
  winkb (Win32Metadata), not computed here. Do not hand-edit."
 
 ExternalMemory subclass: XFORM [
-    XFORM class >> sizeInBytes [ ^28 ]
-    XFORM class >> byteSize [ ^28 ]
-    byteSize [ ^28 ]
-    XFORM class >> new [ ^self new: 28 ]
+    XFORM class >> sizeInBytes [ ^24 ]
+    XFORM class >> byteSize [ ^24 ]
+    byteSize [ ^24 ]
+    XFORM class >> new [ ^self new: 24 ]
 
     XFORM class >> _OffsetOf_eM11 [ ^0 ]
     XFORM class >> _OffsetOf_eM12 [ ^4 ]
@@ -13,7 +13,7 @@ ExternalMemory subclass: XFORM [
     XFORM class >> _OffsetOf_eM22 [ ^12 ]
     XFORM class >> _OffsetOf_eDx [ ^16 ]
     XFORM class >> _OffsetOf_eDy [ ^20 ]
-    XFORM class >> _XFORM_Size [ ^28 ]
+    XFORM class >> _XFORM_Size [ ^24 ]
 
     "eM11: f32 at 0 — no accessor (width unknown); use byteAt: directly"
     "eM12: f32 at 4 — no accessor (width unknown); use byteAt: directly"

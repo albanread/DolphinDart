@@ -3,10 +3,10 @@
 
 ExternalMemory subclass: FUNCDESC [
     | names arguments outputIndices retvalIndex methodName |
-    FUNCDESC class >> sizeInBytes [ ^76 ]
-    FUNCDESC class >> byteSize [ ^76 ]
-    byteSize [ ^76 ]
-    FUNCDESC class >> new [ ^self new: 76 ]
+    FUNCDESC class >> sizeInBytes [ ^80 ]
+    FUNCDESC class >> byteSize [ ^80 ]
+    byteSize [ ^80 ]
+    FUNCDESC class >> new [ ^self new: 80 ]
 
     FUNCDESC class >> _OffsetOf_memid [ ^0 ]
     FUNCDESC class >> _OffsetOf_lprgscode [ ^8 ]
@@ -20,7 +20,7 @@ ExternalMemory subclass: FUNCDESC [
     FUNCDESC class >> _OffsetOf_cScodes [ ^42 ]
     FUNCDESC class >> _OffsetOf_elemdescFunc [ ^48 ]
     FUNCDESC class >> _OffsetOf_wFuncFlags [ ^72 ]
-    FUNCDESC class >> _FUNCDESC_Size [ ^76 ]
+    FUNCDESC class >> _FUNCDESC_Size [ ^80 ]
 
     memid [ ^self int32At: 1 ]
     memid: v [ ^self int32At: 1 put: v ]

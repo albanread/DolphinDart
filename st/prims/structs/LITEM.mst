@@ -2,10 +2,10 @@
  winkb (Win32Metadata), not computed here. Do not hand-edit."
 
 ExternalMemory subclass: LITEM [
-    LITEM class >> sizeInBytes [ ^120 ]
-    LITEM class >> byteSize [ ^120 ]
-    byteSize [ ^120 ]
-    LITEM class >> new [ ^self new: 120 ]
+    LITEM class >> sizeInBytes [ ^4280 ]
+    LITEM class >> byteSize [ ^4280 ]
+    byteSize [ ^4280 ]
+    LITEM class >> new [ ^self new: 4280 ]
 
     LITEM class >> _OffsetOf_mask [ ^0 ]
     LITEM class >> _OffsetOf_iLink [ ^4 ]
@@ -14,7 +14,7 @@ ExternalMemory subclass: LITEM [
     LITEM class >> _OffsetOf_szID [ ^16 ]
     LITEM class >> _OffsetOf_szUrl [ ^112 ]
     "corpus constant _OffsetOf_szURL: no unambiguous winkb field (candidates: []) — not aliased"
-    LITEM class >> _LITEM_Size [ ^120 ]
+    LITEM class >> _LITEM_Size [ ^4280 ]
 
     mask [ ^self uint32At: 1 ]
     mask: v [ ^self uint32At: 1 put: v ]
@@ -24,6 +24,40 @@ ExternalMemory subclass: LITEM [
     state: v [ ^self uint32At: 9 put: v ]
     stateMask [ ^self uint32At: 13 ]
     stateMask: v [ ^self uint32At: 13 put: v ]
-    "szID: char[] at 16 — no accessor (width unknown); use byteAt: directly"
-    "szUrl: char[] at 112 — no accessor (width unknown); use byteAt: directly"
+    szID [ "char[48] at 16"
+        | s i c |
+        s := WriteStream on: String new.
+        i := 16.
+        [ i < 112 and: [ (c := self uint16At: i + 1) ~= 0 ] ]
+            whileTrue: [ s nextPut: (Character value: c). i := i + 2 ].
+        ^s contents
+    ]
+    szID: aString [
+        | i c |
+        i := 16.
+        1 to: ((aString size min: 47)) do: [ :k |
+            c := (aString at: k) value.
+            self uint16At: i + 1 put: c. i := i + 2 ].
+        self uint16At: i + 1 put: 0.
+        ^aString
+    ]
+    LITEM class >> _SpanOf_szID [ ^96 ]
+    szUrl [ "char[2084] at 112"
+        | s i c |
+        s := WriteStream on: String new.
+        i := 112.
+        [ i < 4280 and: [ (c := self uint16At: i + 1) ~= 0 ] ]
+            whileTrue: [ s nextPut: (Character value: c). i := i + 2 ].
+        ^s contents
+    ]
+    szUrl: aString [
+        | i c |
+        i := 112.
+        1 to: ((aString size min: 2083)) do: [ :k |
+            c := (aString at: k) value.
+            self uint16At: i + 1 put: c. i := i + 2 ].
+        self uint16At: i + 1 put: 0.
+        ^aString
+    ]
+    LITEM class >> _SpanOf_szUrl [ ^4168 ]
 ]

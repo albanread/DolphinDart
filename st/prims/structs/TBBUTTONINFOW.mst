@@ -6,6 +6,14 @@ ExternalMemory subclass: TBBUTTONINFOW [
     TBBUTTONINFOW class >> byteSize [ ^48 ]
     byteSize [ ^48 ]
     TBBUTTONINFOW class >> new [ ^self new: 48 ]
+    TBBUTTONINFOW class >> newBuffer [
+        "SizedStructure: the leading UInt32 is the struct's
+         own size, and the API rejects a buffer without it."
+        | b |
+        b := self new: 48.
+        b uint32At: 1 put: 48.
+        ^b
+    ]
 
     TBBUTTONINFOW class >> _OffsetOf_cbSize [ ^0 ]
     TBBUTTONINFOW class >> _OffsetOf_dwMask [ ^4 ]

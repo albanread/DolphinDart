@@ -2,10 +2,10 @@
  winkb (Win32Metadata), not computed here. Do not hand-edit."
 
 ENHMETARECORD subclass: EMRPOLYTEXTOUTA [
-    EMRPOLYTEXTOUTA class >> sizeInBytes [ ^48 ]
-    EMRPOLYTEXTOUTA class >> byteSize [ ^48 ]
-    byteSize [ ^48 ]
-    EMRPOLYTEXTOUTA class >> new [ ^self new: 48 ]
+    EMRPOLYTEXTOUTA class >> sizeInBytes [ ^80 ]
+    EMRPOLYTEXTOUTA class >> byteSize [ ^80 ]
+    byteSize [ ^80 ]
+    EMRPOLYTEXTOUTA class >> new [ ^self new: 80 ]
 
     EMRPOLYTEXTOUTA class >> _OffsetOf_emr [ ^0 ]
     EMRPOLYTEXTOUTA class >> _OffsetOf_rclBounds [ ^8 ]
@@ -14,7 +14,7 @@ ENHMETARECORD subclass: EMRPOLYTEXTOUTA [
     EMRPOLYTEXTOUTA class >> _OffsetOf_eyScale [ ^32 ]
     EMRPOLYTEXTOUTA class >> _OffsetOf_cStrings [ ^36 ]
     EMRPOLYTEXTOUTA class >> _OffsetOf_aemrtext [ ^40 ]
-    EMRPOLYTEXTOUTA class >> _EMRPOLYTEXTOUTA_Size [ ^48 ]
+    EMRPOLYTEXTOUTA class >> _EMRPOLYTEXTOUTA_Size [ ^80 ]
 
     emr [ ^EMR viewOn: self at: 0 size: 8 ]
     rclBounds [ ^RECTL viewOn: self at: 8 size: 16 ]
@@ -24,5 +24,6 @@ ENHMETARECORD subclass: EMRPOLYTEXTOUTA [
     "eyScale: f32 at 32 — no accessor (width unknown); use byteAt: directly"
     cStrings [ ^self int32At: 37 ]
     cStrings: v [ ^self int32At: 37 put: v ]
-    "aemrtext: Windows.Win32.Graphics.Gdi.EMRTEXT[] at 40 — no accessor (width unknown); use byteAt: directly"
+    "aemrtext: Windows.Win32.Graphics.Gdi.EMRTEXT[] at 40, 40 bytes — element width unknown; use byteAt: directly"
+    EMRPOLYTEXTOUTA class >> _SpanOf_aemrtext [ ^40 ]
 ]

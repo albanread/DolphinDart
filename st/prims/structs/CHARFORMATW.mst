@@ -2,10 +2,10 @@
  winkb (Win32Metadata), not computed here. Do not hand-edit."
 
 ExternalMemory subclass: CHARFORMATW [
-    CHARFORMATW class >> sizeInBytes [ ^34 ]
-    CHARFORMATW class >> byteSize [ ^34 ]
-    byteSize [ ^34 ]
-    CHARFORMATW class >> new [ ^self new: 34 ]
+    CHARFORMATW class >> sizeInBytes [ ^92 ]
+    CHARFORMATW class >> byteSize [ ^92 ]
+    byteSize [ ^92 ]
+    CHARFORMATW class >> new [ ^self new: 92 ]
 
     CHARFORMATW class >> _OffsetOf_cbSize [ ^0 ]
     CHARFORMATW class >> _OffsetOf_dwMask [ ^4 ]
@@ -16,7 +16,7 @@ ExternalMemory subclass: CHARFORMATW [
     CHARFORMATW class >> _OffsetOf_bCharSet [ ^24 ]
     CHARFORMATW class >> _OffsetOf_bPitchAndFamily [ ^25 ]
     CHARFORMATW class >> _OffsetOf_szFaceName [ ^26 ]
-    CHARFORMATW class >> _CHARFORMATW_Size [ ^34 ]
+    CHARFORMATW class >> _CHARFORMATW_Size [ ^92 ]
 
     cbSize [ ^self uint32At: 1 ]
     cbSize: v [ ^self uint32At: 1 put: v ]
@@ -33,5 +33,22 @@ ExternalMemory subclass: CHARFORMATW [
     bCharSet: v [ ^self byteAt: 25 put: v ]
     bPitchAndFamily [ ^self byteAt: 26 ]
     bPitchAndFamily: v [ ^self byteAt: 26 put: v ]
-    "szFaceName: char[] at 26 — no accessor (width unknown); use byteAt: directly"
+    szFaceName [ "char[33] at 26"
+        | s i c |
+        s := WriteStream on: String new.
+        i := 26.
+        [ i < 92 and: [ (c := self uint16At: i + 1) ~= 0 ] ]
+            whileTrue: [ s nextPut: (Character value: c). i := i + 2 ].
+        ^s contents
+    ]
+    szFaceName: aString [
+        | i c |
+        i := 26.
+        1 to: ((aString size min: 32)) do: [ :k |
+            c := (aString at: k) value.
+            self uint16At: i + 1 put: c. i := i + 2 ].
+        self uint16At: i + 1 put: 0.
+        ^aString
+    ]
+    CHARFORMATW class >> _SpanOf_szFaceName [ ^66 ]
 ]

@@ -2,16 +2,17 @@
  winkb (Win32Metadata), not computed here. Do not hand-edit."
 
 ExternalMemory subclass: FD_SET [
-    FD_SET class >> sizeInBytes [ ^16 ]
-    FD_SET class >> byteSize [ ^16 ]
-    byteSize [ ^16 ]
-    FD_SET class >> new [ ^self new: 16 ]
+    FD_SET class >> sizeInBytes [ ^520 ]
+    FD_SET class >> byteSize [ ^520 ]
+    byteSize [ ^520 ]
+    FD_SET class >> new [ ^self new: 520 ]
 
     FD_SET class >> _OffsetOf_fd_count [ ^0 ]
     FD_SET class >> _OffsetOf_fd_array [ ^8 ]
-    FD_SET class >> _FD_SET_Size [ ^16 ]
+    FD_SET class >> _FD_SET_Size [ ^520 ]
 
     fd_count [ ^self uint32At: 1 ]
     fd_count: v [ ^self uint32At: 1 put: v ]
-    "fd_array: Windows.Win32.Networking.WinSock.SOCKET[] at 8 — no accessor (width unknown); use byteAt: directly"
+    "fd_array: Windows.Win32.Networking.WinSock.SOCKET[] at 8, 512 bytes — element width unknown; use byteAt: directly"
+    FD_SET class >> _SpanOf_fd_array [ ^512 ]
 ]

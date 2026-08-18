@@ -2,10 +2,10 @@
  winkb (Win32Metadata), not computed here. Do not hand-edit."
 
 ExternalMemory subclass: LOGCOLORSPACEW [
-    LOGCOLORSPACEW class >> sizeInBytes [ ^76 ]
-    LOGCOLORSPACEW class >> byteSize [ ^76 ]
-    byteSize [ ^76 ]
-    LOGCOLORSPACEW class >> new [ ^self new: 76 ]
+    LOGCOLORSPACEW class >> sizeInBytes [ ^588 ]
+    LOGCOLORSPACEW class >> byteSize [ ^588 ]
+    byteSize [ ^588 ]
+    LOGCOLORSPACEW class >> new [ ^self new: 588 ]
 
     LOGCOLORSPACEW class >> _OffsetOf_lcsSignature [ ^0 ]
     LOGCOLORSPACEW class >> _OffsetOf_lcsVersion [ ^4 ]
@@ -17,7 +17,7 @@ ExternalMemory subclass: LOGCOLORSPACEW [
     LOGCOLORSPACEW class >> _OffsetOf_lcsGammaGreen [ ^60 ]
     LOGCOLORSPACEW class >> _OffsetOf_lcsGammaBlue [ ^64 ]
     LOGCOLORSPACEW class >> _OffsetOf_lcsFilename [ ^68 ]
-    LOGCOLORSPACEW class >> _LOGCOLORSPACEW_Size [ ^76 ]
+    LOGCOLORSPACEW class >> _LOGCOLORSPACEW_Size [ ^588 ]
 
     lcsSignature [ ^self uint32At: 1 ]
     lcsSignature: v [ ^self uint32At: 1 put: v ]
@@ -36,5 +36,22 @@ ExternalMemory subclass: LOGCOLORSPACEW [
     lcsGammaGreen: v [ ^self uint32At: 61 put: v ]
     lcsGammaBlue [ ^self uint32At: 65 ]
     lcsGammaBlue: v [ ^self uint32At: 65 put: v ]
-    "lcsFilename: char[] at 68 — no accessor (width unknown); use byteAt: directly"
+    lcsFilename [ "char[260] at 68"
+        | s i c |
+        s := WriteStream on: String new.
+        i := 68.
+        [ i < 588 and: [ (c := self uint16At: i + 1) ~= 0 ] ]
+            whileTrue: [ s nextPut: (Character value: c). i := i + 2 ].
+        ^s contents
+    ]
+    lcsFilename: aString [
+        | i c |
+        i := 68.
+        1 to: ((aString size min: 259)) do: [ :k |
+            c := (aString at: k) value.
+            self uint16At: i + 1 put: c. i := i + 2 ].
+        self uint16At: i + 1 put: 0.
+        ^aString
+    ]
+    LOGCOLORSPACEW class >> _SpanOf_lcsFilename [ ^520 ]
 ]

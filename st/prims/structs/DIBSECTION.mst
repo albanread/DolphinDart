@@ -16,7 +16,8 @@ BITMAP subclass: DIBSECTION [
 
     dsBm [ ^BITMAP viewOn: self at: 0 size: 32 ]
     dsBmih [ ^BITMAPINFOHEADER viewOn: self at: 32 size: 40 ]
-    "dsBitfields: u32[] at 72 — no accessor (width unknown); use byteAt: directly"
+    "dsBitfields: u32[] at 72, 16 bytes — element width unknown; use byteAt: directly"
+    DIBSECTION class >> _SpanOf_dsBitfields [ ^16 ]
     dshSection [ ^self intptrAt: 89 ]
     dshSection: v [ ^self intptrAt: 89 put: v ]
     dsOffset [ ^self uint32At: 97 ]

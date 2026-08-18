@@ -24,7 +24,8 @@ ExternalMemory subclass: TBBUTTON [
     fsState: v [ ^self byteAt: 9 put: v ]
     fsStyle [ ^self byteAt: 10 ]
     fsStyle: v [ ^self byteAt: 10 put: v ]
-    "bReserved: u8[] at 10 — no accessor (width unknown); use byteAt: directly"
+    "bReserved: u8[] at 10, 6 bytes — element width unknown; use byteAt: directly"
+    TBBUTTON class >> _SpanOf_bReserved [ ^6 ]
     dwData [ ^self intptrAt: 17 ]
     dwData: v [ ^self intptrAt: 17 put: v ]
     iString [ ^self intptrAt: 25 ]

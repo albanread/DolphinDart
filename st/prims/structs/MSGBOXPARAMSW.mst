@@ -7,6 +7,14 @@ ExternalMemory subclass: MSGBOXPARAMSW [
     MSGBOXPARAMSW class >> byteSize [ ^80 ]
     byteSize [ ^80 ]
     MSGBOXPARAMSW class >> new [ ^self new: 80 ]
+    MSGBOXPARAMSW class >> newBuffer [
+        "SizedStructure: the leading UInt32 is the struct's
+         own size, and the API rejects a buffer without it."
+        | b |
+        b := self new: 80.
+        b uint32At: 1 put: 80.
+        ^b
+    ]
 
     MSGBOXPARAMSW class >> _OffsetOf_cbSize [ ^0 ]
     MSGBOXPARAMSW class >> _OffsetOf_hwndOwner [ ^8 ]

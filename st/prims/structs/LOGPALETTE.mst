@@ -2,19 +2,20 @@
  winkb (Win32Metadata), not computed here. Do not hand-edit."
 
 ExternalMemory subclass: LOGPALETTE [
-    LOGPALETTE class >> sizeInBytes [ ^12 ]
-    LOGPALETTE class >> byteSize [ ^12 ]
-    byteSize [ ^12 ]
-    LOGPALETTE class >> new [ ^self new: 12 ]
+    LOGPALETTE class >> sizeInBytes [ ^8 ]
+    LOGPALETTE class >> byteSize [ ^8 ]
+    byteSize [ ^8 ]
+    LOGPALETTE class >> new [ ^self new: 8 ]
 
     LOGPALETTE class >> _OffsetOf_palVersion [ ^0 ]
     LOGPALETTE class >> _OffsetOf_palNumEntries [ ^2 ]
     LOGPALETTE class >> _OffsetOf_palPalEntry [ ^4 ]
-    LOGPALETTE class >> _LOGPALETTE_Size [ ^12 ]
+    LOGPALETTE class >> _LOGPALETTE_Size [ ^8 ]
 
     palVersion [ ^self uint16At: 1 ]
     palVersion: v [ ^self uint16At: 1 put: v ]
     palNumEntries [ ^self uint16At: 3 ]
     palNumEntries: v [ ^self uint16At: 3 put: v ]
-    "palPalEntry: Windows.Win32.Graphics.Gdi.PALETTEENTRY[] at 4 — no accessor (width unknown); use byteAt: directly"
+    "palPalEntry: Windows.Win32.Graphics.Gdi.PALETTEENTRY[] at 4, 4 bytes — element width unknown; use byteAt: directly"
+    LOGPALETTE class >> _SpanOf_palPalEntry [ ^4 ]
 ]

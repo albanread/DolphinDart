@@ -2,19 +2,44 @@
  winkb (Win32Metadata), not computed here. Do not hand-edit."
 
 ExternalMemory subclass: RGNDATA [
-    RGNDATA class >> sizeInBytes [ ^40 ]
-    RGNDATA class >> byteSize [ ^40 ]
-    byteSize [ ^40 ]
-    RGNDATA class >> new [ ^self new: 40 ]
+    RGNDATA class >> sizeInBytes [ ^36 ]
+    RGNDATA class >> byteSize [ ^36 ]
+    byteSize [ ^36 ]
+    RGNDATA class >> new [ ^self new: 36 ]
+    RGNDATA class >> newBuffer [
+        "SizedStructure: the leading UInt32 is the struct's
+         own size, and the API rejects a buffer without it."
+        | b |
+        b := self new: 36.
+        b uint32At: 1 put: 36.
+        ^b
+    ]
 
     RGNDATA class >> _OffsetOf_rdh [ ^0 ]
     RGNDATA class >> _OffsetOf_Buffer [ ^32 ]
-    "corpus constant _OffsetOf_iType: no unambiguous winkb field (candidates: []) — not aliased"
-    "corpus constant _OffsetOf_nCount: no unambiguous winkb field (candidates: []) — not aliased"
-    "corpus constant _OffsetOf_nRgnSize: no unambiguous winkb field (candidates: []) — not aliased"
-    "corpus constant _OffsetOf_rcBound: no unambiguous winkb field (candidates: []) — not aliased"
-    RGNDATA class >> _RGNDATA_Size [ ^40 ]
+    RGNDATA class >> _OffsetOf_iType [ ^4 ]  "nested field, flattened"
+    RGNDATA class >> _OffsetOf_nCount [ ^8 ]  "nested field, flattened"
+    RGNDATA class >> _OffsetOf_nRgnSize [ ^12 ]  "nested field, flattened"
+    RGNDATA class >> _OffsetOf_rcBound [ ^16 ]  "nested field, flattened"
+    RGNDATA class >> _RGNDATA_Size [ ^36 ]
 
     rdh [ ^RGNDATAHEADER viewOn: self at: 0 size: 32 ]
-    "buffer: Windows.Win32.Foundation.CHAR[] at 32 — no accessor (width unknown); use byteAt: directly"
+    buffer [ "CHAR[4] at 32"
+        | s i c |
+        s := WriteStream on: String new.
+        i := 32.
+        [ i < 36 and: [ (c := self byteAt: i + 1) ~= 0 ] ]
+            whileTrue: [ s nextPut: (Character value: c). i := i + 1 ].
+        ^s contents
+    ]
+    buffer: aString [
+        | i c |
+        i := 32.
+        1 to: ((aString size min: 3)) do: [ :k |
+            c := (aString at: k) value.
+            self byteAt: i + 1 put: c. i := i + 1 ].
+        self byteAt: i + 1 put: 0.
+        ^aString
+    ]
+    RGNDATA class >> _SpanOf_Buffer [ ^4 ]
 ]

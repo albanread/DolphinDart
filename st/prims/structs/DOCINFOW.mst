@@ -7,6 +7,14 @@ ExternalMemory subclass: DOCINFOW [
     DOCINFOW class >> byteSize [ ^40 ]
     byteSize [ ^40 ]
     DOCINFOW class >> new [ ^self new: 40 ]
+    DOCINFOW class >> newBuffer [
+        "SizedStructure: the leading UInt32 is the struct's
+         own size, and the API rejects a buffer without it."
+        | b |
+        b := self new: 40.
+        b uint32At: 1 put: 40.
+        ^b
+    ]
 
     DOCINFOW class >> _OffsetOf_cbSize [ ^0 ]
     DOCINFOW class >> _OffsetOf_lpszDocName [ ^8 ]

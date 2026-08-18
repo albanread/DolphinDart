@@ -2,20 +2,21 @@
  winkb (Win32Metadata), not computed here. Do not hand-edit."
 
 ENHMETARECORD subclass: EMRGLSBOUNDEDRECORD [
-    EMRGLSBOUNDEDRECORD class >> sizeInBytes [ ^36 ]
-    EMRGLSBOUNDEDRECORD class >> byteSize [ ^36 ]
-    byteSize [ ^36 ]
-    EMRGLSBOUNDEDRECORD class >> new [ ^self new: 36 ]
+    EMRGLSBOUNDEDRECORD class >> sizeInBytes [ ^32 ]
+    EMRGLSBOUNDEDRECORD class >> byteSize [ ^32 ]
+    byteSize [ ^32 ]
+    EMRGLSBOUNDEDRECORD class >> new [ ^self new: 32 ]
 
     EMRGLSBOUNDEDRECORD class >> _OffsetOf_emr [ ^0 ]
     EMRGLSBOUNDEDRECORD class >> _OffsetOf_rclBounds [ ^8 ]
     EMRGLSBOUNDEDRECORD class >> _OffsetOf_cbData [ ^24 ]
     EMRGLSBOUNDEDRECORD class >> _OffsetOf_Data [ ^28 ]
-    EMRGLSBOUNDEDRECORD class >> _EMRGLSBOUNDEDRECORD_Size [ ^36 ]
+    EMRGLSBOUNDEDRECORD class >> _EMRGLSBOUNDEDRECORD_Size [ ^32 ]
 
     emr [ ^EMR viewOn: self at: 0 size: 8 ]
     rclBounds [ ^RECTL viewOn: self at: 8 size: 16 ]
     cbData [ ^self uint32At: 25 ]
     cbData: v [ ^self uint32At: 25 put: v ]
-    "data: u8[] at 28 — no accessor (width unknown); use byteAt: directly"
+    "data: u8[] at 28, 4 bytes — element width unknown; use byteAt: directly"
+    EMRGLSBOUNDEDRECORD class >> _SpanOf_Data [ ^4 ]
 ]

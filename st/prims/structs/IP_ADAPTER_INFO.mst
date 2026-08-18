@@ -32,11 +32,46 @@ ExternalMemory subclass: IP_ADAPTER_INFO [
     "next: Windows.Win32.NetworkManagement.IpHelper.IP_ADAPTER_INFO* at 0 — no accessor (width unknown); use byteAt: directly"
     comboIndex [ ^self uint32At: 9 ]
     comboIndex: v [ ^self uint32At: 9 put: v ]
-    "adapterName: Windows.Win32.Foundation.CHAR[] at 12 — no accessor (width unknown); use byteAt: directly"
-    "description: Windows.Win32.Foundation.CHAR[] at 272 — no accessor (width unknown); use byteAt: directly"
+    adapterName [ "CHAR[260] at 12"
+        | s i c |
+        s := WriteStream on: String new.
+        i := 12.
+        [ i < 272 and: [ (c := self byteAt: i + 1) ~= 0 ] ]
+            whileTrue: [ s nextPut: (Character value: c). i := i + 1 ].
+        ^s contents
+    ]
+    adapterName: aString [
+        | i c |
+        i := 12.
+        1 to: ((aString size min: 259)) do: [ :k |
+            c := (aString at: k) value.
+            self byteAt: i + 1 put: c. i := i + 1 ].
+        self byteAt: i + 1 put: 0.
+        ^aString
+    ]
+    IP_ADAPTER_INFO class >> _SpanOf_AdapterName [ ^260 ]
+    description [ "CHAR[132] at 272"
+        | s i c |
+        s := WriteStream on: String new.
+        i := 272.
+        [ i < 404 and: [ (c := self byteAt: i + 1) ~= 0 ] ]
+            whileTrue: [ s nextPut: (Character value: c). i := i + 1 ].
+        ^s contents
+    ]
+    description: aString [
+        | i c |
+        i := 272.
+        1 to: ((aString size min: 131)) do: [ :k |
+            c := (aString at: k) value.
+            self byteAt: i + 1 put: c. i := i + 1 ].
+        self byteAt: i + 1 put: 0.
+        ^aString
+    ]
+    IP_ADAPTER_INFO class >> _SpanOf_Description [ ^132 ]
     addressLength [ ^self uint32At: 405 ]
     addressLength: v [ ^self uint32At: 405 put: v ]
-    "address: u8[] at 408 — no accessor (width unknown); use byteAt: directly"
+    "address: u8[] at 408, 8 bytes — element width unknown; use byteAt: directly"
+    IP_ADAPTER_INFO class >> _SpanOf_Address [ ^8 ]
     index [ ^self uint32At: 417 ]
     index: v [ ^self uint32At: 417 put: v ]
     type [ ^self uint32At: 421 ]
@@ -44,13 +79,13 @@ ExternalMemory subclass: IP_ADAPTER_INFO [
     dhcpEnabled [ ^self uint32At: 425 ]
     dhcpEnabled: v [ ^self uint32At: 425 put: v ]
     "currentIpAddress: Windows.Win32.NetworkManagement.IpHelper.IP_ADDR_STRING* at 432 — no accessor (width unknown); use byteAt: directly"
-    ipAddressList [ ^IP_ADDR_STRING viewOn: self at: 440 size: 44 ]
-    gatewayList [ ^IP_ADDR_STRING viewOn: self at: 488 size: 44 ]
-    dhcpServer [ ^IP_ADDR_STRING viewOn: self at: 536 size: 44 ]
+    ipAddressList [ ^IP_ADDR_STRING viewOn: self at: 440 size: 48 ]
+    gatewayList [ ^IP_ADDR_STRING viewOn: self at: 488 size: 48 ]
+    dhcpServer [ ^IP_ADDR_STRING viewOn: self at: 536 size: 48 ]
     haveWins [ ^self int32At: 585 ]
     haveWins: v [ ^self int32At: 585 put: v ]
-    primaryWinsServer [ ^IP_ADDR_STRING viewOn: self at: 592 size: 44 ]
-    secondaryWinsServer [ ^IP_ADDR_STRING viewOn: self at: 640 size: 44 ]
+    primaryWinsServer [ ^IP_ADDR_STRING viewOn: self at: 592 size: 48 ]
+    secondaryWinsServer [ ^IP_ADDR_STRING viewOn: self at: 640 size: 48 ]
     leaseObtained [ ^self intptrAt: 689 ]
     leaseObtained: v [ ^self intptrAt: 689 put: v ]
     leaseExpires [ ^self intptrAt: 697 ]

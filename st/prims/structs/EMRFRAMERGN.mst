@@ -2,10 +2,10 @@
  winkb (Win32Metadata), not computed here. Do not hand-edit."
 
 ENHMETARECORD subclass: EMRFRAMERGN [
-    EMRFRAMERGN class >> sizeInBytes [ ^48 ]
-    EMRFRAMERGN class >> byteSize [ ^48 ]
-    byteSize [ ^48 ]
-    EMRFRAMERGN class >> new [ ^self new: 48 ]
+    EMRFRAMERGN class >> sizeInBytes [ ^44 ]
+    EMRFRAMERGN class >> byteSize [ ^44 ]
+    byteSize [ ^44 ]
+    EMRFRAMERGN class >> new [ ^self new: 44 ]
 
     EMRFRAMERGN class >> _OffsetOf_emr [ ^0 ]
     EMRFRAMERGN class >> _OffsetOf_rclBounds [ ^8 ]
@@ -14,7 +14,7 @@ ENHMETARECORD subclass: EMRFRAMERGN [
     EMRFRAMERGN class >> _OffsetOf_szlStroke [ ^32 ]
     EMRFRAMERGN class >> _OffsetOf_RgnData [ ^40 ]
     "corpus constant _OffsetOf_RGNDATA: no unambiguous winkb field (candidates: []) — not aliased"
-    EMRFRAMERGN class >> _EMRFRAMERGN_Size [ ^48 ]
+    EMRFRAMERGN class >> _EMRFRAMERGN_Size [ ^44 ]
 
     emr [ ^EMR viewOn: self at: 0 size: 8 ]
     rclBounds [ ^RECTL viewOn: self at: 8 size: 16 ]
@@ -23,5 +23,6 @@ ENHMETARECORD subclass: EMRFRAMERGN [
     ihBrush [ ^self uint32At: 29 ]
     ihBrush: v [ ^self uint32At: 29 put: v ]
     szlStroke [ ^SIZEL viewOn: self at: 32 size: 8 ]
-    "rgnData: u8[] at 40 — no accessor (width unknown); use byteAt: directly"
+    "rgnData: u8[] at 40, 4 bytes — element width unknown; use byteAt: directly"
+    EMRFRAMERGN class >> _SpanOf_RgnData [ ^4 ]
 ]

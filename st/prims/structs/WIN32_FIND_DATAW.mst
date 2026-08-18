@@ -3,10 +3,10 @@
 
 WIN32_FILE_ATTRIBUTE_DATA subclass: WIN32_FIND_DATAW [
     | directory |
-    WIN32_FIND_DATAW class >> sizeInBytes [ ^572 ]
-    WIN32_FIND_DATAW class >> byteSize [ ^572 ]
-    byteSize [ ^572 ]
-    WIN32_FIND_DATAW class >> new [ ^self new: 572 ]
+    WIN32_FIND_DATAW class >> sizeInBytes [ ^592 ]
+    WIN32_FIND_DATAW class >> byteSize [ ^592 ]
+    byteSize [ ^592 ]
+    WIN32_FIND_DATAW class >> new [ ^self new: 592 ]
 
     WIN32_FIND_DATAW class >> _OffsetOf_dwFileAttributes [ ^0 ]
     WIN32_FIND_DATAW class >> _OffsetOf_ftCreationTime [ ^4 ]
@@ -18,7 +18,7 @@ WIN32_FILE_ATTRIBUTE_DATA subclass: WIN32_FIND_DATAW [
     WIN32_FIND_DATAW class >> _OffsetOf_dwReserved1 [ ^40 ]
     WIN32_FIND_DATAW class >> _OffsetOf_cFileName [ ^44 ]
     WIN32_FIND_DATAW class >> _OffsetOf_cAlternateFileName [ ^564 ]
-    WIN32_FIND_DATAW class >> _WIN32_FIND_DATAW_Size [ ^572 ]
+    WIN32_FIND_DATAW class >> _WIN32_FIND_DATAW_Size [ ^592 ]
 
     dwFileAttributes [ ^self uint32At: 1 ]
     dwFileAttributes: v [ ^self uint32At: 1 put: v ]
@@ -33,6 +33,40 @@ WIN32_FILE_ATTRIBUTE_DATA subclass: WIN32_FIND_DATAW [
     dwReserved0: v [ ^self uint32At: 37 put: v ]
     dwReserved1 [ ^self uint32At: 41 ]
     dwReserved1: v [ ^self uint32At: 41 put: v ]
-    "cFileName: char[] at 44 — no accessor (width unknown); use byteAt: directly"
-    "cAlternateFileName: char[] at 564 — no accessor (width unknown); use byteAt: directly"
+    cFileName [ "char[260] at 44"
+        | s i c |
+        s := WriteStream on: String new.
+        i := 44.
+        [ i < 564 and: [ (c := self uint16At: i + 1) ~= 0 ] ]
+            whileTrue: [ s nextPut: (Character value: c). i := i + 2 ].
+        ^s contents
+    ]
+    cFileName: aString [
+        | i c |
+        i := 44.
+        1 to: ((aString size min: 259)) do: [ :k |
+            c := (aString at: k) value.
+            self uint16At: i + 1 put: c. i := i + 2 ].
+        self uint16At: i + 1 put: 0.
+        ^aString
+    ]
+    WIN32_FIND_DATAW class >> _SpanOf_cFileName [ ^520 ]
+    cAlternateFileName [ "char[14] at 564"
+        | s i c |
+        s := WriteStream on: String new.
+        i := 564.
+        [ i < 592 and: [ (c := self uint16At: i + 1) ~= 0 ] ]
+            whileTrue: [ s nextPut: (Character value: c). i := i + 2 ].
+        ^s contents
+    ]
+    cAlternateFileName: aString [
+        | i c |
+        i := 564.
+        1 to: ((aString size min: 13)) do: [ :k |
+            c := (aString at: k) value.
+            self uint16At: i + 1 put: c. i := i + 2 ].
+        self uint16At: i + 1 put: 0.
+        ^aString
+    ]
+    WIN32_FIND_DATAW class >> _SpanOf_cAlternateFileName [ ^28 ]
 ]

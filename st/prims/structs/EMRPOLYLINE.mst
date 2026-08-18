@@ -17,5 +17,6 @@ ENHMETARECORD subclass: EMRPOLYLINE [
     rclBounds [ ^RECTL viewOn: self at: 8 size: 16 ]
     cptl [ ^self uint32At: 25 ]
     cptl: v [ ^self uint32At: 25 put: v ]
-    "aptl: Windows.Win32.Foundation.POINTL[] at 28 — no accessor (width unknown); use byteAt: directly"
+    "aptl: Windows.Win32.Foundation.POINTL[] at 28, 8 bytes — element width unknown; use byteAt: directly"
+    EMRPOLYLINE class >> _SpanOf_aptl [ ^8 ]
 ]

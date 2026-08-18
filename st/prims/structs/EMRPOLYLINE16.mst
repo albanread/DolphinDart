@@ -2,20 +2,21 @@
  winkb (Win32Metadata), not computed here. Do not hand-edit."
 
 ENHMETARECORD subclass: EMRPOLYLINE16 [
-    EMRPOLYLINE16 class >> sizeInBytes [ ^36 ]
-    EMRPOLYLINE16 class >> byteSize [ ^36 ]
-    byteSize [ ^36 ]
-    EMRPOLYLINE16 class >> new [ ^self new: 36 ]
+    EMRPOLYLINE16 class >> sizeInBytes [ ^32 ]
+    EMRPOLYLINE16 class >> byteSize [ ^32 ]
+    byteSize [ ^32 ]
+    EMRPOLYLINE16 class >> new [ ^self new: 32 ]
 
     EMRPOLYLINE16 class >> _OffsetOf_emr [ ^0 ]
     EMRPOLYLINE16 class >> _OffsetOf_rclBounds [ ^8 ]
     EMRPOLYLINE16 class >> _OffsetOf_cpts [ ^24 ]
     EMRPOLYLINE16 class >> _OffsetOf_apts [ ^28 ]
-    EMRPOLYLINE16 class >> _EMRPOLYLINE16_Size [ ^36 ]
+    EMRPOLYLINE16 class >> _EMRPOLYLINE16_Size [ ^32 ]
 
     emr [ ^EMR viewOn: self at: 0 size: 8 ]
     rclBounds [ ^RECTL viewOn: self at: 8 size: 16 ]
     cpts [ ^self uint32At: 25 ]
     cpts: v [ ^self uint32At: 25 put: v ]
-    "apts: Windows.Win32.Foundation.POINTS[] at 28 — no accessor (width unknown); use byteAt: directly"
+    "apts: Windows.Win32.Foundation.POINTS[] at 28, 4 bytes — element width unknown; use byteAt: directly"
+    EMRPOLYLINE16 class >> _SpanOf_apts [ ^4 ]
 ]

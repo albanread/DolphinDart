@@ -116,6 +116,9 @@ GATES = {
     # The REAL one: the whole live image (~700 classes), menu bar, collapsed
     # roots, lazy expand at scale, selection + keyboard driving the panes.
     "st_classbrowser": [MVP, MVP_COMPAT, FFI + "/dolphin_class_browser.mst"],
+    # DD12's goal gate: owner disabled, showModal blocking, OK/Cancel over a
+    # ValueBuffer, two stacked modals unwinding innermost-first.
+    "st_modal": [MVP, MVP_COMPAT, FFI + "/dolphin_modal.mst"],
 }
 
 # Gates with no window and no message pump. They run under `dart.exe`, which

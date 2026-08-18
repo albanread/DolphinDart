@@ -2,17 +2,34 @@
  winkb (Win32Metadata), not computed here. Do not hand-edit."
 
 ExternalMemory subclass: IP_ADAPTER_INDEX_MAP [
-    IP_ADAPTER_INDEX_MAP class >> sizeInBytes [ ^12 ]
-    IP_ADAPTER_INDEX_MAP class >> byteSize [ ^12 ]
-    byteSize [ ^12 ]
-    IP_ADAPTER_INDEX_MAP class >> new [ ^self new: 12 ]
+    IP_ADAPTER_INDEX_MAP class >> sizeInBytes [ ^260 ]
+    IP_ADAPTER_INDEX_MAP class >> byteSize [ ^260 ]
+    byteSize [ ^260 ]
+    IP_ADAPTER_INDEX_MAP class >> new [ ^self new: 260 ]
 
     IP_ADAPTER_INDEX_MAP class >> _OffsetOf_Index [ ^0 ]
     IP_ADAPTER_INDEX_MAP class >> _OffsetOf_Name [ ^4 ]
     "corpus constant _OffsetOf_index: no unambiguous winkb field (candidates: []) — not aliased"
-    IP_ADAPTER_INDEX_MAP class >> _IP_ADAPTER_INDEX_MAP_Size [ ^12 ]
+    IP_ADAPTER_INDEX_MAP class >> _IP_ADAPTER_INDEX_MAP_Size [ ^260 ]
 
     index [ ^self uint32At: 1 ]
     index: v [ ^self uint32At: 1 put: v ]
-    "name: char[] at 4 — no accessor (width unknown); use byteAt: directly"
+    name [ "char[128] at 4"
+        | s i c |
+        s := WriteStream on: String new.
+        i := 4.
+        [ i < 260 and: [ (c := self uint16At: i + 1) ~= 0 ] ]
+            whileTrue: [ s nextPut: (Character value: c). i := i + 2 ].
+        ^s contents
+    ]
+    name: aString [
+        | i c |
+        i := 4.
+        1 to: ((aString size min: 127)) do: [ :k |
+            c := (aString at: k) value.
+            self uint16At: i + 1 put: c. i := i + 2 ].
+        self uint16At: i + 1 put: 0.
+        ^aString
+    ]
+    IP_ADAPTER_INDEX_MAP class >> _SpanOf_Name [ ^256 ]
 ]

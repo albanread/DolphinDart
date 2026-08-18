@@ -631,3 +631,35 @@ Four distinct emitter gaps, each currently patched around in
 * **`##()` lowers to `[...] value`** — re-evaluated per send with dynamic
   self, where Dolphin binds once at compile time. A semantic divergence,
   benign today, recorded with the defaultIcon trap above.
+
+### 3.22 Packed structs — winkb cannot see `#pragma pack`, Dolphin can
+
+`BITMAPFILEHEADER` is **14 bytes**, not 16. It is declared `#pragma pack(2)`,
+so `bfSize` sits at 2 (not 4) and `bfOffBits` at 10 (not 12). The generator
+emits 16 with `bfOffBits` at 12, because it takes its sizes and offsets from
+winkb's `types.size_bits` / `struct_fields.byte_offset`, and **Win32Metadata
+does not model non-default packing** — it reports the naturally-aligned
+layout.
+
+Found by `tools/conform_structs.py`, which is the only reason it is known:
+Dolphin 8 answers `OS.BITMAPFILEHEADER byteSize` -> `14`, and Dolphin is
+right. This is the one case where the "winkb is authoritative, the corpus is
+32-bit and suspect" rule (CLAUDE.md rule 1) inverts — packing is not a
+pointer-width question, so the corpus's number is correct on both
+architectures and ours is wrong on both.
+
+**Latent, not live:** nothing under `st/mvp` reads `BITMAPFILEHEADER` today
+(`Image`/`Bitmap` load through GDI+ and `LoadImage`, which take the file
+path). It becomes live the moment anything parses a `.bmp` in the image —
+including reading back what `Win32 mvpCapture:` writes.
+
+**The class, not the instance.** Any struct with explicit packing has the
+same defect; BITMAPFILEHEADER is simply the one Dolphin also defines, so it
+is the one the differential sweep can see. The other 141 structs Dolphin does
+not define are unchecked in this respect.
+
+**Fix when it matters:** let the oracle be authoritative for size AND offsets
+where Dolphin defines the struct and the struct is pointer-free — i.e. bake
+`tools/conform_structs.py`'s comparison into `genstructs.py` as an override
+table generated from Dolphin rather than hand-written. Until then the sweep
+reports it every run, which is why the sweep exists.

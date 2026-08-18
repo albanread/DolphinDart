@@ -2,10 +2,10 @@
  winkb (Win32Metadata), not computed here. Do not hand-edit."
 
 ExternalMemory subclass: EXCEPINFO [
-    EXCEPINFO class >> sizeInBytes [ ^60 ]
-    EXCEPINFO class >> byteSize [ ^60 ]
-    byteSize [ ^60 ]
-    EXCEPINFO class >> new [ ^self new: 60 ]
+    EXCEPINFO class >> sizeInBytes [ ^64 ]
+    EXCEPINFO class >> byteSize [ ^64 ]
+    byteSize [ ^64 ]
+    EXCEPINFO class >> new [ ^self new: 64 ]
 
     EXCEPINFO class >> _OffsetOf_wCode [ ^0 ]
     EXCEPINFO class >> _OffsetOf_wReserved [ ^2 ]
@@ -19,7 +19,7 @@ ExternalMemory subclass: EXCEPINFO [
     "corpus constant _OffsetOf_pwszDescription: no unambiguous winkb field (candidates: []) — not aliased"
     "corpus constant _OffsetOf_pwszHelpFile: no unambiguous winkb field (candidates: []) — not aliased"
     "corpus constant _OffsetOf_pwszSource: no unambiguous winkb field (candidates: []) — not aliased"
-    EXCEPINFO class >> _EXCEPINFO_Size [ ^60 ]
+    EXCEPINFO class >> _EXCEPINFO_Size [ ^64 ]
 
     wCode [ ^self uint16At: 1 ]
     wCode: v [ ^self uint16At: 1 put: v ]

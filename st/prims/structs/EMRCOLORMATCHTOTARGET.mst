@@ -2,10 +2,10 @@
  winkb (Win32Metadata), not computed here. Do not hand-edit."
 
 ENHMETARECORD subclass: EMRCOLORMATCHTOTARGET [
-    EMRCOLORMATCHTOTARGET class >> sizeInBytes [ ^32 ]
-    EMRCOLORMATCHTOTARGET class >> byteSize [ ^32 ]
-    byteSize [ ^32 ]
-    EMRCOLORMATCHTOTARGET class >> new [ ^self new: 32 ]
+    EMRCOLORMATCHTOTARGET class >> sizeInBytes [ ^28 ]
+    EMRCOLORMATCHTOTARGET class >> byteSize [ ^28 ]
+    byteSize [ ^28 ]
+    EMRCOLORMATCHTOTARGET class >> new [ ^self new: 28 ]
 
     EMRCOLORMATCHTOTARGET class >> _OffsetOf_emr [ ^0 ]
     EMRCOLORMATCHTOTARGET class >> _OffsetOf_dwAction [ ^8 ]
@@ -13,7 +13,7 @@ ENHMETARECORD subclass: EMRCOLORMATCHTOTARGET [
     EMRCOLORMATCHTOTARGET class >> _OffsetOf_cbName [ ^16 ]
     EMRCOLORMATCHTOTARGET class >> _OffsetOf_cbData [ ^20 ]
     EMRCOLORMATCHTOTARGET class >> _OffsetOf_Data [ ^24 ]
-    EMRCOLORMATCHTOTARGET class >> _EMRCOLORMATCHTOTARGET_Size [ ^32 ]
+    EMRCOLORMATCHTOTARGET class >> _EMRCOLORMATCHTOTARGET_Size [ ^28 ]
 
     emr [ ^EMR viewOn: self at: 0 size: 8 ]
     dwAction [ ^self uint32At: 9 ]
@@ -24,5 +24,6 @@ ENHMETARECORD subclass: EMRCOLORMATCHTOTARGET [
     cbName: v [ ^self uint32At: 17 put: v ]
     cbData [ ^self uint32At: 21 ]
     cbData: v [ ^self uint32At: 21 put: v ]
-    "data: u8[] at 24 — no accessor (width unknown); use byteAt: directly"
+    "data: u8[] at 24, 4 bytes — element width unknown; use byteAt: directly"
+    EMRCOLORMATCHTOTARGET class >> _SpanOf_Data [ ^4 ]
 ]

@@ -12,8 +12,8 @@ ExternalMemory subclass: FORMATRANGE [
     FORMATRANGE class >> _OffsetOf_rc [ ^16 ]
     FORMATRANGE class >> _OffsetOf_rcPage [ ^32 ]
     FORMATRANGE class >> _OffsetOf_chrg [ ^48 ]
-    "corpus constant _OffsetOf_cpMax: no unambiguous winkb field (candidates: []) — not aliased"
-    "corpus constant _OffsetOf_cpMin: no unambiguous winkb field (candidates: []) — not aliased"
+    FORMATRANGE class >> _OffsetOf_cpMax [ ^52 ]  "nested field, flattened"
+    FORMATRANGE class >> _OffsetOf_cpMin [ ^48 ]  "nested field, flattened"
     FORMATRANGE class >> _FORMATRANGE_Size [ ^56 ]
 
     hdc [ ^self intptrAt: 1 ]

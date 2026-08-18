@@ -6,6 +6,14 @@ ExternalMemory subclass: FLASHWINFO [
     FLASHWINFO class >> byteSize [ ^32 ]
     byteSize [ ^32 ]
     FLASHWINFO class >> new [ ^self new: 32 ]
+    FLASHWINFO class >> newBuffer [
+        "SizedStructure: the leading UInt32 is the struct's
+         own size, and the API rejects a buffer without it."
+        | b |
+        b := self new: 32.
+        b uint32At: 1 put: 32.
+        ^b
+    ]
 
     FLASHWINFO class >> _OffsetOf_cbSize [ ^0 ]
     FLASHWINFO class >> _OffsetOf_hwnd [ ^8 ]

@@ -2,10 +2,10 @@
  winkb (Win32Metadata), not computed here. Do not hand-edit."
 
 ExternalMemory subclass: CPINFOEXW [
-    CPINFOEXW class >> sizeInBytes [ ^32 ]
-    CPINFOEXW class >> byteSize [ ^32 ]
-    byteSize [ ^32 ]
-    CPINFOEXW class >> new [ ^self new: 32 ]
+    CPINFOEXW class >> sizeInBytes [ ^544 ]
+    CPINFOEXW class >> byteSize [ ^544 ]
+    byteSize [ ^544 ]
+    CPINFOEXW class >> new [ ^self new: 544 ]
 
     CPINFOEXW class >> _OffsetOf_MaxCharSize [ ^0 ]
     CPINFOEXW class >> _OffsetOf_DefaultChar [ ^4 ]
@@ -14,14 +14,33 @@ ExternalMemory subclass: CPINFOEXW [
     CPINFOEXW class >> _OffsetOf_CodePage [ ^20 ]
     CPINFOEXW class >> _OffsetOf_CodePageName [ ^24 ]
     "corpus constant _OffsetOf_codepage: no unambiguous winkb field (candidates: []) — not aliased"
-    CPINFOEXW class >> _CPINFOEXW_Size [ ^32 ]
+    CPINFOEXW class >> _CPINFOEXW_Size [ ^544 ]
 
     maxCharSize [ ^self uint32At: 1 ]
     maxCharSize: v [ ^self uint32At: 1 put: v ]
-    "defaultChar: u8[] at 4 — no accessor (width unknown); use byteAt: directly"
-    "leadByte: u8[] at 6 — no accessor (width unknown); use byteAt: directly"
+    "defaultChar: u8[] at 4, 2 bytes — element width unknown; use byteAt: directly"
+    CPINFOEXW class >> _SpanOf_DefaultChar [ ^2 ]
+    "leadByte: u8[] at 6, 12 bytes — element width unknown; use byteAt: directly"
+    CPINFOEXW class >> _SpanOf_LeadByte [ ^12 ]
     "unicodeDefaultChar: char at 18 — no accessor (width unknown); use byteAt: directly"
     codePage [ ^self uint32At: 21 ]
     codePage: v [ ^self uint32At: 21 put: v ]
-    "codePageName: char[] at 24 — no accessor (width unknown); use byteAt: directly"
+    codePageName [ "char[260] at 24"
+        | s i c |
+        s := WriteStream on: String new.
+        i := 24.
+        [ i < 544 and: [ (c := self uint16At: i + 1) ~= 0 ] ]
+            whileTrue: [ s nextPut: (Character value: c). i := i + 2 ].
+        ^s contents
+    ]
+    codePageName: aString [
+        | i c |
+        i := 24.
+        1 to: ((aString size min: 259)) do: [ :k |
+            c := (aString at: k) value.
+            self uint16At: i + 1 put: c. i := i + 2 ].
+        self uint16At: i + 1 put: 0.
+        ^aString
+    ]
+    CPINFOEXW class >> _SpanOf_CodePageName [ ^520 ]
 ]

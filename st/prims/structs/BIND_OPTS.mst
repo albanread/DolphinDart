@@ -6,6 +6,14 @@ ExternalMemory subclass: BIND_OPTS [
     BIND_OPTS class >> byteSize [ ^16 ]
     byteSize [ ^16 ]
     BIND_OPTS class >> new [ ^self new: 16 ]
+    BIND_OPTS class >> newBuffer [
+        "SizedStructure: the leading UInt32 is the struct's
+         own size, and the API rejects a buffer without it."
+        | b |
+        b := self new: 16.
+        b uint32At: 1 put: 16.
+        ^b
+    ]
 
     BIND_OPTS class >> _OffsetOf_cbStruct [ ^0 ]
     BIND_OPTS class >> _OffsetOf_grfFlags [ ^4 ]

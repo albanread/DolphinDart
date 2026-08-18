@@ -6,6 +6,14 @@ ExternalMemory subclass: LICINFO [
     LICINFO class >> byteSize [ ^12 ]
     byteSize [ ^12 ]
     LICINFO class >> new [ ^self new: 12 ]
+    LICINFO class >> newBuffer [
+        "SizedStructure: the leading UInt32 is the struct's
+         own size, and the API rejects a buffer without it."
+        | b |
+        b := self new: 12.
+        b uint32At: 1 put: 12.
+        ^b
+    ]
 
     LICINFO class >> _OffsetOf_cbLicInfo [ ^0 ]
     LICINFO class >> _OffsetOf_fRuntimeKeyAvail [ ^4 ]

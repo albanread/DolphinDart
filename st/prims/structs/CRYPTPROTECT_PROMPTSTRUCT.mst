@@ -6,6 +6,14 @@ ExternalMemory subclass: CRYPTPROTECT_PROMPTSTRUCT [
     CRYPTPROTECT_PROMPTSTRUCT class >> byteSize [ ^24 ]
     byteSize [ ^24 ]
     CRYPTPROTECT_PROMPTSTRUCT class >> new [ ^self new: 24 ]
+    CRYPTPROTECT_PROMPTSTRUCT class >> newBuffer [
+        "SizedStructure: the leading UInt32 is the struct's
+         own size, and the API rejects a buffer without it."
+        | b |
+        b := self new: 24.
+        b uint32At: 1 put: 24.
+        ^b
+    ]
 
     CRYPTPROTECT_PROMPTSTRUCT class >> _OffsetOf_cbSize [ ^0 ]
     CRYPTPROTECT_PROMPTSTRUCT class >> _OffsetOf_dwPromptFlags [ ^4 ]

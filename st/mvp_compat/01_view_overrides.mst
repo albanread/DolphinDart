@@ -212,7 +212,16 @@ Object subclass: DolphinBoot [
            path goes through `nearestPoint:`/`nearestView:`, so uninitialized
            it was `at:ifAbsentPut:` sent to nil — inside `showModal`, where a
            contained failure meant the modal simply never opened."
-          DisplayMonitor } do: [ :each |
+          DisplayMonitor.
+          "`DpiAwareness class >> initialize` builds `Awarenesses`, the table
+           `fromHandle:` looks a context handle up in
+           (`Awarenesses lookup: anInteger asInteger negated`). Uninitialized
+           that is `lookup:` sent to nil — and `fromHandle:` is reached from
+           `UserLibrary class >> dpiAwareness`, which is the FIRST thing
+           `DisplayMonitor>>cacheInfo` calls. So an uninitialized DpiAwareness
+           meant no monitor could report its rectangle, which meant no window
+           could be positioned."
+          DpiAwareness } do: [ :each |
             [ each initialize ] on: Error do: [ :e | failed add: each name ] ].
 
         "AND `onStartup`, which is a SECOND initializer Dolphin runs at image
@@ -249,6 +258,37 @@ Object subclass: DolphinBoot [
          ASSIGNED, do not assume which initializer holds it."
         { DisplayMonitor } do: [ :each |
             [ each reset ] on: Error do: [ :e | failed add: each name, ' reset' ] ].
+
+        "AND `UserLibrary initialize`, which sets the DPI awareness context —
+         Dolphin's OWN method, never called by this port until now:
+
+             self setProcessDpiAwarenessContext: DesiredDpiAwarenessContext.
+             DpiAwarenessContext := self getThreadDpiAwarenessContext.
+
+         It was on the critical path and completely invisible. `cacheInfo`
+         opens with `UserLibrary dpiAwareness inContextDo: [...]`, and
+         `dpiAwareness` answers `DpiAwareness fromHandle: DpiAwarenessContext`
+         — so with the class variable nil, `fromHandle:` truncated a nil
+         handle. Contained, so what a gate saw was a monitor that could not
+         report its own rectangle, from a failure two classes away.
+
+         `DesiredDpiAwarenessContext` is seeded first because the assignment
+         Dolphin makes for it lives in the `.cls` class-side `initialize`,
+         which is a DIFFERENT method from this loose one and is shadowed by
+         it here. -16r4 is DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2, from
+         `OS.Win32Constants`.
+
+         The fallback is not belt-and-braces: `setProcessDpiAwarenessContext:`
+         legitimately fails when the process awareness is already fixed by a
+         manifest — Dolphin's own comment says 'we may not get what we asked
+         for' — and if it raises, its own next statement never runs. Asking
+         the thread directly is what Dolphin's line does anyway."
+        DesiredDpiAwarenessContext isNil
+            ifTrue: [ DesiredDpiAwarenessContext := -16r4 ].
+        [ UserLibrary initialize ] on: Error do: [ :e | ].
+        DpiAwarenessContext isNil ifTrue: [
+            [ DpiAwarenessContext := UserLibrary getThreadDpiAwarenessContext ]
+                on: Error do: [ :e | failed add: 'DpiAwarenessContext' ] ].
         ^failed asArray
     ]
 ]

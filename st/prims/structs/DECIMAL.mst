@@ -2,10 +2,10 @@
  winkb (Win32Metadata), not computed here. Do not hand-edit."
 
 ExternalMemory subclass: DECIMAL [
-    DECIMAL class >> sizeInBytes [ ^56 ]
-    DECIMAL class >> byteSize [ ^56 ]
-    byteSize [ ^56 ]
-    DECIMAL class >> new [ ^self new: 56 ]
+    DECIMAL class >> sizeInBytes [ ^80 ]
+    DECIMAL class >> byteSize [ ^80 ]
+    byteSize [ ^80 ]
+    DECIMAL class >> new [ ^self new: 80 ]
 
     DECIMAL class >> _OffsetOf_wReserved [ ^0 ]
     DECIMAL class >> _OffsetOf_Anonymous1 [ ^8 ]
@@ -15,7 +15,7 @@ ExternalMemory subclass: DECIMAL [
     "corpus constant _OffsetOf_lo64: no unambiguous winkb field (candidates: []) — not aliased"
     "corpus constant _OffsetOf_scale: no unambiguous winkb field (candidates: []) — not aliased"
     "corpus constant _OffsetOf_sign: no unambiguous winkb field (candidates: []) — not aliased"
-    DECIMAL class >> _DECIMAL_Size [ ^56 ]
+    DECIMAL class >> _DECIMAL_Size [ ^80 ]
 
     wReserved [ ^self uint16At: 1 ]
     wReserved: v [ ^self uint16At: 1 put: v ]

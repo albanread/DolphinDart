@@ -19,9 +19,43 @@ ExternalMemory subclass: EXTLOGFONTW [
     EXTLOGFONTW class >> _OffsetOf_elfPanose [ ^308 ]
     EXTLOGFONTW class >> _EXTLOGFONTW_Size [ ^320 ]
 
-    elfLogFont [ ^LOGFONTW viewOn: self at: 0 size: 36 ]
-    "elfFullName: char[] at 92 — no accessor (width unknown); use byteAt: directly"
-    "elfStyle: char[] at 220 — no accessor (width unknown); use byteAt: directly"
+    elfLogFont [ ^LOGFONTW viewOn: self at: 0 size: 92 ]
+    elfFullName [ "char[64] at 92"
+        | s i c |
+        s := WriteStream on: String new.
+        i := 92.
+        [ i < 220 and: [ (c := self uint16At: i + 1) ~= 0 ] ]
+            whileTrue: [ s nextPut: (Character value: c). i := i + 2 ].
+        ^s contents
+    ]
+    elfFullName: aString [
+        | i c |
+        i := 92.
+        1 to: ((aString size min: 63)) do: [ :k |
+            c := (aString at: k) value.
+            self uint16At: i + 1 put: c. i := i + 2 ].
+        self uint16At: i + 1 put: 0.
+        ^aString
+    ]
+    EXTLOGFONTW class >> _SpanOf_elfFullName [ ^128 ]
+    elfStyle [ "char[32] at 220"
+        | s i c |
+        s := WriteStream on: String new.
+        i := 220.
+        [ i < 284 and: [ (c := self uint16At: i + 1) ~= 0 ] ]
+            whileTrue: [ s nextPut: (Character value: c). i := i + 2 ].
+        ^s contents
+    ]
+    elfStyle: aString [
+        | i c |
+        i := 220.
+        1 to: ((aString size min: 31)) do: [ :k |
+            c := (aString at: k) value.
+            self uint16At: i + 1 put: c. i := i + 2 ].
+        self uint16At: i + 1 put: 0.
+        ^aString
+    ]
+    EXTLOGFONTW class >> _SpanOf_elfStyle [ ^64 ]
     elfVersion [ ^self uint32At: 285 ]
     elfVersion: v [ ^self uint32At: 285 put: v ]
     elfStyleSize [ ^self uint32At: 289 ]
@@ -30,7 +64,8 @@ ExternalMemory subclass: EXTLOGFONTW [
     elfMatch: v [ ^self uint32At: 293 put: v ]
     elfReserved [ ^self uint32At: 297 ]
     elfReserved: v [ ^self uint32At: 297 put: v ]
-    "elfVendorId: u8[] at 300 — no accessor (width unknown); use byteAt: directly"
+    "elfVendorId: u8[] at 300, 4 bytes — element width unknown; use byteAt: directly"
+    EXTLOGFONTW class >> _SpanOf_elfVendorId [ ^4 ]
     elfCulture [ ^self uint32At: 305 ]
     elfCulture: v [ ^self uint32At: 305 put: v ]
     elfPanose [ ^PANOSE viewOn: self at: 308 size: 10 ]

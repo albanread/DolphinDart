@@ -6,6 +6,14 @@ ExternalMemory subclass: MENUINFO [
     MENUINFO class >> byteSize [ ^40 ]
     byteSize [ ^40 ]
     MENUINFO class >> new [ ^self new: 40 ]
+    MENUINFO class >> newBuffer [
+        "SizedStructure: the leading UInt32 is the struct's
+         own size, and the API rejects a buffer without it."
+        | b |
+        b := self new: 40.
+        b uint32At: 1 put: 40.
+        ^b
+    ]
 
     MENUINFO class >> _OffsetOf_cbSize [ ^0 ]
     MENUINFO class >> _OffsetOf_fMask [ ^4 ]

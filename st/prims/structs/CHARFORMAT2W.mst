@@ -6,6 +6,14 @@ ExternalMemory subclass: CHARFORMAT2W [
     CHARFORMAT2W class >> byteSize [ ^120 ]
     byteSize [ ^120 ]
     CHARFORMAT2W class >> new [ ^self new: 120 ]
+    CHARFORMAT2W class >> newBuffer [
+        "SizedStructure: the leading UInt32 is the struct's
+         own size, and the API rejects a buffer without it."
+        | b |
+        b := self new: 120.
+        b uint32At: 1 put: 120.
+        ^b
+    ]
 
     CHARFORMAT2W class >> _OffsetOf_Base [ ^0 ]
     CHARFORMAT2W class >> _OffsetOf_wWeight [ ^92 ]
@@ -19,18 +27,18 @@ ExternalMemory subclass: CHARFORMAT2W [
     CHARFORMAT2W class >> _OffsetOf_bAnimation [ ^117 ]
     CHARFORMAT2W class >> _OffsetOf_bRevAuthor [ ^118 ]
     CHARFORMAT2W class >> _OffsetOf_bUnderlineColor [ ^119 ]
-    "corpus constant _OffsetOf_bCharSet: no unambiguous winkb field (candidates: []) — not aliased"
-    "corpus constant _OffsetOf_bPitchAndFamily: no unambiguous winkb field (candidates: []) — not aliased"
-    "corpus constant _OffsetOf_crTextColor: no unambiguous winkb field (candidates: []) — not aliased"
+    CHARFORMAT2W class >> _OffsetOf_bCharSet [ ^24 ]  "nested field, flattened"
+    CHARFORMAT2W class >> _OffsetOf_bPitchAndFamily [ ^25 ]  "nested field, flattened"
+    CHARFORMAT2W class >> _OffsetOf_crTextColor [ ^20 ]  "nested field, flattened"
     "corpus constant _OffsetOf_dwCookie: no unambiguous winkb field (candidates: []) — not aliased"
-    "corpus constant _OffsetOf_dwEffects: no unambiguous winkb field (candidates: []) — not aliased"
-    "corpus constant _OffsetOf_dwMask: no unambiguous winkb field (candidates: []) — not aliased"
-    "corpus constant _OffsetOf_szFaceName: no unambiguous winkb field (candidates: []) — not aliased"
-    "corpus constant _OffsetOf_yHeight: no unambiguous winkb field (candidates: []) — not aliased"
-    "corpus constant _OffsetOf_yOffset: no unambiguous winkb field (candidates: []) — not aliased"
+    CHARFORMAT2W class >> _OffsetOf_dwEffects [ ^8 ]  "nested field, flattened"
+    CHARFORMAT2W class >> _OffsetOf_dwMask [ ^4 ]  "nested field, flattened"
+    CHARFORMAT2W class >> _OffsetOf_szFaceName [ ^26 ]  "nested field, flattened"
+    CHARFORMAT2W class >> _OffsetOf_yHeight [ ^12 ]  "nested field, flattened"
+    CHARFORMAT2W class >> _OffsetOf_yOffset [ ^16 ]  "nested field, flattened"
     CHARFORMAT2W class >> _CHARFORMAT2W_Size [ ^120 ]
 
-    base [ ^CHARFORMATW viewOn: self at: 0 size: 34 ]
+    base [ ^CHARFORMATW viewOn: self at: 0 size: 92 ]
     wWeight [ ^self uint16At: 93 ]
     wWeight: v [ ^self uint16At: 93 put: v ]
     sSpacing [ ^self int16At: 95 ]

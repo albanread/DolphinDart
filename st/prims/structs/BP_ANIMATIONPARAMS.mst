@@ -6,6 +6,14 @@ ExternalMemory subclass: BP_ANIMATIONPARAMS [
     BP_ANIMATIONPARAMS class >> byteSize [ ^16 ]
     byteSize [ ^16 ]
     BP_ANIMATIONPARAMS class >> new [ ^self new: 16 ]
+    BP_ANIMATIONPARAMS class >> newBuffer [
+        "SizedStructure: the leading UInt32 is the struct's
+         own size, and the API rejects a buffer without it."
+        | b |
+        b := self new: 16.
+        b uint32At: 1 put: 16.
+        ^b
+    ]
 
     BP_ANIMATIONPARAMS class >> _OffsetOf_cbSize [ ^0 ]
     BP_ANIMATIONPARAMS class >> _OffsetOf_dwFlags [ ^4 ]

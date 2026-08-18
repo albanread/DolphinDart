@@ -2,10 +2,10 @@
  winkb (Win32Metadata), not computed here. Do not hand-edit."
 
 ExternalMemory subclass: WSAPROTOCOL_INFOW [
-    WSAPROTOCOL_INFOW class >> sizeInBytes [ ^120 ]
-    WSAPROTOCOL_INFOW class >> byteSize [ ^120 ]
-    byteSize [ ^120 ]
-    WSAPROTOCOL_INFOW class >> new [ ^self new: 120 ]
+    WSAPROTOCOL_INFOW class >> sizeInBytes [ ^624 ]
+    WSAPROTOCOL_INFOW class >> byteSize [ ^624 ]
+    byteSize [ ^624 ]
+    WSAPROTOCOL_INFOW class >> new [ ^self new: 624 ]
 
     WSAPROTOCOL_INFOW class >> _OffsetOf_dwServiceFlags1 [ ^0 ]
     WSAPROTOCOL_INFOW class >> _OffsetOf_dwServiceFlags2 [ ^4 ]
@@ -27,7 +27,7 @@ ExternalMemory subclass: WSAPROTOCOL_INFOW [
     WSAPROTOCOL_INFOW class >> _OffsetOf_dwMessageSize [ ^104 ]
     WSAPROTOCOL_INFOW class >> _OffsetOf_dwProviderReserved [ ^108 ]
     WSAPROTOCOL_INFOW class >> _OffsetOf_szProtocol [ ^112 ]
-    WSAPROTOCOL_INFOW class >> _WSAPROTOCOL_INFOW_Size [ ^120 ]
+    WSAPROTOCOL_INFOW class >> _WSAPROTOCOL_INFOW_Size [ ^624 ]
 
     dwServiceFlags1 [ ^self uint32At: 1 ]
     dwServiceFlags1: v [ ^self uint32At: 1 put: v ]
@@ -42,7 +42,7 @@ ExternalMemory subclass: WSAPROTOCOL_INFOW [
     "providerId: System.Guid at 24 — no accessor (width unknown); use byteAt: directly"
     dwCatalogEntryId [ ^self uint32At: 33 ]
     dwCatalogEntryId: v [ ^self uint32At: 33 put: v ]
-    protocolChain [ ^WSAPROTOCOLCHAIN viewOn: self at: 36 size: 12 ]
+    protocolChain [ ^WSAPROTOCOLCHAIN viewOn: self at: 36 size: 32 ]
     iVersion [ ^self int32At: 69 ]
     iVersion: v [ ^self int32At: 69 put: v ]
     iAddressFamily [ ^self int32At: 73 ]
@@ -65,5 +65,22 @@ ExternalMemory subclass: WSAPROTOCOL_INFOW [
     dwMessageSize: v [ ^self uint32At: 105 put: v ]
     dwProviderReserved [ ^self uint32At: 109 ]
     dwProviderReserved: v [ ^self uint32At: 109 put: v ]
-    "szProtocol: char[] at 112 — no accessor (width unknown); use byteAt: directly"
+    szProtocol [ "char[256] at 112"
+        | s i c |
+        s := WriteStream on: String new.
+        i := 112.
+        [ i < 624 and: [ (c := self uint16At: i + 1) ~= 0 ] ]
+            whileTrue: [ s nextPut: (Character value: c). i := i + 2 ].
+        ^s contents
+    ]
+    szProtocol: aString [
+        | i c |
+        i := 112.
+        1 to: ((aString size min: 255)) do: [ :k |
+            c := (aString at: k) value.
+            self uint16At: i + 1 put: c. i := i + 2 ].
+        self uint16At: i + 1 put: 0.
+        ^aString
+    ]
+    WSAPROTOCOL_INFOW class >> _SpanOf_szProtocol [ ^512 ]
 ]

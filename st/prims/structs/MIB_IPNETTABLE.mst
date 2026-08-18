@@ -2,16 +2,17 @@
  winkb (Win32Metadata), not computed here. Do not hand-edit."
 
 ExternalMemory subclass: MIB_IPNETTABLE [
-    MIB_IPNETTABLE class >> sizeInBytes [ ^16 ]
-    MIB_IPNETTABLE class >> byteSize [ ^16 ]
-    byteSize [ ^16 ]
-    MIB_IPNETTABLE class >> new [ ^self new: 16 ]
+    MIB_IPNETTABLE class >> sizeInBytes [ ^40 ]
+    MIB_IPNETTABLE class >> byteSize [ ^40 ]
+    byteSize [ ^40 ]
+    MIB_IPNETTABLE class >> new [ ^self new: 40 ]
 
     MIB_IPNETTABLE class >> _OffsetOf_dwNumEntries [ ^0 ]
     MIB_IPNETTABLE class >> _OffsetOf_table [ ^8 ]
-    MIB_IPNETTABLE class >> _MIB_IPNETTABLE_Size [ ^16 ]
+    MIB_IPNETTABLE class >> _MIB_IPNETTABLE_Size [ ^40 ]
 
     dwNumEntries [ ^self uint32At: 1 ]
     dwNumEntries: v [ ^self uint32At: 1 put: v ]
-    "table: Windows.Win32.NetworkManagement.IpHelper.MIB_IPNETROW_LH[] at 8 — no accessor (width unknown); use byteAt: directly"
+    "table: Windows.Win32.NetworkManagement.IpHelper.MIB_IPNETROW_LH[] at 8, 32 bytes — element width unknown; use byteAt: directly"
+    MIB_IPNETTABLE class >> _SpanOf_table [ ^32 ]
 ]

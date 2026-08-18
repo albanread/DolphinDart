@@ -2,14 +2,14 @@
  winkb (Win32Metadata), not computed here. Do not hand-edit."
 
 ExternalMemory subclass: CY [
-    CY class >> sizeInBytes [ ^8 ]
-    CY class >> byteSize [ ^8 ]
-    byteSize [ ^8 ]
-    CY class >> new [ ^self new: 8 ]
+    CY class >> sizeInBytes [ ^32 ]
+    CY class >> byteSize [ ^32 ]
+    byteSize [ ^32 ]
+    CY class >> new [ ^self new: 32 ]
 
     CY class >> _OffsetOf_Anonymous [ ^0 ]
     CY class >> _OffsetOf_int64 [ ^0 ]
-    CY class >> _CY_Size [ ^8 ]
+    CY class >> _CY_Size [ ^32 ]
 
     "anonymous: _Anonymous_e__Struct at 0 — no accessor (width unknown); use byteAt: directly"
     int64 [ ^self intptrAt: 1 ]

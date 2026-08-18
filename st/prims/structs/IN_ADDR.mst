@@ -2,10 +2,10 @@
  winkb (Win32Metadata), not computed here. Do not hand-edit."
 
 ExternalMemory subclass: IN_ADDR [
-    IN_ADDR class >> sizeInBytes [ ^8 ]
-    IN_ADDR class >> byteSize [ ^8 ]
-    byteSize [ ^8 ]
-    IN_ADDR class >> new [ ^self new: 8 ]
+    IN_ADDR class >> sizeInBytes [ ^4 ]
+    IN_ADDR class >> byteSize [ ^4 ]
+    byteSize [ ^4 ]
+    IN_ADDR class >> new [ ^self new: 4 ]
 
     IN_ADDR class >> _OffsetOf_S_un [ ^0 ]
     "corpus constant _OffsetOf_s_addr: no unambiguous winkb field (candidates: []) — not aliased"
@@ -15,7 +15,7 @@ ExternalMemory subclass: IN_ADDR [
     "corpus constant _OffsetOf_s_b4: no unambiguous winkb field (candidates: []) — not aliased"
     "corpus constant _OffsetOf_s_w1: no unambiguous winkb field (candidates: []) — not aliased"
     "corpus constant _OffsetOf_s_w2: no unambiguous winkb field (candidates: []) — not aliased"
-    IN_ADDR class >> _IN_ADDR_Size [ ^8 ]
+    IN_ADDR class >> _IN_ADDR_Size [ ^4 ]
 
     "s_un: _S_un_e__Union at 0 — no accessor (width unknown); use byteAt: directly"
 ]

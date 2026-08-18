@@ -1,0 +1,44 @@
+"05_newfixed.mst — `ByteArray class >> newFixed:`, the OUT-PARAMETER BUFFER.
+
+ `Behavior>>newFixed:` is Dolphin's primitive 76: allocate an indexable byte
+ object on the FIXED heap, so the garbage collector cannot move it while a
+ Win32 call is writing into it. Dolphin's own comment draws the distinction —
+ objects from primitive 71 'are free to move to assist garbage collection,
+ whereas those allocated with primitive 76 are in a traditional fixed heap'.
+
+ The `Utf16String` half of this was already answered when DD9 aliased
+ `Utf16String` to `Utf16Buffer` (01_view_overrides.mst), which carries its own
+ `newFixed:` taking a CHARACTER count. The BYTE-ARRAY half was never written,
+ and five sites in the translated wave use it for API out-parameters:
+
+     DisplayMonitor>>getDpi:      ByteArray newFixed: 4    GetDpiForMonitor
+     DisplayMonitor>>scaleFactor  ByteArray newFixed: 4
+     Canvas>>plgBlt               ByteArray newFixed: 24   three POINTs
+     ImageList>>...               ByteArray newFixed: 8
+     TextEdit>>selectionRange     ByteArray newFixed: 8    EM_GETSEL
+
+ Each raised `ByteArray class has no method 'newFixed:'` inside a contained
+ handler, so they read as five unrelated failures rather than one missing
+ method. `DisplayMonitor>>getDpi:` is the one that mattered for DD12: it is
+ reached from `effectiveDpi`, the FIRST statement of `cacheInfo`, so no
+ monitor could report its rectangle and every window-positioning path above it
+ — `showModal`'s centring included — died before calling GetMonitorInfo.
+
+ WHAT IT ANSWERS HERE. This port has nothing to pin against: image objects
+ live in the Dart heap and never travel to Windows, and everything that does
+ cross the FFI boundary is an `ExternalMemory` — a real malloc'd block at a
+ stable address, which is exactly the guarantee primitive 76 exists to give.
+ So `newFixed:` answers external memory, and the pinning semantics hold by
+ construction rather than by emulation.
+
+ Not a stand-in with a retirement date; there is nothing to retire to. The one
+ visible difference from Dolphin is that the answer is an ExternalMemory
+ rather than a ByteArray proper, and every caller in the corpus does one of
+ exactly two things with it — reads a field back (`int32AtOffset:`, which
+ ExternalMemory answers) or hands it to an API (`asParameter`/`yourAddress`,
+ likewise)."
+
+ByteArray extend [
+    "Dolphin's argument is the SIZE IN BYTES for a byte class."
+    ByteArray class >> newFixed: anInteger [ ^ExternalMemory new: anInteger ]
+]

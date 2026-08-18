@@ -2,21 +2,55 @@
  winkb (Win32Metadata), not computed here. Do not hand-edit."
 
 SOCKADDR subclass: SOCKADDR_STORAGE [
-    SOCKADDR_STORAGE class >> sizeInBytes [ ^24 ]
-    SOCKADDR_STORAGE class >> byteSize [ ^24 ]
-    byteSize [ ^24 ]
-    SOCKADDR_STORAGE class >> new [ ^self new: 24 ]
+    SOCKADDR_STORAGE class >> sizeInBytes [ ^128 ]
+    SOCKADDR_STORAGE class >> byteSize [ ^128 ]
+    byteSize [ ^128 ]
+    SOCKADDR_STORAGE class >> new [ ^self new: 128 ]
 
     SOCKADDR_STORAGE class >> _OffsetOf_ss_family [ ^0 ]
     SOCKADDR_STORAGE class >> _OffsetOf___ss_pad1 [ ^2 ]
     SOCKADDR_STORAGE class >> _OffsetOf___ss_align [ ^8 ]
     SOCKADDR_STORAGE class >> _OffsetOf___ss_pad2 [ ^16 ]
-    SOCKADDR_STORAGE class >> _SOCKADDR_STORAGE_Size [ ^24 ]
+    SOCKADDR_STORAGE class >> _SOCKADDR_STORAGE_Size [ ^128 ]
 
     ss_family [ ^self uint16At: 1 ]
     ss_family: v [ ^self uint16At: 1 put: v ]
-    "__ss_pad1: Windows.Win32.Foundation.CHAR[] at 2 — no accessor (width unknown); use byteAt: directly"
+    __ss_pad1 [ "CHAR[6] at 2"
+        | s i c |
+        s := WriteStream on: String new.
+        i := 2.
+        [ i < 8 and: [ (c := self byteAt: i + 1) ~= 0 ] ]
+            whileTrue: [ s nextPut: (Character value: c). i := i + 1 ].
+        ^s contents
+    ]
+    __ss_pad1: aString [
+        | i c |
+        i := 2.
+        1 to: ((aString size min: 5)) do: [ :k |
+            c := (aString at: k) value.
+            self byteAt: i + 1 put: c. i := i + 1 ].
+        self byteAt: i + 1 put: 0.
+        ^aString
+    ]
+    SOCKADDR_STORAGE class >> _SpanOf___ss_pad1 [ ^6 ]
     __ss_align [ ^self intptrAt: 9 ]
     __ss_align: v [ ^self intptrAt: 9 put: v ]
-    "__ss_pad2: Windows.Win32.Foundation.CHAR[] at 16 — no accessor (width unknown); use byteAt: directly"
+    __ss_pad2 [ "CHAR[112] at 16"
+        | s i c |
+        s := WriteStream on: String new.
+        i := 16.
+        [ i < 128 and: [ (c := self byteAt: i + 1) ~= 0 ] ]
+            whileTrue: [ s nextPut: (Character value: c). i := i + 1 ].
+        ^s contents
+    ]
+    __ss_pad2: aString [
+        | i c |
+        i := 16.
+        1 to: ((aString size min: 111)) do: [ :k |
+            c := (aString at: k) value.
+            self byteAt: i + 1 put: c. i := i + 1 ].
+        self byteAt: i + 1 put: 0.
+        ^aString
+    ]
+    SOCKADDR_STORAGE class >> _SpanOf___ss_pad2 [ ^112 ]
 ]

@@ -15,5 +15,5 @@ ENHMETARECORD subclass: EMRCREATEPALETTE [
     emr [ ^EMR viewOn: self at: 0 size: 8 ]
     ihPal [ ^self uint32At: 9 ]
     ihPal: v [ ^self uint32At: 9 put: v ]
-    lgpl [ ^LOGPALETTE viewOn: self at: 12 size: 12 ]
+    lgpl [ ^LOGPALETTE viewOn: self at: 12 size: 8 ]
 ]

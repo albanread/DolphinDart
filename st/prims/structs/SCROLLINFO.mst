@@ -6,6 +6,14 @@ ExternalMemory subclass: SCROLLINFO [
     SCROLLINFO class >> byteSize [ ^28 ]
     byteSize [ ^28 ]
     SCROLLINFO class >> new [ ^self new: 28 ]
+    SCROLLINFO class >> newBuffer [
+        "SizedStructure: the leading UInt32 is the struct's
+         own size, and the API rejects a buffer without it."
+        | b |
+        b := self new: 28.
+        b uint32At: 1 put: 28.
+        ^b
+    ]
 
     SCROLLINFO class >> _OffsetOf_cbSize [ ^0 ]
     SCROLLINFO class >> _OffsetOf_fMask [ ^4 ]

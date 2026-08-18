@@ -6,6 +6,14 @@ ExternalMemory subclass: LASTINPUTINFO [
     LASTINPUTINFO class >> byteSize [ ^8 ]
     byteSize [ ^8 ]
     LASTINPUTINFO class >> new [ ^self new: 8 ]
+    LASTINPUTINFO class >> newBuffer [
+        "SizedStructure: the leading UInt32 is the struct's
+         own size, and the API rejects a buffer without it."
+        | b |
+        b := self new: 8.
+        b uint32At: 1 put: 8.
+        ^b
+    ]
 
     LASTINPUTINFO class >> _OffsetOf_cbSize [ ^0 ]
     LASTINPUTINFO class >> _OffsetOf_dwTime [ ^4 ]

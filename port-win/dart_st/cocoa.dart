@@ -877,6 +877,46 @@ _stValue0Slow(r) {
   } on NoSuchMethodError catch (e) {
     if (!e.toString().contains("'value'")) rethrow;
     return r;
+  } catch (e) {
+    // THE OTHER HALF OF THE SAME MISS. The clause above sees only Dart's
+    // NoSuchMethodError, which is what a NATIVE receiver raises. An ST
+    // receiver whose chain defines `doesNotUnderstand:` — and the world
+    // defines it on Object, so that is every ST object — takes the reify
+    // path in the object-NSM hook instead and signals a real ST
+    // `MessageNotUnderstood`. That is an ST exception object, not a Dart
+    // error, so `on NoSuchMethodError` cannot match it and the miss escaped.
+    //
+    // It escaped as far as `SystemMetrics>>getSysParamForDpi:type:ifError:`,
+    // whose last line is Dolphin's `^struct value` — asked of Dolphin 8,
+    // `aLOGFONTW value == aLOGFONTW` answers **true**, so self is the right
+    // answer. The send only started arriving once LOGFONTW was corrected to
+    // its true 92 bytes and SystemParametersInfoForDpi began SUCCEEDING;
+    // while the struct was 36 bytes the call failed and the `ifError:` block
+    // ran instead, which is why five gates passed over a latent gap here.
+    if (!_stIsValueDnu(e)) rethrow;
+    return r;
+  }
+}
+
+// Is this caught object an ST doesNotUnderstand for `value` specifically?
+// Narrow on purpose: swallowing any MessageNotUnderstood would turn a real
+// error inside somebody's `value` implementation into a plausible wrong
+// answer, which is worse than the bug being fixed.
+bool _stIsValueDnu(e) {
+  // Matched on the EXACT text `Object>>doesNotUnderstand:` builds
+  // (st/world/01_object.mst): `'does not understand ' , selector asString`.
+  // Narrower than a class check and far more robust — asking the caught
+  // object for its `class` is itself a send, and a send inside this handler
+  // is exactly what must not be relied on.
+  const want = 'does not understand value';
+  try {
+    var t = stSend(e, 'messageText', []);
+    if (t != null && t.toString() == want) return true;
+  } catch (_) {}
+  try {
+    return e.toString().contains(want);
+  } catch (_) {
+    return false;
   }
 }
 stValue1(r, a) { if (r is Function) return r(a); return _stValue1Slow(r, a); }

@@ -2,10 +2,10 @@
  winkb (Win32Metadata), not computed here. Do not hand-edit."
 
 ExternalMemory subclass: PAINTSTRUCT [
-    PAINTSTRUCT class >> sizeInBytes [ ^44 ]
-    PAINTSTRUCT class >> byteSize [ ^44 ]
-    byteSize [ ^44 ]
-    PAINTSTRUCT class >> new [ ^self new: 44 ]
+    PAINTSTRUCT class >> sizeInBytes [ ^72 ]
+    PAINTSTRUCT class >> byteSize [ ^72 ]
+    byteSize [ ^72 ]
+    PAINTSTRUCT class >> new [ ^self new: 72 ]
 
     PAINTSTRUCT class >> _OffsetOf_hdc [ ^0 ]
     PAINTSTRUCT class >> _OffsetOf_fErase [ ^8 ]
@@ -13,7 +13,7 @@ ExternalMemory subclass: PAINTSTRUCT [
     PAINTSTRUCT class >> _OffsetOf_fRestore [ ^28 ]
     PAINTSTRUCT class >> _OffsetOf_fIncUpdate [ ^32 ]
     PAINTSTRUCT class >> _OffsetOf_rgbReserved [ ^36 ]
-    PAINTSTRUCT class >> _PAINTSTRUCT_Size [ ^44 ]
+    PAINTSTRUCT class >> _PAINTSTRUCT_Size [ ^72 ]
 
     hdc [ ^self intptrAt: 1 ]
     hdc: v [ ^self intptrAt: 1 put: v ]
@@ -24,5 +24,6 @@ ExternalMemory subclass: PAINTSTRUCT [
     fRestore: v [ ^self int32At: 29 put: v ]
     fIncUpdate [ ^self int32At: 33 ]
     fIncUpdate: v [ ^self int32At: 33 put: v ]
-    "rgbReserved: u8[] at 36 — no accessor (width unknown); use byteAt: directly"
+    "rgbReserved: u8[] at 36, 36 bytes — element width unknown; use byteAt: directly"
+    PAINTSTRUCT class >> _SpanOf_rgbReserved [ ^36 ]
 ]

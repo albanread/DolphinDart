@@ -2,10 +2,10 @@
  winkb (Win32Metadata), not computed here. Do not hand-edit."
 
 ExternalMemory subclass: LOGFONTW [
-    LOGFONTW class >> sizeInBytes [ ^36 ]
-    LOGFONTW class >> byteSize [ ^36 ]
-    byteSize [ ^36 ]
-    LOGFONTW class >> new [ ^self new: 36 ]
+    LOGFONTW class >> sizeInBytes [ ^92 ]
+    LOGFONTW class >> byteSize [ ^92 ]
+    byteSize [ ^92 ]
+    LOGFONTW class >> new [ ^self new: 92 ]
 
     LOGFONTW class >> _OffsetOf_lfHeight [ ^0 ]
     LOGFONTW class >> _OffsetOf_lfWidth [ ^4 ]
@@ -21,7 +21,7 @@ ExternalMemory subclass: LOGFONTW [
     LOGFONTW class >> _OffsetOf_lfQuality [ ^26 ]
     LOGFONTW class >> _OffsetOf_lfPitchAndFamily [ ^27 ]
     LOGFONTW class >> _OffsetOf_lfFaceName [ ^28 ]
-    LOGFONTW class >> _LOGFONTW_Size [ ^36 ]
+    LOGFONTW class >> _LOGFONTW_Size [ ^92 ]
 
     lfHeight [ ^self int32At: 1 ]
     lfHeight: v [ ^self int32At: 1 put: v ]
@@ -49,5 +49,22 @@ ExternalMemory subclass: LOGFONTW [
     lfQuality: v [ ^self byteAt: 27 put: v ]
     lfPitchAndFamily [ ^self byteAt: 28 ]
     lfPitchAndFamily: v [ ^self byteAt: 28 put: v ]
-    "lfFaceName: char[] at 28 — no accessor (width unknown); use byteAt: directly"
+    lfFaceName [ "char[32] at 28"
+        | s i c |
+        s := WriteStream on: String new.
+        i := 28.
+        [ i < 92 and: [ (c := self uint16At: i + 1) ~= 0 ] ]
+            whileTrue: [ s nextPut: (Character value: c). i := i + 2 ].
+        ^s contents
+    ]
+    lfFaceName: aString [
+        | i c |
+        i := 28.
+        1 to: ((aString size min: 31)) do: [ :k |
+            c := (aString at: k) value.
+            self uint16At: i + 1 put: c. i := i + 2 ].
+        self uint16At: i + 1 put: 0.
+        ^aString
+    ]
+    LOGFONTW class >> _SpanOf_lfFaceName [ ^64 ]
 ]

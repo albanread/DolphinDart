@@ -43,7 +43,7 @@ ENHMETARECORD subclass: EMRALPHABLEND [
     xSrc: v [ ^self int32At: 45 put: v ]
     ySrc [ ^self int32At: 49 ]
     ySrc: v [ ^self int32At: 49 put: v ]
-    xformSrc [ ^XFORM viewOn: self at: 52 size: 28 ]
+    xformSrc [ ^XFORM viewOn: self at: 52 size: 24 ]
     crBkColorSrc [ ^COLORREF viewOn: self at: 76 size: 4 ]
     iUsageSrc [ ^self uint32At: 81 ]
     iUsageSrc: v [ ^self uint32At: 81 put: v ]

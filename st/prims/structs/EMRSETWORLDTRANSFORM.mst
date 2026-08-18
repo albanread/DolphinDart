@@ -2,16 +2,16 @@
  winkb (Win32Metadata), not computed here. Do not hand-edit."
 
 ENHMETARECORD subclass: EMRSETWORLDTRANSFORM [
-    EMRSETWORLDTRANSFORM class >> sizeInBytes [ ^16 ]
-    EMRSETWORLDTRANSFORM class >> byteSize [ ^16 ]
-    byteSize [ ^16 ]
-    EMRSETWORLDTRANSFORM class >> new [ ^self new: 16 ]
+    EMRSETWORLDTRANSFORM class >> sizeInBytes [ ^32 ]
+    EMRSETWORLDTRANSFORM class >> byteSize [ ^32 ]
+    byteSize [ ^32 ]
+    EMRSETWORLDTRANSFORM class >> new [ ^self new: 32 ]
 
     EMRSETWORLDTRANSFORM class >> _OffsetOf_emr [ ^0 ]
     EMRSETWORLDTRANSFORM class >> _OffsetOf_xform [ ^8 ]
     "corpus constant _OffsetOf_XFORM: no unambiguous winkb field (candidates: []) — not aliased"
-    EMRSETWORLDTRANSFORM class >> _EMRSETWORLDTRANSFORM_Size [ ^16 ]
+    EMRSETWORLDTRANSFORM class >> _EMRSETWORLDTRANSFORM_Size [ ^32 ]
 
     emr [ ^EMR viewOn: self at: 0 size: 8 ]
-    xform [ ^XFORM viewOn: self at: 8 size: 28 ]
+    xform [ ^XFORM viewOn: self at: 8 size: 24 ]
 ]

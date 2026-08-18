@@ -89,13 +89,30 @@ DialogView subclass: ValuePromptView [
     ]
 ]
 
-"The owner. Opens the dialog and holds onto what it answered."
+"The owner. Opens dialogs, and — more importantly — RECORDS THE ORDER events
+ actually happened in, because that order is the whole difference between a
+ modal and a window with buttons on it. Every driver here posts its dismissal
+ with `UiSession postAction:` BEFORE entering `showModal`; the queue is drained
+ by `pump`, and the only pump running at that moment is the NESTED one inside
+ the modal loop. So a dismissal that happens at all is proof the nested loop
+ ran, and a dismissal that happens BEFORE `showModal` returns is proof the
+ caller was genuinely blocked."
 ShellView subclass: ModalOwnerShell [
-    | subject lastAnswer inner |
+    | subject lastAnswer inner trace ownerEnabledWhileModal |
 
     subject [ ^subject ]
     lastAnswer [ ^lastAnswer ]
     inner [ ^inner ]
+    trace [ ^trace ifNil: [ trace := OrderedCollection new ] ]
+    traceString [ ^(self trace inject: '' into: [ :a :b | a , b , ' ' ]) trimBlanks ]
+    note: aString [ ^self trace add: aString ]
+    resetTrace [ trace := OrderedCollection new. ^self ]
+
+    "What WINDOWS said about the owner while the dialog was up — sampled from
+     inside the nested loop, which is the only moment the answer means
+     anything. Sampling after `showModal` returns would always answer true,
+     because its ensure block has re-enabled the owner by then."
+    ownerEnabledWhileModal [ ^ownerEnabledWhileModal ]
 
     ModalOwnerShell class >> routeDolphinMessages [ ^UiSession routeMessagesFrom: View ]
 
@@ -105,12 +122,15 @@ ShellView subclass: ModalOwnerShell [
         ^self
     ]
 
-    "Build a modal on this shell, ready to show."
-    newPrompt [
+    "Build a modal owned by aView, ready to show. Owner AND parent: a window
+     with a parent handle but no WS_CHILD is an OWNED POPUP, which is the
+     relationship a modal needs — Windows keeps it above its owner and routes
+     the owner's disablement correctly."
+    newPromptOwnedBy: aView [
         | dlg |
         dlg := ValuePromptView new.
-        dlg owner: self.
-        dlg parentView: self.
+        dlg owner: aView.
+        dlg parentView: aView.
         dlg create.
         dlg build.
         dlg onSubject: subject.
@@ -118,12 +138,65 @@ ShellView subclass: ModalOwnerShell [
         inner := dlg.
         ^dlg
     ]
+    newPrompt [ ^self newPromptOwnedBy: self ]
 
-    "Show it modally. This BLOCKS in the nested pump until the dialog closes,
-     which is the assertion the gate cares about most."
+    "Show it modally. BLOCKS in the nested pump until the dialog closes."
     promptModally [
         lastAnswer := inner showModal.
         ^lastAnswer
+    ]
+
+    "── the drivers ─────────────────────────────────────────────────────
+     `dismiss` runs from inside the modal loop. It samples the owner's
+     enablement first (while it still means something), types into the edit
+     exactly as a user would, then presses the button."
+    promptTyping: aString then: aSymbol [
+        | dlg |
+        self resetTrace.
+        dlg := self newPrompt.
+        UiSession postAction: [
+            ownerEnabledWhileModal := User32 isWindowEnabled: self handle.
+            self note: 'dismissing'.
+            dlg edit text: aString.
+            dlg perform: aSymbol ].
+        self note: 'entering'.
+        self promptModally.
+        self note: 'returned'.
+        ^lastAnswer
+    ]
+
+    "OK applies the buffered edit through to the subject; Cancel does not."
+    promptOk: aString [ ^self promptTyping: aString then: #ok ]
+    promptCancel: aString [ ^self promptTyping: aString then: #cancel ]
+
+    "── two STACKED modals ──────────────────────────────────────────────
+     The inner dialog is owned by the OUTER dialog, which is what stacking
+     means: each level disables the one below it. The unwind order is the
+     assertion — a single-threaded nested pump can only unwind innermost
+     first, and if it ever unwound outermost first the inner loop would be
+     pumping a destroyed window."
+    promptStacked [
+        | outerDlg |
+        self resetTrace.
+        outerDlg := self newPrompt.
+        UiSession postAction: [
+            | innerDlg |
+            innerDlg := self newPromptOwnedBy: outerDlg.
+            UiSession postAction: [
+                self note: 'closeB'.
+                innerDlg edit text: 'B'.
+                innerDlg ok ].
+            self note: 'enterB'.
+            innerDlg showModal.
+            self note: 'returnB'.
+            self note: 'closeA'.
+            outerDlg edit text: 'A'.
+            outerDlg ok ].
+        self note: 'enterA'.
+        inner := outerDlg.
+        self promptModally.
+        self note: 'returnA'.
+        ^self traceString
     ]
 
     subjectValue [ ^subject value ]

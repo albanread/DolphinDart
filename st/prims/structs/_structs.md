@@ -1,9 +1,9 @@
 # Generated Win32 structs
 
-- struct pointer types used by the corpus: **1280**
-- **generated: 383** (offsets from winkb `struct_fields`)
-- not in winkb: **917**
-- fields without an accessor: **266**
+- struct pointer types used by the corpus: **1289**
+- **generated: 386** (offsets from winkb `struct_fields`)
+- not in winkb: **923**
+- fields without an accessor: **222**
 
 ## Generated
 
@@ -11,7 +11,7 @@
 |---|--:|--:|--:|
 | `ACCEL` | 6 | 3 | 1 |
 | `ADDRINFOW` | 48 | 8 | 2 |
-| `ARRAYDESC` | 28 | 3 | 1 |
+| `ARRAYDESC` | 32 | 3 | 1 |
 | `BCRYPT_ALGORITHM_IDENTIFIER` | 16 | 3 | 1 |
 | `BCRYPT_PROVIDER_NAME` | 8 | 1 | 1 |
 | `BINDINFO` | 128 | 14 | 1 |
@@ -20,7 +20,7 @@
 | `BIND_OPTS3` | 48 | 2 | 1 |
 | `BITMAP` | 32 | 7 | 1 |
 | `BITMAPFILEHEADER` | 16 | 5 | 1 |
-| `BITMAPINFO` | 48 | 2 | 1 |
+| `BITMAPINFO` | 44 | 2 | 1 |
 | `BITMAPINFOHEADER` | 40 | 11 | 1 |
 | `BLENDFUNCTION` | 4 | 4 | 1 |
 | `BOOL` | 4 | 1 | 1 |
@@ -31,9 +31,9 @@
 | `BSTR` | 8 | 1 | 0 |
 | `CADWORD` | 16 | 2 | 1 |
 | `CALPOLESTR` | 16 | 2 | 1 |
-| `CATEGORYINFO` | 20 | 3 | 1 |
+| `CATEGORYINFO` | 272 | 3 | 1 |
 | `CHARFORMAT2W` | 120 | 12 | 1 |
-| `CHARFORMATW` | 34 | 9 | 0 |
+| `CHARFORMATW` | 92 | 9 | 0 |
 | `CHARRANGE` | 8 | 2 | 1 |
 | `CHOOSECOLORW` | 72 | 9 | 1 |
 | `CHOOSEFONTW` | 104 | 16 | 1 |
@@ -43,34 +43,35 @@
 | `COAUTHINFO` | 40 | 7 | 1 |
 | `COLORADJUSTMENT` | 24 | 12 | 1 |
 | `COLORREF` | 4 | 1 | 0 |
-| `CONNECTDATA` | 12 | 2 | 1 |
+| `COMMTIMEOUTS` | 20 | 5 | 2 |
+| `CONNECTDATA` | 16 | 2 | 1 |
 | `COSERVERINFO` | 32 | 4 | 2 |
-| `CPINFOEXW` | 32 | 6 | 1 |
+| `CPINFOEXW` | 544 | 6 | 1 |
 | `CRYPTPROTECT_PROMPTSTRUCT` | 24 | 4 | 2 |
 | `CUSTDATA` | 16 | 2 | 7 |
 | `CUSTDATAITEM` | 16 | 2 | 1 |
-| `CY` | 8 | 2 | 0 |
-| `DECIMAL` | 56 | 4 | 1 |
-| `DEVMODEW` | 268 | 27 | 2 |
+| `CY` | 32 | 2 | 0 |
+| `DECIMAL` | 80 | 4 | 1 |
+| `DEVMODEW` | 272 | 27 | 2 |
 | `DIBSECTION` | 104 | 5 | 1 |
-| `DISPLAY_DEVICEW` | 592 | 6 | 1 |
+| `DISPLAY_DEVICEW` | 840 | 6 | 1 |
 | `DISPPARAMS` | 24 | 4 | 3 |
 | `DOCINFOW` | 40 | 5 | 1 |
 | `DRAWITEMSTRUCT` | 64 | 9 | 1 |
 | `DTBGOPTS` | 24 | 3 | 1 |
-| `DVTARGETDEVICE` | 20 | 6 | 1 |
+| `DVTARGETDEVICE` | 16 | 6 | 1 |
 | `EDITSTREAM` | 24 | 3 | 1 |
 | `ELEMDESC` | 24 | 2 | 1 |
 | `EMR` | 8 | 2 | 0 |
 | `EMRALPHABLEND` | 108 | 18 | 1 |
-| `EMRANGLEARC` | 32 | 5 | 1 |
+| `EMRANGLEARC` | 28 | 5 | 1 |
 | `EMRARC` | 40 | 4 | 1 |
 | `EMRBITBLT` | 100 | 16 | 1 |
 | `EMRCOLORCORRECTPALETTE` | 24 | 5 | 1 |
-| `EMRCOLORMATCHTOTARGET` | 32 | 6 | 1 |
+| `EMRCOLORMATCHTOTARGET` | 28 | 6 | 1 |
 | `EMRCREATEBRUSHINDIRECT` | 24 | 3 | 1 |
-| `EMRCREATECOLORSPACE` | 20 | 3 | 1 |
-| `EMRCREATECOLORSPACEW` | 616 | 6 | 1 |
+| `EMRCREATECOLORSPACE` | 340 | 3 | 1 |
+| `EMRCREATECOLORSPACEW` | 612 | 6 | 1 |
 | `EMRCREATEDIBPATTERNBRUSHPT` | 32 | 7 | 1 |
 | `EMRCREATEMONOBRUSH` | 32 | 7 | 1 |
 | `EMRCREATEPALETTE` | 20 | 3 | 1 |
@@ -79,31 +80,31 @@
 | `EMREOF` | 20 | 4 | 1 |
 | `EMREXCLUDECLIPRECT` | 24 | 2 | 1 |
 | `EMREXTCREATEFONTINDIRECTW` | 332 | 3 | 1 |
-| `EMREXTCREATEPEN` | 36 | 7 | 1 |
+| `EMREXTCREATEPEN` | 56 | 7 | 1 |
 | `EMREXTFLOODFILL` | 24 | 4 | 1 |
-| `EMREXTSELECTCLIPRGN` | 24 | 4 | 1 |
+| `EMREXTSELECTCLIPRGN` | 20 | 4 | 1 |
 | `EMREXTTEXTOUTA` | 76 | 6 | 1 |
 | `EMRFILLPATH` | 24 | 2 | 1 |
-| `EMRFILLRGN` | 40 | 5 | 1 |
-| `EMRFRAMERGN` | 48 | 6 | 1 |
-| `EMRGDICOMMENT` | 20 | 3 | 1 |
-| `EMRGLSBOUNDEDRECORD` | 36 | 4 | 1 |
-| `EMRGLSRECORD` | 20 | 3 | 1 |
-| `EMRGRADIENTFILL` | 44 | 6 | 1 |
-| `EMRINVERTRGN` | 36 | 4 | 1 |
+| `EMRFILLRGN` | 36 | 5 | 1 |
+| `EMRFRAMERGN` | 44 | 6 | 1 |
+| `EMRGDICOMMENT` | 16 | 3 | 1 |
+| `EMRGLSBOUNDEDRECORD` | 32 | 4 | 1 |
+| `EMRGLSRECORD` | 16 | 3 | 1 |
+| `EMRGRADIENTFILL` | 52 | 6 | 1 |
+| `EMRINVERTRGN` | 32 | 4 | 1 |
 | `EMRLINETO` | 16 | 2 | 1 |
 | `EMRMASKBLT` | 128 | 23 | 1 |
 | `EMRMODIFYWORLDTRANSFORM` | 36 | 3 | 1 |
 | `EMROFFSETCLIPRGN` | 16 | 2 | 1 |
 | `EMRPIXELFORMAT` | 48 | 2 | 1 |
 | `EMRPLGBLT` | 140 | 21 | 1 |
-| `EMRPOLYDRAW` | 44 | 5 | 1 |
-| `EMRPOLYDRAW16` | 40 | 5 | 1 |
+| `EMRPOLYDRAW` | 40 | 5 | 1 |
+| `EMRPOLYDRAW16` | 36 | 5 | 1 |
 | `EMRPOLYLINE` | 36 | 4 | 1 |
-| `EMRPOLYLINE16` | 36 | 4 | 1 |
+| `EMRPOLYLINE16` | 32 | 4 | 1 |
 | `EMRPOLYPOLYLINE` | 44 | 6 | 1 |
-| `EMRPOLYPOLYLINE16` | 44 | 6 | 1 |
-| `EMRPOLYTEXTOUTA` | 48 | 7 | 1 |
+| `EMRPOLYPOLYLINE16` | 40 | 6 | 1 |
+| `EMRPOLYTEXTOUTA` | 80 | 7 | 1 |
 | `EMRRESIZEPALETTE` | 16 | 3 | 1 |
 | `EMRRESTOREDC` | 12 | 2 | 1 |
 | `EMRROUNDRECT` | 32 | 3 | 1 |
@@ -115,36 +116,36 @@
 | `EMRSETCOLORADJUSTMENT` | 32 | 2 | 1 |
 | `EMRSETCOLORSPACE` | 12 | 2 | 1 |
 | `EMRSETDIBITSTODEVICE` | 76 | 15 | 1 |
-| `EMRSETICMPROFILE` | 28 | 5 | 1 |
+| `EMRSETICMPROFILE` | 24 | 5 | 1 |
 | `EMRSETMAPPERFLAGS` | 12 | 2 | 1 |
-| `EMRSETMITERLIMIT` | 16 | 2 | 1 |
-| `EMRSETPALETTEENTRIES` | 28 | 5 | 1 |
+| `EMRSETMITERLIMIT` | 12 | 2 | 1 |
+| `EMRSETPALETTEENTRIES` | 24 | 5 | 1 |
 | `EMRSETPIXELV` | 20 | 3 | 1 |
 | `EMRSETVIEWPORTEXTEX` | 16 | 2 | 1 |
 | `EMRSETVIEWPORTORGEX` | 16 | 2 | 1 |
-| `EMRSETWORLDTRANSFORM` | 16 | 2 | 1 |
+| `EMRSETWORLDTRANSFORM` | 32 | 2 | 1 |
 | `EMRSTRETCHBLT` | 108 | 18 | 1 |
 | `EMRSTRETCHDIBITS` | 80 | 16 | 1 |
 | `EMRTEXT` | 40 | 6 | 1 |
 | `EMRTRANSPARENTBLT` | 108 | 18 | 1 |
 | `ENHMETAHEADER` | 108 | 19 | 1 |
-| `ENHMETARECORD` | 16 | 3 | 1 |
+| `ENHMETARECORD` | 12 | 3 | 1 |
 | `ENLINK` | 56 | 5 | 1 |
-| `ENUMLOGFONTW` | 228 | 3 | 1 |
-| `EXCEPINFO` | 60 | 9 | 4 |
-| `EXCEPTION_RECORD` | 40 | 6 | 1 |
+| `ENUMLOGFONTW` | 284 | 3 | 1 |
+| `EXCEPINFO` | 64 | 9 | 4 |
+| `EXCEPTION_RECORD` | 152 | 6 | 1 |
 | `EXTLOGFONTW` | 320 | 10 | 1 |
-| `EXTLOGPEN` | 36 | 7 | 1 |
-| `EXTLOGPEN32` | 32 | 7 | 0 |
-| `FD_SET` | 16 | 2 | 3 |
+| `EXTLOGPEN` | 32 | 7 | 1 |
+| `EXTLOGPEN32` | 28 | 7 | 0 |
+| `FD_SET` | 520 | 2 | 3 |
 | `FILETIME` | 8 | 2 | 27 |
-| `FILE_NOTIFY_INFORMATION` | 20 | 4 | 1 |
+| `FILE_NOTIFY_INFORMATION` | 16 | 4 | 1 |
 | `FINDREPLACEW` | 80 | 11 | 1 |
 | `FLASHWINFO` | 32 | 5 | 1 |
 | `FONTDESC` | 64 | 8 | 1 |
-| `FORMATETC` | 28 | 5 | 9 |
+| `FORMATETC` | 32 | 5 | 9 |
 | `FORMATRANGE` | 56 | 5 | 1 |
-| `FUNCDESC` | 76 | 12 | 1 |
+| `FUNCDESC` | 80 | 12 | 1 |
 | `GETTEXTEX` | 32 | 5 | 1 |
 | `GRADIENT_RECT` | 8 | 2 | 1 |
 | `GRADIENT_TRIANGLE` | 12 | 3 | 1 |
@@ -155,7 +156,7 @@
 | `HTTP_BINDING_INFO` | 16 | 2 | 1 |
 | `HTTP_BYTE_RANGE` | 16 | 2 | 1 |
 | `HTTP_CACHE_POLICY` | 8 | 2 | 3 |
-| `HTTP_CHANNEL_BIND_INFO` | 20 | 4 | 1 |
+| `HTTP_CHANNEL_BIND_INFO` | 24 | 4 | 1 |
 | `HTTP_CONNECTION_LIMIT_INFO` | 8 | 2 | 1 |
 | `HTTP_COOKED_URL` | 40 | 8 | 1 |
 | `HTTP_DATA_CHUNK` | 16 | 2 | 2 |
@@ -171,12 +172,12 @@
 | `HTTP_QOS_SETTING_INFO` | 16 | 2 | 1 |
 | `HTTP_REQUEST_AUTH_INFO` | 80 | 13 | 1 |
 | `HTTP_REQUEST_CHANNEL_BIND_STATUS` | 24 | 4 | 1 |
-| `HTTP_REQUEST_HEADERS` | 40 | 5 | 1 |
+| `HTTP_REQUEST_HEADERS` | 688 | 5 | 1 |
 | `HTTP_REQUEST_INFO` | 16 | 3 | 1 |
 | `HTTP_REQUEST_TOKEN_BINDING_INFO` | 32 | 5 | 1 |
 | `HTTP_REQUEST_V1` | 848 | 18 | 1 |
 | `HTTP_REQUEST_V2` | 864 | 3 | 2 |
-| `HTTP_RESPONSE_HEADERS` | 40 | 5 | 1 |
+| `HTTP_RESPONSE_HEADERS` | 512 | 5 | 1 |
 | `HTTP_RESPONSE_INFO` | 16 | 3 | 1 |
 | `HTTP_RESPONSE_V1` | 552 | 8 | 1 |
 | `HTTP_RESPONSE_V2` | 568 | 3 | 2 |
@@ -188,13 +189,13 @@
 | `HTTP_SERVICE_BINDING_W` | 24 | 3 | 1 |
 | `HTTP_SERVICE_CONFIG_CACHE_SET` | 8 | 2 | 1 |
 | `HTTP_SERVICE_CONFIG_IP_LISTEN_PARAM` | 16 | 2 | 1 |
-| `HTTP_SERVICE_CONFIG_IP_LISTEN_QUERY` | 16 | 2 | 1 |
-| `HTTP_SERVICE_CONFIG_SSL_CCS_KEY` | 8 | 1 | 0 |
+| `HTTP_SERVICE_CONFIG_IP_LISTEN_QUERY` | 136 | 2 | 1 |
+| `HTTP_SERVICE_CONFIG_SSL_CCS_KEY` | 128 | 1 | 0 |
 | `HTTP_SERVICE_CONFIG_SSL_CCS_QUERY` | 144 | 3 | 1 |
 | `HTTP_SERVICE_CONFIG_SSL_CCS_SET` | 200 | 2 | 1 |
 | `HTTP_SERVICE_CONFIG_SSL_KEY` | 8 | 1 | 0 |
 | `HTTP_SERVICE_CONFIG_SSL_PARAM` | 72 | 10 | 1 |
-| `HTTP_SERVICE_CONFIG_SSL_QUERY` | 20 | 3 | 1 |
+| `HTTP_SERVICE_CONFIG_SSL_QUERY` | 24 | 3 | 1 |
 | `HTTP_SERVICE_CONFIG_SSL_SET` | 80 | 2 | 1 |
 | `HTTP_SERVICE_CONFIG_SSL_SNI_KEY` | 136 | 2 | 1 |
 | `HTTP_SERVICE_CONFIG_SSL_SNI_QUERY` | 152 | 3 | 1 |
@@ -214,26 +215,26 @@
 | `HTTP_VERSION` | 4 | 2 | 1 |
 | `ICONINFO` | 32 | 5 | 2 |
 | `IDLDESC` | 16 | 2 | 1 |
-| `IN6_ADDR` | 8 | 1 | 1 |
-| `IN_ADDR` | 8 | 1 | 1 |
-| `IP_ADAPTER_INDEX_MAP` | 12 | 2 | 2 |
+| `IN6_ADDR` | 16 | 1 | 1 |
+| `IN_ADDR` | 4 | 1 | 1 |
+| `IP_ADAPTER_INDEX_MAP` | 260 | 2 | 2 |
 | `IP_ADAPTER_INFO` | 704 | 18 | 1 |
-| `IP_ADAPTER_ORDER_MAP` | 12 | 2 | 1 |
-| `IP_ADDRESS_STRING` | 8 | 1 | 0 |
-| `IP_ADDR_STRING` | 44 | 4 | 1 |
-| `IP_INTERFACE_INFO` | 12 | 2 | 1 |
-| `IP_UNIDIRECTIONAL_ADAPTER_ADDRESS` | 12 | 2 | 1 |
-| `ITEMIDLIST` | 8 | 1 | 1 |
+| `IP_ADAPTER_ORDER_MAP` | 8 | 2 | 1 |
+| `IP_ADDRESS_STRING` | 16 | 1 | 0 |
+| `IP_ADDR_STRING` | 48 | 4 | 1 |
+| `IP_INTERFACE_INFO` | 264 | 2 | 1 |
+| `IP_UNIDIRECTIONAL_ADAPTER_ADDRESS` | 8 | 2 | 1 |
+| `ITEMIDLIST` | 4 | 1 | 1 |
 | `LASTINPUTINFO` | 8 | 2 | 1 |
-| `LHITTESTINFO` | 16 | 2 | 1 |
+| `LHITTESTINFO` | 4288 | 2 | 1 |
 | `LICINFO` | 12 | 3 | 1 |
-| `LITEM` | 120 | 6 | 1 |
+| `LITEM` | 4280 | 6 | 1 |
 | `LOGBRUSH` | 16 | 3 | 1 |
 | `LOGBRUSH32` | 12 | 3 | 0 |
-| `LOGCOLORSPACEA` | 76 | 10 | 0 |
-| `LOGCOLORSPACEW` | 76 | 10 | 1 |
-| `LOGFONTW` | 36 | 14 | 2 |
-| `LOGPALETTE` | 12 | 3 | 2 |
+| `LOGCOLORSPACEA` | 328 | 10 | 0 |
+| `LOGCOLORSPACEW` | 588 | 10 | 1 |
+| `LOGFONTW` | 92 | 14 | 2 |
+| `LOGPALETTE` | 8 | 3 | 2 |
 | `LOGPEN` | 16 | 3 | 1 |
 | `LVBKIMAGEW` | 40 | 6 | 1 |
 | `LVCOLUMNW` | 56 | 11 | 1 |
@@ -248,29 +249,29 @@
 | `MIBICMPSTATS` | 52 | 13 | 1 |
 | `MIB_ICMP` | 104 | 1 | 1 |
 | `MIB_IFNUMBER` | 4 | 1 | 1 |
-| `MIB_IFROW` | 612 | 24 | 2 |
-| `MIB_IFTABLE` | 12 | 2 | 1 |
-| `MIB_IPADDRTABLE` | 12 | 2 | 1 |
-| `MIB_IPFORWARDROW` | 116 | 14 | 4 |
-| `MIB_IPFORWARDTABLE` | 16 | 2 | 1 |
-| `MIB_IPNETTABLE` | 16 | 2 | 1 |
-| `MIB_TCPTABLE` | 16 | 2 | 1 |
+| `MIB_IFROW` | 860 | 24 | 2 |
+| `MIB_IFTABLE` | 864 | 2 | 1 |
+| `MIB_IPADDRTABLE` | 28 | 2 | 1 |
+| `MIB_IPFORWARDROW` | 120 | 14 | 4 |
+| `MIB_IPFORWARDTABLE` | 128 | 2 | 1 |
+| `MIB_IPNETTABLE` | 40 | 2 | 1 |
+| `MIB_TCPTABLE` | 32 | 2 | 1 |
 | `MIB_UDPROW` | 8 | 2 | 1 |
 | `MIB_UDPSTATS` | 20 | 5 | 2 |
 | `MIB_UDPTABLE` | 12 | 2 | 1 |
 | `MINMAXINFO` | 40 | 5 | 1 |
 | `MONITORINFO` | 40 | 4 | 0 |
-| `MONITORINFOEXW` | 48 | 2 | 1 |
+| `MONITORINFOEXW` | 104 | 2 | 1 |
 | `MSG` | 48 | 6 | 7 |
 | `MSGBOXPARAMSW` | 80 | 10 | 2 |
-| `MULTI_QI` | 20 | 3 | 1 |
+| `MULTI_QI` | 24 | 3 | 1 |
 | `NCCALCSIZE_PARAMS` | 56 | 2 | 1 |
 | `NET_ADDRESS_INFO` | 16 | 2 | 1 |
 | `NEWTEXTMETRICW` | 76 | 24 | 1 |
 | `NMCUSTOMDRAW` | 80 | 7 | 1 |
 | `NMHDR` | 24 | 3 | 1 |
 | `NMITEMACTIVATE` | 72 | 9 | 1 |
-| `NMLINK` | 32 | 2 | 1 |
+| `NMLINK` | 4304 | 2 | 1 |
 | `NMLISTVIEW` | 64 | 8 | 1 |
 | `NMLVCUSTOMDRAW` | 136 | 12 | 1 |
 | `NMLVFINDITEMW` | 72 | 3 | 1 |
@@ -298,11 +299,11 @@
 | `OUTLINETEXTMETRICW` | 232 | 32 | 1 |
 | `OVERLAPPED` | 32 | 4 | 28 |
 | `PAGESETUPDLGW` | 128 | 14 | 1 |
-| `PAINTSTRUCT` | 44 | 6 | 2 |
+| `PAINTSTRUCT` | 72 | 6 | 2 |
 | `PALETTEENTRY` | 4 | 4 | 1 |
 | `PANOSE` | 10 | 10 | 1 |
-| `PARAFORMAT` | 48 | 10 | 1 |
-| `PARAMDESC` | 10 | 2 | 1 |
+| `PARAFORMAT` | 168 | 10 | 1 |
+| `PARAMDESC` | 16 | 2 | 1 |
 | `PARAMDESCEX` | 16 | 2 | 1 |
 | `PICTDESC` | 16 | 3 | 1 |
 | `PIXELFORMATDESCRIPTOR` | 40 | 26 | 1 |
@@ -311,6 +312,7 @@
 | `POINTS` | 4 | 2 | 1 |
 | `PRINTDLGEXW` | 136 | 21 | 1 |
 | `PRINTPAGERANGE` | 8 | 2 | 1 |
+| `PROCESS_INFORMATION` | 24 | 4 | 1 |
 | `PROPBAG2` | 32 | 6 | 3 |
 | `PROPSPEC` | 16 | 2 | 3 |
 | `PROTOENT` | 24 | 3 | 1 |
@@ -318,23 +320,23 @@
 | `RECT` | 16 | 4 | 1 |
 | `RECTL` | 16 | 4 | 63 |
 | `RGBQUAD` | 4 | 4 | 2 |
-| `RGNDATA` | 40 | 2 | 1 |
+| `RGNDATA` | 36 | 2 | 1 |
 | `RGNDATAHEADER` | 32 | 5 | 0 |
 | `SAFEARRAY` | 32 | 6 | 16 |
 | `SAFEARRAYBOUND` | 8 | 2 | 2 |
 | `SCROLLINFO` | 28 | 7 | 2 |
-| `SECURITY_ATTRIBUTES` | 20 | 3 | 1 |
+| `SECURITY_ATTRIBUTES` | 24 | 3 | 3 |
 | `SERVENT` | 32 | 4 | 1 |
 | `SERVICE_STATUS` | 28 | 7 | 1 |
 | `SERVICE_STATUS_PROCESS` | 36 | 9 | 1 |
-| `SHITEMID` | 10 | 2 | 1 |
-| `SHSTOCKICONINFO` | 32 | 5 | 1 |
+| `SHITEMID` | 4 | 2 | 1 |
+| `SHSTOCKICONINFO` | 544 | 5 | 1 |
 | `SIZE` | 8 | 2 | 1 |
 | `SIZEL` | 8 | 2 | 8 |
-| `SOCKADDR` | 10 | 2 | 3 |
+| `SOCKADDR` | 16 | 2 | 3 |
 | `SOCKADDR_IN` | 16 | 4 | 1 |
 | `SOCKADDR_IN6` | 32 | 5 | 1 |
-| `SOCKADDR_STORAGE` | 24 | 4 | 1 |
+| `SOCKADDR_STORAGE` | 128 | 4 | 1 |
 | `SPAUDIOBUFFERINFO` | 12 | 3 | 2 |
 | `SPAUDIOSTATUS` | 40 | 7 | 1 |
 | `SPBINARYGRAMMAR` | 4 | 1 | 1 |
@@ -350,9 +352,10 @@
 | `SPWORDLIST` | 24 | 3 | 2 |
 | `SPWORDPRONUNCIATIONLIST` | 24 | 3 | 1 |
 | `SQL_DAY_SECOND_STRUCT` | 20 | 5 | 1 |
-| `SQL_INTERVAL_STRUCT` | 16 | 3 | 1 |
+| `SQL_INTERVAL_STRUCT` | 28 | 3 | 1 |
 | `SQL_YEAR_MONTH_STRUCT` | 8 | 2 | 1 |
-| `STATDATA` | 52 | 4 | 1 |
+| `STARTUPINFOW` | 104 | 18 | 1 |
+| `STATDATA` | 56 | 4 | 1 |
 | `STATPROPSETSTG` | 48 | 7 | 1 |
 | `STATPROPSTG` | 16 | 3 | 1 |
 | `STATSTG` | 72 | 11 | 3 |
@@ -377,23 +380,23 @@
 | `TVITEMEXW` | 80 | 15 | 1 |
 | `TVITEMW` | 56 | 10 | 1 |
 | `TYPEATTR` | 88 | 18 | 1 |
-| `TYPEDESC` | 10 | 2 | 1 |
+| `TYPEDESC` | 16 | 2 | 1 |
 | `UDACCEL` | 8 | 2 | 1 |
 | `VARDESC` | 56 | 6 | 1 |
 | `VARIANT` | 8 | 1 | 1 |
 | `VARIANT_BOOL` | 2 | 1 | 1 |
 | `VS_FIXEDFILEINFO` | 52 | 13 | 1 |
 | `WIN32_FILE_ATTRIBUTE_DATA` | 36 | 6 | 1 |
-| `WIN32_FIND_DATAW` | 572 | 10 | 2 |
+| `WIN32_FIND_DATAW` | 592 | 10 | 2 |
 | `WINDOWPLACEMENT` | 44 | 6 | 1 |
 | `WINDOWPOS` | 40 | 7 | 1 |
 | `WSADATA` | 408 | 7 | 1 |
-| `WSAPROTOCOLCHAIN` | 12 | 2 | 1 |
-| `WSAPROTOCOL_INFOW` | 120 | 20 | 2 |
-| `XFORM` | 28 | 6 | 1 |
+| `WSAPROTOCOLCHAIN` | 32 | 2 | 1 |
+| `WSAPROTOCOL_INFOW` | 624 | 20 | 2 |
+| `XFORM` | 24 | 6 | 1 |
 | `XHR_COOKIE` | 48 | 6 | 1 |
 
-## Not in winkb (917)
+## Not in winkb (923)
 
 - `ADDRINFOW*` (used 1x)
 - `ADOCommandConstruction` (used 1x)
@@ -859,6 +862,7 @@
 - `IEnumFORMATETC*` (used 1x)
 - `IEnumMoniker` (used 1x)
 - `IEnumMoniker*` (used 2x)
+- `IEnumRECT` (used 1x)
 - `IEnumSTATDATA` (used 1x)
 - `IEnumSTATDATA*` (used 1x)
 - `IEnumSpObjectTokens*` (used 2x)
@@ -935,6 +939,8 @@
 - `IPropertyStorage*` (used 2x)
 - `IProvideClassInfo` (used 1x)
 - `IProvideClassInfo2` (used 1x)
+- `IRandomStream` (used 1x)
+- `IRandomStream2` (used 1x)
 - `IRecFields` (used 1x)
 - `IRecordInfo` (used 1x)
 - `IRecordInfo*` (used 2x)
@@ -1239,6 +1245,8 @@
 - `Recordset20` (used 1x)
 - `Recordset21` (used 1x)
 - `RecordsetEventsVt` (used 1x)
+- `RefactoringError` (used 1x)
+- `ResumableTestFailure` (used 1x)
 - `SAFEARRAY*` (used 4x)
 - `SCALAR` (used 1x)
 - `SCNotification` (used 1x)
@@ -1267,6 +1275,7 @@
 - `TLIBATTR*` (used 1x)
 - `TOOLINFOW` (used 1x)
 - `TYPEATTR*` (used 1x)
+- `TestFailure` (used 1x)
 - `TextRangeFull` (used 1x)
 - `TextToFindFull` (used 1x)
 - `TrustedDataError` (used 1x)
@@ -1313,7 +1322,7 @@
 - `_Recordset` (used 1x)
 - `_Stream` (used 1x)
 
-## Fields without an accessor (266)
+## Fields without an accessor (222)
 
 - ADDRINFOW.ai_addr (Windows.Win32.Networking.WinSock.SOCKADDR*)
 - ADDRINFOW.ai_next (Windows.Win32.Networking.WinSock.ADDRINFOW*)
@@ -1331,9 +1340,7 @@
 - CADWORD.pElems (u32*)
 - CALPOLESTR.pElems (Windows.Win32.Foundation.PWSTR*)
 - CATEGORYINFO.catid (System.Guid)
-- CATEGORYINFO.szDescription (char[])
 - CHARFORMAT2W.Anonymous (_Anonymous_e__Union)
-- CHARFORMATW.szFaceName (char[])
 - CHOOSECOLORW.lpCustColors (Windows.Win32.Foundation.COLORREF*)
 - CHOOSECOLORW.lpfnHook (Windows.Win32.UI.Controls.Dialogs.LPCCHOOKPROC)
 - CHOOSEFONTW.lpLogFont (Windows.Win32.Graphics.Gdi.LOGFONTW*)
@@ -1347,21 +1354,14 @@
 - CPINFOEXW.DefaultChar (u8[])
 - CPINFOEXW.LeadByte (u8[])
 - CPINFOEXW.UnicodeDefaultChar (char)
-- CPINFOEXW.CodePageName (char[])
 - CUSTDATA.prgCustData (Windows.Win32.System.Com.CUSTDATAITEM*)
 - CUSTDATAITEM.guid (System.Guid)
 - CY.Anonymous (_Anonymous_e__Struct)
 - DECIMAL.Anonymous1 (_Anonymous1_e__Union)
 - DECIMAL.Anonymous2 (_Anonymous2_e__Union)
-- DEVMODEW.dmDeviceName (char[])
 - DEVMODEW.Anonymous1 (_Anonymous1_e__Union)
-- DEVMODEW.dmFormName (char[])
 - DEVMODEW.Anonymous2 (_Anonymous2_e__Union)
 - DIBSECTION.dsBitfields (u32[])
-- DISPLAY_DEVICEW.DeviceName (char[])
-- DISPLAY_DEVICEW.DeviceString (char[])
-- DISPLAY_DEVICEW.DeviceID (char[])
-- DISPLAY_DEVICEW.DeviceKey (char[])
 - DISPPARAMS.rgvarg (Windows.Win32.System.Variant.VARIANT*)
 - DISPPARAMS.rgdispidNamedArgs (i32*)
 - DVTARGETDEVICE.tdData (u8[])
@@ -1375,3 +1375,12 @@
 - EMREXTTEXTOUTA.exScale (f32)
 - EMREXTTEXTOUTA.eyScale (f32)
 - EMRFILLRGN.RgnData (u8[])
+- EMRFRAMERGN.RgnData (u8[])
+- EMRGDICOMMENT.Data (u8[])
+- EMRGLSBOUNDEDRECORD.Data (u8[])
+- EMRGLSRECORD.Data (u8[])
+- EMRGRADIENTFILL.Ver (Windows.Win32.Graphics.Gdi.TRIVERTEX[])
+- EMRINVERTRGN.RgnData (u8[])
+- EMRPLGBLT.aptlDest (Windows.Win32.Foundation.POINTL[])
+- EMRPOLYDRAW.aptl (Windows.Win32.Foundation.POINTL[])
+- EMRPOLYDRAW.abTypes (u8[])

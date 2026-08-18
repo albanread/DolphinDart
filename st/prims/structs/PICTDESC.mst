@@ -6,6 +6,14 @@ ExternalMemory subclass: PICTDESC [
     PICTDESC class >> byteSize [ ^16 ]
     byteSize [ ^16 ]
     PICTDESC class >> new [ ^self new: 16 ]
+    PICTDESC class >> newBuffer [
+        "SizedStructure: the leading UInt32 is the struct's
+         own size, and the API rejects a buffer without it."
+        | b |
+        b := self new: 16.
+        b uint32At: 1 put: 16.
+        ^b
+    ]
 
     PICTDESC class >> _OffsetOf_cbSizeofstruct [ ^0 ]
     PICTDESC class >> _OffsetOf_picType [ ^4 ]

@@ -13,6 +13,6 @@ ExternalMemory subclass: ELEMDESC [
     "corpus constant _OffsetOf_paramdesc: no unambiguous winkb field (candidates: []) — not aliased"
     ELEMDESC class >> _ELEMDESC_Size [ ^24 ]
 
-    tdesc [ ^TYPEDESC viewOn: self at: 0 size: 10 ]
+    tdesc [ ^TYPEDESC viewOn: self at: 0 size: 16 ]
     "anonymous: _Anonymous_e__Union at 16 — no accessor (width unknown); use byteAt: directly"
 ]

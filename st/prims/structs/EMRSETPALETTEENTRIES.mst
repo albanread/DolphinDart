@@ -2,17 +2,17 @@
  winkb (Win32Metadata), not computed here. Do not hand-edit."
 
 ENHMETARECORD subclass: EMRSETPALETTEENTRIES [
-    EMRSETPALETTEENTRIES class >> sizeInBytes [ ^28 ]
-    EMRSETPALETTEENTRIES class >> byteSize [ ^28 ]
-    byteSize [ ^28 ]
-    EMRSETPALETTEENTRIES class >> new [ ^self new: 28 ]
+    EMRSETPALETTEENTRIES class >> sizeInBytes [ ^24 ]
+    EMRSETPALETTEENTRIES class >> byteSize [ ^24 ]
+    byteSize [ ^24 ]
+    EMRSETPALETTEENTRIES class >> new [ ^self new: 24 ]
 
     EMRSETPALETTEENTRIES class >> _OffsetOf_emr [ ^0 ]
     EMRSETPALETTEENTRIES class >> _OffsetOf_ihPal [ ^8 ]
     EMRSETPALETTEENTRIES class >> _OffsetOf_iStart [ ^12 ]
     EMRSETPALETTEENTRIES class >> _OffsetOf_cEntries [ ^16 ]
     EMRSETPALETTEENTRIES class >> _OffsetOf_aPalEntries [ ^20 ]
-    EMRSETPALETTEENTRIES class >> _EMRSETPALETTEENTRIES_Size [ ^28 ]
+    EMRSETPALETTEENTRIES class >> _EMRSETPALETTEENTRIES_Size [ ^24 ]
 
     emr [ ^EMR viewOn: self at: 0 size: 8 ]
     ihPal [ ^self uint32At: 9 ]
@@ -21,5 +21,6 @@ ENHMETARECORD subclass: EMRSETPALETTEENTRIES [
     iStart: v [ ^self uint32At: 13 put: v ]
     cEntries [ ^self uint32At: 17 ]
     cEntries: v [ ^self uint32At: 17 put: v ]
-    "aPalEntries: Windows.Win32.Graphics.Gdi.PALETTEENTRY[] at 20 — no accessor (width unknown); use byteAt: directly"
+    "aPalEntries: Windows.Win32.Graphics.Gdi.PALETTEENTRY[] at 20, 4 bytes — element width unknown; use byteAt: directly"
+    EMRSETPALETTEENTRIES class >> _SpanOf_aPalEntries [ ^4 ]
 ]

@@ -2,16 +2,17 @@
  winkb (Win32Metadata), not computed here. Do not hand-edit."
 
 ExternalMemory subclass: HTTP_SERVICE_CONFIG_IP_LISTEN_QUERY [
-    HTTP_SERVICE_CONFIG_IP_LISTEN_QUERY class >> sizeInBytes [ ^16 ]
-    HTTP_SERVICE_CONFIG_IP_LISTEN_QUERY class >> byteSize [ ^16 ]
-    byteSize [ ^16 ]
-    HTTP_SERVICE_CONFIG_IP_LISTEN_QUERY class >> new [ ^self new: 16 ]
+    HTTP_SERVICE_CONFIG_IP_LISTEN_QUERY class >> sizeInBytes [ ^136 ]
+    HTTP_SERVICE_CONFIG_IP_LISTEN_QUERY class >> byteSize [ ^136 ]
+    byteSize [ ^136 ]
+    HTTP_SERVICE_CONFIG_IP_LISTEN_QUERY class >> new [ ^self new: 136 ]
 
     HTTP_SERVICE_CONFIG_IP_LISTEN_QUERY class >> _OffsetOf_AddrCount [ ^0 ]
     HTTP_SERVICE_CONFIG_IP_LISTEN_QUERY class >> _OffsetOf_AddrList [ ^8 ]
-    HTTP_SERVICE_CONFIG_IP_LISTEN_QUERY class >> _HTTP_SERVICE_CONFIG_IP_LISTEN_QUERY_Size [ ^16 ]
+    HTTP_SERVICE_CONFIG_IP_LISTEN_QUERY class >> _HTTP_SERVICE_CONFIG_IP_LISTEN_QUERY_Size [ ^136 ]
 
     addrCount [ ^self uint32At: 1 ]
     addrCount: v [ ^self uint32At: 1 put: v ]
-    "addrList: Windows.Win32.Networking.WinSock.SOCKADDR_STORAGE[] at 8 — no accessor (width unknown); use byteAt: directly"
+    "addrList: Windows.Win32.Networking.WinSock.SOCKADDR_STORAGE[] at 8, 128 bytes — element width unknown; use byteAt: directly"
+    HTTP_SERVICE_CONFIG_IP_LISTEN_QUERY class >> _SpanOf_AddrList [ ^128 ]
 ]

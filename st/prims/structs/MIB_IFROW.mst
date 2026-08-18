@@ -2,10 +2,10 @@
  winkb (Win32Metadata), not computed here. Do not hand-edit."
 
 ExternalMemory subclass: MIB_IFROW [
-    MIB_IFROW class >> sizeInBytes [ ^612 ]
-    MIB_IFROW class >> byteSize [ ^612 ]
-    byteSize [ ^612 ]
-    MIB_IFROW class >> new [ ^self new: 612 ]
+    MIB_IFROW class >> sizeInBytes [ ^860 ]
+    MIB_IFROW class >> byteSize [ ^860 ]
+    byteSize [ ^860 ]
+    MIB_IFROW class >> new [ ^self new: 860 ]
 
     MIB_IFROW class >> _OffsetOf_wszName [ ^0 ]
     MIB_IFROW class >> _OffsetOf_dwIndex [ ^512 ]
@@ -31,9 +31,26 @@ ExternalMemory subclass: MIB_IFROW [
     MIB_IFROW class >> _OffsetOf_dwOutQLen [ ^596 ]
     MIB_IFROW class >> _OffsetOf_dwDescrLen [ ^600 ]
     MIB_IFROW class >> _OffsetOf_bDescr [ ^604 ]
-    MIB_IFROW class >> _MIB_IFROW_Size [ ^612 ]
+    MIB_IFROW class >> _MIB_IFROW_Size [ ^860 ]
 
-    "wszName: char[] at 0 — no accessor (width unknown); use byteAt: directly"
+    wszName [ "char[256] at 0"
+        | s i c |
+        s := WriteStream on: String new.
+        i := 0.
+        [ i < 512 and: [ (c := self uint16At: i + 1) ~= 0 ] ]
+            whileTrue: [ s nextPut: (Character value: c). i := i + 2 ].
+        ^s contents
+    ]
+    wszName: aString [
+        | i c |
+        i := 0.
+        1 to: ((aString size min: 255)) do: [ :k |
+            c := (aString at: k) value.
+            self uint16At: i + 1 put: c. i := i + 2 ].
+        self uint16At: i + 1 put: 0.
+        ^aString
+    ]
+    MIB_IFROW class >> _SpanOf_wszName [ ^512 ]
     dwIndex [ ^self uint32At: 513 ]
     dwIndex: v [ ^self uint32At: 513 put: v ]
     dwType [ ^self uint32At: 517 ]
@@ -44,7 +61,8 @@ ExternalMemory subclass: MIB_IFROW [
     dwSpeed: v [ ^self uint32At: 525 put: v ]
     dwPhysAddrLen [ ^self uint32At: 529 ]
     dwPhysAddrLen: v [ ^self uint32At: 529 put: v ]
-    "bPhysAddr: u8[] at 532 — no accessor (width unknown); use byteAt: directly"
+    "bPhysAddr: u8[] at 532, 8 bytes — element width unknown; use byteAt: directly"
+    MIB_IFROW class >> _SpanOf_bPhysAddr [ ^8 ]
     dwAdminStatus [ ^self uint32At: 541 ]
     dwAdminStatus: v [ ^self uint32At: 541 put: v ]
     dwOperStatus [ ^self uint32At: 545 ]
@@ -77,5 +95,6 @@ ExternalMemory subclass: MIB_IFROW [
     dwOutQLen: v [ ^self uint32At: 597 put: v ]
     dwDescrLen [ ^self uint32At: 601 ]
     dwDescrLen: v [ ^self uint32At: 601 put: v ]
-    "bDescr: u8[] at 604 — no accessor (width unknown); use byteAt: directly"
+    "bDescr: u8[] at 604, 256 bytes — element width unknown; use byteAt: directly"
+    MIB_IFROW class >> _SpanOf_bDescr [ ^256 ]
 ]

@@ -6,6 +6,14 @@ ExternalMemory subclass: WINDOWPLACEMENT [
     WINDOWPLACEMENT class >> byteSize [ ^44 ]
     byteSize [ ^44 ]
     WINDOWPLACEMENT class >> new [ ^self new: 44 ]
+    WINDOWPLACEMENT class >> newBuffer [
+        "SizedStructure: the leading UInt32 is the struct's
+         own size, and the API rejects a buffer without it."
+        | b |
+        b := self new: 44.
+        b uint32At: 1 put: 44.
+        ^b
+    ]
 
     WINDOWPLACEMENT class >> _OffsetOf_length [ ^0 ]
     WINDOWPLACEMENT class >> _OffsetOf_flags [ ^4 ]

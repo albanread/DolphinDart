@@ -2,16 +2,17 @@
  winkb (Win32Metadata), not computed here. Do not hand-edit."
 
 ExternalMemory subclass: SHITEMID [
-    SHITEMID class >> sizeInBytes [ ^10 ]
-    SHITEMID class >> byteSize [ ^10 ]
-    byteSize [ ^10 ]
-    SHITEMID class >> new [ ^self new: 10 ]
+    SHITEMID class >> sizeInBytes [ ^4 ]
+    SHITEMID class >> byteSize [ ^4 ]
+    byteSize [ ^4 ]
+    SHITEMID class >> new [ ^self new: 4 ]
 
     SHITEMID class >> _OffsetOf_cb [ ^0 ]
     SHITEMID class >> _OffsetOf_abID [ ^2 ]
-    SHITEMID class >> _SHITEMID_Size [ ^10 ]
+    SHITEMID class >> _SHITEMID_Size [ ^4 ]
 
     cb [ ^self uint16At: 1 ]
     cb: v [ ^self uint16At: 1 put: v ]
-    "abID: u8[] at 2 — no accessor (width unknown); use byteAt: directly"
+    "abID: u8[] at 2, 2 bytes — element width unknown; use byteAt: directly"
+    SHITEMID class >> _SpanOf_abID [ ^2 ]
 ]

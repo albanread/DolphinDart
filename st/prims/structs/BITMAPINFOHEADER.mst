@@ -6,6 +6,14 @@ ExternalMemory subclass: BITMAPINFOHEADER [
     BITMAPINFOHEADER class >> byteSize [ ^40 ]
     byteSize [ ^40 ]
     BITMAPINFOHEADER class >> new [ ^self new: 40 ]
+    BITMAPINFOHEADER class >> newBuffer [
+        "SizedStructure: the leading UInt32 is the struct's
+         own size, and the API rejects a buffer without it."
+        | b |
+        b := self new: 40.
+        b uint32At: 1 put: 40.
+        ^b
+    ]
 
     BITMAPINFOHEADER class >> _OffsetOf_biSize [ ^0 ]
     BITMAPINFOHEADER class >> _OffsetOf_biWidth [ ^4 ]

@@ -2,17 +2,17 @@
  winkb (Win32Metadata), not computed here. Do not hand-edit."
 
 ENHMETARECORD subclass: EMRSETICMPROFILE [
-    EMRSETICMPROFILE class >> sizeInBytes [ ^28 ]
-    EMRSETICMPROFILE class >> byteSize [ ^28 ]
-    byteSize [ ^28 ]
-    EMRSETICMPROFILE class >> new [ ^self new: 28 ]
+    EMRSETICMPROFILE class >> sizeInBytes [ ^24 ]
+    EMRSETICMPROFILE class >> byteSize [ ^24 ]
+    byteSize [ ^24 ]
+    EMRSETICMPROFILE class >> new [ ^self new: 24 ]
 
     EMRSETICMPROFILE class >> _OffsetOf_emr [ ^0 ]
     EMRSETICMPROFILE class >> _OffsetOf_dwFlags [ ^8 ]
     EMRSETICMPROFILE class >> _OffsetOf_cbName [ ^12 ]
     EMRSETICMPROFILE class >> _OffsetOf_cbData [ ^16 ]
     EMRSETICMPROFILE class >> _OffsetOf_Data [ ^20 ]
-    EMRSETICMPROFILE class >> _EMRSETICMPROFILE_Size [ ^28 ]
+    EMRSETICMPROFILE class >> _EMRSETICMPROFILE_Size [ ^24 ]
 
     emr [ ^EMR viewOn: self at: 0 size: 8 ]
     dwFlags [ ^self uint32At: 9 ]
@@ -21,5 +21,6 @@ ENHMETARECORD subclass: EMRSETICMPROFILE [
     cbName: v [ ^self uint32At: 13 put: v ]
     cbData [ ^self uint32At: 17 ]
     cbData: v [ ^self uint32At: 17 put: v ]
-    "data: u8[] at 20 — no accessor (width unknown); use byteAt: directly"
+    "data: u8[] at 20, 4 bytes — element width unknown; use byteAt: directly"
+    EMRSETICMPROFILE class >> _SpanOf_Data [ ^4 ]
 ]

@@ -67,3 +67,24 @@ CommCtrlLibrary extend [
  `emit_class` emits a `initializeClassConstants` per class, called at the
  class's own place in the load order — which fixed nine classes, not three.
  See docs/JOURNAL.md."
+
+"── MONITORINFOF_PRIMARY ────────────────────────────────────────────────
+ A class CONSTANT of `OS.MONITORINFOEXW` in the corpus, and class constants
+ do not survive a `--reopen`: a reopen cannot add class variables without
+ redeclaring the class, and redeclaring it would discard the winkb layout the
+ generated class carries. So the constant is bound here as a global, which is
+ how every other capitalised Win32 name in this port resolves.
+
+ Its one reader is Dolphin's own `MONITORINFOEXW>>isPrimary`:
+
+     ^self dwFlags allMask: MONITORINFOF_PRIMARY
+
+ and unbound it made that `allMask: nil` — reported as `_bitAndFromSmi` sent
+ to null, which names neither the constant nor the method. `isPrimary` is
+ read by `DisplayMonitor>>printOn:`, so printing a monitor raised.
+
+ Value 1, from winkb's `constants` table (`MONITORINFOF_PRIMARY`, u32, 1) —
+ not from memory, and confirmed behaviourally against Dolphin 8, which
+ answers `true` for `DisplayMonitor primary isPrimary` and `false` for a
+ fresh MONITORINFOEXW."
+MONITORINFOF_PRIMARY := 1.

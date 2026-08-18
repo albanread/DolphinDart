@@ -2,16 +2,16 @@
  winkb (Win32Metadata), not computed here. Do not hand-edit."
 
 ExternalMemory subclass: HTTP_CHANNEL_BIND_INFO [
-    HTTP_CHANNEL_BIND_INFO class >> sizeInBytes [ ^20 ]
-    HTTP_CHANNEL_BIND_INFO class >> byteSize [ ^20 ]
-    byteSize [ ^20 ]
-    HTTP_CHANNEL_BIND_INFO class >> new [ ^self new: 20 ]
+    HTTP_CHANNEL_BIND_INFO class >> sizeInBytes [ ^24 ]
+    HTTP_CHANNEL_BIND_INFO class >> byteSize [ ^24 ]
+    byteSize [ ^24 ]
+    HTTP_CHANNEL_BIND_INFO class >> new [ ^self new: 24 ]
 
     HTTP_CHANNEL_BIND_INFO class >> _OffsetOf_Hardening [ ^0 ]
     HTTP_CHANNEL_BIND_INFO class >> _OffsetOf_Flags [ ^4 ]
     HTTP_CHANNEL_BIND_INFO class >> _OffsetOf_ServiceNames [ ^8 ]
     HTTP_CHANNEL_BIND_INFO class >> _OffsetOf_NumberOfServiceNames [ ^16 ]
-    HTTP_CHANNEL_BIND_INFO class >> _HTTP_CHANNEL_BIND_INFO_Size [ ^20 ]
+    HTTP_CHANNEL_BIND_INFO class >> _HTTP_CHANNEL_BIND_INFO_Size [ ^24 ]
 
     hardening [ ^self uint32At: 1 ]
     hardening: v [ ^self uint32At: 1 put: v ]

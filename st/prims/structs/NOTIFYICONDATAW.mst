@@ -6,6 +6,14 @@ ExternalMemory subclass: NOTIFYICONDATAW [
     NOTIFYICONDATAW class >> byteSize [ ^976 ]
     byteSize [ ^976 ]
     NOTIFYICONDATAW class >> new [ ^self new: 976 ]
+    NOTIFYICONDATAW class >> newBuffer [
+        "SizedStructure: the leading UInt32 is the struct's
+         own size, and the API rejects a buffer without it."
+        | b |
+        b := self new: 976.
+        b uint32At: 1 put: 976.
+        ^b
+    ]
 
     NOTIFYICONDATAW class >> _OffsetOf_cbSize [ ^0 ]
     NOTIFYICONDATAW class >> _OffsetOf_hWnd [ ^8 ]
@@ -36,14 +44,65 @@ ExternalMemory subclass: NOTIFYICONDATAW [
     uCallbackMessage: v [ ^self uint32At: 25 put: v ]
     hIcon [ ^self intptrAt: 33 ]
     hIcon: v [ ^self intptrAt: 33 put: v ]
-    "szTip: char[] at 40 — no accessor (width unknown); use byteAt: directly"
+    szTip [ "char[128] at 40"
+        | s i c |
+        s := WriteStream on: String new.
+        i := 40.
+        [ i < 296 and: [ (c := self uint16At: i + 1) ~= 0 ] ]
+            whileTrue: [ s nextPut: (Character value: c). i := i + 2 ].
+        ^s contents
+    ]
+    szTip: aString [
+        | i c |
+        i := 40.
+        1 to: ((aString size min: 127)) do: [ :k |
+            c := (aString at: k) value.
+            self uint16At: i + 1 put: c. i := i + 2 ].
+        self uint16At: i + 1 put: 0.
+        ^aString
+    ]
+    NOTIFYICONDATAW class >> _SpanOf_szTip [ ^256 ]
     dwState [ ^self uint32At: 297 ]
     dwState: v [ ^self uint32At: 297 put: v ]
     dwStateMask [ ^self uint32At: 301 ]
     dwStateMask: v [ ^self uint32At: 301 put: v ]
-    "szInfo: char[] at 304 — no accessor (width unknown); use byteAt: directly"
+    szInfo [ "char[256] at 304"
+        | s i c |
+        s := WriteStream on: String new.
+        i := 304.
+        [ i < 816 and: [ (c := self uint16At: i + 1) ~= 0 ] ]
+            whileTrue: [ s nextPut: (Character value: c). i := i + 2 ].
+        ^s contents
+    ]
+    szInfo: aString [
+        | i c |
+        i := 304.
+        1 to: ((aString size min: 255)) do: [ :k |
+            c := (aString at: k) value.
+            self uint16At: i + 1 put: c. i := i + 2 ].
+        self uint16At: i + 1 put: 0.
+        ^aString
+    ]
+    NOTIFYICONDATAW class >> _SpanOf_szInfo [ ^512 ]
     "anonymous: _Anonymous_e__Union at 816 — no accessor (width unknown); use byteAt: directly"
-    "szInfoTitle: char[] at 824 — no accessor (width unknown); use byteAt: directly"
+    szInfoTitle [ "char[64] at 824"
+        | s i c |
+        s := WriteStream on: String new.
+        i := 824.
+        [ i < 952 and: [ (c := self uint16At: i + 1) ~= 0 ] ]
+            whileTrue: [ s nextPut: (Character value: c). i := i + 2 ].
+        ^s contents
+    ]
+    szInfoTitle: aString [
+        | i c |
+        i := 824.
+        1 to: ((aString size min: 63)) do: [ :k |
+            c := (aString at: k) value.
+            self uint16At: i + 1 put: c. i := i + 2 ].
+        self uint16At: i + 1 put: 0.
+        ^aString
+    ]
+    NOTIFYICONDATAW class >> _SpanOf_szInfoTitle [ ^128 ]
     dwInfoFlags [ ^self uint32At: 953 ]
     dwInfoFlags: v [ ^self uint32At: 953 put: v ]
     "guidItem: System.Guid at 960 — no accessor (width unknown); use byteAt: directly"

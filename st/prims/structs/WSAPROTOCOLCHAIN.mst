@@ -2,16 +2,17 @@
  winkb (Win32Metadata), not computed here. Do not hand-edit."
 
 ExternalMemory subclass: WSAPROTOCOLCHAIN [
-    WSAPROTOCOLCHAIN class >> sizeInBytes [ ^12 ]
-    WSAPROTOCOLCHAIN class >> byteSize [ ^12 ]
-    byteSize [ ^12 ]
-    WSAPROTOCOLCHAIN class >> new [ ^self new: 12 ]
+    WSAPROTOCOLCHAIN class >> sizeInBytes [ ^32 ]
+    WSAPROTOCOLCHAIN class >> byteSize [ ^32 ]
+    byteSize [ ^32 ]
+    WSAPROTOCOLCHAIN class >> new [ ^self new: 32 ]
 
     WSAPROTOCOLCHAIN class >> _OffsetOf_ChainLen [ ^0 ]
     WSAPROTOCOLCHAIN class >> _OffsetOf_ChainEntries [ ^4 ]
-    WSAPROTOCOLCHAIN class >> _WSAPROTOCOLCHAIN_Size [ ^12 ]
+    WSAPROTOCOLCHAIN class >> _WSAPROTOCOLCHAIN_Size [ ^32 ]
 
     chainLen [ ^self int32At: 1 ]
     chainLen: v [ ^self int32At: 1 put: v ]
-    "chainEntries: u32[] at 4 — no accessor (width unknown); use byteAt: directly"
+    "chainEntries: u32[] at 4, 28 bytes — element width unknown; use byteAt: directly"
+    WSAPROTOCOLCHAIN class >> _SpanOf_ChainEntries [ ^28 ]
 ]

@@ -27,7 +27,7 @@ ExternalMemory subclass: HTTP_RESPONSE_V1 [
     reasonLength: v [ ^self uint16At: 11 put: v ]
     pReason [ ^self intptrAt: 17 ]
     pReason: v [ ^self intptrAt: 17 put: v ]
-    headers [ ^HTTP_RESPONSE_HEADERS viewOn: self at: 24 size: 40 ]
+    headers [ ^HTTP_RESPONSE_HEADERS viewOn: self at: 24 size: 512 ]
     entityChunkCount [ ^self uint16At: 537 ]
     entityChunkCount: v [ ^self uint16At: 537 put: v ]
     "pEntityChunks: Windows.Win32.Networking.HttpServer.HTTP_DATA_CHUNK* at 544 — no accessor (width unknown); use byteAt: directly"

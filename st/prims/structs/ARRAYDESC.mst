@@ -2,18 +2,19 @@
  winkb (Win32Metadata), not computed here. Do not hand-edit."
 
 ExternalMemory subclass: ARRAYDESC [
-    ARRAYDESC class >> sizeInBytes [ ^28 ]
-    ARRAYDESC class >> byteSize [ ^28 ]
-    byteSize [ ^28 ]
-    ARRAYDESC class >> new [ ^self new: 28 ]
+    ARRAYDESC class >> sizeInBytes [ ^32 ]
+    ARRAYDESC class >> byteSize [ ^32 ]
+    byteSize [ ^32 ]
+    ARRAYDESC class >> new [ ^self new: 32 ]
 
     ARRAYDESC class >> _OffsetOf_tdescElem [ ^0 ]
     ARRAYDESC class >> _OffsetOf_cDims [ ^16 ]
     ARRAYDESC class >> _OffsetOf_rgbounds [ ^20 ]
-    ARRAYDESC class >> _ARRAYDESC_Size [ ^28 ]
+    ARRAYDESC class >> _ARRAYDESC_Size [ ^32 ]
 
-    tdescElem [ ^TYPEDESC viewOn: self at: 0 size: 10 ]
+    tdescElem [ ^TYPEDESC viewOn: self at: 0 size: 16 ]
     cDims [ ^self uint16At: 17 ]
     cDims: v [ ^self uint16At: 17 put: v ]
-    "rgbounds: Windows.Win32.System.Com.SAFEARRAYBOUND[] at 20 — no accessor (width unknown); use byteAt: directly"
+    "rgbounds: Windows.Win32.System.Com.SAFEARRAYBOUND[] at 20, 12 bytes — element width unknown; use byteAt: directly"
+    ARRAYDESC class >> _SpanOf_rgbounds [ ^12 ]
 ]

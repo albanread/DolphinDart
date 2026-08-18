@@ -2,18 +2,19 @@
  winkb (Win32Metadata), not computed here. Do not hand-edit."
 
 ENHMETARECORD subclass: EMRGLSRECORD [
-    EMRGLSRECORD class >> sizeInBytes [ ^20 ]
-    EMRGLSRECORD class >> byteSize [ ^20 ]
-    byteSize [ ^20 ]
-    EMRGLSRECORD class >> new [ ^self new: 20 ]
+    EMRGLSRECORD class >> sizeInBytes [ ^16 ]
+    EMRGLSRECORD class >> byteSize [ ^16 ]
+    byteSize [ ^16 ]
+    EMRGLSRECORD class >> new [ ^self new: 16 ]
 
     EMRGLSRECORD class >> _OffsetOf_emr [ ^0 ]
     EMRGLSRECORD class >> _OffsetOf_cbData [ ^8 ]
     EMRGLSRECORD class >> _OffsetOf_Data [ ^12 ]
-    EMRGLSRECORD class >> _EMRGLSRECORD_Size [ ^20 ]
+    EMRGLSRECORD class >> _EMRGLSRECORD_Size [ ^16 ]
 
     emr [ ^EMR viewOn: self at: 0 size: 8 ]
     cbData [ ^self uint32At: 9 ]
     cbData: v [ ^self uint32At: 9 put: v ]
-    "data: u8[] at 12 — no accessor (width unknown); use byteAt: directly"
+    "data: u8[] at 12, 4 bytes — element width unknown; use byteAt: directly"
+    EMRGLSRECORD class >> _SpanOf_Data [ ^4 ]
 ]
