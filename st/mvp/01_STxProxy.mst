@@ -1,0 +1,11 @@
+Object subclass: STxProxy [
+    stbFixup: inFiler at: anInteger [
+        "Answer the object that this one represents.
+        	As we use become to change the receiver's identity no fixups are required."
+        ^self become: self value
+    ]
+    STxProxy class >> new [
+        "Private - Use specialized instance creation methods"
+        ^self shouldNotImplement
+    ]
+]

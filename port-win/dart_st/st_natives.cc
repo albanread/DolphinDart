@@ -556,6 +556,28 @@ static void STSendCommon(Dart_NativeArguments args, bool probe) {
       if (sn >= 4 && base.compare(sn - 4, 4, " ext") == 0) base.erase(sn - 4);
       fn ^= LookupClassSideMethod(thread, zone, base, sel);
     }
+    // `Object>>value ^self`, ON THE DYNAMIC PATH TOO.
+    //
+    // Dolphin's `Core.Object` defines `value`, so EVERY object is a niladic
+    // valuable and `at: k ifAbsent: #error` is legal code — the absent
+    // handler is a Symbol and `at:ifAbsent:` sends `value` to it.
+    // `View>>wmSetCursor:wParam:lParam:` does exactly that.
+    //
+    // The IL builder rewrites most `value` sends to `stValue0`, whose slow
+    // path already implements this. But a send that arrives HERE — dispatched
+    // dynamically rather than through the helper — had no such fallback, so
+    // the same expression worked or failed depending on how it was compiled.
+    // Surfaced when the STB filer proxies were translated: they define
+    // `value`, which changed how some call sites lower, and five contained
+    // `_OneByteString has no method 'value'` errors appeared in a gate that
+    // had been green.
+    //
+    // Narrow on purpose: only the ZERO-ARGUMENT `value`, and only after
+    // lookup has genuinely missed, so any real implementation still wins.
+    if (fn.IsNull() && n == 0 && selector == "value") {
+      Dart_SetReturnValue(args, Api::NewHandle(thread, recv.raw()));
+      return;
+    }
     if (fn.IsNull()) {
       if (!probe) {
         // Name the receiver the way a Smalltalk programmer would (ported from

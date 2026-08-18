@@ -1,0 +1,36 @@
+STxProxy subclass: STBSingletonProxy [
+    | class selector |
+
+    class: aClass [
+        "Set the receiver's class inst var."
+        class := aClass
+    ]
+    selector: aSymbol [
+        "Set the receiver's selector inst var."
+        selector := aSymbol
+    ]
+    stbFixup: inFiler at: anInteger [
+        "Answer the object that this one represents.
+        	We must not use #become: to swap the receiver with the represented
+        	object. We need to tell inFiler to replace its readMap entry for our answer."
+        | anObject |
+        	anObject := class perform: selector.
+        	inFiler fixup: anInteger to: anObject.
+        	^anObject
+    ]
+    STBSingletonProxy class >> forClass: aClass [
+        "Answers an instance of the receiver that represents the singleton class, aClass.
+        	It is assumed that aClass will exist in the destination image and #current will
+        	be sent to it to yield the appropriate singleton instance"
+        ^self forClass: aClass using: #current
+    ]
+    STBSingletonProxy class >> forClass: aClass using: aSelectorSymbol [
+        "Answers an instance of the receiver that represents the singleton class, aClass.
+        	It is assumed that aClass will exist in the destination image and aSelectorSymbol will
+        	be sent to it to yield the appropriate singleton instance"
+        ^(self basicNew)
+        		class: aClass;
+        		selector: aSelectorSymbol;
+        		yourself
+    ]
+]

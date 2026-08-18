@@ -1,0 +1,22 @@
+STxProxy subclass: STBStaticVariableProxy [
+    | reference |
+
+    reference: aBindingReference [
+        	reference := aBindingReference.
+        	^self
+    ]
+    stbFixup: aSTxInFiler at: anInteger [
+        "Answer the value of the static variable that this proxy represents.
+        	We must not use #become: to swap the receiver with the represented variable value. We need to tell the in-filer to replace its readMap entry for the resolved value."
+        | anObject |
+        	anObject := self value.
+        	aSTxInFiler fixup: anInteger to: anObject.
+        	^anObject
+    ]
+    value [
+        	^reference value
+    ]
+    STBStaticVariableProxy class >> reference: aBindingReference [
+        	^self basicNew reference: aBindingReference
+    ]
+]

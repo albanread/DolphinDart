@@ -372,6 +372,41 @@ TARGETS = [
     "Core/Object Arts/Dolphin/MVP/Views/Cards/UI.CardContainer.cls",
     "Core/Object Arts/Dolphin/MVP/Views/Sliding Tray/UI.SlidingCardTray.cls",
     "Core/Object Arts/Dolphin/MVP/Views/Sliding Tray/UI.SlideyInneyOuteyThing.cls",
+
+    # ── DD14: THE VIEW-RESOURCE READER ───────────────────────────────────
+    #
+    # `View>>loadViewResource:withContext:forEdit:` is the whole mechanism:
+    #
+    #     filer := aResourceArray stbInFiler.
+    #     child := filer isUpgrading: ...; context: ...; basicNext.
+    #     [filer evaluateDeferredActions] ifCurtailed: [child destroy].
+    #     ^child
+    #
+    # `resource_Default_view` answers a literal array beginning `#'!STL' 6`,
+    # so the reader is the LITERAL filer (`STLInFiler`) over the shared
+    # `STxInFiler` protocol, with proxies standing in for classes,
+    # collections and views inside the graph.
+    #
+    # 55KB of Smalltalk that unlocks 654 `resource_*` methods across 217
+    # classes. Everything hand-built until now is a view this would have
+    # supplied.
+    "Core/Object Arts/Dolphin/System/Filer/Kernel.STxFiler.cls",
+    "Core/Object Arts/Dolphin/System/Filer/Kernel.STxInFiler.cls",
+    "Core/Object Arts/Dolphin/System/Filer/Kernel.STxProxy.cls",
+    "Core/Object Arts/Dolphin/System/Filer/Kernel.STLInFiler.cls",
+    "Core/Object Arts/Dolphin/System/Filer/Kernel.STBInFiler.cls",
+    "Core/Object Arts/Dolphin/System/Filer/Kernel.STBClassProxy.cls",
+    "Core/Object Arts/Dolphin/System/Filer/Kernel.STBMetaclassProxy.cls",
+    "Core/Object Arts/Dolphin/System/Filer/Kernel.STBCollectionProxy.cls",
+    "Core/Object Arts/Dolphin/System/Filer/Kernel.STBIdentityDictionaryProxy.cls",
+    "Core/Object Arts/Dolphin/System/Filer/Kernel.STBSingletonProxy.cls",
+    "Core/Object Arts/Dolphin/System/Filer/Kernel.STBSortedCollectionProxy.cls",
+    "Core/Object Arts/Dolphin/System/Filer/Kernel.STBStaticVariableProxy.cls",
+    "Core/Object Arts/Dolphin/System/Filer/Kernel.STBError.cls",
+    "Core/Object Arts/Dolphin/System/Filer/Kernel.RestrictedClassLocator.cls",
+    # The view's own proxy, and the identifier that names a resource.
+    "Core/Object Arts/Dolphin/MVP/Base/UI.STBViewProxy.cls",
+    "Core/Object Arts/Dolphin/Base/UI.ResourceIdentifier.cls",
     # Clipboard paste is a goal-gate item; the class is a thin wrapper over
     # User32 clipboard calls the generated floor already has.
     "Core/Object Arts/Dolphin/MVP/Base/UI.Clipboard.cls",

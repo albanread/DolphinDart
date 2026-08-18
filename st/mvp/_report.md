@@ -1,22 +1,22 @@
 # dolphin2mst run report
 
-- inputs: **136** source files (`.cls` + `.pax`)
-- shared-pool constants available: **7869** from **212** pools
-- loose methods adopted from `.pax`: **1**
-- parsed: **136**  (unbalanced/skipped: 0)
-- emitted: **137** `.mst`
-- methods: **5331**
-- refusals: **278**
+- inputs: **152** source files (`.cls` + `.pax`)
+- shared-pool constants available: **7887** from **214** pools
+- loose methods adopted from `.pax`: **7**
+- parsed: **152**  (unbalanced/skipped: 0)
+- emitted: **153** `.mst`
+- methods: **5577**
+- refusals: **293**
 
 ## Refusals by rewrite class
 
 | Rewrite | Count |
 |---|--:|
-| `hashhash` | 134 |
-| `cascade` | 61 |
-| `binding-literal` | 41 |
+| `hashhash` | 142 |
+| `cascade` | 65 |
+| `binding-literal` | 45 |
 | `pragma` | 29 |
-| `orphan-loose-methods` | 10 |
+| `orphan-loose-methods` | 9 |
 | `qq` | 3 |
 
 ## Per class
@@ -113,7 +113,23 @@
 | `RadioButton` | 1 | 0 |
 | `Rectangle` | 98 | 2 |
 | `ReferenceView` | 17 | 3 |
+| `ResourceIdentifier` | 44 | 2 |
 | `ResourceLibrary` | 18 | 0 |
+| `RestrictedClassLocator` | 10 | 0 |
+| `STBClassProxy` | 11 | 1 |
+| `STBCollectionProxy` | 6 | 0 |
+| `STBError` | 1 | 0 |
+| `STBIdentityDictionaryProxy` | 3 | 0 |
+| `STBInFiler` | 18 | 7 |
+| `STBMetaclassProxy` | 2 | 1 |
+| `STBSingletonProxy` | 5 | 1 |
+| `STBSortedCollectionProxy` | 9 | 1 |
+| `STBStaticVariableProxy` | 4 | 0 |
+| `STBViewProxy` | 32 | 3 |
+| `STLInFiler` | 22 | 0 |
+| `STxFiler` | 24 | 0 |
+| `STxInFiler` | 53 | 0 |
+| `STxProxy` | 2 | 0 |
 | `ScrollEvent` | 16 | 1 |
 | `SelectionChangeEvent` | 12 | 0 |
 | `SelectionChangingEvent` | 5 | 0 |

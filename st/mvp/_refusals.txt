@@ -1,4 +1,6 @@
 C:\projects\dsfork\Core\Object Arts\Dolphin\Base\Core.Model.cls:85: [cascade] cascade on a receiver this rewriter cannot bound — splitting it could change evaluation
+C:\projects\dsfork\Core\Object Arts\Dolphin\Base\UI.ResourceIdentifier.cls:184: [cascade] cascade on a receiver this rewriter cannot bound — splitting it could change evaluation
+C:\projects\dsfork\Core\Object Arts\Dolphin\Base\UI.ResourceIdentifier.cls:4735: [binding-literal] `#{...}` variable-binding literal has no house equivalent
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\Graphics.Rectangle.cls:666: [cascade] cascade on a receiver this rewriter cannot bound — splitting it could change evaluation
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\Graphics.Rectangle.cls:696: [binding-literal] `#{...}` variable-binding literal has no house equivalent
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.Clipboard.cls:352: [hashhash] `##(self)` folded to a runtime block
@@ -36,6 +38,9 @@ C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.Presenter.cls:1132: [bin
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.ReferenceView.cls:45: [hashhash] `##(self indexOfInstVar: 'referee')` folded to a runtime block
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.ReferenceView.cls:161: [hashhash] `##(self)` folded to a runtime block
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.ReferenceView.cls:189: [binding-literal] `#{...}` variable-binding literal has no house equivalent
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.STBViewProxy.cls:133: [hashhash] `##((1024 bitOr: 1) bitInvert)` folded to a runtime block
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.STBViewProxy.cls:256: [cascade] cascade on a receiver this rewriter cannot bound — splitting it could change evaluation
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.STBViewProxy.cls:278: [hashhash] `##(96 @ 96)` folded to a runtime block
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.ScrollEvent.cls:69: [cascade] cascade on a receiver this rewriter cannot bound — splitting it could change evaluation
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.Shell.cls:292: [hashhash] `##(self)` folded to a runtime block
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.Shell.cls:300: [binding-literal] `#{...}` variable-binding literal has no house equivalent
@@ -285,6 +290,17 @@ C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Splitter\UI.Splitter.cls:2
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Splitter\UI.Splitter.cls:244: [binding-literal] `#{...}` variable-binding literal has no house equivalent
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Splitter\UI.Splitter.cls:254: [hashhash] `##(Color brightness: 225 / 255)` folded to a runtime block
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Static\Rectangle\UI.StaticRectangle.cls:84: [binding-literal] `#{...}` variable-binding literal has no house equivalent
+C:\projects\dsfork\Core\Object Arts\Dolphin\System\Filer\Kernel.STBClassProxy.cls:66: [binding-literal] `#{...}` variable-binding literal has no house equivalent
+C:\projects\dsfork\Core\Object Arts\Dolphin\System\Filer\Kernel.STBInFiler.cls:155: [hashhash] `##(Signature size)` folded to a runtime block
+C:\projects\dsfork\Core\Object Arts\Dolphin\System\Filer\Kernel.STBInFiler.cls:163: [binding-literal] `#{...}` variable-binding literal has no house equivalent
+C:\projects\dsfork\Core\Object Arts\Dolphin\System\Filer\Kernel.STBInFiler.cls:185: [hashhash] `##($0 asciiValue)` folded to a runtime block
+C:\projects\dsfork\Core\Object Arts\Dolphin\System\Filer\Kernel.STBInFiler.cls:185: [hashhash] `##($0 asciiValue)` folded to a runtime block
+C:\projects\dsfork\Core\Object Arts\Dolphin\System\Filer\Kernel.STBInFiler.cls:185: [hashhash] `##($9 asciiValue)` folded to a runtime block
+C:\projects\dsfork\Core\Object Arts\Dolphin\System\Filer\Kernel.STBInFiler.cls:185: [hashhash] `##($0 asciiValue)` folded to a runtime block
+C:\projects\dsfork\Core\Object Arts\Dolphin\System\Filer\Kernel.STBInFiler.cls:185: [hashhash] `##(Character space asciiValue)` folded to a runtime block
+C:\projects\dsfork\Core\Object Arts\Dolphin\System\Filer\Kernel.STBMetaclassProxy.cls:28: [binding-literal] `#{...}` variable-binding literal has no house equivalent
+C:\projects\dsfork\Core\Object Arts\Dolphin\System\Filer\Kernel.STBSingletonProxy.cls:54: [cascade] cascade on a receiver this rewriter cannot bound — splitting it could change evaluation
+C:\projects\dsfork\Core\Object Arts\Dolphin\System\Filer\Kernel.STBSortedCollectionProxy.cls:41: [cascade] cascade on a receiver this rewriter cannot bound — splitting it could change evaluation
 loose:2633: [hashhash] `##(self defaultIcon)` folded to a runtime block
 Core.Error: [orphan-loose-methods] 1 loose method(s) filed onto 'Core.Error', which was not translated
 Core.MessageSend: [orphan-loose-methods] 1 loose method(s) filed onto 'Core.MessageSend', which was not translated
@@ -295,4 +311,3 @@ Core.Warning: [orphan-loose-methods] 1 loose method(s) filed onto 'Core.Warning'
 Graphics.Bitmap: [orphan-loose-methods] 1 loose method(s) filed onto 'Graphics.Bitmap', which was not translated
 OS.CommCtrlLibrary: [orphan-loose-methods] 1 loose method(s) filed onto 'OS.CommCtrlLibrary', which was not translated
 OS.KernelLibrary: [orphan-loose-methods] 1 loose method(s) filed onto 'OS.KernelLibrary', which was not translated
-UI.ResourceIdentifier: [orphan-loose-methods] 6 loose method(s) filed onto 'UI.ResourceIdentifier', which was not translated
