@@ -282,6 +282,14 @@ def main(argv):
     for sub, kind in (("icons", "ico"), ("cursors", "cur"), ("bitmaps", "bmp")):
         os.makedirs(os.path.join(args.out, sub), exist_ok=True)
     _write_licence(args.out, args.dll, len(icons), len(cursors), len(bitmaps))
+    # THE MANIFEST IS NOT OPTIONAL. A resource NAME cannot be recovered from
+    # the filename it was written to: `CLASSBROWSERSHELL.ICO` is a name that
+    # ends in `.ICO`, while `!APPLICATION` is a name with no extension that
+    # had `.ico` appended to make a usable filename. Stripping the extension
+    # to rebuild the .rc got the first kind wrong, and every FindResource for
+    # it missed with ERROR_RESOURCE_NAME_NOT_FOUND while the resources were
+    # demonstrably in the DLL. So the mapping is RECORDED here.
+    manifest = []
     for n in icons:
         blob = res.data(RT_GROUP_ICON, n)
         data = build_icon_file(res, blob, False) if blob else None
@@ -290,6 +298,7 @@ def main(argv):
             if not fn.lower().endswith(".ico"):
                 fn += ".ico"
             open(fn, "wb").write(data)
+            manifest.append(("ICON", n, os.path.relpath(fn, args.out)))
             written += 1
     for n in cursors:
         blob = res.data(RT_GROUP_CURSOR, n)
@@ -299,6 +308,7 @@ def main(argv):
             if not fn.lower().endswith(".cur"):
                 fn += ".cur"
             open(fn, "wb").write(data)
+            manifest.append(("CURSOR", n, os.path.relpath(fn, args.out)))
             written += 1
     for n in bitmaps:
         blob = res.data(RT_BITMAP, n)
@@ -308,8 +318,15 @@ def main(argv):
             if not fn.lower().endswith(".bmp"):
                 fn += ".bmp"
             open(fn, "wb").write(data)
+            manifest.append(("BITMAP", n, os.path.relpath(fn, args.out)))
             written += 1
-    print("\n  wrote %d file(s) to %s" % (written, args.out))
+
+    with open(os.path.join(args.out, "MANIFEST.tsv"), "w",
+              encoding="utf-8", newline="\n") as fh:
+        fh.write("# type\tresource name (VERBATIM)\tfile\n")
+        for kind, name, rel in manifest:
+            fh.write("%s\t%s\t%s\n" % (kind, name, rel.replace(os.sep, "/")))
+    print("\n  wrote %d file(s) + MANIFEST.tsv to %s" % (written, args.out))
     return 0
 
 

@@ -1170,3 +1170,56 @@ coming back as an unsigned pseudo-handle that `fromHandle:` cannot map
 (`Awarenesses lookup: anInteger asInteger negated` wants -1..-5). Unresolved;
 recorded because every coordinate in the port is wrong by a factor of 1.5
 until it is, and nothing currently notices.
+
+---
+
+## Oracle cost, and Dolphin's artwork on ARM64
+
+**The oracle was slow for a stupid reason, and it is now fast.** A 387-
+expression sweep ran as ONE Dolphin invocation with a 900s budget, so a single
+hang cost the entire batch and there was no partial credit — the results file
+is only flushed on `close`. `ask()` now chunks (25 per run, 60s each), flushes
+per line so a killed chunk keeps the answers it already computed, and kills
+the process on timeout rather than waiting on it. The full struct sweep went
+from over an hour to **9.3 seconds**, same results.
+
+Worth recording because it was the opposite of the suspicion: Dolphin starts
+and evaluates in about a third of a second — `(1 to: 8000000) inject: 0 into:`
+answers correctly in 1.2s wall including image start. The cost was never
+per-run; it was running the whole thing repeatedly with no way to salvage a
+partial answer.
+
+**Dolphin's artwork now loads through Dolphin's own mechanism.** 295 icons and
+5 bitmaps, extracted from `DolphinDR8.dll` (they are not in the source repo —
+`git ls-files Core/DolphinVM/Res` answers four files, none of them images),
+rebuilt into an **ARM64** `DolphinDR8.dll` by `tools/build_resources.py`.
+`LoadImage` against it returns real HICONs for every name, and all 300
+resources extracted back out are byte-identical to the files they were built
+from.
+
+The name is kept on purpose: `SessionManager>>defaultResLibPath` answers
+`'DolphinDR8'`, so an identically-named library means the corpus's own
+`Image class >> fromId:` path resolves with no override to maintain.
+
+Three things cost a build each, all now in the tools:
+
+  * A resource NAME cannot be recovered from its filename. `!APPLICATION` has
+    no extension and had `.ico` appended; `CLASSBROWSERSHELL.ICO` is a name
+    that ENDS in `.ICO`. Stripping the extension to guess broke the second
+    kind, and `FindResource` missed while the resources were plainly in the
+    DLL. `MANIFEST.tsv` records the mapping at extraction time.
+  * Resource names in a `.rc` are written BARE. Quoted, rc.exe keeps the
+    quotes as part of the name — ours enumerated as `'"HEADERPIN.BMP"'` where
+    Object Arts' enumerated as `'HEADERPIN.BMP'`. Dolphin's own `devres.rc`
+    shows the form.
+  * `/NOENTRY`, because a resource-only DLL has no code.
+
+Incidentally measured and worth knowing: Object Arts' 32-bit DLL DOES serve
+resources to an ARM64 process — resources are architecture-neutral data, and
+`LoadImage` against it returns valid handles. Shipping theirs would work. Ours
+is built anyway so the asset path carries no foreign-architecture dependency.
+
+NOT YET WIRED. The DLL exists and is verified from outside the image; nothing
+in `st/` loads it yet. `External.ResourceLibrary` and `Image class >> fromId:`
+still need porting, which is what `ShellView new create` raising `defaultIcon`
+is waiting on, and LOOSE_ENDS 3.20 (no per-row icons) with it.

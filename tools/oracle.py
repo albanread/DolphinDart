@@ -45,6 +45,7 @@ from __future__ import annotations
 import os
 import subprocess
 import sys
+import time
 import tempfile
 from typing import List, Optional
 
@@ -76,7 +77,11 @@ exprs keysAndValuesDo: [ :i :each |
         out nextPutAll: i printString.
         out nextPut: Character tab.
         out nextPutAll: (r copyReplaceAll: (String with: lf) with: ' | ').
-        out nextPut: lf ] ].
+        out nextPut: lf.
+        "Flushed PER LINE: if this run is killed on a timeout, the
+         answers already computed survive. Buffering to `close`
+         means a hang on expression 20 discards the first 19."
+        out flush ] ].
 out close!
 """
 
@@ -85,16 +90,46 @@ def _strip_bom(s: str) -> str:
     return s[1:] if s.startswith("\ufeff") else s
 
 
-def ask(exprs: List[str], timeout: int = 180) -> List[Optional[str]]:
+def ask(exprs: List[str], timeout: int = 60, batch: int = 25,
+        verbose: bool = True) -> List[Optional[str]]:
     """Evaluate each expression in real Dolphin 8; answer the printStrings.
 
     The answer is positional and the same length as `exprs`. An entry is None
-    only if the image never reported that line at all — which means the run
-    died partway, not that the expression answered nothing.
+    only if the image never reported that line at all.
+
+    CHUNKED, AND SMALL BY DEFAULT. One 387-expression run took over an hour
+    and, worse, a single hang inside it costs the whole batch — there is no
+    partial credit from a chunk file that never closed. So the work is split
+    into `batch`-sized runs, each with its own `timeout`, and a chunk that
+    times out loses only its own expressions: they come back None, the run
+    says so, and the remaining chunks still execute.
+
+    The image start-up dominates a small batch (a second or two), so batches
+    below ~10 are wasteful and batches above ~50 put too much at risk. 25 is
+    the default for that reason, not by measurement of an optimum.
     """
     if not os.path.exists(EXE):
         raise RuntimeError(
             "no Dolphin oracle at %s — see tools/oracle.py header" % EXE)
+    if len(exprs) > batch:
+        out: List[Optional[str]] = []
+        n = (len(exprs) + batch - 1) // batch
+        for i in range(0, len(exprs), batch):
+            part = exprs[i:i + batch]
+            if verbose:
+                sys.stderr.write("  oracle chunk %d/%d (%d exprs) ... "
+                                 % (i // batch + 1, n, len(part)))
+                sys.stderr.flush()
+            t0 = time.time()
+            got = ask(part, timeout=timeout, batch=batch, verbose=False)
+            if verbose:
+                miss = sum(1 for g in got if g is None)
+                sys.stderr.write("%.1fs%s\n" % (
+                    time.time() - t0,
+                    "  [%d NO ANSWER]" % miss if miss else ""))
+                sys.stderr.flush()
+            out.extend(got)
+        return out
     work = tempfile.mkdtemp(prefix="oracle_", dir=ORACLE_DIR)
     exprs_path = os.path.join(work, "exprs.txt")
     results_path = os.path.join(work, "results.txt")
@@ -103,17 +138,27 @@ def ask(exprs: List[str], timeout: int = 180) -> List[Optional[str]]:
     # would ride along into the expression and break the compile.
     with open(exprs_path, "w", encoding="utf-8", newline="\n") as fh:
         fh.write("\n".join(e.replace("\n", " ") for e in exprs) + "\n")
-    with open(script_path, "w", encoding="utf-8", newline="\n") as fh:
-        fh.write(RUNNER % {"exprs": exprs_path.replace("\\", "\\\\"),
-                           "results": results_path.replace("\\", "\\\\")})
-    # Chunk-file paths inside Smalltalk string literals: a single backslash is
-    # literal in Smalltalk, so undo the escaping done above.
+    # Paths go into SMALLTALK STRING LITERALS, where a backslash is an
+    # ordinary character — no escaping, unlike the C-family languages either
+    # side of this file.
     with open(script_path, "w", encoding="utf-8", newline="\n") as fh:
         fh.write(RUNNER % {"exprs": exprs_path, "results": results_path})
 
-    subprocess.run([EXE, IMAGE, "-u", "-q", "-f", script_path, "-x"],
-                   cwd=ORACLE_DIR, timeout=timeout,
-                   stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    # A HUNG IMAGE MUST NOT HANG THE CALLER. `-u` suppresses the error dialog
+    # but not every way a GUI process can decide to wait, so the timeout is
+    # enforced here and the process is killed rather than waited on. Whatever
+    # the script managed to write before the kill is still read below — the
+    # results file is appended line by line, so a partial chunk yields
+    # partial answers instead of none.
+    try:
+        subprocess.run([EXE, IMAGE, "-u", "-q", "-f", script_path, "-x"],
+                       cwd=ORACLE_DIR, timeout=timeout,
+                       stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    except subprocess.TimeoutExpired:
+        sys.stderr.write("  oracle: TIMEOUT after %ds — killing, keeping "
+                         "whatever was written\n" % timeout)
+        subprocess.call(["taskkill", "/F", "/IM", "Dolphin8.exe"],
+                        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
     out: List[Optional[str]] = [None] * len(exprs)
     if os.path.exists(results_path):
@@ -128,6 +173,13 @@ def ask(exprs: List[str], timeout: int = 180) -> List[Optional[str]]:
                     continue
                 if 0 <= i < len(out):
                     out[i] = val
+    # One temp dir per chunk, and chunking multiplied them — clean up rather
+    # than leave the oracle directory filling with them run after run.
+    try:
+        import shutil
+        shutil.rmtree(work, ignore_errors=True)
+    except Exception:
+        pass
     return out
 
 
