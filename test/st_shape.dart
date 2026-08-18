@@ -1,5 +1,5 @@
-// Scratch probe: the icon-title-font path, newly reachable now that
-// LOGFONTW is its true 92 bytes and SystemParametersInfoForDpi succeeds.
+// Scratch probe: the resource/icon chain, end to end.
+//   Icon fromId: 'ShellView.ico'  ->  defaultResourceLibrary  ->  LoadImage
 import 'dart:cocoa';
 import 'dart:io';
 
@@ -16,7 +16,7 @@ String evb(String body) {
   try { return stClassSend0(stClassNamed(cls), 'v').toString(); }
   catch (e) { return 'THREW: ' + e.toString().replaceAll('\n', ' | '); }
 }
-void p(String l, String b) => print(('  ' + l).padRight(34) + '-> ' + evb(b));
+void p(String l, String b) => print(('  ' + l).padRight(36) + '-> ' + evb(b));
 
 main(List<String> a) {
   for (var g in a) { for (var d in g.split(';')) {
@@ -28,19 +28,32 @@ main(List<String> a) {
   stRun('DolphinBoot initializeViewClasses.');
   stRun('UiSession startUp.');
 
-  p('LOGFONTW sizeInBytes', 'LOGFONTW sizeInBytes printString');
-  p('SystemMetrics current', 'SystemMetrics current class name');
-  p('getSysParamForDpi 31', "| m | m := SystemMetrics current. "
-      "(m getSysParamForDpi: 31 type: LOGFONTW ifError: [ 'ERR' ]) printString");
-  p('  its class', "| m r | m := SystemMetrics current. "
-      "r := m getSysParamForDpi: 31 type: LOGFONTW ifError: [ nil ]. r class name");
-  p('  beImmutableObject', "| m r | m := SystemMetrics current. "
-      "r := m getSysParamForDpi: 31 type: LOGFONTW ifError: [ nil ]. "
-      "r beImmutableObject class name");
-  p('Font fromLogFont:dpi:', "| m r | m := SystemMetrics current. "
-      "r := m getSysParamForDpi: 31 type: LOGFONTW ifError: [ nil ]. "
-      "(Font fromLogFont: r dpi: 96) class name");
-  p('getIconTitleFont', 'SystemMetrics current getIconTitleFont class name');
-  p('Font system', 'Font system class name');
+  // The classes themselves.
+  p('ResourceLibrary', 'ResourceLibrary name');
+  p('ImageFromResourceInitializer', 'ImageFromResourceInitializer name');
+  p('Icon', 'Icon name');
+
+  // The raw Win32 path first: if THIS fails the DLL or prims are wrong,
+  // not the image-side plumbing.
+  p('loadLibraryEx our DLL',
+    "(Kernel32 loadLibraryEx: (Utf16Buffer fromString: "
+    "'C:\\projects\\DolphinDart\\resources\\DolphinDR8.dll') "
+    "hFile: 0 dwFlags: 0) printString");
+  p('loadImage from it',
+    "| h n | h := Kernel32 loadLibraryEx: (Utf16Buffer fromString: "
+    "'C:\\projects\\DolphinDart\\resources\\DolphinDR8.dll') hFile: 0 dwFlags: 0. "
+    "n := Utf16Buffer fromString: 'ShellView.ico'. "
+    "(User32 loadImage: h lpszName: n uType: 1 cxDesired: 0 cyDesired: 0 "
+    "fuLoad: 16r8040) printString");
+
+  // Then Dolphin's own plumbing.
+  p('SessionManager current', 'SessionManager classVarCurrent class name');
+  p('defaultResLibPath', 'SessionManager classVarCurrent defaultResLibPath');
+  p('defaultResourceLibrary', 'SessionManager classVarCurrent defaultResourceLibrary printString');
+  p('ResourceLibrary open:', "(ResourceLibrary open: 'DolphinDR8') printString");
+  p('Icon fromId:', "(Icon fromId: 'ShellView.ico') printString");
+  p('  its handle', "(Icon fromId: 'ShellView.ico') handle printString");
+  p('ShellView defaultIcon', 'ShellView defaultIcon printString');
+  p('ShellView icon', 'ShellView icon printString');
   exit(0);
 }

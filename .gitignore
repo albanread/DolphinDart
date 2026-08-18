@@ -27,3 +27,9 @@ __pycache__/
 
 # transient build logs
 *.log
+
+# Resource build intermediate. `DolphinDR8.res` is 15MB of rc.exe output that
+# is fully reproduced from `resources/icons` + `MANIFEST.tsv` by
+# `tools/build_resources.py`. The .dll IS tracked, because the image loads it
+# at runtime and building it needs the Windows SDK.
+resources/*.res

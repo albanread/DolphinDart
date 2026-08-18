@@ -27,6 +27,18 @@ ShellView subclass: ClassBrowserShell [
     ClassBrowserShell class >> routeDolphinMessages [ ^UiSession routeMessagesFrom: View ]
 
     build [
+        "THE WINDOW'S ICON, from Dolphin's own artwork. `Icon fromId:` resolves
+         'ClassBrowserShell.ico' through `SessionManager defaultResourceLibrary`
+         -> `resources/DolphinDR8.dll`, this port's ARM64 rebuild of Dolphin's
+         resource DLL carrying the same 295 icons under the same names. It is
+         the icon Dolphin's own class browser wears.
+
+         `updateIcons` is Dolphin's — it scales each to the metrics' large and
+         small extents and sends WM_SETICON for both, then holds on to them so
+         Windows is never left pointing at a collected handle."
+        self largeIcon: (Icon fromId: 'ClassBrowserShell.ico').
+        self smallIcon: (Icon fromId: 'ClassBrowserShell.ico').
+
         tree := TreeView new.
         tree parentView: self.
         tree preferredExtent: 260 @ 400.

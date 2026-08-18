@@ -152,13 +152,29 @@ TARGETS = [
     # ListView's `applyImageLists` asks for a system cursor.
     #
     # `ImageInitializer` is the abstract parent; the three below are the ones
-    # the stock-image constructors reach. The bitmap and file/resource
-    # initializers are NOT taken: nothing constructed in this port loads an
-    # image from a file or a resource, and each drags in the DIB and stream
-    # machinery behind it.
+    # the stock-image constructors reach. The bitmap initializer is NOT taken:
+    # nothing here decodes a DIB, and it drags in the stream machinery.
     "Core/Object Arts/Dolphin/MVP/Graphics/Graphics.ImageInitializer.cls",
     "Core/Object Arts/Dolphin/MVP/Graphics/Graphics.IconFromSystemInitializer.cls",
     "Core/Object Arts/Dolphin/MVP/Graphics/Graphics.ImageFromHandleInitializer.cls",
+    # THE RESOURCE INITIALIZERS, which an earlier pass deliberately skipped on
+    # the grounds that "nothing constructed in this port loads an image from a
+    # resource". That stopped being true the moment `resources/DolphinDR8.dll`
+    # existed. They are how Dolphin names artwork — never by path:
+    #
+    #     ClassDescription >> defaultIcon
+    #         ^Icon fromId: self defaultIconName      "'ShellView.ico'"
+    #     Image class >> fromId: anId
+    #         ^self fromId: anId in: SessionManager.Current defaultResourceLibrary
+    #
+    # and `ShellView new create` raising `defaultIcon` is the visible end of
+    # that chain being absent.
+    "Core/Object Arts/Dolphin/MVP/Graphics/Graphics.ImageFromResourceInitializer.cls",
+    "Core/Object Arts/Dolphin/MVP/Graphics/Graphics.ImageFromStringResourceInitializer.cls",
+    # The library those identifiers are resolved against. Subclasses
+    # `External.DynamicLinkLibrary`, which the generated prims floor already
+    # supplies, so this is one class and not a family.
+    "Core/Object Arts/Dolphin/Base/External.ResourceLibrary.cls",
     # `IconicListAbstract` — the shared parent of ListView, TreeView and
     # TabView — holds the image-list plumbing, so no common control can be
     # constructed without this one.

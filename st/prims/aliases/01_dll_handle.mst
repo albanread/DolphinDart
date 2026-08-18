@@ -1,0 +1,61 @@
+"01_dll_handle.mst — the `handle` instance variable `DynamicLinkLibrary`
+ should have, supplied where `ResourceLibrary` can inherit it.
+
+ `genprims` generates a `DynamicLinkLibrary` that is little more than a name:
+ a `default` answering the class (so `Xxx default foo` and `Xxx foo` reach the
+ same generated methods) plus one FFI entry point. Dolphin's real class is the
+ base of the external-library machinery and carries `handle`, `basicOpen:`,
+ `close`, `free` and the rest.
+
+ `External.ResourceLibrary` is translated from the corpus and SUBCLASSES it,
+ and its own code reads the inherited variable directly:
+
+     (self isOpen and: [anObject isOpen])
+         ifTrue: [handle = anObject handle]
+
+ With no such variable that is a compile-time unknown, so the ivar is declared
+ here rather than in `st/mvp_compat` — this layer loads BEFORE `st/mvp`, and a
+ superclass has to exist in its final shape before the subclass that inherits
+ from it is created. Declared afterwards it would have been a fresh class that
+ `ResourceLibrary` was not descended from.
+
+ REDECLARING RATHER THAN REOPENING is deliberate and safe here, and the two
+ conditions that make it safe are both checked: a declaration carrying ivars
+ REPLACES the class (see CLAUDE.md rule 3), and `ResourceLibrary` is the only
+ subclass in the tree while `DllRegisterServer` — the one generated method
+ lost — has no sender. `default` is re-supplied because the library idiom
+ depends on it."
+Object subclass: DynamicLinkLibrary [
+    | handle |
+
+    DynamicLinkLibrary class >> default [ ^self ]
+
+    "Dolphin's own: `handle := nil. self handle: (self class load: aString
+     flags: self loadFlags)`. Split the same way so a subclass can override
+     either half."
+    basicOpen: aString [
+        handle := nil.
+        self handle: (self class load: aString flags: self loadFlags).
+        ^self
+    ]
+    DynamicLinkLibrary class >> load: aString flags: anInteger [
+        | name h |
+        name := Utf16Buffer fromString: aString.
+        h := [ Kernel32 loadLibraryEx: name hFile: 0 dwFlags: anInteger ]
+                ensure: [ name free ].
+        (h isNil or: [ h = 0 ]) ifTrue: [ ^Win32Error signalLastError ].
+        ^h
+    ]
+    handle [ ^handle ]
+    handle: anObject [ handle := anObject ]
+    isOpen [ ^handle notNil and: [ handle ~= 0 ] ]
+    asParameter [ ^handle ]
+    loadFlags [ ^0 ]
+    close [
+        handle isNil ifTrue: [ ^self ].
+        Kernel32 freeLibrary: handle.
+        handle := nil
+    ]
+    free [ ^self close ]
+    beFinalizable [ ^self ]
+]

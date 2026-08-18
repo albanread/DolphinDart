@@ -1,0 +1,74 @@
+ImageInitializer subclass: ImageFromResourceInitializer [
+    | identifier module flags extent |
+
+    = anObject [
+        "Answer whether the receiver and anObject are equivalent."
+        ^self == anObject or: 
+        			[self species == anObject species
+        				and: [identifier = anObject identifier and: [module = anObject module]]]
+    ]
+    createImage: anImage extent: aPoint [
+        	^(anImage
+        		loadResource: identifier
+        		fromModule: module
+        		extent: aPoint
+        		flags: flags)
+        			ifNil: 
+        				[(self tryLoadFromFile: anImage extent: aPoint)
+        					ifNil: 
+        						[anImage
+        							loadResource: identifier
+        							fromModule: SessionManager classVarCurrent defaultResourceLibrary
+        							extent: aPoint
+        							flags: flags]]
+    ]
+    extent [
+        	^extent
+    ]
+    extent: aPoint [
+        	extent := aPoint
+    ]
+    flag: anInteger set: aBoolean [
+        	flags := flags mask: anInteger set: aBoolean
+    ]
+    flags [
+        	^flags
+    ]
+    flags: anInteger [
+        	flags := anInteger
+    ]
+    hash [
+        "Answer the <integer> hash value for the receiver."
+        ^(identifier hash + module hash) hashMultiply
+    ]
+    identifier [
+        	^identifier
+    ]
+    identifier: anIntegerOrString [
+        	identifier := anIntegerOrString
+    ]
+    module [
+        	^module
+    ]
+    module: anObject [
+        	module := anObject
+    ]
+    printImage: anImage on: aWriteStream [
+        "Private - Print a representation of the <Image> initialized by the receiver onto the <puttableStream> argument in the form a developer might want to see."
+        aWriteStream print: anImage class. aWriteStream nextPutAll: ' fromId: '. aWriteStream print: identifier.
+        	module = SessionManager classVarCurrent defaultResourceLibrary
+        		ifFalse: 
+        			[aWriteStream
+        				nextPutAll: ' in: ';
+        				print: module]
+    ]
+    tryLoadFromFile: anImage extent: aPoint [
+        	^nil
+    ]
+    ImageFromResourceInitializer class >> identifier: identifierObject module: moduleObject flags: anInteger [
+        | _casc1 | _casc1 := self basicNew. _casc1 instVarAt: 1 put: identifierObject. _casc1 instVarAt: 2 put: moduleObject. _casc1 instVarAt: 3 put: anInteger. ^_casc1 yourself
+    ]
+    ImageFromResourceInitializer class >> identifier: identifierObject module: moduleObject flags: anInteger extent: aPoint [
+        | _casc1 | _casc1 := self basicNew. _casc1 instVarAt: 1 put: identifierObject. _casc1 instVarAt: 2 put: moduleObject. _casc1 instVarAt: 3 put: anInteger. _casc1 instVarAt: 4 put: aPoint. ^_casc1 yourself
+    ]
+]

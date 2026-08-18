@@ -1,0 +1,18 @@
+ImageFromResourceInitializer subclass: ImageFromStringResourceInitializer [
+    = anObject [
+        "Answer whether the receiver and anObject are equivalent."
+        ^self == anObject or: 
+        			[self species == anObject species
+        				and: [(identifier compareOrdinals: anObject identifier ignoringCase: true) == 0 and: [module = anObject module]]]
+    ]
+    hash [
+        "Answer the <integer> hash value for the receiver."
+        ^identifier hashOrdinalsIgnoringCase
+    ]
+    tryLoadFromFile: anImage extent: aPoint [
+        	^anImage
+        		loadFromFile: (FileLocator default localFileSpecFor: identifier)
+        		extent: aPoint
+        		flags: (flags bitAnd: [32768 bitInvert] value)
+    ]
+]

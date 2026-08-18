@@ -610,6 +610,19 @@ translated — then DELETE the override. Trap recorded for that day: the
 `defaultIcon` overrides will be honoured where Dolphin's compile-time
 binding deliberately ignores them (see 3.21).
 
+**UPDATE — the first of those three is done.** `defaultIcon` now works:
+`ShellView icon` answers an Icon and `(Icon fromId: 'ShellView.ico') handle`
+answers a real HICON, resolved through `SessionManager
+defaultResourceLibrary` -> `resources/DolphinDR8.dll`, this port's ARM64
+rebuild of Dolphin's resource DLL (295 icons, same names). A window wearing
+its icon is photographed in the DD12 journal entry.
+
+What 3.20 still waits on is the other two: `Icon>>extent` over GetIconInfo,
+and `ImageList` population from real HICONs (`addToImageList:mask:`). The
+artwork and the lookup are no longer the obstacle — the image-list plumbing
+is. That is a much smaller remaining job than when this entry was written,
+and the stand-in stays until it is done rather than being half-removed.
+
 ### 3.21 Translator defects surfaced by the LVITEMW reopen (agent-reported)
 Four distinct emitter gaps, each currently patched around in
 `st/mvp_compat/06_listview.mst` with the emitted original documented there:

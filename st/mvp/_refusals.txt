@@ -116,6 +116,7 @@ C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Graphics\Graphics.Image.cls:190:
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Graphics\Graphics.Image.cls:283: [cascade] cascade on a receiver this rewriter cannot bound — splitting it could change evaluation
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Graphics\Graphics.Image.cls:318: [hashhash] `##(self)` folded to a runtime block
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Graphics\Graphics.Image.cls:397: [cascade] cascade on a receiver this rewriter cannot bound — splitting it could change evaluation
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Graphics\Graphics.ImageFromStringResourceInitializer.cls:29: [hashhash] `##(32768 bitInvert)` folded to a runtime block
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Graphics\Graphics.ImageList.cls:139: [cascade] cascade on a receiver this rewriter cannot bound — splitting it could change evaluation
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Graphics\Graphics.ImageList.cls:359: [hashhash] `##(self)` folded to a runtime block
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Graphics\Graphics.ImageList.cls:371: [cascade] cascade on a receiver this rewriter cannot bound — splitting it could change evaluation

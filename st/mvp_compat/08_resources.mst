@@ -1,0 +1,262 @@
+"08_resources.mst — how this port finds Dolphin's artwork.
+
+ The chain the corpus already implements, once these four gaps are filled:
+
+     ShellView icon                         ^##(self) defaultIcon
+     ClassDescription >> defaultIcon        ^Icon fromId: self defaultIconName
+     ClassDescription >> defaultIconName    ^File composeStem: self name
+                                                 extension: '.ico'
+     Image class >> fromId: anId            ^self fromId: anId
+                                                in: SessionManager current
+                                                     defaultResourceLibrary
+     SessionManager >> defaultResLibPath    ^'DolphinDR8'
+
+ so `ShellView icon` becomes `LoadImage(hDolphinDR8, 'ShellView.ico', ...)`.
+ `resources/DolphinDR8.dll` is this port's ARM64 rebuild of Dolphin's own
+ resource DLL, carrying the same 295 icons under the same names — see
+ `resources/README.md`. Keeping the NAME is what makes `defaultResLibPath`
+ work unaltered.
+
+ `ShellView new create` raising `defaultIcon` was the visible end of this
+ chain being absent; the error named the last link rather than the missing
+ four."
+
+"── WeakLookupTable ────────────────────────────────────────────────────
+ `ResourceLibrary class >> initialize` builds its `Libraries` alias table with
+ one. A plain LookupTable here: the table maps a library stem to an open
+ ResourceLibrary, and this port WANTS those retained — an open resource
+ module is exactly the thing that should not be collected while the image is
+ running. The weakness in Dolphin's version is about image stripping, which
+ this port does not do.
+
+ Same reasoning, and the same recorded caveat, as `SharedLookupTable` in
+ 07_dialogs.mst."
+LookupTable subclass: WeakLookupTable [ ]
+
+"── File: the path-splitting Dolphin's code calls ──────────────────────
+ Not Dolphin's File class — that is the whole file-system layer, and nothing
+ here opens a file. These are the four PURE STRING operations the resource
+ path needs, and their exact semantics were taken from the oracle rather than
+ assumed, because the edge cases are where a reimplementation goes wrong:
+
+     File composeStem: 'ShellView' extension: '.ico'  ->  'ShellView.ico'
+     File splitStemFrom: 'C:\\dir\\DolphinDR8.dll'    ->  'DolphinDR8'
+     File splitPathFrom: 'C:\\dir\\DolphinDR8.dll'    ->  'C:\\dir\\'
+     File splitPathFrom: 'DolphinDR8'                 ->  ''
+     File splitFilenameFrom: 'C:\\dir\\DolphinDR8.dll' -> 'DolphinDR8.dll'
+
+ Note the trailing separator `splitPathFrom:` keeps, and that
+ `composeStem:extension:` is plain concatenation — the extension carries its
+ own dot."
+Object subclass: File [
+    File class >> _lastSeparatorIn: aString [
+        | last |
+        last := 0.
+        1 to: aString size do: [ :i |
+            | c |
+            c := aString at: i.
+            (c = $\ or: [ c = $/ ]) ifTrue: [ last := i ] ].
+        ^last
+    ]
+    File class >> splitPathFrom: aString [
+        | last |
+        last := self _lastSeparatorIn: aString.
+        ^last = 0 ifTrue: [ '' ] ifFalse: [ aString copyFrom: 1 to: last ]
+    ]
+    File class >> splitFilenameFrom: aString [
+        | last |
+        last := self _lastSeparatorIn: aString.
+        ^last = 0 ifTrue: [ aString ]
+                  ifFalse: [ aString copyFrom: last + 1 to: aString size ]
+    ]
+    File class >> splitStemFrom: aString [
+        | fn dot |
+        fn := self splitFilenameFrom: aString.
+        dot := 0.
+        1 to: fn size do: [ :i | (fn at: i) = $. ifTrue: [ dot := i ] ].
+        ^dot = 0 ifTrue: [ fn ] ifFalse: [ fn copyFrom: 1 to: dot - 1 ]
+    ]
+    File class >> splitExtensionFrom: aString [
+        | fn dot |
+        fn := self splitFilenameFrom: aString.
+        dot := 0.
+        1 to: fn size do: [ :i | (fn at: i) = $. ifTrue: [ dot := i ] ].
+        ^dot = 0 ifTrue: [ '' ] ifFalse: [ fn copyFrom: dot + 1 to: fn size ]
+    ]
+    File class >> composeStem: aStem extension: anExtension [
+        ^aStem , anExtension
+    ]
+]
+
+"── FileLocator: the file FALLBACK, not the primary path ───────────────
+ `ImageFromStringResourceInitializer>>tryLoadFromFile:extent:` is Dolphin's
+ second attempt when a resource identifier is not in the module:
+
+     ^anImage loadFromFile: (FileLocator default localFileSpecFor: identifier)
+
+ Kept working because it is genuinely useful here — the extracted `.ico`
+ files sit beside the DLL — and because leaving it as a send to nil would turn
+ a missing icon into an unrelated error two classes away."
+Object subclass: FileLocator [
+    | base |
+    FileLocator class >> on: aString [ ^self basicNew setBase: aString ]
+    FileLocator class >> default [ ^self on: 'resources\icons\' ]
+    FileLocator class >> imageRelative [ ^self on: 'resources\' ]
+    FileLocator class >> installRelative [ ^self on: 'resources\' ]
+    setBase: aString [ base := aString ]
+    base [ ^base ]
+    localFileSpecFor: aString [ ^base , aString ]
+]
+
+ResourceLibrary extend [
+    "Dolphin's `defaultLoadFlags` answers 34 — LOAD_LIBRARY_AS_IMAGE_RESOURCE
+     (16r20) | LOAD_LIBRARY_AS_DATAFILE (16r2) — which maps the module for
+     resources only, executing nothing. Verified against our own DLL: the
+     module handle and the HICON `LoadImage` returns are identical whether the
+     library is opened with those flags or with none."
+    loadFlags [ ^loadFlags ifNil: [ self class defaultLoadFlags ] ]
+
+    "Dolphin searches working directory, then image-relative, then
+     install-relative. This port's equivalent list, in the same spirit: the
+     name as given, then `resources\\` (where the build puts it), then with
+     `.dll` appended for each. `defaultResLibPath` answers a STEM
+     ('DolphinDR8'), so the extension has to be tried."
+    ResourceLibrary class >> searchSpecsFor: aString [
+        | stem out |
+        stem := aString.
+        out := OrderedCollection new.
+        out add: stem; add: stem , '.dll'.
+        out add: 'resources\' , stem; add: 'resources\' , stem , '.dll'.
+        ^out
+    ]
+
+    ResourceLibrary class >> open: aString [
+        | lib |
+        lib := self basicNew.
+        lib fileName: aString.
+        (self searchSpecsFor: aString) do: [ :spec |
+            (lib attemptToOpen: spec) ifTrue: [ ^lib ] ].
+        "Not found. Answer the unopened library rather than raising: Dolphin
+         signals a Notification here and carries on, because a missing
+         resource library must degrade to missing artwork and not to a dead
+         image."
+        ^lib
+    ]
+    ResourceLibrary class >> open: aString withAliases: anArray [
+        ^self open: aString
+    ]
+    ResourceLibrary class >> open: aString withAliases: anArray flags: anInteger [
+        ^self open: aString
+    ]
+]
+
+"── the session's default library ──────────────────────────────────────
+ Dolphin's own two methods, verbatim in behaviour. `defaultResLibPath`
+ answering the bare stem is why our DLL keeps the name `DolphinDR8.dll`."
+SessionManager extend [
+    defaultResLibPath [ ^'DolphinDR8' ]
+    defaultResourceLibrary [
+        ^ResourceLibraryDefault ifNil: [
+            ResourceLibraryDefault := ResourceLibrary open: self defaultResLibPath ]
+    ]
+    SessionManager class >> defaultResourceLibrary [
+        ^SessionManager classVarCurrent defaultResourceLibrary
+    ]
+]
+
+"── `defaultIcon`, Dolphin's loose ClassDescription methods ────────────
+ Filed onto `Core.ClassDescription` by `Dolphin GDI Graphics.pax`, so they are
+ sent to a CLASS — every `Foo class >> icon` in the corpus is
+ `^##(self) defaultIcon`. This port has no ClassDescription; the class side of
+ `Object` is the equivalent reach, and the bodies are Dolphin's."
+nil subclass: Object [
+    Object class >> defaultIconName [
+        ^File composeStem: self name extension: '.ico'
+    ]
+    Object class >> defaultIcon [
+        ^Icon fromId: self defaultIconName
+    ]
+
+    "`self name` INSIDE a class-side method. `Behavior>>name` exists and a
+     DYNAMIC send to a class finds it — `each name` in
+     `DolphinBoot class >> initializeViewClasses` does exactly that — but
+     `self name` written in a class method compiles to a class-side send,
+     which looks for `ShellView class >> name` and misses. The asymmetry is
+     the port's, not Dolphin's, and the corpus writes `self name` in class
+     methods freely, so it is answered once here rather than per caller.
+
+     `printString` of a class answers its bare name in this port (measured:
+     `DisplayMonitor printString` -> 'DisplayMonitor'). Dolphin answers the
+     Symbol `#ShellView`, and both concatenate to the same 'ShellView.ico'."
+    Object class >> name [ ^self printString ]
+]
+
+"── marshalling the resource name ──────────────────────────────────────
+ Dolphin's `Image>>loadResource:fromModule:extent:flags:` is
+
+     ^User32 loadImage: moduleObject asParameter
+             lpszName: identifierObject asResourceId
+             ...
+
+ and in Dolphin a String is directly passable as an LPCTSTR. This port's FFI
+ floor refuses that outright — `FFI: cannot pass String as a pointer argument`
+ — which is the floor doing its job rather than guessing an encoding.
+
+ So the send is overridden ONLY to marshal, and every other part of the
+ method is Dolphin's, including the `bitOr: 64` (LR_DEFAULTSIZE) it adds when
+ no extent was asked for.
+
+ An INTEGER identifier must not be marshalled: `MAKEINTRESOURCE` passes the
+ ordinal AS the pointer value, which is why `Integer>>asResourceId` answers
+ self and why the two cases are separated here rather than in `asResourceId`.
+
+ The buffer is freed with `ensure:`, because this runs once per icon per
+ image and a leak here is a leak per window."
+Image extend [
+    loadResource: identifierObject fromModule: moduleObject extent: aPoint flags: anInteger [
+        | id flags |
+        id := identifierObject asResourceId.
+        flags := (aPoint = Point classVarZero)
+            ifTrue: [ anInteger bitOr: 64 ]
+            ifFalse: [ anInteger ].
+        id isString ifFalse: [
+            ^User32
+                loadImage: moduleObject asParameter
+                lpszName: id
+                uType: self imageType
+                cxDesired: aPoint x
+                cyDesired: aPoint y
+                fuLoad: flags ].
+        ^[ | buf |
+           buf := Utf16Buffer fromString: id.
+           [ User32
+                loadImage: moduleObject asParameter
+                lpszName: buf
+                uType: self imageType
+                cxDesired: aPoint x
+                cyDesired: aPoint y
+                fuLoad: flags ] ensure: [ buf free ] ] value
+    ]
+]
+
+"── asResourceId ───────────────────────────────────────────────────────
+ `Image>>loadResource:fromModule:extent:flags:` normalises its identifier
+ with this before calling LoadImage. Dolphin's `Integer>>asResourceId`
+ answers self — an integer ID passes through as MAKEINTRESOURCE — and the
+ String version LOWERCASES, which the oracle settled:
+
+     'ShellView.ico' asResourceId          ->  'shellview.ico'
+     'ShellView.ico' asResourceId == ...   ->  false   (a new string)
+
+ Harmless for lookup, since Windows compares resource names
+ case-insensitively (measured against our own DLL: SHELLVIEW.ICO,
+ ShellView.ico and shellview.ico all answer the same HICON), but reproduced
+ rather than skipped because the identifier is also a CACHE KEY — Dolphin
+ interns images by it, and two spellings of one icon must not become two
+ entries."
+String extend [
+    asResourceId [ ^self asLowercase ]
+]
+Integer extend [
+    asResourceId [ ^self ]
+]

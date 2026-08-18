@@ -1223,3 +1223,59 @@ NOT YET WIRED. The DLL exists and is verified from outside the image; nothing
 in `st/` loads it yet. `External.ResourceLibrary` and `Image class >> fromId:`
 still need porting, which is what `ShellView new create` raising `defaultIcon`
 is waiting on, and LOOSE_ENDS 3.20 (no per-row icons) with it.
+
+---
+
+## Icons: Dolphin's own retrieval path, end to end, on ARM64
+
+`ShellView new create` raising `defaultIcon` turned out to name the LAST link
+of a chain with four missing pieces. The chain, entirely Dolphin's:
+
+    Foo class >> icon                      ^##(self) defaultIcon
+    ClassDescription >> defaultIcon        ^Icon fromId: self defaultIconName
+    ClassDescription >> defaultIconName    ^File composeStem: self name
+                                                extension: '.ico'
+    Image class >> fromId:                 ^self fromId: anId in:
+                                             SessionManager current
+                                               defaultResourceLibrary
+    SessionManager >> defaultResLibPath    ^'DolphinDR8'
+
+**Now working:** `(Icon fromId: 'ShellView.ico') handle` answers a real HICON,
+`ShellView icon` answers the Icon, and the class browser wears
+`ClassBrowserShell.ico` in its title bar — photographed, not asserted.
+
+Translated rather than written: `External.ResourceLibrary`,
+`Graphics.ImageFromResourceInitializer` and its String subclass. An earlier
+pass had deliberately skipped the resource initializers because "nothing
+constructed in this port loads an image from a resource"; that stopped being
+true the moment `resources/DolphinDR8.dll` existed.
+
+Five gaps supplied, each the smallest thing that lets Dolphin's own code run:
+
+  * `DynamicLinkLibrary`'s `handle` ivar. `genprims` emits a near-empty class
+    of that name, and the translated `ResourceLibrary` subclasses it and reads
+    `handle` directly. Declared in `st/prims/aliases` because a superclass
+    must be final BEFORE the subclass is created — in `st/mvp_compat` it would
+    have been a different class that `ResourceLibrary` was not descended from.
+  * `File`'s four path-splitting operations, with the exact semantics the
+    ORACLE gave (`splitPathFrom:` keeps its trailing separator;
+    `composeStem:extension:` is plain concatenation, the extension carrying
+    its own dot). Not Dolphin's File class — nothing here opens a file.
+  * `Object class >> name`. `Behavior>>name` exists and a DYNAMIC send to a
+    class finds it, but `self name` written inside a class method compiles to
+    a class-side send and misses. The corpus writes `self name` in class
+    methods freely, so it is answered once rather than per caller.
+  * `asResourceId`. Integer answers self (MAKEINTRESOURCE passes the ordinal
+    AS the pointer); String LOWERCASES, which the oracle settled. Reproduced
+    rather than skipped because the identifier is also Dolphin's image CACHE
+    KEY, and two spellings of one icon must not become two entries.
+  * Marshalling in `loadResource:fromModule:extent:flags:`. In Dolphin a
+    String is directly passable as LPCTSTR; this port's FFI floor refuses,
+    which is the floor doing its job. Overridden ONLY to marshal — the
+    `bitOr: 64` (LR_DEFAULTSIZE) and everything else stays Dolphin's.
+
+Verified along the way, so it is not re-derived: Dolphin's own load flags
+(`defaultLoadFlags` = 34 = AS_IMAGE_RESOURCE | AS_DATAFILE) give the same
+module handle and the same HICON as an ordinary load, and Windows compares
+resource names case-insensitively, so `defaultIconName`'s 'ShellView.ico'
+finds the DLL's `SHELLVIEW.ICO`.

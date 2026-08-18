@@ -1,18 +1,18 @@
 # dolphin2mst run report
 
-- inputs: **120** source files (`.cls` + `.pax`)
+- inputs: **123** source files (`.cls` + `.pax`)
 - shared-pool constants available: **7856** from **209** pools
 - loose methods adopted from `.pax`: **1**
-- parsed: **120**  (unbalanced/skipped: 0)
-- emitted: **121** `.mst`
-- methods: **4748**
-- refusals: **223**
+- parsed: **123**  (unbalanced/skipped: 0)
+- emitted: **124** `.mst`
+- methods: **4785**
+- refusals: **224**
 
 ## Refusals by rewrite class
 
 | Rewrite | Count |
 |---|--:|
-| `hashhash` | 102 |
+| `hashhash` | 103 |
 | `cascade` | 58 |
 | `pragma` | 26 |
 | `binding-literal` | 24 |
@@ -72,6 +72,8 @@
 | `IconicListUpdateMode` | 9 | 0 |
 | `Image` | 59 | 5 |
 | `ImageFromHandleInitializer` | 7 | 0 |
+| `ImageFromResourceInitializer` | 16 | 0 |
+| `ImageFromStringResourceInitializer` | 3 | 1 |
 | `ImageInitializer` | 19 | 0 |
 | `ImageList` | 39 | 3 |
 | `ImageManager` | 28 | 1 |
@@ -108,6 +110,7 @@
 | `PushButton` | 41 | 8 |
 | `RGB` | 11 | 0 |
 | `Rectangle` | 98 | 2 |
+| `ResourceLibrary` | 18 | 0 |
 | `ScrollEvent` | 16 | 1 |
 | `SelectionChangeEvent` | 12 | 0 |
 | `SelectionChangingEvent` | 5 | 0 |
