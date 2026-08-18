@@ -1239,6 +1239,36 @@ static bool IsCoreGetterCollision(const std::string& sel) {
          sel == "reversed";
 }
 
+// Does any transitive SUBCLASS of `cls` define a static function named `sel`?
+// Class-hierarchy analysis for the class-side `self` fast path: if nothing
+// below the defining class overrides the selector, compile-time resolution and
+// runtime lookup cannot disagree, so the direct StaticCall is safe.
+//
+// `direct_subclasses` is maintained by ClassFinalizer, so this sees every
+// class FINALIZED SO FAR — see the caller for what that does and does not
+// guarantee. Each visited class is member-finalized first, for the reason
+// TranslateClassSend documents: a bare LookupStaticFunction routes through the
+// Dart parser and crashes on a TokenStream-less ST class.
+static bool AnySubclassOverridesStatic(dart::Zone* zone,
+                                       const dart::Class& cls,
+                                       const dart::String& sel) {
+  using namespace dart;
+  const GrowableObjectArray& subs =
+      GrowableObjectArray::Handle(zone, cls.direct_subclasses());
+  if (subs.IsNull()) return false;
+  Class& sub = Class::Handle(zone);
+  Function& f = Function::Handle(zone);
+  for (intptr_t i = 0; i < subs.Length(); i++) {
+    sub ^= subs.At(i);
+    if (sub.IsNull()) continue;
+    if (!sub.is_finalized()) ClassFinalizer::FinalizeClass(sub);
+    f = sub.LookupStaticFunction(sel);
+    if (!f.IsNull()) return true;
+    if (AnySubclassOverridesStatic(zone, sub, sel)) return true;
+  }
+  return false;
+}
+
 Fragment StGraphBuilder::TranslateMessage(MessageNode* node) {
   if (node->receiver == nullptr) {
     return Unsupported(node, "cascade message (no receiver)");
@@ -1531,12 +1561,40 @@ Fragment StGraphBuilder::TranslateMessage(MessageNode* node) {
       // metaclass-shadow chain at compile time and emit a DIRECT StaticCall
       // (thisCls as arg 0) instead of the runtime stClassSend helper — a
       // native transition + shadow-chain walk + InvokeFunction per call.
-      // Recursive class-side `self fib:` was ~480x MACVM before this. Correct
-      // for inherited `self new` too: the resolved `new`'s body sees
-      // self = thisCls (arg 0) and allocates the RECEIVING class. The one
-      // divergence — a subclass overriding a class-side method that a
-      // superclass self-sends still reaches the compile-time-resolved
-      // (superclass) method — is a rare pattern, absent from the corpus.
+      // Recursive class-side `self fib:` was ~480x MACVM before this.
+      //
+      // BUT the compile-time resolution walks from THIS method's OWNER, so it
+      // is only what a runtime lookup would find when the receiving class IS
+      // the owner. For an INHERITED send on a subclass that overrides the
+      // selector, a bare direct call silently reaches the superclass method —
+      // which broke the whole STxFiler version-dispatch hierarchy (`STxFiler
+      // class >> classForVersion:` does `self versions lookup:`, and with
+      // receiver STLInFiler still reached STxFiler's abstract `versions`).
+      // Dolphin leans on class-side polymorphism heavily (abstract templates,
+      // factory methods, version dispatch), so this is NOT the rare pattern a
+      // prior comment here claimed was absent from the corpus.
+      //
+      // So the direct call is taken only when CLASS-HIERARCHY ANALYSIS proves
+      // it cannot disagree with a runtime lookup: no subclass of the defining
+      // class overrides the selector. Otherwise the runtime stClassSend walks
+      // the shadow chain from the ACTUAL receiving class and finds the
+      // override.
+      //
+      // The decision is made at COMPILE time, deliberately, rather than by a
+      // runtime `thisCls == owner` guard. That guard was tried and is correct,
+      // but the diamond+join it needs blocks the optimizer from inlining the
+      // recursive call: `fib: 32` went 164ms -> 416ms (2.5x). CHA restores the
+      // straight-line StaticCall for the monomorphic case, which is nearly all
+      // of them, and pays the helper only where polymorphism actually exists.
+      //
+      // RESIDUAL RISK, precisely: CHA sees the classes finalized SO FAR, and ST
+      // functions are compiled lazily on first call. A subclass that loads
+      // AFTER a method was compiled, and overrides a selector that method
+      // self-sends, would keep the stale direct call. That needs the ancestor
+      // to be CALLED DURING loading (a top-level statement) and the override to
+      // load later — `tools/audit_classside.py` enumerates the corpus's
+      // class-side overrides and their load order so the case stays visible;
+      // it reports none today.
       const String& msel = String::ZoneHandle(
           zone_,
           Symbols::New(thread_, ::st::MangleSelector(node->selector).c_str()));
@@ -1550,15 +1608,43 @@ Fragment StGraphBuilder::TranslateMessage(MessageNode* node) {
           c ^= c.SuperClass();
         }
       }
+      // CHA: the direct call is safe only if nothing below the DEFINING class
+      // (the shadow that owns the running method — where the resolution walk
+      // started) overrides the selector. `fn`'s own owner may be further up
+      // the chain; an override anywhere below the definer can intercept.
       if (!fn.IsNull()) {
-        Fragment instructions = LoadLocal(locals_["self"]);  // thisCls arg 0
+        const Class& definer = Class::Handle(zone_, pf_->function().Owner());
+        if (!AnySubclassOverridesStatic(zone_, definer, msel)) {
+          Fragment instructions = LoadLocal(locals_["self"]);  // thisCls arg 0
+          instructions += PushArgument();
+          for (size_t i = 0; i < node->args.size(); i++) {
+            instructions += TranslateExpression(node->args[i].get());
+            instructions += PushArgument();
+          }
+          instructions +=
+              StaticCall(fn, 1 + static_cast<intptr_t>(node->args.size()));
+          return instructions;
+        }
+        // Overridden below the definer: dispatch on the ACTUAL receiving class
+        // through the runtime helper. Emitted HERE rather than by falling
+        // through, because the `self new` block below would otherwise claim a
+        // resolved-but-overridden `new` and inline-allocate, skipping the
+        // user's class-side `new` entirely.
+        char helper[16];
+        snprintf(helper, sizeof(helper), "stClassSend%d",
+                 static_cast<int>(node->args.size()));
+        Fragment instructions = LoadLocal(locals_["self"]);  // thisCls receiver
+        instructions += PushArgument();
+        instructions += Constant(String::ZoneHandle(
+            zone_, Symbols::New(thread_, node->selector.c_str())));
         instructions += PushArgument();
         for (size_t i = 0; i < node->args.size(); i++) {
           instructions += TranslateExpression(node->args[i].get());
           instructions += PushArgument();
         }
-        instructions +=
-            StaticCall(fn, 1 + static_cast<intptr_t>(node->args.size()));
+        instructions += StaticCall(
+            Function::ZoneHandle(zone_, LookupCocoaFunction(helper)),
+            2 + static_cast<intptr_t>(node->args.size()));
         return instructions;
       }
       // Unresolved `self new`/`self basicNew` (no user class-side override):

@@ -189,3 +189,5 @@ STxInFiler subclass: STLInFiler [
 ]
 
 STLInFiler initializeClassConstants.
+
+STLInFiler initialize.

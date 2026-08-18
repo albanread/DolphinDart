@@ -1428,3 +1428,88 @@ Second, smaller gap on the same path: `ReadStream>>nextAvailable` does not
 exist, which `peekForSignatureIn:` needs.
 
 25/25 gates throughout.
+
+---
+
+## DD15 — class-side `self` binds to the RECEIVER; the STL header reads
+
+The DD14 blocker is closed, and it was a compiler bug, not a corpus quirk.
+
+**What was wrong.** Class-side methods compile to STATIC Dart functions whose
+argument 0 is `thisCls`, and `self` is that argument — so `self` always held
+the right class (`PWho2 whoSelf name` answered `'PWho2'` throughout). What was
+wrong was the SEND: the class-side `self <sel>` fast path resolved the target
+by walking the shadow chain from the method's OWNER at compile time and emitted
+a direct `StaticCall`. For an inherited method that is the wrong chain — the
+receiver's own overrides never get a chance. A comment on that path called the
+divergence "a rare pattern, absent from the corpus". `tools/audit_classside.py`
+now counts **73** self-sent class-side overrides in the wave.
+
+The minimal case, and note it is NOT about `subclassResponsibility` — a plain
+override misbinds identically:
+
+    QBase class >> pick [ ^#BASE ]   QBase class >> usePick [ ^self pick ]
+    QDer  class >> pick [ ^#DER  ]
+    QDer usePick   ->  #BASE     wanted #DER
+
+**The fix, and the false start worth recording.** First attempt was a runtime
+guard: compare `thisCls` against the owner's Type, direct call if equal, else
+`stClassSendN`. Correct — 25/25, every probe right — and it cost **2.5x on
+`fib:`** (164ms -> 416ms). The compare itself is a pointer test; what cost the
+time was the diamond+join, which stops the optimizer inlining the recursive
+call. At ~2.2M calls that is ~114ns/call, far too much for the test itself.
+
+So the decision moved to compile time — CHA over the metaclass-shadow subtree
+(`Class::direct_subclasses`, maintained by ClassFinalizer). No subclass
+overrides the selector: emit the bare, inlinable `StaticCall` exactly as
+before. Some subclass does: emit `stClassSendN`, which dispatches on the actual
+receiving class. Monomorphic sends — nearly all of them — keep the original
+code shape, and `fib:` is back to **165.1ms** against a measured 164.1ms
+baseline.
+
+One trap inside the fix: a resolved-but-overridden `new` must NOT fall through
+to the `self new` inline-allocation block below, or the fast arm allocates
+directly and skips the user's class-side `new`. The overridden case emits its
+runtime send in place.
+
+**RESIDUAL RISK, stated plainly.** CHA sees classes finalized so far, and ST
+functions compile lazily on first call. A subclass that loads AFTER a method
+was compiled, overriding a selector that method self-sends, would keep a stale
+direct call. That needs the ancestor to be CALLED DURING LOADING and the
+override to load later. `tools/audit_classside.py` enumerates exactly that
+ordering and reports **0** today; it self-tests against a synthetic case that
+it does flag, so the green is not vacuous. It strips comments first —
+`CommandButton class >> initialize` documents itself with the literal text
+"self initialize" in its comment, which read as a real send.
+
+**The second half: class-side `initialize` is still never called.** With
+dispatch fixed, `STLInFiler versions` reached the right method and answered
+nil — `Versions := Array new: 7. self register` lives in a class-side
+`initialize` that no file-in loader sends (the standing rule-3 trap; the
+generated `initializeClassConstants` covers constants, not this). Fixed in the
+translator with an explicit opt-in set, `EMIT_CLASS_INITIALIZE`, NOT by
+blanket-sending all 33 class-side `initialize`s in the wave — many touch
+Win32/GUI at load. Regeneration touched exactly the two filer files.
+
+**`ReadStream>>nextAvailable` / `nextAvailable:`** added to `st/world`, both
+asked of the oracle rather than inferred: `nextAvailable` answers nil at end
+(non-signalling `next`), `nextAvailable: n` TRUNCATES rather than signalling
+(9 from a 3-element stream answers 3) and follows the collection's species.
+Nine behaviours checked against Dolphin; the only diffs are the port's
+existing `(1 2 3 )` Array printString convention, which predates this.
+
+**Where that leaves the reader** — the whole STL header path now runs:
+
+    ContainerView resource_Default_view first: 5  ->  (#!STL 6 2118 11 #{UI.STBViewProxy} )
+    STLInFiler peekForSignatureIn: (ReadStream on: ...)  ->  true
+    STLInFiler readVersionFrom: ...                      ->  6
+    STLInFiler classForVersion: 6                        ->  STLInFiler
+
+25/25 gates throughout; cogbench flat on the other six workloads.
+
+### Next
+
+The filer now selects itself and reads its own header, so the next step is the
+BODY: `STxInFiler>>next` and the proxy classes it dispatches to
+(`UI.STBViewProxy`, `Kernel.STBClassProxy`), then instantiate one Dolphin view
+resource end to end and photograph it.

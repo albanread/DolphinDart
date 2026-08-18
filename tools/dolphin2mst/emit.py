@@ -33,6 +33,27 @@ import pools
 from stlex import strip_code
 
 
+# Classes whose class-side `initialize` must be SENT at load. A file-in loader
+# never calls a class-side `initialize` (the standing trap: see CLAUDE.md #3),
+# and for most classes the generated `initializeClassConstants` covers the
+# nil-valued constants. But a few build a runtime data structure and register
+# themselves into it — pure, GUI-free, load-order-safe work that no constant
+# fold can stand in for. Blanket-sending every class-side `initialize` is NOT
+# safe (33 classes in the wave define one; many touch Win32/GUI at load), so
+# this is an explicit opt-in, curated to classes whose `initialize` is data
+# only and verified needed.
+#
+#   STLInFiler / STBInFiler  `Versions := Array new: 7. self register` — the
+#   version->deserializer table `STxFiler class >> classForVersion:` looks up.
+#   Without it `versions` answers nil and the whole STB/STL view-resource
+#   reader dead-ends on `nil lookup:` (the DD14 filer blocker's second half,
+#   once class-side `self` dispatch was fixed).
+EMIT_CLASS_INITIALIZE = frozenset({
+    "STLInFiler",
+    "STBInFiler",
+})
+
+
 @dataclass
 class Refusal:
     where: str            # file:line
@@ -1306,5 +1327,16 @@ def emit_class(pf: ParsedFile, renames: Dict[str, str],
            for ln in lines):
         lines.append("")
         lines.append(f"{name} initializeClassConstants.")
+
+    # Send the class-side `initialize` for the curated set above — same reason
+    # (a file-in loader never sends it), but for real class-side `initialize`
+    # methods rather than the synthetic constant-assigner. Guarded on the
+    # method actually being present in the emitted class.
+    if name in EMIT_CLASS_INITIALIZE and any(
+            ln.strip().startswith(f"{name} class >> initialize ")
+            or ln.strip() == f"{name} class >> initialize ["
+            for ln in lines):
+        lines.append("")
+        lines.append(f"{name} initialize.")
 
     return EmitResult("\n".join(lines) + "\n", refusals, notes)

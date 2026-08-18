@@ -64,6 +64,26 @@ Object subclass: ReadStream [
         position := collection size.
         ^r
     ]
+    nextAvailable ^ <Object> [
+        "The next element, or nil at the end — the non-signalling `next`.
+         Dolphin's STx filers sniff a stream's signature with it, so it must
+         answer nil rather than error where `next` errors (oracle: an
+         exhausted `(ReadStream on: #(1 2 3))` answers nil)."
+        self atEnd ifTrue: [ ^nil ].
+        position := position + 1.
+        ^collection at: position
+    ]
+    nextAvailable: n <Integer> ^ <SequenceableCollection> [
+        "Up to n elements, TRUNCATED at the end rather than signalling — asking
+         a 3-element stream for 9 answers all 3 (oracle). Species follows the
+         collection, as `upToEnd` does: an Array stream answers an Array, a
+         String stream a String."
+        | last r |
+        last := position + n min: collection size.
+        r := collection copyFrom: position + 1 to: last.
+        position := last.
+        ^r
+    ]
     do: aBlock <[Object]> [
         [ self atEnd ] whileFalse: [ aBlock value: self next ]
     ]
