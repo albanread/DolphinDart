@@ -43,6 +43,14 @@ STxProxy subclass: STBClassProxy [
         	anSTBInFiler fixup: anInteger to: behaviourOrStub.
         	^behaviourOrStub
     ]
+    withClassLocator: aClassLocator [
+        	^(VariableBinding path: 'ClassStub') ifDefined: 
+        			[:stub |
+        			stub withClassLocator: (aClassLocator copyWithCodeBase
+        						key: locatorKey;
+        						packageName: packageName;
+        						yourself)]
+    ]
     STBClassProxy class >> locatorKey: aString package: aPackage [
         | _casc1 | _casc1 := self basicNew. _casc1 locatorKey: aString. _casc1 packageName: aPackage name asUtf8String. ^_casc1 yourself
     ]

@@ -1,0 +1,73 @@
+"13_variable_binding.mst — Dolphin's `#{Namespace.Name}` literal, as an object.
+
+ `#{Core.Array}` denotes the BINDING, not the value: Dolphin's compiler makes a
+ `Kernel.VariableBinding` at compile time, and `#{Core.Array} value` answers
+ the class. The house dialect has no such literal, so the translator lowers
+ each one to `(VariableBinding path: 'Core.Array')` — see
+ `tools/dolphin2mst/litarray.py`.
+
+ WHY THIS MATTERS MORE THAN ITS SIZE SUGGESTS. Dolphin does not build its
+ windows in code; it deserialises them. `resource_Default_view` answers a
+ literal array whose every class reference is a binding literal:
+
+     ^#(#'!!STL' 6 2118 11 #{UI.STBViewProxy} #{UI.ContainerView} ...
+        774 #{Core.MessageSend} #createWindow: 1030 #{UI.CreateWindow} ...)
+
+ The translator used to refuse any method containing `#{`, which meant every
+ one of the 654 `resource_*` methods in the corpus was dropped. This class and
+ that rewrite are what let a Dolphin window be read from Dolphin's own data.
+
+ NAMESPACES. Dolphin 8 has them; this port does not. A binding therefore keeps
+ the FULL dotted path for printing and identity, and resolves on the LAST
+ segment — `#{UI.ContainerView}` and a bare `ContainerView` are the same class
+ here. Recorded rather than hidden: if two namespaces ever contribute the same
+ short name, this is where the collision would surface."
+Object subclass: VariableBinding [
+    | path cached |
+
+    VariableBinding class >> path: aString [
+        ^self basicNew setPath: aString
+    ]
+    "Dolphin also spells it `#{X} binding` in places; the binding of a binding
+     is itself."
+    binding [ ^self ]
+
+    setPath: aString [ path := aString. cached := nil ]
+    path [ ^path ]
+
+    "The last dotted segment — the name this port knows the class by."
+    name [
+        | i |
+        i := 0.
+        1 to: path size do: [ :k | (path at: k) = $. ifTrue: [ i := k ] ].
+        ^i = 0 ifTrue: [ path ] ifFalse: [ path copyFrom: i + 1 to: path size ]
+    ]
+    key [ ^self name asSymbol ]
+
+    "`value` is a universal helper (CLAUDE.md rule 2), and that is fine here:
+     the helper's slow path ATTEMPTS the real send first, so a defined
+     `value` is reached — which is how ValueHolder and the STB proxies work.
+     Checked with tools/audit_helpers.py rather than assumed."
+    value [
+        ^cached ifNil: [ cached := Worker classNamed: self name asSymbol ]
+    ]
+    isDefined [ ^self value notNil ]
+
+    "Dolphin's `setValue:` writes THROUGH the binding to the global. This port
+     has no writable global table reachable from here, so it is refused loudly
+     rather than silently dropping the write — a silent no-op here would
+     corrupt whatever was being initialised. No caller in the translated wave
+     uses it; if one appears, that is the moment to add the table."
+    setValue: anObject [
+        ^self error: 'VariableBinding>>setValue: not supported — ' , path
+    ]
+
+    = anObject [
+        ^(anObject isKindOf: VariableBinding) and: [ anObject path = path ]
+    ]
+    hash [ ^path hash ]
+
+    printOn: aStream [
+        aStream nextPutAll: '#{'; nextPutAll: path; nextPut: $}
+    ]
+]

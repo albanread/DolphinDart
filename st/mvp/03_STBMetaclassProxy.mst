@@ -7,4 +7,12 @@ STBClassProxy subclass: STBMetaclassProxy [
         		ifNotNil: [:availableClass | availableClass class]
         		ifNil: [self withClassLocator: aClassLocator]
     ]
+    withClassLocator: aClassLocator [
+        	^(VariableBinding path: 'MetaclassStub') ifDefined: 
+        			[:stub |
+        			stub withClassLocator: (aClassLocator copyWithCodeBase
+        						key: locatorKey;
+        						packageName: packageName;
+        						yourself)]
+    ]
 ]

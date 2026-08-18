@@ -718,4 +718,10 @@ GraphicsTool subclass: Menu [
         		4: ? Adds imageManager (now metrics), id, _reserved1, reserved2"
         ^4
     ]
+    Menu class >> uninitialize [
+        	| menuMessages |
+        	menuMessages := {123. 278. 279}.
+        	(VariableBinding path: 'ControlView') isDefined ifFalse: [menuMessages := menuMessages , {43. 44}].
+        	View unregisterMessageMappings: menuMessages
+    ]
 ]

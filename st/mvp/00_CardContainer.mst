@@ -296,4 +296,12 @@ AbstractCardContainer subclass: CardContainer [
         	canvas windowOrigin: prev.
         	^result
     ]
+    CardContainer class >> resource_Default_view [
+        "Answer the literal data from which the 'Default view' resource can be reconstituted.
+        	DO NOT EDIT OR RECATEGORIZE THIS METHOD.
+
+        	If you wish to modify this resource evaluate:
+        	Tools.ViewComposer openOn: (UI.ResourceIdentifier class: self selector: #resource_Default_view)"
+        ^{#'!STL'. 6. 2118. 11. (VariableBinding path: 'UI.STBViewProxy'). (VariableBinding path: 'UI.CardContainer'). 38. (VariableBinding path: 'Core.Array'). 16. nil. nil. 50. 2. 8. 1409286144. 131073. 32. nil. 6. (VariableBinding path: 'Graphics.Color'). #default. nil. 5. nil. nil. nil. 32. 1350. 1. (VariableBinding path: 'UI.CardLayout'). 550. (VariableBinding path: 'Core.OrderedCollection'). 0. nil. nil. nil. nil. 550. (VariableBinding path: 'Core.IdentityDictionary'). 0. nil. 18. (VariableBinding path: 'UI.TabViewXP'). 50. 28. nil. 32. 50. 2. 8. 1140916736. 1. 240. 838. 2. (VariableBinding path: 'UI.ListModel'). 178. 0. nil. 6. (VariableBinding path: 'Kernel.IdentitySearchPolicy'). nil. nil. 1. nil. nil. nil. 240. nil. nil. 518. (VariableBinding path: 'Core.Message'). #displayString. 8. #(). 386. #iconImageIndex. 416. 1350. 1. (VariableBinding path: 'Graphics.IconImageManager'). nil. nil. nil. nil. nil. #noIcons. nil. nil. nil. nil. nil. 262. (VariableBinding path: 'Core.MessageSequence'). 50. 2. 774. (VariableBinding path: 'Core.MessageSend'). #createWindow:. 50. 1. 1030. (VariableBinding path: 'UI.CreateWindow'). 262. (VariableBinding path: 'OS.RECTL'). 8. #[0 0 0 0 0 0 0 0 94 1 0 0 250 0 0 0]. 193. 272. 8. ''. 240. 530. #tcmSetExtendedStyle:dwExStyle:. 8. #(-1 0). 240. 3. 8. #(). 518. (VariableBinding path: 'Graphics.Point'). 193. 193. nil. 27. 482. 50. 1. 530. #createWindow:. 50. 1. 578. 610. 8. #[255 14 0 0 10 0 0 0 93 16 0 0 4 1 0 0]. 193. 80. 8. ''. 32. 1. 50. 1. 240. 722. 193. 193. nil. 27}
+    ]
 ]

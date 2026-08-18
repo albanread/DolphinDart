@@ -123,6 +123,27 @@ STxInFiler subclass: STBInFiler [
         	^(aReadStream nextAvailable: [Signature size] value) asByteArray = Signature
         		or: [aReadStream position: position. false]
     ]
+    STBInFiler class >> predefinedClasses [
+        "Answer a <sequencedReadableCollection> of the classes that are pre-registered in every STB file."
+        "As of STB 6 the collection proxies are no longer used routinely, but they are still occasionally useful. e.g. for forcing a stable order of the key/value pairs, so are retained. However object streams should no longer contain AnsiStrings - Strings are always written with UTF-8 encoding so that they deserialise with the original code points, regardless of the system code page on the target system."
+
+        	^[{
+        		(VariableBinding path: 'AnsiString').
+        		Array.
+        		ByteArray.
+        		LargeInteger.
+        		STBClassProxy.
+        		STBMetaclassProxy.
+        		Symbol.
+        		STBCollectionProxy.
+        		OrderedCollection.
+        		STBIdentityDictionaryProxy.
+        		LookupTable.
+        		IdentityDictionary.
+        		Utf8String.
+        		Utf16String
+        	}] value
+    ]
     STBInFiler class >> readVersionFrom: aByteStream [
         "Private - Read and answer the <integer> STB format version encoded in the byte stream."
         | byte ver |

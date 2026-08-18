@@ -334,6 +334,14 @@ ControlBarAbstract subclass: StatusBar [
         "Answers an Icon that can be used to represent this class"
         ^[self] value defaultIcon
     ]
+    StatusBar class >> resource_Status_bar [
+        "Answer the literal data from which the 'Status bar' resource can be reconstituted.
+        	DO NOT EDIT OR RECATEGORIZE THIS METHOD.
+
+        	If you wish to modify this resource evaluate:
+        	Tools.ViewComposer openOn: (UI.ResourceIdentifier class: self selector: #resource_Status_bar)"
+        ^{#'!STL'. 6. 2118. 11. (VariableBinding path: 'UI.STBViewProxy'). (VariableBinding path: 'UI.StatusBar'). 38. (VariableBinding path: 'Core.Array'). 21. nil. nil. 50. 2. 8. 1409288460. 1. 32. nil. 6. (VariableBinding path: 'Graphics.Color'). #default. nil. 5. nil. 1350. 1. (VariableBinding path: 'Graphics.Font'). nil. true. 262. (VariableBinding path: 'OS.LOGFONTW'). 8. #[243 255 255 255 0 0 0 0 0 0 0 0 0 0 0 0 144 1 0 0 0 0 0 0 3 2 1 0 65 0 114 0 105 0 97 0 108 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0]. 193. nil. nil. 32. nil. nil. 518. (VariableBinding path: 'Kernel.STBIdentityDictionaryProxy'). (VariableBinding path: 'Core.IdentityDictionary'). 8. #(). nil. nil. nil. 50. 1. 1862. 1. (VariableBinding path: 'UI.StatusBarItem'). 8193. -1. 32. nil. 518. (VariableBinding path: 'Core.Message'). #displayString. 8. #(). 322. #iconImageIndex. 8. #(). nil. 1094. 1. (VariableBinding path: 'UI.StatusBarNullItem'). 8705. 1. 32. nil. nil. 262. (VariableBinding path: 'Core.MessageSequence'). 50. 1. 774. (VariableBinding path: 'Core.MessageSend'). #createWindow:. 50. 1. 1030. (VariableBinding path: 'UI.CreateWindow'). 262. (VariableBinding path: 'OS.RECTL'). 8. #[255 14 0 0 10 0 0 0 93 16 0 0 32 0 0 0]. 193. 80. 8. ''. 32. 1. 8. #(). 518. (VariableBinding path: 'Graphics.Point'). 193. 193. nil. 29}
+    ]
     StatusBar class >> themePartName [
         	^'STATUS'
     ]

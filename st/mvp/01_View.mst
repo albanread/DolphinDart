@@ -4230,6 +4230,16 @@ Object subclass: View [
         	capturedHandle := User32 getCapture.
         	^capturedHandle notNil ifTrue: [self withHandle: capturedHandle] ifFalse: []
     ]
+    View class >> classForUnregisteredHandle: aHandle [
+        "Private - Answer the View class to use to wrap a Window handle that is external to Dolphin, either because the Window belongs to another process, or because it was not directly created by Dolphin. An example of the latter would be the common dialogs and their controls. The dialogs are opened by Dolphin calling system APIs, and these APIs then internally create a dialog from a template. Both the dialog and the controls on the dialog are unregistered/unowned"
+        | style |
+        	(User32 isDialog: aHandle) ifTrue: [^((VariableBinding path: 'UI.DialogView') valueOrNil ifNil: [ ShellView ]) ].
+        	style := User32 getWindowStyle: aHandle.
+        	(style allMask: 1073741824) ifFalse: [^ShellView].
+        	style := User32 getWindowExStyle: aHandle.
+        	(style anyMask: 65536) ifTrue: [^ContainerView].
+        	^View
+    ]
     View class >> closeAll [
         "Private - Ask all top level views to close (they will receiver a WM_CLOSE, which
         	they may refuse). Answer whether all windows are closed."
@@ -4436,6 +4446,14 @@ Object subclass: View [
     ]
     View class >> resetTheme [
         	theme := nil
+    ]
+    View class >> resource_Default_view [
+        "Answer the literal data from which the 'Default view' resource can be reconstituted.
+        	DO NOT EDIT OR RECATEGORIZE THIS METHOD.
+
+        	If you wish to modify this resource evaluate:
+        	Tools.ViewComposer openOn: (UI.ResourceIdentifier class: self selector: #resource_Default_view)"
+        ^{#'!STL'. 6. 2118. 11. (VariableBinding path: 'UI.STBViewProxy'). (VariableBinding path: 'UI.View'). 38. (VariableBinding path: 'Core.Array'). 12. nil. nil. 50. 2. 8. 1140850688. 1. 32. nil. 6. (VariableBinding path: 'Graphics.Color'). #default. nil. 5. nil. nil. nil. 32. 262. (VariableBinding path: 'Core.MessageSequence'). 50. 1. 774. (VariableBinding path: 'Core.MessageSend'). #createWindow:. 50. 1. 1030. (VariableBinding path: 'UI.CreateWindow'). 262. (VariableBinding path: 'OS.RECTL'). 8. #[255 14 0 0 10 0 0 0 99 15 0 0 110 0 0 0]. 193. 80. 8. ''. 32. 3. 8. #(). 518. (VariableBinding path: 'Graphics.Point'). 193. 193. nil. 27}
     ]
     View class >> selectorForMessage: anInteger [
         "Private - Answer the selector for the specified message, or nil if not recognised."

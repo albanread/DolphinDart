@@ -486,6 +486,9 @@ Object subclass: Rectangle [
         "Answer a new instance of the receiver with the specified origin and extent."
         ^self origin: originPoint corner: originPoint + extentPoint
     ]
+    Rectangle class >> unitialize [
+        	(VariableBinding path: 'Empty') binding setValue: nil
+    ]
     Rectangle class >> vertex: aPoint1 vertex: aPoint2 [
         "Answer a new, normalised, instance of the receiver with the specified diagonally opposite
         	vertices."

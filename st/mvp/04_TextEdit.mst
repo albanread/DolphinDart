@@ -328,6 +328,9 @@ ValueConvertingControlView subclass: TextEdit [
         	might."
         ^self presenter == self ifFalse: [self presenter findDetails: aFindDetails]
     ]
+    findDialogClass [
+        	^((VariableBinding path: 'AdvancedFindDialog') valueOrNil ifNil: [ FindDialog ]) 
+    ]
     findNext: aFindDetails [
         	| match |
         	match := self findNextWrapped: aFindDetails.

@@ -640,6 +640,20 @@ nil subclass: Object [
      because a class constant with no generated setter is a translator gap
      rather than a reason to abort a class's whole initializer — which is the
      specific way this bug did its damage."
+    "`subclassResponsibility` ON THE CLASS SIDE. `Object>>subclassResponsibility`
+     exists instance-side (st/world/01_object.mst), but Dolphin marks
+     CLASS-side methods abstract with it too — `STxFiler class >> on:` and
+     `stxFormatName` are both `^self subclassResponsibility`.
+
+     Missing, the abstract itself failed with `class 'STLInFiler' has no
+     class-side method 'subclassResponsibility'`, which names the WRONG
+     method: the bug is whichever abstract was reached, and that name is the
+     one hidden. An abstract that cannot report itself is worse than useless,
+     so this exists to make the real culprit say its own name."
+    Object class >> subclassResponsibility [
+        ^self error: 'subclass responsibility'
+    ]
+
     Object class >> addClassConstant: aName value: aValue [
         [ self perform: ('classVar' , aName , ':') asSymbol
                withArguments: (Array with: aValue) ]

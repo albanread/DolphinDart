@@ -197,6 +197,15 @@ Object subclass: ResourceIdentifier [
     canShow [
         	^self resourceOrNil notNil and: [self owningClass respondsTo: #show:]
     ]
+    fixupIcon [
+        "Private - Now try to determine the icon to use from the class of the top level object in the 
+        	resource. We perform a non-realizing load of the resource object."
+        | icon stlInFilerClass |
+        	stlInFilerClass := (VariableBinding path: 'Kernel.STLInFiler') value.
+        	icon := [(stlInFilerClass on: self resource readStream) basicNext icon] on: Error do: [:x | x icon].
+        	self icon: icon.
+        	^icon
+    ]
     icon [
         	^self propertyAt: #_icon ifAbsent: [self fixupIcon]
     ]

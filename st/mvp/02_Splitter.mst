@@ -177,6 +177,14 @@ View subclass: Splitter [
         "Answers an Icon that can be used to represent this class"
         ^[self] value defaultIcon
     ]
+    Splitter class >> resource_Horizontalvertical_splitter [
+        "Answer the literal data from which the 'Horizontalvertical splitter' resource can be reconstituted.
+        	DO NOT EDIT OR RECATEGORIZE THIS METHOD.
+
+        	If you wish to modify this resource evaluate:
+        	Tools.ViewComposer openOn: (UI.ResourceIdentifier class: self selector: #resource_Horizontalvertical_splitter)"
+        ^{#'!STL'. 6. 2118. 11. (VariableBinding path: 'UI.STBViewProxy'). (VariableBinding path: 'UI.Splitter'). 38. (VariableBinding path: 'Core.Array'). 12. nil. nil. 50. 2. 8. 1140850688. 1. 32. nil. 6. (VariableBinding path: 'Graphics.Color'). #default. nil. 517. nil. nil. nil. 3142. 1. (VariableBinding path: 'UI.DraggableViewInteractor'). 32. nil. 1. #left. nil. nil. nil. 518. (VariableBinding path: 'Graphics.Point'). 1. 1. 178. 9. 9. nil. 192. nil. 262. (VariableBinding path: 'Core.MessageSequence'). 50. 1. 774. (VariableBinding path: 'Core.MessageSend'). #createWindow:. 50. 1. 1030. (VariableBinding path: 'UI.CreateWindow'). 262. (VariableBinding path: 'OS.RECTL'). 8. #[255 14 0 0 10 0 0 0 218 16 0 0 15 0 0 0]. 193. 80. 8. ''. 32. 3. 8. #(). 178. 193. 193. nil. 27}
+    ]
     Splitter class >> stbConvertFromVersion12: anArray [
         "Private - Perform an STB conversion from a version 12 <View> to version 13. 13 adds
         	inheritable background colours if the backcolor is nil (similar to the way fonts are

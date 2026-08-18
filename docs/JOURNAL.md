@@ -1361,3 +1361,70 @@ The integration risk is not the DLL. Scintilla is message-based
 is exactly where 64-bit bites: wParam/lParam carry positions and pointers, and
 `SCNotification` grows the way NMHDR did (12 -> 24 bytes of header). Rule 1,
 at every Scintilla call site.
+
+---
+
+## DD14 — binding literals lowered; Dolphin's resource data is IN the image
+
+`#{Namespace.Name}` was refused outright (45 methods), and that one refusal
+dropped every `resource_*` method in the corpus — the literal arrays Dolphin's
+windows are deserialised from, since every class reference inside one is a
+binding literal. Now lowered:
+
+    ^#(#'!!STL' 6 2118 11 #{UI.STBViewProxy} #{UI.ContainerView} ...)
+    ^{#'!!STL'. 6. 2118. 11. (VariableBinding path: 'UI.STBViewProxy'). ...}
+
+Written as a real scanner (`tools/dolphin2mst/litarray.py`, 12 self-tests)
+rather than a substitution, because **inside a literal array a bare word is a
+SYMBOL**: `#(foo)` is a symbol, `{foo}` is a variable. An array carrying a
+binding has to be rewritten element by element, with `nil`/`true`/`false` left
+as themselves. Getting that wrong produces source that compiles and means
+something else, which is what the blanket refusal was protecting against.
+
+**The bug that cost a cycle, now a regression test:** `##(` CONTAINS `#(`. The
+first version treated `STBInFiler class >> predefinedClasses` —
+`^##({#{AnsiString}. Array. ...})` — as a literal array and turned it into
+unparseable soup.
+
+Result: binding-literal refusals **45 -> 0**, 15 classes in our wave now carry
+view resources, and `ContainerView resource_Default_view` answers a 59-element
+Array beginning `#!STL 6 2118 11 #{UI.STBViewProxy} #{UI.ContainerView}` —
+Dolphin's own window description, live in the image. Bindings resolve:
+`#{UI.ContainerView} value` answers `ContainerView`.
+
+Also added: `Array>>stbInFiler` (a loose method from `Dolphin Literal
+Filer.pax`, one line, the doorway to the whole mechanism), and
+`Object class >> subclassResponsibility` — Dolphin marks CLASS-side methods
+abstract too, and without it the abstract failed with "class 'STLInFiler' has
+no class-side method 'subclassResponsibility'", naming the wrong method and
+hiding the real one.
+
+### THE BLOCKER, and it is foundational
+
+**A `self` send inside an INHERITED class-side method binds to the defining
+class, not the receiver.** Minimal case:
+
+    Object subclass: PBase [
+        PBase class >> tag    [ ^self subclassResponsibility ]
+        PBase class >> useTag [ ^self tag ] ]
+    PBase subclass: PDerived [
+        PDerived class >> tag [ ^'DERIVED' ] ]
+
+    PDerived tag           -> 'DERIVED'                 correct
+    PDerived useTag        -> 'subclass responsibility' WRONG, want 'DERIVED'
+    IDerived new useTag    -> 'DERIVED'                 instance side is fine
+
+That is why the filer stops: `STxFiler class >> classForVersion:` does
+`self versions lookup: ...`, and with the receiver `STLInFiler` it still
+reaches `STxFiler`'s abstract instead of `STLInFiler class >> versions`, which
+demonstrably exists and answers the table.
+
+This is a Smalltalk semantics violation, not a corpus quirk, and Dolphin leans
+on class-side polymorphism heavily — abstract templates, factory methods,
+version dispatch. Fixing it is the next piece of work and is likely to unblock
+more than the filer.
+
+Second, smaller gap on the same path: `ReadStream>>nextAvailable` does not
+exist, which `peekForSignatureIn:` needs.
+
+25/25 gates throughout.

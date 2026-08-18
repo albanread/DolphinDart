@@ -407,6 +407,13 @@ View subclass: ControlView [
 
         	CommCtrlLibrary openDefault
     ]
+    ControlView class >> uninitialize [
+        	| deadMessages |
+        	CommCtrlLibrary removeInitFlag: 16384.
+        	deadMessages := self controlColorMessages.
+        	(VariableBinding path: 'Menu') isDefined ifFalse: [deadMessages := deadMessages , {43. 44}].
+        	View unregisterMessageMappings: deadMessages
+    ]
     ControlView class >> winClassName [
         "Private - Answer the name of the Windows window class to use when realizing the receiver."
         ^self subclassResponsibility

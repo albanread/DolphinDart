@@ -1,0 +1,21 @@
+"09_filer.mst — the loose methods that start a view-resource read.
+
+ `Array>>stbInFiler` is filed onto `Core.Array` by `Dolphin Literal Filer.pax`
+ rather than declared in a `.cls`, so the class translator never sees it. It
+ is one line, and it is the doorway to the whole mechanism:
+
+     View>>loadViewResource: aResourceArray withContext: c forEdit: e
+         filer := aResourceArray stbInFiler.
+         child := filer isUpgrading: e; context: c; basicNext.
+         [filer evaluateDeferredActions] ifCurtailed: [child destroy].
+         ^child
+
+ Loaded from `st/mvp_compat` because `STLInFiler` is translated into `st/mvp`,
+ which loads after `st/dolphin_compat` — the reopen has to come after the
+ class it names exists."
+
+Array extend [
+    "Dolphin's own body, verbatim. The resource is a literal array; the STL
+     filer reads it as a stream of tokens."
+    stbInFiler [ ^STLInFiler on: self readStream ]
+]

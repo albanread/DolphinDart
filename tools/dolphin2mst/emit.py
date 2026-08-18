@@ -28,6 +28,7 @@ from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Tuple
 
 from parse import ClassDef, Method, ParsedFile
+from litarray import lower as lower_bindings
 import pools
 from stlex import strip_code
 
@@ -1233,16 +1234,22 @@ def emit_class(pf: ParsedFile, renames: Dict[str, str],
             break
         else:
             # `#{Namespace.Name}` — Dolphin's VARIABLE BINDING literal. It
-            # denotes the binding (an association), not the value, and its
-            # protocol (`binding value`, `setValue:`, `isDefined`) has no house
-            # equivalent. Silently emitting it would produce source that parses
-            # and means something else, so it is refused. Found the honest way:
-            # Graphics.Point's class-side `uninitialize` emitted
-            # `#{Zero} binding setValue: nil` cleanly in the first run.
+            # denotes the binding, not the value, and the house dialect has no
+            # such literal. This was REFUSED outright, for a good reason
+            # (silently emitting it produces source that parses and means
+            # something else) — but the refusal cost more than it saved: it
+            # dropped all 654 `resource_*` methods, which are the literal
+            # arrays Dolphin's windows are deserialised FROM. Every class
+            # reference inside one is a binding literal.
+            #
+            # Now lowered instead, by a real scanner (`litarray.py`) rather
+            # than a substitution, because inside a literal array a BARE WORD
+            # IS A SYMBOL: `#(foo)` is a symbol and `{foo}` is a variable, so
+            # an array carrying a binding has to be rewritten element by
+            # element. `nil`/`true`/`false` are themselves in both forms.
+            # Runtime half in `st/dolphin_compat/13_variable_binding.mst`.
             if "#{" in strip_code(body):
-                refusals.append(Refusal(where, "binding-literal",
-                                        "`#{...}` variable-binding literal has no house equivalent"))
-                continue
+                body = lower_bindings(body)
             # Pools fold BEFORE `##()`, so a compile-time expression written
             # over pool names (`##(BM_CLICK bitOr: 4)`) has literals to fold.
             body = rewrite_qualified_classvars(body, classvar_owners)

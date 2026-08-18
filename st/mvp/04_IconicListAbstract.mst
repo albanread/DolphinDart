@@ -20,6 +20,17 @@ ListControlView subclass: IconicListAbstract [
         "Private - Set the receiver's image lists from the image managers."
         ^self subclassResponsibility
     ]
+    attachEditControl: hWnd [
+        	^SessionManager classVarCurrent inputState windowAt: hWnd
+        		ifAbsent: 
+        			[| editView |
+        			editView := (((VariableBinding path: 'TextEdit') valueOrNil ifNil: [ ControlView ]) ) new.	"Attach a Smalltalk window so that keyboard accelerator keys will work in the in-place edit
+        	view (#1243). The caller can use this for whatever other purpose they wish."
+        			editView parentView: self.
+        			"We don't subclass the edit control, so we won't receive any messages for it, however inserting it into our windows collection is sufficient for Ctrl+C, etc, but we need to remember to remove it when we are done as we won't know when it is destroyed."
+        			editView attachHandle: hWnd asExternalHandle.
+        			editView]
+    ]
     basicEditItemLabel: anIntegerOrHandle [
         "Private - Begin inline editing of the item with one-based <integer> index, itemIndex."
         ^self error: 'In-place label editing not supported'

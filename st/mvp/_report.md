@@ -6,15 +6,14 @@
 - parsed: **152**  (unbalanced/skipped: 0)
 - emitted: **153** `.mst`
 - methods: **5577**
-- refusals: **293**
+- refusals: **249**
 
 ## Refusals by rewrite class
 
 | Rewrite | Count |
 |---|--:|
-| `hashhash` | 142 |
+| `hashhash` | 143 |
 | `cascade` | 65 |
-| `binding-literal` | 45 |
 | `pragma` | 29 |
 | `orphan-loose-methods` | 9 |
 | `qq` | 3 |
@@ -33,7 +32,7 @@
 | `Brush` | 29 | 1 |
 | `CCITEM` | 32 | 0 |
 | `Canvas` | 126 | 5 |
-| `CardContainer` | 48 | 4 |
+| `CardContainer` | 48 | 3 |
 | `Clipboard` | 42 | 1 |
 | `Color` | 268 | 9 |
 | `ColorDefault` | 11 | 1 |
@@ -46,8 +45,8 @@
 | `CommandPolicy` | 21 | 0 |
 | `CommandQuery` | 39 | 2 |
 | `CommonDialog` | 30 | 1 |
-| `ContainerView` | 37 | 3 |
-| `ControlView` | 61 | 3 |
+| `ContainerView` | 37 | 2 |
+| `ControlView` | 61 | 2 |
 | `CreateDialog` | 3 | 0 |
 | `CreateInDpiAwarenessContext` | 5 | 0 |
 | `CreateWindow` | 11 | 0 |
@@ -55,7 +54,7 @@
 | `CreateWindowFunction` | 12 | 0 |
 | `Cursor` | 47 | 1 |
 | `DelegatingCommandPolicy` | 1 | 0 |
-| `Dialog` | 43 | 3 |
+| `Dialog` | 43 | 2 |
 | `DialogView` | 57 | 5 |
 | `DisplayMonitor` | 49 | 3 |
 | `DividerMenuItem` | 26 | 1 |
@@ -69,7 +68,7 @@
 | `Icon` | 62 | 2 |
 | `IconFromSystemInitializer` | 12 | 0 |
 | `IconImageManager` | 10 | 0 |
-| `IconicListAbstract` | 112 | 14 |
+| `IconicListAbstract` | 112 | 13 |
 | `IconicListUpdateMode` | 9 | 0 |
 | `Image` | 59 | 5 |
 | `ImageFromHandleInitializer` | 7 | 0 |
@@ -93,7 +92,7 @@
 | `ListViewUpdateMode` | 8 | 0 |
 | `ListViewVirtualUpdateMode` | 11 | 0 |
 | `MONITORINFOEXW (reopen)` | 8 | 0 |
-| `Menu` | 101 | 2 |
+| `Menu` | 101 | 1 |
 | `MenuBar` | 7 | 1 |
 | `MenuItem` | 35 | 0 |
 | `Model` | 9 | 1 |
@@ -106,22 +105,22 @@
 | `Pen` | 33 | 0 |
 | `PointEvent` | 5 | 0 |
 | `PositionEvent` | 23 | 0 |
-| `Presenter` | 152 | 6 |
-| `Prompter` | 26 | 3 |
-| `PushButton` | 41 | 8 |
+| `Presenter` | 152 | 4 |
+| `Prompter` | 26 | 0 |
+| `PushButton` | 41 | 3 |
 | `RGB` | 11 | 0 |
 | `RadioButton` | 1 | 0 |
-| `Rectangle` | 98 | 2 |
-| `ReferenceView` | 17 | 3 |
-| `ResourceIdentifier` | 44 | 2 |
+| `Rectangle` | 98 | 1 |
+| `ReferenceView` | 17 | 2 |
+| `ResourceIdentifier` | 44 | 1 |
 | `ResourceLibrary` | 18 | 0 |
 | `RestrictedClassLocator` | 10 | 0 |
-| `STBClassProxy` | 11 | 1 |
+| `STBClassProxy` | 11 | 0 |
 | `STBCollectionProxy` | 6 | 0 |
 | `STBError` | 1 | 0 |
 | `STBIdentityDictionaryProxy` | 3 | 0 |
 | `STBInFiler` | 18 | 7 |
-| `STBMetaclassProxy` | 2 | 1 |
+| `STBMetaclassProxy` | 2 | 0 |
 | `STBSingletonProxy` | 5 | 1 |
 | `STBSortedCollectionProxy` | 9 | 1 |
 | `STBStaticVariableProxy` | 4 | 0 |
@@ -133,13 +132,13 @@
 | `ScrollEvent` | 16 | 1 |
 | `SelectionChangeEvent` | 12 | 0 |
 | `SelectionChangingEvent` | 5 | 0 |
-| `Shell` | 39 | 2 |
+| `Shell` | 39 | 1 |
 | `ShellView` | 156 | 11 |
-| `SlideyInneyOuteyThing` | 66 | 4 |
+| `SlideyInneyOuteyThing` | 66 | 3 |
 | `SlidingCardTray` | 47 | 3 |
-| `Splitter` | 27 | 4 |
-| `StaticRectangle` | 7 | 1 |
-| `StatusBar` | 46 | 5 |
+| `Splitter` | 27 | 3 |
+| `StaticRectangle` | 7 | 0 |
+| `StatusBar` | 46 | 4 |
 | `StatusBarItem` | 21 | 0 |
 | `StatusBarNullItem` | 1 | 0 |
 | `StockBrush` | 7 | 0 |
@@ -152,9 +151,9 @@
 | `TVITEMW (reopen)` | 38 | 1 |
 | `TabView` | 78 | 3 |
 | `TabViewXP` | 23 | 2 |
-| `TextEdit` | 179 | 21 |
-| `TextPresenter` | 20 | 5 |
-| `Toolbar` | 164 | 25 |
+| `TextEdit` | 179 | 20 |
+| `TextPresenter` | 20 | 1 |
+| `Toolbar` | 164 | 14 |
 | `TreeModel` | 31 | 1 |
 | `TreeModelAbstract` | 57 | 7 |
 | `TreeNode` | 14 | 0 |
@@ -174,5 +173,5 @@
 | `ValueHolder` | 4 | 2 |
 | `ValueModel` | 17 | 2 |
 | `ValuePresenter` | 8 | 1 |
-| `View` | 667 | 18 |
+| `View` | 667 | 16 |
 | `WindowsEvent` | 15 | 0 |

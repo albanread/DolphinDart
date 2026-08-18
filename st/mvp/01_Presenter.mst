@@ -831,6 +831,22 @@ Object subclass: Presenter [
         	but connected to aModel."
         ^(super new) on: aModel; yourself
     ]
+    Presenter class >> resource_Container_view [
+        "Answer the literal data from which the 'Container view' resource can be reconstituted.
+        	DO NOT EDIT OR RECATEGORIZE THIS METHOD.
+
+        	If you wish to modify this resource evaluate:
+        	Tools.ViewComposer openOn: (UI.ResourceIdentifier class: self selector: #resource_Container_view)"
+        ^{#'!STL'. 6. 2118. 11. (VariableBinding path: 'UI.STBViewProxy'). (VariableBinding path: 'UI.ContainerView'). 38. (VariableBinding path: 'Core.Array'). 15. nil. nil. 50. 2. 8. 1140850688. 131073. 32. nil. nil. nil. 5. nil. nil. nil. 32. nil. 550. (VariableBinding path: 'Core.IdentityDictionary'). 0. nil. 262. (VariableBinding path: 'Core.MessageSequence'). 50. 1. 774. (VariableBinding path: 'Core.MessageSend'). #createWindow:. 50. 1. 1030. (VariableBinding path: 'UI.CreateWindow'). 262. (VariableBinding path: 'OS.RECTL'). 8. #[255 14 0 0 10 0 0 0 93 16 0 0 4 1 0 0]. 193. 80. 8. ''. 32. 3. 8. #(). 518. (VariableBinding path: 'Graphics.Point'). 193. 193. nil. 27}
+    ]
+    Presenter class >> resource_Default_view [
+        "Answer the literal data from which the 'Default view' resource can be reconstituted.
+        	DO NOT EDIT OR RECATEGORIZE THIS METHOD.
+
+        	If you wish to modify this resource evaluate:
+        	Tools.ViewComposer openOn: (UI.ResourceIdentifier class: self selector: #resource_Default_view)"
+        ^{#'!STL'. 6. 2118. 11. (VariableBinding path: 'UI.STBViewProxy'). (VariableBinding path: 'UI.ContainerView'). 38. (VariableBinding path: 'Core.Array'). 15. nil. nil. 50. 2. 8. 1409286144. 131073. 32. nil. nil. nil. 5. nil. nil. nil. 32. nil. 550. (VariableBinding path: 'Core.IdentityDictionary'). 0. nil. 262. (VariableBinding path: 'Core.MessageSequence'). 50. 1. 774. (VariableBinding path: 'Core.MessageSend'). #createWindow:. 50. 1. 1030. (VariableBinding path: 'UI.CreateWindow'). 262. (VariableBinding path: 'OS.RECTL'). 8. #[255 14 0 0 10 0 0 0 93 16 0 0 4 1 0 0]. 193. 80. 8. ''. 32. 1. 8. #(). 518. (VariableBinding path: 'Graphics.Point'). 193. 193. nil. 27}
+    ]
     Presenter class >> setAdditionalAccelerators: anArray [
         	| bindings | 
         	bindings := anArray
