@@ -35,7 +35,18 @@ $RepoRoot = Split-Path -Parent $SrcDir             # ...\<repo>
 # sibling port must not share this repo's tree. See docs/TOOLCHAIN.md.
 if ($WorkRoot -eq "") { $WorkRoot = $env:WINDART_WORKROOT }
 if ($WorkRoot -eq "" -or $null -eq $WorkRoot) { $WorkRoot = Split-Path -Parent $RepoRoot }
-$BuildDir = Join-Path $WorkRoot "build-$Arch"
+# THE CONFIG IS IN THE PATH, and that is not tidiness.
+#
+# Both configurations used to build into `build-$Arch`, so whichever ran last
+# silently replaced the other and NOTHING about the binary's location said
+# which one you had. `-Config` defaults to Debug, so the documented build
+# command produced an unoptimised VM with assertions on — and a debug VM
+# driving a message pump reads as "the port is slow" rather than "this is a
+# debug build". An entire session's timings were taken that way.
+#
+# Now `build-arm64-Debug` and `build-arm64-Release` coexist, so the two can be
+# compared rather than alternated, and `dartui.exe`'s path states the answer.
+$BuildDir = Join-Path $WorkRoot "build-$Arch-$Config"
 $LogFile  = Join-Path $BuildDir "build.log"
 
 $VsRoot = "C:\Program Files\Microsoft Visual Studio\18\Professional"

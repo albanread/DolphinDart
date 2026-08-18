@@ -2,8 +2,17 @@
 
 Dolphin Smalltalk 8's language layer + Windows prims on the Dart 1.24.3 VM
 (ARM64). Corpus: `C:\projects\dsfork`. Work tree: `C:\projects\dolphindart-work`.
-Build: `powershell -File port-win/build.ps1 -Arch arm64 -WorkRoot
-C:/projects/dolphindart-work -Tree C:/projects/dolphindart-work/tree`.
+Build: `powershell -File port-win/build.ps1 -Arch arm64 -Config Release
+-WorkRoot C:/projects/dolphindart-work -Tree C:/projects/dolphindart-work/tree`.
+
+**`-Config` DEFAULTS TO `Debug`, and the default is a trap.** `build.ps1`
+declares `[string]$Config = "Debug"`, so the command with no `-Config` builds
+an unoptimised Dart VM with assertions on — and it is hopelessly slow to
+drive, which reads as "the port is slow" rather than "the build is a debug
+build". Both configurations write to the SAME `build-$Arch` directory, so
+whichever was built last is what the gates and demos run; there is no way to
+tell from the binary's path which one you have. Check `build.log`, whose
+first line records `[arm64/Release]` or `[arm64/Debug]`.
 Tests: `python tools/gates.py [name]`. Status goes in `docs/JOURNAL.md`, not chat.
 
 These rules exist because each one was paid for. They are ordered by how much

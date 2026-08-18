@@ -49,7 +49,33 @@ import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.dirname(HERE)
-BUILD = r"C:\projects\dolphindart-work\build-arm64"
+# WHICH BUILD, SAID OUT LOUD.
+#
+# Debug and Release used to land in the same `build-arm64`, so whichever was
+# built last is what ran and nothing reported which that was. `-Config`
+# defaults to Debug, so the documented build command produced an unoptimised
+# VM with assertions on, and a whole session's timings were taken from it
+# without anyone — including the person taking them — knowing.
+#
+# Release is PREFERRED when both exist, because a timing taken from a debug
+# build is worse than no timing. The chosen directory is printed on every run
+# (see `main`), and `WINDART_BUILD` overrides the choice outright.
+WORK = r"C:\projects\dolphindart-work"
+
+
+def _pick_build():
+    override = os.environ.get("WINDART_BUILD")
+    if override:
+        return override, "WINDART_BUILD"
+    for suffix, why in (("-Release", "Release"), ("-Debug", "Debug"),
+                        ("", "legacy untagged dir — config UNKNOWN")):
+        cand = os.path.join(WORK, "build-arm64" + suffix)
+        if os.path.exists(os.path.join(cand, "dartui.exe")):
+            return cand, why
+    return os.path.join(WORK, "build-arm64-Release"), "MISSING"
+
+
+BUILD, BUILD_KIND = _pick_build()
 DARTUI = os.path.join(BUILD, "dartui.exe")   # GUI host: runs a real message pump
 DARTC = os.path.join(BUILD, "dart.exe")      # console host: exits when main returns
 
@@ -162,6 +188,17 @@ def main(argv):
     ap.add_argument("-v", "--verbose", action="store_true",
                     help="print each gate's full output, not just failures")
     args = ap.parse_args(argv)
+
+    # Every run states its build. A gate result and a TIMING both mean
+    # different things under Debug and Release, and the directory used to be
+    # the same either way.
+    print("build: %s  [%s]" % (BUILD, BUILD_KIND))
+    if BUILD_KIND == "MISSING":
+        print("  no dartui.exe found — build with:\n"
+              "  powershell -File port-win/build.ps1 -Arch arm64 -Config Release"
+              " -WorkRoot C:/projects/dolphindart-work"
+              " -Tree C:/projects/dolphindart-work/tree")
+        return 2
 
     if args.list:
         for g in sorted(GATES):
