@@ -1,0 +1,113 @@
+"`ButtonInteractor` is a `CapturingInteractor` for use with button ""gadgets"" (i.e. buttons that are drawn in the owner's client area, rather than being windows in their own right). It is not for use with `PushButton` themselves, but simulates the interactive behaviour of buttons. It requires that the owner inform it of the button rectangle (in the parent's client co-ordinates), and that the parent initiates interaction when it detects that the user has moved the mouse into that rectangle (i.e. the owner must do initial hit-testing) by sending a `#startCaptureOn:` message with the relevant `MouseEvent` as the argument.  Following initiation the `ButtonInteractor` captures the mouse and sets the hot/pressed states as appropriate. As the button state changes the interactor invalidates the button rectangle, allowing the owner to redraw the button in the appropriate state. The owner can query the button state using the `#isHot` and `#isPressed` messages. While the user remains within the button rectangle, `#isHot` is true. While the user holds down the left mouse button `#isPressed` is true. When the user moves out of the button rectangle, if the left button is not down then the mouse capture is released. If the left button is down when the user moves out of the rectangle then the capture is not released, `#isPressed` remains true, but `#isHot` is false. The user can then either release the mouse, in which case the capture is released and `#isPressed` becomes false, or move back into the button rectangle in which case `#isHot` becomes true again. Should the user press and release the left mouse button within the button rectangle (not necessarily in one click action - the cursor can be moved out and back into the button rectangle as long as the button is held down), then the command installed in the `ButtonInteractor` is routed from the parent. This is essentially the same as the interaction behaviour of native windows button controls (and the toolbar buttons), and is natural and intuitive in use.
+
+An example use of a `ButtonInteractor` is with the `SlidingCardTray` pin.
+
+## Instance Variables:
+  `buttonRect`			`Rectangle` describing the area occupied by the button
+  `commandDescription`	`CommandDescription` to be fired when the button is clicked.
+
+## Class Variables:
+  `PressedMask`		`<integer>` flags mask for recording pressed state.
+  `ButtonStateMask`	`<integer>` flags mask for all button state flags."
+
+CapturingInteractor subclass: ButtonInteractor [
+    <classVars: ButtonStateMask PressedMask>
+    ButtonInteractor class >> classVarButtonStateMask [ ^ButtonStateMask ]
+    ButtonInteractor class >> classVarButtonStateMask: v [ ^ButtonStateMask := v ]
+    ButtonInteractor class >> classVarPressedMask [ ^PressedMask ]
+    ButtonInteractor class >> classVarPressedMask: v [ ^PressedMask := v ]
+    | buttonRect _unused5 commandDescription |
+
+    buttonRectangle [
+        	^buttonRect."View desktop mapRectangle: buttonRect to: self presenter view"
+    ]
+    buttonRectangle: aRectangle [
+        "Set the button rectangle to be the <Rectangle> argument, expected to be expressed in the
+        	co-ordinate system of the associated presenter."
+        buttonRect := aRectangle "self presenter view mapRectangle: aRectangle to: nil"
+    ]
+    buttonState [
+        	^stateFlags bitAnd: 3
+    ]
+    buttonState: anInteger [
+        	| newState |
+        	newState := anInteger bitAnd: 3.
+        	self buttonState = newState ifTrue: [^self].
+        	stateFlags := (stateFlags maskClear: 3) bitOr: newState.
+        	self invalidateUIState
+    ]
+    changeHotState: aBoolean [
+        	self buttonState: (self buttonState mask: 1 set: aBoolean)
+    ]
+    commandDescription [
+        	^commandDescription
+    ]
+    commandDescription: aCommandDescription [
+        	commandDescription := aCommandDescription
+    ]
+    fireCommand [
+        	commandDescription ifNotNil: [self view onCommand: commandDescription]
+    ]
+    hitTest: aMouseEvent [
+        	^buttonRect isNil or: [buttonRect containsPoint: aMouseEvent position]
+    ]
+    invalidateUIState [
+        	self view invalidateRect: (self buttonRectangle ifNil: [self view clientRectangle]) erase: false
+    ]
+    isHot: aBoolean [
+        	self buttonState: (self buttonState mask: 1 set: aBoolean)
+    ]
+    isPressed [
+        	^stateFlags allMask: 2
+    ]
+    isPressed: aBoolean [
+        	self buttonState: (self buttonState mask: 2 set: aBoolean)
+    ]
+    onLeftButtonPressed: aMouseEvent [
+        	| hot |
+        	super onLeftButtonPressed: aMouseEvent.
+        	hot := self hitTest: aMouseEvent.
+        	hot
+        		ifTrue: [self buttonState: (aMouseEvent isLButtonDown ifTrue: [3] ifFalse: [1])]
+        		ifFalse: [self isHot: false].
+        	^false
+    ]
+    onLeftButtonReleased: aMouseEvent [
+        "Private - The left mouse button has been released so if this is the drag button then end the tracking operation."
+        | fire |
+        	super onLeftButtonReleased: aMouseEvent.
+        	self isHot: (self hitTest: aMouseEvent).
+        	fire := self buttonState == 3.
+        	self isPressed: false.
+        	fire ifTrue: [self fireCommand].
+        	^false
+    ]
+    onMouseMoved: aMouseEvent [
+        "Private - Track the mouse movement to aMouseEvent"
+        self isHot: (self hitTest: aMouseEvent).
+        	self buttonState == 0 ifTrue: [self releaseCapture].
+        	^false	"Don't perform default processing"
+    ]
+    setPresenter: aPresenter [
+        "Private - Initialise the receiver's instance variables. Answer the receiver."
+        super setPresenter: aPresenter.
+        	stateFlags := 0
+    ]
+    startCaptureOn: aMouseEvent [
+        "Start tracking the mouse on behalf of the <mouseTrackerTarget> argument.
+        	The mouse is captured and will remain so until the button is released or capture
+        	is lost for some other reason."
+        aMouseEvent message = 512 
+        		ifTrue: [self onMouseMoved: aMouseEvent]
+        		ifFalse: [self onLeftButtonPressed: aMouseEvent].
+        	self captureMouse
+    ]
+    ButtonInteractor class >> stbConvertFromVersion0: anArray [
+        "At version 1 the old flags inst var is subsumed by superclass stateFlags inst var."
+        | converted | 
+        	converted := Array new: 6.converted at: 1 put: (anArray at: 1). converted at: 2 put: (anArray at: 2). converted at: 3 put: (anArray at: 4). converted at: 4 put: (anArray at: 3). converted replaceFrom: 6
+        			to: converted size
+        			with: anArray
+        			startingAt: 5. ^converted yourself
+    ]
+]

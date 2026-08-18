@@ -503,6 +503,72 @@ TARGETS = [
     # EVERY TextEdit fails to initialize without it — and it fails as
     # `doesNotUnderstand` on nil, three frames inside Dolphin's own code.
     "Core/Object Arts/Dolphin/MVP/Models/Value/Dolphin Value Models.pax",
+
+    # ── DD16: the classes the VIEW RESOURCES NAME ──────────────────────────
+    # Not chosen by reading: DD15b ran the STL filer over
+    # `ContainerView resource_Default_view` until it stopped, and these are
+    # what it asked for and could not find. A resource is a serialised object
+    # GRAPH, so a class it names is not optional decoration — the filer
+    # allocates an instance of it partway through the stream and cannot
+    # continue without one.
+    #
+    # Listed as the transitive SUPERCLASS CLOSURE, because a class whose
+    # superclass is missing does not fail to load: it silently re-roots at
+    # Object (cli.py auto-vivifies a stub), losing every inherited ivar and
+    # method, and the damage surfaces much later as a nil. `UI.StaticText`
+    # needs StaticView + StaticControlView above it; the toolbar items need
+    # ToolbarItem and the 735-line ToolbarButton; the interactors need
+    # Interactor + CapturingInteractor.
+    #
+    # `Core.Message` / `Core.Object` / `Core.SearchPolicy` are deliberately
+    # NOT here — the world and the compat layer already provide them, and a
+    # second declaration carrying ivars REPLACES rather than reopens.
+    "Core/Object Arts/Dolphin/Base/Core.MessageSendAbstract.cls",
+    "Core/Object Arts/Dolphin/Base/Core.MessageSend.cls",
+    "Core/Object Arts/Dolphin/Base/Core.MessageSequenceAbstract.cls",
+    "Core/Object Arts/Dolphin/Base/Core.MessageSequence.cls",
+    "Core/Object Arts/Dolphin/MVP/Graphics/Graphics.VirtualColor.cls",
+    "Core/Object Arts/Dolphin/MVP/Graphics/Graphics.ThemeColor.cls",
+    "Core/Object Arts/Dolphin/Base/Kernel.SingletonSearchPolicy.cls",
+    "Core/Object Arts/Dolphin/Base/Kernel.NeverSearchPolicy.cls",
+    "Core/Object Arts/Dolphin/MVP/Base/UI.StaticView.cls",
+    "Core/Object Arts/Dolphin/MVP/Base/UI.StaticControlView.cls",
+    "Core/Object Arts/Dolphin/MVP/Views/Static/Text/UI.StaticText.cls",
+    "Core/Object Arts/Dolphin/MVP/Presenters/Text/UI.MultilineTextEdit.cls",
+    "Core/Object Arts/Dolphin/MVP/Views/Cards/UI.CardLayout.cls",
+    "Core/Object Arts/Dolphin/MVP/Base/UI.FlowLayout.cls",
+    "Core/Object Arts/Dolphin/MVP/Base/UI.Interactor.cls",
+    "Core/Object Arts/Dolphin/MVP/Base/UI.CapturingInteractor.cls",
+    "Core/Object Arts/Dolphin/MVP/Views/Sliding Tray/UI.ButtonInteractor.cls",
+    "Core/Object Arts/Dolphin/MVP/Base/UI.MouseTracker.cls",
+    "Core/Object Arts/Dolphin/MVP/Base/UI.DraggableViewInteractor.cls",
+    "Core/Object Arts/Dolphin/MVP/Views/Control Bars/UI.ToolbarItem.cls",
+    "Core/Object Arts/Dolphin/MVP/Views/Control Bars/UI.ToolbarButton.cls",
+    "Core/Object Arts/Dolphin/MVP/Views/Control Bars/UI.ToolbarIconButton.cls",
+    "Core/Object Arts/Dolphin/MVP/Views/Control Bars/UI.ToolbarSeparator.cls",
+    "Core/Object Arts/Dolphin/MVP/Views/Control Bars/UI.ToolbarTextButton.cls",
+
+    # The STx FILER PACKAGE MANIFEST, for its LOOSE METHODS — the same reason
+    # the two .pax files above are targets. It carries the per-class
+    # `stbReadFrom:format:size:` overrides, and those are not an optimisation:
+    # a COLLECTION cannot be deserialised by the generic path at all.
+    #
+    # The generic path assigns raw slots (`instVarAt:put:` for instSize + size
+    # values), which assumes our object shape matches Dolphin's. For the view
+    # classes it does — 48 of 53 classes the resources name agree on instSize,
+    # exactly. For the collections it CANNOT: Dolphin's IdentityDictionary has
+    # 2 named ivars and hash buckets in its indexed slots, ours has 3 and a
+    # different internal structure. Reading one into the other produces a
+    # broken dictionary even when the count happens to line up — and here it
+    # did not, so the filer read one value too many and ran off the end of a
+    # 59-element resource.
+    #
+    # `LookupTable class >> stbReadFrom:format:size:` instead answers
+    # `anSTBInFiler readLookupTable: self format: … size: …`, which reads
+    # KEYS AND VALUES and builds the collection through its own protocol.
+    # STxInFiler already had both that and readExtensibleCollection: — the
+    # overrides that route to them were the missing half.
+    "Core/Object Arts/Dolphin/System/Filer/Dolphin STx Filer Core.pax",
 ]
 
 # Parsed for hierarchy + pools, never emitted. DIRECTORIES, deliberately: a
@@ -578,6 +644,17 @@ def main(argv):
            # back. `UI.RichText` is the other half, which is the whole point
            # of the dispatch — the view does not have to know which it got.
            "--loose", "Core.String",
+           # DD16 — the COLLECTION filer overrides from `Dolphin STx Filer
+           # Core.pax`. Each is one class-side `stbReadFrom:format:size:` that
+           # routes to `readLookupTable:` / `readExtensibleCollection:` instead
+           # of the generic raw-slot path, which cannot deserialise a
+           # collection whose internal shape differs from Dolphin's — and all
+           # three of ours do. IdentityDictionary and Dictionary inherit
+           # LookupTable's; IdentitySet and SortedCollection inherit Set's and
+           # OrderedCollection's.
+           "--loose", "Core.LookupTable",
+           "--loose", "Core.OrderedCollection",
+           "--loose", "Core.Set",
            # REOPENED, not defined: `genstructs` builds `LVCOLUMNW` from
            # winkb with typed accessors at real offsets, and the `.cls` adds
            # the Smalltalk on top — `LVCOLUMNW class >> fromColumn:` is what

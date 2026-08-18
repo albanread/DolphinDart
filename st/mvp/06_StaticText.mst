@@ -1,0 +1,156 @@
+"`StaticText` is a `<valueView>` class for a Window STATIC control for displaying text in one of a number of text styles. The `<valueModel>` associated with a `StaticText` must always yield a `<readableString>` value when mapped through the installed type converter. A `StaticText` will normally be used in conjunction with a `TextPresenter`. The alignment of the text (and therefore the style of the underlying Windows control) can be specified using the alignment aspect which can assume of of the following values: (`#left`, `#center`, `#right`, `#leftNoWrap`, `#simple`).
+
+## Class Constants:
+  AlignmentMap	`LookupTable` of `Symbol` alignment specifiers to Windows styles."
+
+StaticControlView subclass: StaticText [
+    <classVars: AlignmentMap>
+    StaticText class >> classVarAlignmentMap [ ^AlignmentMap ]
+    StaticText class >> classVarAlignmentMap: v [ ^AlignmentMap := v ]
+    alignment [
+        "Answer a symbolic text alignment for the receiver's current mode."
+        | typeFlags |
+        	typeFlags := self getAlignment.
+        	^AlignmentMap keyAtValue: typeFlags ifAbsent: #left
+    ]
+    alignment: aSymbol [
+        "Sets the text alignment to the symbolic alignment name, aSymbol."
+        self setAlignment: ((AlignmentMap lookup: aSymbol)
+        				ifNil: 
+        					[[IdentityDictionary withAll: {#topRight -> 2.
+        								#topCenter -> 1.
+        								#rightCenter -> 2.
+        								#bottomCenter -> 1.
+        								#bottomLeft -> 0.
+        								#bottomRight -> 2.
+        								#leftCenter -> 0.
+        								#topLeft -> 0}] value
+        						at: aSymbol])
+    ]
+    beCenterAligned [
+        "Sets the receiver into center aligned mode"
+        self setAlignment: 1
+    ]
+    beLeftAligned [
+        "Sets the receiver into left aligned mode"
+        self setAlignment: 0
+    ]
+    beNoWordWrap [
+        "Sets the receiver into left aligned no word wrap mode"
+        self setAlignment: 12
+    ]
+    beRightAligned [
+        "Sets the receiver into right aligned mode"
+        self setAlignment: 2
+    ]
+    calculateExtent: aLayoutContext [
+        "Private - Calculate an extent for the receiver that would allow it to display all the text that it currently contains in the vertical/horizontal space that best suits its configured alignment."
+        "Implementation Note: The calculated extent depends on the alignment mode, and sometimes (in word-wrapping modes only) the current width.
+        	- In #simple mode (which is the only true single line mode, and corresponds to the SS_SIMPLE mode of the static control), the calculated extent is that required to draw the text on a single line, stripping out newlines and tabs. Mnemonic prefix characters are also not interpreted in this mode, but will appear as ampersands in the output.
+        	- In the non-wrapping #leftNoWrap mode (SS_LEFTNOWORDWRAP), the width is calculated based on the longest line, and the height is that required to draw however many lines of text there are as delineated by newline separators.
+        	- In the wrapping modes, #left (SS_LEFT), #right (SS_RIGHT), and #center (SS_CENTER), the width is calculated as the minimum of the current width and the width of the longest line (i.e .the current width is the maximum width), and the height is that required to draw the number of lines of text that there are after (possibly) wrapping to the width."
+
+        	| canvas extent dtFlags wrapWidth |
+        	wrapWidth := 0.
+        	self isSingleLine
+        		ifTrue: 
+        			[wrapWidth := 0.
+        			dtFlags := 3104]
+        		ifFalse: 
+        			[| alignmentFlags |
+        			dtFlags := 1088.
+        			alignmentFlags := self getAlignment.
+        			alignmentFlags ~~ 12
+        				ifTrue: 
+        					[wrapWidth := (aLayoutContext clientRectangleOf: self) width.
+
+        					"The DT_LEFT (0), DT_CENTER (1), and DT_RIGHT (2) flags are actually the same as the SS_LEFT, etc, flags"
+        					dtFlags := (dtFlags bitOr: alignmentFlags) bitOr: 16]].
+        	canvas := self canvas.
+        	canvas font: self actualFont.
+        	extent := canvas
+        				textExtent: self text
+        				width: wrapWidth
+        				flags: dtFlags.
+        	canvas free.
+
+        	"Now adjust required client extent to window extent to account for the chrome"
+        	^self calcExtentFromClientExtent: extent
+    ]
+    clear [
+        "Clears the contents of the receiver"
+        self text: ''
+    ]
+    displayValue [
+        "Private - Answer the displayed contents, the text, of the receiver"
+        ^self text
+    ]
+    displayValue: anObject [
+        "Private - Set the displayable contents, the text, of the receiver to the
+        	displayString of anObject"
+        | newText |
+        	newText := anObject displayString.
+        	self displayValue = newText ifFalse: [
+        		"If the text has changed then set the new text for anObject"
+        		self text: newText ]
+    ]
+    getAlignment [
+        "Private - Answers the text alignment, one of SS_LEFT, SS_CENTER, SS_RIGHT, SS_LEFTNOWORDWRAP, or SS_SIMPLE"
+        ^self baseStyle bitAnd: 31
+    ]
+    initialize [
+        "Private - Initialise the receiver."
+        super initialize.
+        	self beLeftAligned.
+    ]
+    isSingleLine [
+        	^self alignment == #simple
+    ]
+    refreshContents [
+        "The model held by the receiver has probably been changed so refresh 
+        	he receiver contents. Overridden here since StaticText and subclasses
+        	are allowed to have no model. This is for efficiency, to avoid having to 
+        	maintain two copies of possibly large text (one in Windows, one in Smalltalk)"
+        self model notNil ifTrue: [ super refreshContents ]
+    ]
+    setAlignment: anInteger [
+        "Private - Sets the text alignment to anInteger, one of SS_LEFT, 
+        	SS_CENTER, SS_RIGHT, etc."
+        self baseStyle: anInteger maskedBy: 31	
+    ]
+    value [
+        "Answer the value of the receiver. Overridden here and in TextEdit since
+        	StaticText can potentially have no (nil) model. This method accesses the 
+        	receiver's window directly via #displayValue."
+        ^self typeconverter convertFromRightToLeft: self displayValue
+    ]
+    value: anObject [
+        "Set the value of the receiver to anObject. Overridden here and in TextEdit
+        	since StaticText can potentially have no (nil) model. This method accesses the 
+        	receiver's window directly via #displayValue:."
+        self displayValue: (self typeconverter convertFromLeftToRight: anObject)
+    ]
+    StaticText class >> icon [
+        "Answers an Icon that can be used to represent this class"
+        ^[self] value defaultIcon
+    ]
+    StaticText class >> initialize [
+        "Private - Initialize the receiver's class variables.
+        		StaticText initialize"
+        AlignmentMap := (IdentityDictionary withAll: {
+        						#left -> 0.
+        						#right -> 2.
+        						#center -> 1.
+        						#leftNoWrap -> 12.
+        						#simple -> 11
+        					})
+    ]
+    StaticText class >> initializeClassConstants [
+        "Private - Assign the `classConstants:` entries whose values are expressions. GENERATED: Dolphin holds these in its image, so no source assigns them and every read was a nil."
+        AlignmentMap := (IdentityDictionary
+        						withAll: { #center -> 16r1. #left -> 16r0. #leftNoWrap -> 16rC. #right -> 16r2. #simple -> 16rB }).
+        ^self
+    ]
+]
+
+StaticText initializeClassConstants.

@@ -351,3 +351,35 @@ ExternalMemory subclass: Utf16Buffer [
         ^ws contents
     ]
 ]
+
+"── Deserialising a STRUCT: Dolphin's shape is not ours (DD16) ──────────
+ Dolphin's `External.Structure` holds exactly ONE named instance variable —
+ `bytes`, a ByteArray — so a serialised RECTL is a single slot containing 16
+ bytes, and `OS.RECTL instSize` is 1. Ours is native memory: `address size
+ owned`, instSize 3.
+
+ The filer's generic path reads `instSize + size` slots straight into
+ `instVarAt:put:`, so without this it read THREE objects for a RECTL — two
+ more than the stream holds — and every object after it came from the wrong
+ offset. It surfaced as `end of stream` at the last element of a 59-element
+ resource, which names neither the struct nor the count.
+
+ So: read Dolphin's one slot and copy it into our buffer. `register:` comes
+ BEFORE the read, exactly as `readObjectOfClass:size:` does it, so a circular
+ reference back to this struct resolves to the same object.
+
+ The instance side is shared by every generated struct because they all
+ descend from ExternalMemory — RECTL, LOGFONTW, POINTL and the rest — and the
+ byte layout is winkb's, so the bytes drop straight in."
+ExternalMemory class extend [
+    stbReadFrom: anSTxInFiler format: aFormat size: anInteger [
+        | struct bytes n |
+        struct := self newBuffer.
+        anSTxInFiler register: struct.
+        bytes := anSTxInFiler basicNext.
+        bytes isNil ifFalse: [
+            n := bytes size min: struct byteSize.
+            1 to: n do: [ :i | struct byteAt: i put: (bytes at: i) ] ].
+        ^struct
+    ]
+]

@@ -39,4 +39,10 @@ Object subclass: Object [
         	In the general case create an answer a ValueHolder onto the receiver"
         ^ValueHolder with: self
     ]
+    stbFixup: anSTBInFiler at: newObjectIndex [
+        "Answer the true object that must be used to represent the receiver when read from anSTBInFiler.
+        	Typically this is overridden by subclasses of STBProxy to answer the proxied object. Other classes
+        	may also override this method to effectively 'one way become' the receiver to some other object"
+        ^self
+    ]
 ]

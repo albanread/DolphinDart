@@ -1,0 +1,299 @@
+"MultilineTextEdit is a <valueView> class that implements the Windows ""EDIT"" control with an ES_MULTILINE style for the displaying and editing of multi-line text. The <valueModel> associated with a MultilineTextEdit must always yield a <readableString> value when mapped through the installed type converter. A MultilineTextEdit will normally be used in conjunction with a <TextPresenter>."
+
+TextEdit subclass: MultilineTextEdit [
+    basicCopyLine [
+        	| range |
+        	range := self lineRange: self currentLine.
+        	(self plainTextRange: range) copyToClipboard
+    ]
+    basicCopySelectionOrLine [
+        	self hasSelection ifTrue: [self basicCopySelection] ifFalse: [self basicCopyLine]
+    ]
+    basicCutLine [
+        	self selectLineAndTerminator: self currentLine.
+        	self basicCutSelection
+    ]
+    basicCutSelectionOrLine [
+        	self hasSelection ifTrue: [self basicCutSelection] ifFalse: [self basicCutLine]
+    ]
+    basicDeleteLine [
+        	self selectLineAndTerminator: self currentLine.
+        	self clearSelection
+    ]
+    basicDuplicateLine [
+        	| range |
+        	range := self lineRange: self currentLine.
+        	self insertText: String lineDelimiter , (self plainTextRange: range) at: range stop + 1
+    ]
+    basicDuplicateSelection [
+        	| sel |
+        	sel := self selectionRange.
+        	sel isEmpty
+        		ifTrue: [self duplicateLine]
+        		ifFalse: 
+        			[| text |
+        			text := self plainTextRange: sel.
+        			self insertText: text at: sel stop + 1]
+    ]
+    basicSelectionStart: start end: end [
+        "Private - Sets the selected range of text to the range defined by start and end 
+        	(0 based, end-exclusive). (0 to: -1) means select all. -1 for start means lose
+        	current selection. According to the Win32 help, EM_SETSEL does not return any 
+        	meaningful value."
+        super basicSelectionStart: start end: end.
+        	self ensureCaretVisible
+    ]
+    calculateExtent: aLayoutContext [
+        "Private - Answer a calculated preferred extent for the receiver."
+        | canvas extent metrics margins |
+        	self wordWrap ifFalse: [^super calculateExtent: aLayoutContext].
+        	canvas := self canvas.
+        	canvas font: self actualFont.
+        	#todo.	"Need to use the suggested extent passed as the argument here, rather than the current client rectangle"
+        	extent := canvas 
+        				textExtent: self text
+        				width: (aLayoutContext clientRectangleOf: self) width
+        				alignment: self alignment.
+        	metrics := canvas textMetrics.
+        	margins := self marginWidths.
+        	extent := extent + ((margins first + margins last) @ metrics tmExternalLeading).
+
+        	"Multiline Edit fields always allow one extra line in which to type"
+        	self isReadOnly ifFalse: [extent y: extent y + metrics tmHeight + metrics tmInternalLeading].
+        	canvas free.
+        	^self calcExtentFromClientExtent: extent
+    ]
+    canHScroll [
+        "Answer true if the receiver is in horizontal scrolling mode"
+        ^self baseStyleAllMask: 1048576
+    ]
+    canHScroll: aBoolean [
+        "Sets the receiver into horizontal scrolling mode if aBoolean is true.
+        	This is a combination of the WS_HSCROLL and ES_AUTOHSCROLL styles"
+        (self 
+        		baseStyleMask: 1048704
+        		set: aBoolean
+        		recreateIfChanged: true) 
+        			ifTrue: 
+        				[self invalidateCalculatedExtent.
+        				self frameChanged]
+    ]
+    canVScroll [
+        "Answer true if the receiver is in vertical scrolling mode"
+        ^self baseStyleAllMask: 2097152
+    ]
+    canVScroll: aBoolean [
+        "Sets the receiver into vertical scrolling mode if aBoolean is true
+        	This a combination of the WS_VSCROLL and ES_AUTOVSCROLL styles"
+        self showVerticalScrollBar: aBoolean.
+        	self invalidateCalculatedExtent
+    ]
+    copySelectionOrLine [
+        	self basicCopySelectionOrLine
+    ]
+    currentLine [
+        "Answer the line on which the caret is currently positioned."
+        ^self lineFromPosition: self caretPosition
+    ]
+    cutSelectionOrLine [
+        	self basicCutSelectionOrLine
+    ]
+    defaultExtent [
+        "Private - Answer the default size of the receiver in device-independent pixels (96-dpi DIPs). This is used only to determine the size of a view when it is created (although after scaling DIPs to the monitor DPI). Thereafter #preferredExtent is used when the desired size of a view is requested."
+        ^[200 @ 80] value
+    ]
+    defaultWindowStyle [
+        "Private - Answer a default style to use when creating a multiline edit pane."
+        ^super defaultWindowStyle bitOr: 4356
+    ]
+    displayOnFormats [
+        "Private - Answers an array of selectors that can be used to determine how the receiver is
+        	represented as a textual display string by #displayOn:. These selectors are sent in turn
+        	until one yields a non-nil, non-empty string as a result. Can be overridden by subclasses to 
+        	change the way a view formats itself as text"
+        ^super displayOnFormats copyReplacing: #text withObject: #displayOnText
+    ]
+    displayOnText [
+        "Private - Answers a reasonably short piece of the receiver's text."
+        ^self lineCount > 0 ifTrue: [self plainTextRange: (self lineRange: 1)] ifFalse: ['']
+    ]
+    dlgCode [
+        "Private - Answer the combination of DLGC_XXX flags usually appropriate for the
+        	receiver. This can be modified depending on the particular message received
+        	with a WM_GETDLGCODE."
+        ^(super dlgCode bitAnd: [8 bitInvert] value) bitOr: 4
+    ]
+    goto: anInteger [
+        "Move the caret to the specified position (not line) and ensure it is visible."
+        self caretPosition: anInteger.
+        	self ensureCaretVisible
+    ]
+    gotoLine: anInteger [
+        "Set caret to start of the line with the specified one-based <integer> index, ensure that
+        	the line is visible."
+        self goto: (self positionAtLine: anInteger)
+    ]
+    initialize [
+        "Private - Initialize the receiver"
+        super initialize.
+        	self wantTab: true.	"Want tabs by default"
+    ]
+    insertText: aString at: anInteger [
+        	| caret | 
+        	caret := self caretPosition.self caretPosition: anInteger. self replaceSelection: aString. self caretPosition: caret
+    ]
+    lineCount [
+        "Answers the number of lines in the receiver."
+        ^self sendMessage: 186
+    ]
+    lineHeight: anInteger [
+        "Answer the height of the specified line of text in the receiver, expressed in pixels and
+        	not including any leading."
+        | canvas height |
+        	canvas := self canvas.
+        	canvas font: self actualFont.
+        	height := canvas textMetrics tmHeight.
+        	canvas free.
+        	^height
+    ]
+    lineLength: anIntegerLineNumber [
+        "Answers the length of the line at anIntegerLineNumber."
+        ^self lineLengthFromPosition: (self positionAtLine: anIntegerLineNumber).
+    ]
+    queryToggleWordWrap: aCommandQuery [
+        aCommandQuery beEnabled. aCommandQuery isChecked: self wordWrap
+    ]
+    resetCharFormat [
+        "Resets the formatting attributes of the selection to the default mode."
+    ]
+    selectCurrentLine [
+        "Selects the complete line of text in the receiver at which
+        	the caret is currently positioned, not including the end of
+        	line characters. Answer the range selected."
+        ^self selectLine: self currentLine
+    ]
+    selectLine: anInteger [
+        "Select the complete line of text in the receiver with the <integer>
+        	index, line, not including the end-of-line characters. Answer the selected 
+        	range."
+        | range |
+        	range := self lineRange: anInteger.
+        	self selectionRange: range.
+        	^range
+    ]
+    selectLineAndTerminator: anInteger [
+        "Select the line on which the caret is located, including the line delimiter. If it is the last line 
+        	(i.e. there is no line terminator), selects the text to the end of line. Answer the selected
+        	range."
+        | last |
+        	last := self lineCount.
+        	^anInteger = last 
+        		ifTrue: [self selectLine: anInteger]
+        		ifFalse: 
+        			[| range |
+        			range := (self positionAtLine: anInteger) 
+        						to: (self positionAtLine: anInteger + 1) - 1.
+        			self selectionRange: range.
+        			range]
+    ]
+    setTabStops: anInteger [
+        "Private - Set the width of the receiver's tab stops to anInteger."
+        | width |
+        	width := UInt32 fromInteger: anInteger.
+        	self
+        		sendMessage: 203
+        		wParam: 1
+        		lpParam: width yourAddress
+    ]
+    showVerticalScrollBar: aBoolean [
+        "Add/remove vertical scrollbar."
+        "As noted in the [edit control documentation](https://learn.microsoft.com/en-us/windows/win32/controls/edit-control-styles), the styles cannot generally be set are creation, so we need to recreate the control to add/remove ES_AUTOVSCROLL."
+
+        	(self
+        		baseStyleMask: 2097216
+        		set: aBoolean
+        		recreateIfChanged: true) ifTrue: [self frameChanged]
+    ]
+    tabFocus [
+        "Private - Sets focus to the receiver. Answers the View which previously had focus,
+        	or nil if none/invalid handle."
+        ^self setFocus
+    ]
+    tabWidth: anInteger [
+        "Change the visible size of a tab to be a multiple of the width of a space character."
+        | canvas |
+        	canvas := self canvas.
+        	canvas font: self actualFont.
+        	self setTabStops: anInteger * (canvas textExtent: ' ') x.
+        	canvas free.
+    ]
+    textAtLine: lineIndex [
+        "Private - Answer the text of a line at the given line index (1-based)."
+        | length text |
+        	lineIndex <= 0 ifTrue: [^self errorSubscriptBounds: lineIndex].
+
+        	"EM_GETLINE has an unusual way of specifying the buffer size, which is that the size in characters is written into the first word.
+        	It does not write a null terminator, but our strings have an implicit one anyway"
+        	length := self lineLength: lineIndex.
+        	text := Utf16String newFixed: length.
+        	text basicAt: 1 put: length.
+        	self
+        		sendMessage: 196
+        		wParam: lineIndex - 1
+        		lpParam: text.
+        	^text
+    ]
+    wmKeyDown: message wParam: wParam lParam: lParam [
+        "Private - Handle WM_KEYDOWN.
+        	Implementation Note: We override here in order to implement the correct behaviour for
+        	the ESCape key in dialogs (i.e. to send an IDCANCEL command to the dialog).
+        	MLEs will do this if they have previously received a WM_GETDLGCODE message, but we
+        	implement those internally in order to suppress a number of features (bugs) which
+        	otherwise occur. RichEdit controls attempt to close their immediate parent directly
+        	with a WM_CLOSE message, rather than sending a WM_COMMAND, which is completely wrong
+        	(why should the parent necessarily be a dialog?), and again they only do this if
+        	they have previously received a WM_GETDLGCODE (which again we absorb to suppress bugs).
+        	If the shell doesn't have an IDCANCEL button, then nothing will happen (which will be the
+        	usual case for non-dialog shells)."
+        wParam == 27 
+        		ifTrue: 
+        			[| shell cancel |
+        			shell := self topShell view.
+        			cancel := shell getItemHandle: 2
+        						ifAbsent: 
+        							[^super 
+        								wmKeyDown: message
+        								wParam: wParam
+        								lParam: lParam].
+        			shell 
+        				sendMessage: 273
+        				wParam: [0 << 16 | 2] value
+        				lParam: cancel.
+        			^0	"Suppress default processing"].
+        	^super 
+        		wmKeyDown: message
+        		wParam: wParam
+        		lParam: lParam
+    ]
+    wmKeyUp: message wParam: wParam lParam: lParam [
+        "Private - Default handler for a WM_KEYUP.
+        	We override the implementation in our superclass since MultilineTextEdits
+        	do not update their model when Enter is pressed. Instead we answer nil 
+        	to accept default window processing."
+        ^nil
+    ]
+    wordWrap [
+        "Answer whether the receiver is in word wrap OR horizontal scrolling mode.
+        	This is a synonym for #canHScroll:, except that it is the boolean inversion."
+        ^self canHScroll not
+    ]
+    wordWrap: aBoolean [
+        "Set the receiver into word wrap OR horizontal scrolling mode, depending on the value of the
+        	<boolean> argument. This is a synonym for #canHScroll:, except that its effect is reversed."
+        self canHScroll: aBoolean not
+    ]
+    MultilineTextEdit class >> maxTextLimit [
+        "Private - Answer the absolute maximum amount of text that the receiver can ever hold."
+        ^16rFFFFFFFF
+    ]
+]

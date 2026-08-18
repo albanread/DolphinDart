@@ -1,0 +1,222 @@
+"FlowLayout implements a general purpose <layoutManager> to layout <view> objects within a <compositeView>. The views are arranged in a similar manner to words on a page; from left to right and top to bottom. The FlowLayout fits as many visible views as possible into a single row before moving onto the next row. Any invisible views are ignored, and are allocated no space in the layout. You can specify the overall alignment of the rows to be #left, #centre or #right. The separation between adjacent components can be specified with the #horizontalGap and #verticalGap aspects. 
+
+Note that a FlowLayout takes no notice of the #arrangement aspects of the views that it manages.
+
+A typical use of a FlowLayout is in a parent Toolbar to manage a series of child bars. This allows the child bars to overflow onto subsequent lines as the parent is re-sized. You can see this effect in action in any of the development tool windows.
+
+Instance Variables:
+	horizontalGap	<integer> horizontal gap between adjacent views
+	verticalGap 		<integer> vertical gap between adjacent views
+	alignment		<Symbol> either #left, #center or #right"
+
+LayoutManager subclass: FlowLayout [
+    <classVars: AlignBottom AlignHCenter AlignLeft AlignmentMap AlignmentMask AlignRight AlignTop AlignVCenter>
+    FlowLayout class >> classVarAlignBottom [ ^AlignBottom ]
+    FlowLayout class >> classVarAlignBottom: v [ ^AlignBottom := v ]
+    FlowLayout class >> classVarAlignHCenter [ ^AlignHCenter ]
+    FlowLayout class >> classVarAlignHCenter: v [ ^AlignHCenter := v ]
+    FlowLayout class >> classVarAlignLeft [ ^AlignLeft ]
+    FlowLayout class >> classVarAlignLeft: v [ ^AlignLeft := v ]
+    FlowLayout class >> classVarAlignmentMap [ ^AlignmentMap ]
+    FlowLayout class >> classVarAlignmentMap: v [ ^AlignmentMap := v ]
+    FlowLayout class >> classVarAlignmentMask [ ^AlignmentMask ]
+    FlowLayout class >> classVarAlignmentMask: v [ ^AlignmentMask := v ]
+    FlowLayout class >> classVarAlignRight [ ^AlignRight ]
+    FlowLayout class >> classVarAlignRight: v [ ^AlignRight := v ]
+    FlowLayout class >> classVarAlignTop [ ^AlignTop ]
+    FlowLayout class >> classVarAlignTop: v [ ^AlignTop := v ]
+    FlowLayout class >> classVarAlignVCenter [ ^AlignVCenter ]
+    FlowLayout class >> classVarAlignVCenter: v [ ^AlignVCenter := v ]
+    | horizontalGap verticalGap flags |
+
+    alignment [
+        "Answers the alignment of the receiver. This will be either #left, #center or #right."
+        ^AlignmentMap keyAtValue: (flags bitAnd: 15) ifAbsent: #topLeft
+    ]
+    alignment: aSymbol [
+        "Sets the alignment of the receiver to aSymbol."
+        flags := (flags maskClear: 15) maskSet: (AlignmentMap at: aSymbol ifAbsent: 0)
+    ]
+    flowSplit: aCompositeView context: aLayoutContext [
+        "Private - Split the visible managed views in aContainerView into a sequenced collection of
+        	lines. Each line is represented by an <Association>, the key of which is a <Point>
+        	specifying the extent of the line i.e. its x-coordinate is the sum of the widths of the
+        	items on that line including any horizontal gap between items, and its y-coordinate is the
+        	height of the tallest item on that line. Note that the extent includes horizontal spacing
+        	between items, but not any vertical spacing between lines."
+        | lines items maxWidth subviews lineWidth lineHeight |
+        	subviews := self visibleSubViewsOf: aCompositeView context: aLayoutContext.
+        	subviews isEmpty ifTrue: [^#()].
+        	lines := OrderedCollection new.
+        	maxWidth := ((aLayoutContext clientRectangleOf: aCompositeView)
+        				insetBy: (aCompositeView actualInsets: aLayoutContext)) width.
+        	lineWidth := 0 - horizontalGap.
+        	lineHeight := 0.
+        	items := OrderedCollection new.
+        	1 to: subviews size
+        		do: 
+        			[:i |
+        			| each itemExtent |
+        			each := subviews at: i.
+        			itemExtent := each layoutExtent: aLayoutContext.
+        			(items notEmpty and: [lineWidth + horizontalGap + itemExtent x > maxWidth])
+        				ifTrue: 
+        					["Break onto new line"
+        					lines addLast: {lineWidth @ lineHeight. items}.
+        					items := OrderedCollection new.
+        					lineWidth := 0 - horizontalGap.
+        					lineHeight := 0].
+        			items addLast: each.
+        			lineWidth := lineWidth + horizontalGap + itemExtent x.
+        			lineHeight := lineHeight max: itemExtent y].
+        	items isEmpty ifFalse: [lines addLast: {lineWidth @ lineHeight. items}].
+        	^lines
+    ]
+    horizontalAlignment [
+        	^flags bitAnd: 3
+    ]
+    horizontalGap [
+        "Answer the horizontal gap between items laid out by the receiver."
+        ^horizontalGap
+    ]
+    horizontalGap: anInteger [
+        "Set the horizontal gap between items laid out by the receiver to be the <integer>
+        	argument."
+        horizontalGap := anInteger
+    ]
+    initialize [
+        	super initialize.
+        	horizontalGap := verticalGap := flags := 0
+    ]
+    layoutContainer: aCompositeView context: aLayoutContext [
+        "Private - Update the <LayoutContext> argument with rectangles for the sub-views of its the
+        	specified container view, laying out those sub-views according to the rules and
+        	configuration of the particular layout manager."
+        | align insets clientRect calcX calcYOffset |
+        	insets := aCompositeView actualInsets: aLayoutContext.
+        	clientRect := (aLayoutContext clientRectangleOf: aCompositeView) insetBy: insets.
+        	align := self horizontalAlignment.
+        	calcX := align == 1
+        				ifTrue: [[:width | (clientRect width - width) // 2 + clientRect left]]
+        				ifFalse: 
+        					[align == 2
+        						ifTrue: [[:width | clientRect right - width]]
+        						ifFalse: [[:width | clientRect left]]].
+        	align := self verticalAlignment.
+        	calcYOffset := align == 4
+        				ifTrue: [[:lineHeight :itemHeight | (lineHeight - itemHeight) // 2]]
+        				ifFalse: 
+        					[align == 8
+        						ifTrue: [[:lineHeight :itemHeight | lineHeight - itemHeight]]
+        						ifFalse: [[:lineHeight :itemHeight | 0]]].
+        	(self flowSplit: aCompositeView context: aLayoutContext) inject: clientRect top
+        		into: 
+        			[:y :eachLine |
+        			| lineExtent lineHeight |
+        			lineExtent := eachLine at: 1.
+        			lineHeight := lineExtent y.
+        			(eachLine at: 2) inject: (calcX value: lineExtent x)
+        				into: 
+        					[:x :eachView |
+        					| extent |
+        					extent := eachView layoutExtent: aLayoutContext.
+        					aLayoutContext setView: eachView
+        						rectangle: (x @ ((calcYOffset value: lineHeight value: extent y) + y) extent: extent).
+        					x + extent x + horizontalGap].
+        			y + lineHeight + verticalGap]
+    ]
+    preferredLayoutExtentOf: aCompositeView context: aLayoutContext [
+        "Answer a <Point> specifying the preferred extent for the <CompositeView> argument when
+        	laying out in the context of the specified <LayoutContext>."
+        | lines insets totalExtent | 
+        	lines := self flowSplit: aCompositeView context: aLayoutContext.
+
+        	"If there are no lines in the receiver then use the existing extent of aContainerView"
+        	lines isEmpty ifTrue: [^aLayoutContext extentOf: aCompositeView].
+
+        	"Otherwise calculate the maximum extent of all the lines - i.e. the sum of all the line
+        	heights, allowing for any gap between them, and the maximum of the line widths"
+        	totalExtent := 0 @ 0.
+        	lines do: 
+        			[:each |
+        			| lineExtent |
+        			lineExtent := each at: 1.
+        			totalExtent
+        				y: totalExtent y + lineExtent y + verticalGap;
+        				x: (totalExtent x max: lineExtent x)].
+        	insets := aCompositeView actualInsets: aLayoutContext.
+        	^totalExtent + insets origin + insets corner
+    ]
+    resize: aSizedView to: aRectangle [
+        "Resize the <view>, aView, to occupy the specified <Rectangle> in the container
+        	view who's layout is managed by the receiver."
+        aSizedView rectangle: aRectangle.
+        	super resize: aSizedView to: aRectangle
+    ]
+    resolutionScaledBy: aPoint [
+        "Private - The receiver is being loaded and it has been determined that the pixel resolution has changed since the point at which the view was saved. Scale any internal pixels by the <Point> argument."
+        horizontalGap := (horizontalGap * aPoint x) truncated.
+        	verticalGap := (verticalGap * aPoint y) truncated
+    ]
+    verticalAlignment [
+        	^flags bitAnd: 12
+    ]
+    verticalGap [
+        "Answer the vertical gap between items laid out by the receiver."
+        ^verticalGap
+    ]
+    verticalGap: anInteger [
+        "Set the vertical gap between items laid out by the receiver to be the <integer> argument."
+        verticalGap := anInteger
+    ]
+    FlowLayout class >> initialize [
+        "self initialize"
+        AlignmentMap := (IdentityDictionary new
+        				at: #leftCenter put: 0 | 4;
+        				at: #rightCenter put: 2 | 4;
+        				at: #topCenter put: 1 | 0;
+        				at: #bottomCenter put: 1 | 8;
+        				at: #center put: 1 | 4;
+        				at: #topLeft put: 0 | 0;
+        				at: #topRight put: 2 | 0;
+        				at: #bottomLeft put: 0 | 8;
+        				at: #bottomRight put: 2 | 8;
+        				shrink;
+        				yourself)
+    ]
+    FlowLayout class >> stbConvertFrom: anSTBClassFormat [
+        "Convert from earlier schema.
+        	1) Former 'alignment' instance variable becomes 'flags', in which alignment is encoded."
+        anSTBClassFormat version == 0
+        		ifTrue: 
+        			[^
+        			[:data |
+        			self new
+        				horizontalGap: data first;
+        				verticalGap: data second;
+        				alignment: ([IdentityDictionary
+        							withAll: { #left -> #leftTop. #center -> #topCenter. #right -> #topRight }] value at: data third);
+        				yourself]].
+        	^super stbConvertFrom: anSTBClassFormat
+    ]
+    FlowLayout class >> stbVersion [
+        	^1
+    ]
+    FlowLayout class >> initializeClassConstants [
+        "Private - Assign the `classConstants:` entries whose values are expressions. GENERATED: Dolphin holds these in its image, so no source assigns them and every read was a nil."
+        AlignmentMap := (IdentityDictionary withAll: {
+        								#bottomCenter -> 16r9.
+        								#bottomLeft -> 16r8.
+        								#bottomRight -> 16rA.
+        								#center -> 16r5.
+        								#leftCenter -> 16r4.
+        								#rightCenter -> 16r6.
+        								#topCenter -> 16r1.
+        								#topLeft -> 16r0.
+        								#topRight -> 16r2
+        							}).
+        ^self
+    ]
+]
+
+FlowLayout initializeClassConstants.

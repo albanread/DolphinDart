@@ -221,4 +221,20 @@ Object subclass: ResourceIdentifier [
         	Answer the <Presenter> opended to display it."
         ^self owningClass show: self name.
     ]
+    ResourceIdentifier class >> stbConvertFrom: anSTBClassFormat [
+        "Convert from previous version resource. 
+        	Version Changes:
+        		1) removes stores a selector as the resource name rather than a string name (this change was made an age ago, and not properly converted)"
+        anSTBClassFormat version == 0
+        		ifTrue: 
+        			[^
+        			[:data |
+        			data becomeA: self.
+        			data selector isSymbol ifFalse: [data name: data selector].
+        			data]].
+        	^super stbConvertFrom: anSTBClassFormat
+    ]
+    ResourceIdentifier class >> stbVersion [
+        	^1
+    ]
 ]

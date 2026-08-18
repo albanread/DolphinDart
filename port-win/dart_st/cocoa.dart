@@ -1127,6 +1127,23 @@ _stDivSlow(a, b) {
       return stInvokeStatic('Fraction', 'numerator:denominator:',
           [a * q[0], p[0]]);
     }
+    // A number over a POINT. Smalltalk coerces by GENERALITY, and Point's is
+    // higher than any scalar's: `96 / (96@96)` is `(96/96) @ (96/96)`, not an
+    // error and not a double. Dolphin gets there through
+    // `retryDivisionCoercing:`; here the call site is the helper, so a
+    // `Number>>/` written in Smalltalk would never run (CLAUDE.md #2) and the
+    // coercion has to live on this slow path.
+    //
+    // Found loading a view resource: `View>>dpiScalingFactor` divides by a
+    // Point, and the failure was `Point has no method 'asDouble'` — the
+    // fallback below asking a Point to be a scalar, which names neither the
+    // operator nor the receiver that actually needed coercing.
+    var bx = _stSendTry(b, 'x', const []);
+    var by = _stSendTry(b, 'y', const []);
+    if (bx != null && by != null) {
+      return stInvokeStatic('Point', 'x:y:',
+          [stDivide(a, bx[0]), stDivide(a, by[0])]);
+    }
     return (a as num) / (stSend(b, 'asDouble', []) as num);
   }
   return a / b;

@@ -123,3 +123,31 @@ ExternalMemory subclass: POINT [
     ]
     asPoint [ ^self x @ self y ]
 ]
+
+"── `RECTL>>scaleToDpi:from:` — from OS.RECTL.cls, which winkb cannot give us ──
+ Our RECTL is GENERATED from winkb (layout, offsets, typed accessors), so it
+ carries none of the Smalltalk Dolphin declares on `OS.RECTL.cls`. This method
+ is one of those, and it is on the critical path of loading any view resource:
+
+     View>>createWindow:      aCreateWindow scaleToDpiOf: creationParent
+     CreateWindowFunction     aView scaleChildCreation: self
+     View>>scaleChildCreation: aCreateWindow scaleToDpi: self dpi
+     CreateWindowApiCall      rectangle scaleToDpi: anInteger from: dpi   <- here
+
+ A saved resource records its geometry at the DPI it was designed at (96), and
+ this rescales it in place to the monitor's. Transcribed from the corpus,
+ including the unrolled form and the `* desired // current` order — integer
+ multiply BEFORE divide, so the rounding matches Dolphin's."
+RECTL extend [
+    scaleToDpi: desiredInteger from: currentInteger [
+        self int32AtOffset: 0
+             put: (self int32AtOffset: 0) * desiredInteger // currentInteger.
+        self int32AtOffset: 4
+             put: (self int32AtOffset: 4) * desiredInteger // currentInteger.
+        self int32AtOffset: 8
+             put: (self int32AtOffset: 8) * desiredInteger // currentInteger.
+        self int32AtOffset: 12
+             put: (self int32AtOffset: 12) * desiredInteger // currentInteger.
+        ^self
+    ]
+]

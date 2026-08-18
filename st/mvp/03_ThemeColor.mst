@@ -1,0 +1,89 @@
+"`ThemeColor` is a class of `VirtualColor`s that provide a named indirection to a real `Color`. They are useful for simple theming purposes, allowing view resources to be created that refer to named `ThemeColor`s which can then be changed to configure the desired actual colour later.
+
+## Instance Variables:
+  `name`		`Symbol`; the name of the colour in the logical scheme.
+  `actualColor`	`Color`; the colour to which the instance currently resolves when used"
+
+VirtualColor subclass: ThemeColor [
+    | name actualColor |
+
+    actualColor [
+        	^((actualColor ifNil: [ Window ]) ) actualColor
+    ]
+    actualColor: aColor [
+        	actualColor := aColor
+    ]
+    basicActualColor [
+        	^actualColor
+    ]
+    name [
+        	^name
+    ]
+    printOn: aPuttableStream [
+        "Append, to the <puttableStream>, target, a string whose characters are a description of the
+        	receiver as a developer would want to see it."
+        | named | 
+        	aPuttableStream nextPut: $(.
+        	named := NamedColors lookup: self name.
+        	named == self
+        		ifTrue: 
+        			[aPuttableStream
+        				print: Color;
+        				space;
+        				display: #named:;
+        				space;
+        				print: self name]
+        		ifFalse: 
+        			[aPuttableStream
+        				print: self class;
+        				nextPutAll: ' name: ';
+        				print: self name;
+        				nextPutAll: ' actualColor: ';
+        				print: self actualColor].
+        	aPuttableStream nextPut: $)
+    ]
+    setName: aSymbol actualColor: aColor [
+        	name := aSymbol.
+        	actualColor := aColor
+    ]
+    shallowCopy [
+        "The receiver's instances are unique for each named value."
+        ^self
+    ]
+    stbSaveOn: anSTBOutFiler [
+        "Output the singleton receiver to anSTBOutFiler."
+        anSTBOutFiler
+        		saveSingleton: self
+        		class: self basicClass
+        		name: self name
+    ]
+    ThemeColor class >> addNamed: aSymbol color: aColor [
+        	| wrapper |
+        	wrapper := self name: aSymbol actualColor: aColor.
+        	^super addNamed: aSymbol color: wrapper
+    ]
+    ThemeColor class >> initialize [
+        	self addNamed: #dialog color: Face3d
+    ]
+    ThemeColor class >> name: aSymbol actualColor: aColor [
+        | _casc1 | _casc1 := self basicNew. _casc1 instVarAt: 1 put: aSymbol. _casc1 instVarAt: 2 put: aColor. ^_casc1 yourself
+    ]
+    ThemeColor class >> stbReadFrom: anSTBInFiler format: anSTBClassConversion size: anInteger [
+        "Read an instance of the receiver from the binary filer, aSTBInFiler."
+        "Implementation Note: Overridden in order to maintain unique instances without using a STBSingletonProxy."
+
+        	| answer ref colorName |
+        	ref := anSTBInFiler register: nil.
+        	colorName := anSTBInFiler basicNext.
+        	answer := NamedColors at: colorName
+        				ifAbsent: 
+        					["If the theme colour is not defined, return a colour that will make the fault obvious"
+        					self name: colorName actualColor: Color magenta].
+        	anSTBInFiler fixup: ref to: answer.
+        	^answer
+    ]
+    ThemeColor class >> uninitialize [
+        	NamedColors
+        		removeAllKeys: ((NamedColors select: [:each | each isKindOf: self]) collect: [:each | each name])
+    ]
+]

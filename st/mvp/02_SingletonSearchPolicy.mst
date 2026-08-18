@@ -1,0 +1,25 @@
+SearchPolicy subclass: SingletonSearchPolicy [
+    name [
+        "Answer the name of the `SearchPolicy`. This is nil apart from the named singletons."
+        ^self subclassResponsibility
+    ]
+    SingletonSearchPolicy class >> current [
+        "Answer the singleton instance of the receiver."
+        ^current ifNil: [current := self new]
+    ]
+    SingletonSearchPolicy class >> onPreStripImage [
+        "Private - Tidy up the receiver's lazily initialized subinstances in preparation for image stripping."
+        self allSubclassesDo: [:each | each uninitialize]
+    ]
+    SingletonSearchPolicy class >> uninitialize [
+        "Private - Tidy up the receiver in preparation for removal from the system."
+        current := nil
+    ]
+    SingletonSearchPolicy class >> stbReadFrom: anSTBInFiler format: anSTBClassConversion size: anInteger [
+        "Read an instance of the receiver from the binary filer, aSTBInFiler."
+        | singleton |
+        	singleton := self current.
+        	anSTBInFiler register: singleton.
+        	^singleton
+    ]
+]

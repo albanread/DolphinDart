@@ -1,0 +1,51 @@
+"`ToolbarTextButton` represents a user defined text-only button for a `Toolbar`. These are primarily intended for use with icon fonts such as Segoe Fluent Icons, providing lightweight and scalable button images."
+
+ToolbarButton subclass: ToolbarTextButton [
+    | buttonText |
+
+    buttonText [
+        	^buttonText
+    ]
+    buttonText: aStringOrCharacter [
+        	buttonText := aStringOrCharacter
+    ]
+    imageIndexIn: aToolbar [
+        "Private - The receiver does not have an image - it is text only."
+        ^-2
+    ]
+    isTextOnly [
+        	^true
+    ]
+    populateTbButton: aTBBUTTON for: aToolbar withLabels: aBoolean [
+        "Private - For text buttons, style must always include BTNS_SHOWTEXT and BTNS_AUTOSIZE, which are set by the initializer"
+        ^aTBBUTTON
+        		idCommand: self getCommandId
+        		iBitmap: -2
+        		iString: (aToolbar addString: buttonText)
+        		fsStyle: style
+    ]
+    setCommandDescription: aCommandDescription buttonText: aString [
+        	style := 80.
+        	commandDescription := aCommandDescription.
+        	buttonText := aString.
+        	^self
+    ]
+    ToolbarTextButton class >> command: aCommand description: aStringDescription buttonText: aString [
+        "Answer a new instance of the receiver issuing aCommand with aStringDescription and anImage"
+        | command |
+        	command := CommandDescription command: aCommand description: aStringDescription.
+        	^self commandDescription: command buttonText: aString
+    ]
+    ToolbarTextButton class >> commandDescription: aCommandDescription buttonText: aString [
+        "Answer a new instance of the receiver containing a bitmap for aCommandDescription"
+        ^(self basicNew)
+        		setCommandDescription: aCommandDescription buttonText: aString
+    ]
+    ToolbarTextButton class >> new [
+        "Answer a new default ToolbarButton"
+        ^self
+        		command: #noCommand
+        		description: 'No command'
+        		buttonText: $\x1F42C
+    ]
+]

@@ -66,4 +66,19 @@ Object subclass: Model [
         	No change at this level."
         ^anArray
     ]
+    Model class >> stbConvertFrom: anSTBClassFormat [
+        "Convert from previous version resource. 
+        	Version Changes:
+        		1: Added 'events' instance variable to Model."
+        ^
+        	[:data |
+        	| instVars |
+        	instVars := self stbConvert: data fromVersion: anSTBClassFormat version.
+        	"Allow for the fact that the conversions may be assuming that appending inst vars with a default value of nil does not require conversion"
+        	(instVars resize: self instSize) becomeA: self]
+    ]
+    Model class >> stbVersion [
+        "Answer the current binary filer version number for instances of the receiver."
+        ^1
+    ]
 ]

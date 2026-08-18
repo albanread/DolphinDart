@@ -156,4 +156,26 @@ DynamicLinkLibrary subclass: ResourceLibrary [
         	aliases do: [:alias | Libraries at: (File default: alias extension: 'dll') put: lib].
         	^lib
     ]
+    ResourceLibrary class >> stbConvertFrom: anSTBClassFormat [
+        "Convert from version 1 ExternalResourceLibrary (adds loadFlags inst. var)"
+        "Shouldn't be needed, as resource libraries were proxied, and now have a special format"
+
+        	anSTBClassFormat version == 0 ifTrue: [^[:data | { data at: 1. self defaultLoadFlags } becomeA: self]].
+        	^super stbConvertFrom: anSTBClassFormat
+    ]
+    ResourceLibrary class >> stbReadFrom: anSTxInFiler format: anSTBClassConversion size: anInteger [
+        "Read an instance of the receiver from the binary filer, aSTBInFiler."
+        "Implementation Note: Overridden in order to maintain unique instances without using a proxy. Pre-D8 STB streams will still contained the proxies, and so this will not be called."
+
+        	| reslib ref fileName |
+        	ref := anSTxInFiler register: nil.
+        	fileName := anSTxInFiler basicNext.
+        	reslib := self open: fileName.
+        	anSTxInFiler fixup: ref to: reslib.
+        	^reslib
+    ]
+    ResourceLibrary class >> stbVersion [
+        "Answer the current binary filer version number for instances of the receiver."
+        ^1
+    ]
 ]

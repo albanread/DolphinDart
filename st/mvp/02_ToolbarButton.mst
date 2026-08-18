@@ -1,0 +1,559 @@
+"`ToolbarButton` is the abstract class of `Toolbar` buttons.  The button is a `<commandSource>` capable of storing `CommandDescription` to be fired when the button is pressed. Each button has an image, the provision of which is implemented by subclasses. The dimensions of the images within the bitmap are held by the containing `Toolbar` in its `#bitmapExtent` aspect.
+
+## Instance Variables:
+  `style`				`<integer>` representing the Window's style of the item.
+  `commandDescription`	`CommandDescription` or `nil`; the item's command.  
+  `commandId`			`<integer>`  ID of the item's command (or zero if none)."
+
+ToolbarItem subclass: ToolbarButton [
+    <classVars: LabelledButtonStyles>
+    ToolbarButton class >> classVarLabelledButtonStyles [ ^LabelledButtonStyles ]
+    ToolbarButton class >> classVarLabelledButtonStyles: v [ ^LabelledButtonStyles := v ]
+    | style commandDescription commandId textcolor font |
+
+    checked [
+        	#deprecated.
+        	^self isChecked
+    ]
+    checked: aBoolean [
+        	#deprecated.
+        	self isChecked: aBoolean
+    ]
+    command [
+        "Answer the <commandMessage> for the receiver or nil if one has not been set."
+        ^self commandDescription command
+    ]
+    command: commandMessage [
+        "Sets the command associated with the receiver to the <commandMessage> argument."
+        self commandDescription command: commandMessage
+    ]
+    commandDescription [
+        	^commandDescription
+    ]
+    commandDescription: aCommandDescription [
+        	commandDescription := aCommandDescription
+    ]
+    commandId [
+        "Private - Answer the Integer command identifier for the receiver"
+        ^commandId
+    ]
+    enabled [
+        	#deprecated.
+        	^self isEnabled
+    ]
+    enabled: aBoolean [
+        	#deprecated.
+        	self isEnabled: aBoolean
+    ]
+    font [
+        	^font
+    ]
+    font: aFont [
+        	font := aFont
+    ]
+    getCommandId [
+        "Private - Determine and answer the Integer command identifier for the receiver"
+        ^commandId := commandDescription id
+    ]
+    hide: aBoolean [
+        	#deprecated.
+        	self isHidden: aBoolean
+    ]
+    imageIndexIn: aToolbar [
+        "Private - Add the bitmap for the receiver to aToolbar.
+        	Answer the index of the bitmap within aToolbar's registered bitmaps"
+        ^self subclassResponsibility
+    ]
+    indeterminate: aBoolean [
+        	#deprecated.
+        	self isIndeterminate: aBoolean
+    ]
+    initialize [
+        "Private - Initialize the state of the receiver."
+        style := BTNS_BUTTON
+    ]
+    isChecked [
+        	^self toolbar tbIsButtonChecked: self commandId
+    ]
+    isChecked: aBoolean [
+        	self toolbar tbCheckButton: self commandId state: aBoolean.
+
+        	"Most Microsoft app's also set the 'pressed' state too, and this does look better."
+        	self isPressed: aBoolean
+    ]
+    isCheckStyle [
+        "Answers true if the receiver is a check style button that toggles between pressed and
+        	unpressed states when clicked."
+        ^self style allMask: BTNS_CHECK
+    ]
+    isCheckStyle: aBoolean [
+        "Sets the receiver to be a check style button according to aBoolean"
+        self style: (self style mask: BTNS_CHECK set: aBoolean)
+    ]
+    isDropDownOnly [
+        "Answers true if the receiver is a drop-down arrow ONLY (as opposed
+        	to both a push button and a drop-down)."
+        ^self style allMask: BTNS_WHOLEDROPDOWN
+    ]
+    isDropDownOnly: aBoolean [
+        "Set whether the receiver is a drop-down arrow ONLY (as opposed
+        	to both a push button and a drop-down)."
+        self style: (self style mask: BTNS_DROPDOWN | BTNS_WHOLEDROPDOWN set: aBoolean)
+    ]
+    isDropdownStyle [
+        "Answers true if the receiver is a drop down style button"
+        ^self style allMask: BTNS_DROPDOWN
+    ]
+    isDropdownStyle: aBoolean [
+        "Sets the receiver to be a drop down style button according to aBoolean"
+        self style: (self style mask: BTNS_DROPDOWN set: aBoolean)
+    ]
+    isEnabled [
+        "Answer whether the receiver is enabled."
+        ^self toolbar tbIsButtonEnabled: self commandId
+    ]
+    isEnabled: aBoolean [
+        	self toolbar tbEnableButton: self commandId state: aBoolean
+    ]
+    isGroupStyle [
+        "Answers true if the receiver is a group button that will be reset if others in its group
+        	are pressed"
+        ^self style allMask: BTNS_GROUP
+    ]
+    isGroupStyle: aBoolean [
+        "Sets the receiver to be a group style button according to aBoolean. A group button is like
+        	a radio button in that once pressed it remains pressed until another button in the group is
+        	pressed."
+        self style: (self style mask: BTNS_GROUP set: aBoolean)
+    ]
+    isHidden [
+        	^self toolbar tbIsButtonHidden: self commandId
+    ]
+    isHidden: aBoolean [
+        	self toolbar tbHideButton: self commandId state: aBoolean
+    ]
+    isIndeterminate [
+        	^self toolbar tbIsButtonIndeterminate: self commandId
+    ]
+    isIndeterminate: aBoolean [
+        	self toolbar tbIndeterminate: self commandId state: aBoolean
+    ]
+    isPressed [
+        	^self toolbar tbIsButtonPressed: self commandId
+    ]
+    isPressed: aBoolean [
+        	self toolbar tbPressButton: self commandId state: aBoolean
+    ]
+    onTipTextRequired [
+        "Tool-tip text is required for the receiver. We give the first <commandTarget>
+        	on the command route which is prepared to accept the command the opportunity to
+        	dynamically supply the tip text, otherwise just use that associated with the receiver."
+        | query |
+        	query := self parent queryCommandRouteFor: self commandDescription.
+        	^(query canPerform and: [query receiver respondsTo: #onTipTextRequired:query:])
+        		ifTrue: [query receiver onTipTextRequired: self query: query]
+        		ifFalse: [self toolTipText]
+    ]
+    populateTbButton: aTBBUTTON for: aToolbar withLabels: aBoolean [
+        	^aBoolean
+        		ifTrue: 
+        			[aTBBUTTON
+        				idCommand: self getCommandId
+        				iBitmap: (self imageIndexIn: aToolbar)
+        				iString: (aToolbar addString: self text)
+        				fsStyle: (style bitOr: 80)]
+        		ifFalse: 
+        			[aTBBUTTON
+        				idCommand: self getCommandId
+        				iBitmap: (self imageIndexIn: aToolbar)
+        				iString: -1
+        				fsStyle: style]
+    ]
+    pressed [
+        	#deprecated.
+        	^self isPressed
+    ]
+    pressed: aBoolean [
+        	#deprecated.
+        	self isPressed: aBoolean
+    ]
+    printOn: aStream [
+        "Append a representation of the receiver to aStream."
+        aStream basicPrint: self. aStream nextPut: $(. aStream print: self command. aStream nextPut: $)
+    ]
+    rectangle [
+        "Answer the receiver's bounding Rectangle in the parent coordinate system"
+        ^(self toolbar tbGetRect: self commandId) asRectangle
+    ]
+    screenRectangle [
+        "Answer the receiver's bounding Rectangle in the parent coordinate system"
+        ^self toolbar mapRectangle: self rectangle to: View desktop
+    ]
+    stateMask: stateMask [
+        "Set the TBSTATE_XXX flags of the receiver to the <integer> stateMask."
+        self toolbar tbSetState: self commandId state: stateMask
+    ]
+    stbSaveOn: anSTxOutFiler [
+        	| saved |
+        	"We don't want to save down the command id because it is unstable and needs to be reallocated when the toolbar is realized anyway"
+        	saved := commandId.
+        	commandId := nil.
+        	[super stbSaveOn: anSTxOutFiler] ensure: [commandId := saved]
+    ]
+    style [
+        "Private - Answer the style of the receiver."
+        ^style
+    ]
+    style: styleInteger [
+        "Private - Set the style of the receiver."
+        style := styleInteger.
+        	self update
+    ]
+    text [
+        "Answers a short String description of the receiver's command. Uses the String
+        	representation of the command itself if no explicit description has been
+        	provided"
+        ^self commandDescription description
+    ]
+    text: aString [
+        "Sets the String description of the receiver's command."
+        ^self commandDescription description: aString
+    ]
+    textcolor [
+        	^textcolor
+    ]
+    textcolor: aColor [
+        	textcolor := aColor
+    ]
+    toolTipText [
+        "Answer a String suitable for displaying in a Tool tip control."
+        ^self commandDescription toolTipText
+    ]
+    validateUserInterface: route [
+        "Set the enable/checked state of the receiver using the <commandRoute>, route."
+        | query mask |
+        	query := route query: self commandDescription.
+        	"Set the state all at once to improve performance"
+        	mask := query isEnabled ifTrue: [TBSTATE_ENABLED] ifFalse: [0].
+        	query isChecked ifTrue: [mask := mask bitOr: [TBSTATE_CHECKED|TBSTATE_PRESSED] value].
+        	self stateMask: mask
+    ]
+    ToolbarButton class >> bitmapButtonClass [
+        "Answer the subclass of the receiver which is used to represent buttons with images from arbitrary bitmaps."
+        ^ToolbarBitmapButton
+    ]
+    ToolbarButton class >> clearSelection [
+        "Answer a sub-instance of the receiver for the #clearSelection command"
+        ^self
+        		systemBitmap: IDB_STD_SMALL_COLOR
+        		image: STD_DELETE
+        		command: #clearSelection
+        		description: 'Delete'
+    ]
+    ToolbarButton class >> copySelection [
+        "Answer a sub-instance of the receiver for the #copySelection command"
+        ^self
+        		systemBitmap: IDB_STD_SMALL_COLOR
+        		image: STD_COPY
+        		command: #copySelection
+        		description: 'Copy'
+    ]
+    ToolbarButton class >> cutSelection [
+        "Answer a sub-instance of the receiver for the #cutSelection command"
+        ^self
+        		systemBitmap: IDB_STD_SMALL_COLOR
+        		image: STD_CUT
+        		command: #cutSelection
+        		description: 'Cut'
+    ]
+    ToolbarButton class >> dolphinImage: bitmapIndex command: aCommand description: aString [
+        "Private - Answer a new instance of the receiver using a Dolphin system toolbar bitmap
+        	identified by bitmapName and issuing aCommand"
+        ^self bitmapButtonClass
+        		bitmap: self dolphinToolsBitmap
+        		index: bitmapIndex
+        		commandDescription: (CommandDescription command: aCommand description: aString)
+    ]
+    ToolbarButton class >> dolphinToolsBitmap [
+        "Private - Answer the bitmap for the internal Dolphin tool button images"
+        ^(Bitmap fromId: 'Tools.bmp') isShared: true
+    ]
+    ToolbarButton class >> fileNew [
+        "Answer a sub-instance of the receiver for the #fileNew command"
+        ^self
+        		systemBitmap: IDB_STD_SMALL_COLOR
+        		image: STD_FILENEW
+        		command: #fileNew
+        		description: 'New'
+    ]
+    ToolbarButton class >> fileOpen [
+        "Answer a sub-instance of the receiver for the #fileOpen command"
+        ^self
+        		systemBitmap: IDB_STD_SMALL_COLOR
+        		image: STD_FILEOPEN
+        		command: #fileOpen
+        		description: 'Open'
+    ]
+    ToolbarButton class >> fileSave [
+        "Answer a sub-instance of the receiver for the #fileSave command"
+        ^self
+        		systemBitmap: IDB_STD_SMALL_COLOR
+        		image: STD_FILESAVE
+        		command: #fileSave
+        		description: 'Save'
+    ]
+    ToolbarButton class >> find [
+        "Answer a sub-instance of the receiver for the #find command"
+        "The standard find tool is rather poor, and nobody uses it, so rather than:
+        	^self standardImage: STD_FIND command: #find description: 'Find'"
+
+        	^self bitmapButtonClass
+        		bitmap: self findToolsBitmap
+        		index: 0
+        		commandDescription: (CommandDescription command: #find description: 'Find')
+    ]
+    ToolbarButton class >> findNext [
+        "Answer a sub-instance of the receiver for the #findNext command"
+        ^self bitmapButtonClass
+        		bitmap: self findToolsBitmap
+        		index: 1
+        		commandDescription: (CommandDescription command: #findNext description: 'Find Next')
+    ]
+    ToolbarButton class >> findToolsBitmap [
+        "Note that the find tools (like the list tools) are pulled from resources located in the VM/executable,
+        	rather than development resources, to avoid the need for the user to ship the development
+        	resources DLL just because the find or list toolbars are used.
+        	Note that the bitmap is shared, and should not be modified."
+        ^(Bitmap fromId: 'FINDBAR.BMP' in: VM)
+        		setMap3DColors: true;
+        		isShared: true;
+        		yourself
+    ]
+    ToolbarButton class >> histImage: bitmapIndex command: aCommand description: aString [
+        "Private - Answer a new instance of the receiver using the standard system History
+        	toolbar bitmap identified by bitmapName and issuing aCommand"
+        ^self systemButtonClass
+        		bitmapId: IDB_HIST_SMALL_COLOR
+        		index: bitmapIndex
+        		commandDescription: (CommandDescription command: aCommand description: aString)
+    ]
+    ToolbarButton class >> historyBack [
+        "Answer a sub-instance of the receiver for the #historyBack command"
+        ^(self histImage: HIST_BACK command: #historyBack description: 'Back')
+        		isDropdownStyle: true;
+        		yourself
+    ]
+    ToolbarButton class >> historyForward [
+        "Answer a sub-instance of the receiver for the #historyForward command"
+        ^(self histImage: HIST_FORWARD command: #historyForward description: 'Forward')
+        		isDropdownStyle: true;
+        		yourself
+    ]
+    ToolbarButton class >> icon [
+        	^PushButton icon
+    ]
+    ToolbarButton class >> initialize [
+        	LabelledButtonStyles := BTNS_AUTOSIZE | BTNS_SHOWTEXT
+    ]
+    ToolbarButton class >> largeIconMode [
+        "Answer a sub-instance of the receiver for the #largeIcons command"
+        ^self
+        		systemBitmap: IDB_VIEW_SMALL_COLOR
+        		image: VIEW_LARGEICONS
+        		command: #largeIconMode
+        		description: 'Large Icons'
+    ]
+    ToolbarButton class >> listMode [
+        "Answer a sub-instance of the receiver for the #listStyle command"
+        ^self
+        		systemBitmap: IDB_VIEW_SMALL_COLOR
+        		image: VIEW_LIST
+        		command: #listMode
+        		description: 'View List'
+    ]
+    ToolbarButton class >> listToolsBitmap [
+        "Note that the list tools (like the find tools) are pulled from resources located in the VM/executable,
+        	rather than development resources, to avoid the need for the user to ship the development
+        	resources DLL just because the find or list toolbars are used.
+        	Note that the bitmap is shared, and should not be modified."
+        ^(Bitmap fromId: 'LISTBAR.BMP' in: VM)
+        		setMap3DColors: true;
+        		isShared: true;
+        		yourself
+    ]
+    ToolbarButton class >> newFolder [
+        "Answer a sub-instance of the receiver for the #newFolder command"
+        ^self
+        		systemBitmap: IDB_VIEW_SMALL_COLOR
+        		image: VIEW_NEWFOLDER
+        		command: #newFolder
+        		description: 'Create New Folder'
+    ]
+    ToolbarButton class >> parentFolder [
+        "Answer a sub-instance of the receiver for the #parentFolder command"
+        ^self
+        		systemBitmap: IDB_VIEW_SMALL_COLOR
+        		image: VIEW_PARENTFOLDER
+        		command: #parentFolder
+        		description: 'Up One Level'
+    ]
+    ToolbarButton class >> pasteClipboard [
+        "Answer a sub-instance of the receiver for the #pasteClipboard command"
+        ^self
+        		systemBitmap: IDB_STD_SMALL_COLOR
+        		image: STD_PASTE
+        		command: #pasteClipboard
+        		description: 'Paste'
+    ]
+    ToolbarButton class >> print [
+        "Answer a sub-instance of the receiver for the #print command"
+        ^self
+        		systemBitmap: IDB_STD_SMALL_COLOR
+        		image: STD_PRINT
+        		command: #print
+        		description: 'Print'
+    ]
+    ToolbarButton class >> properties [
+        "Answer a sub-instance of the receiver for the #properties command"
+        ^self
+        		systemBitmap: IDB_STD_SMALL_COLOR
+        		image: STD_PROPERTIES
+        		command: #properties
+        		description: 'Properties'
+    ]
+    ToolbarButton class >> redo [
+        "Answer a sub-instance of the receiver for the #redo command"
+        ^self
+        		systemBitmap: IDB_STD_SMALL_COLOR
+        		image: STD_REDOW
+        		command: #redo
+        		description: 'Redo'
+    ]
+    ToolbarButton class >> replace [
+        "Answer a sub-instance of the receiver for the #replace command"
+        ^self
+        		systemBitmap: IDB_STD_SMALL_COLOR
+        		image: STD_REPLACE
+        		command: #replace
+        		description: 'Replace'
+    ]
+    ToolbarButton class >> reportMode [
+        "Answer a sub-instance of the receiver for the #reportStyle command"
+        ^self
+        		systemBitmap: IDB_VIEW_SMALL_COLOR
+        		image: VIEW_DETAILS
+        		command: #reportMode
+        		description: 'View Details'
+    ]
+    ToolbarButton class >> smallIconMode [
+        "Answer a sub-instance of the receiver for the #smallIcons command"
+        ^self
+        		systemBitmap: IDB_VIEW_SMALL_COLOR
+        		image: VIEW_SMALLICONS
+        		command: #smallIconMode
+        		description: 'Small Icons'
+    ]
+    ToolbarButton class >> sortDate [
+        "Answer a sub-instance of the receiver for the #sortDate command"
+        ^self
+        		systemBitmap: IDB_VIEW_SMALL_COLOR
+        		image: VIEW_SORTDATE
+        		command: #sortDate
+        		description: 'Sort by Date'
+    ]
+    ToolbarButton class >> sortName [
+        "Answer a sub-instance of the receiver for the #sortName command"
+        ^self
+        		systemBitmap: IDB_VIEW_SMALL_COLOR
+        		image: VIEW_SORTNAME
+        		command: #sortName
+        		description: 'Sort by Name'
+    ]
+    ToolbarButton class >> sortSize [
+        "Answer a sub-instance of the receiver for the #sortSize command"
+        ^self
+        		systemBitmap: IDB_VIEW_SMALL_COLOR
+        		image: VIEW_SORTSIZE
+        		command: #sortSize
+        		description: 'Sort by Size'
+    ]
+    ToolbarButton class >> sortType [
+        "Answer a sub-instance of the receiver for the #sortType command"
+        ^self
+        		systemBitmap: IDB_VIEW_SMALL_COLOR
+        		image: VIEW_SORTTYPE
+        		command: #sortType
+        		description: 'Sort by Type'
+    ]
+    ToolbarButton class >> stbConvertFrom: anSTBClassFormat [
+        	anSTBClassFormat version == 0
+        		ifTrue: 
+        			[^
+        			[:data |
+        			"Need to remap former concrete ToolbarButtons to ToolbarBitmapButtons."
+        			(self stbConvertFromVersion0: data) becomeA: ToolbarBitmapButton]].
+        	anSTBClassFormat version == 1
+        		ifTrue: [^[:data | (self stbConvertFromVersion1: data) becomeA: self]].
+        	^super stbConvertFrom: anSTBClassFormat
+    ]
+    ToolbarButton class >> stbConvertFromVersion0: anArray [
+        "Version 0 inst var layout was:
+        		ToolbarItem
+        			1: commandId
+        			2: text (unused)
+        			3: window (toolbar)
+        			4: style
+        			5: commandDescription
+        		ToolbarButton (which was concrete, and equivalent to ToolbarBitmapButton)
+        			6: bitmap
+        			7: bitmapIndex
+
+        	Version 1 inst var layout for ToolbarBitmapButton is:
+        		ToolbarItem
+        			1: toolbar
+        		ToolbarButton
+        			2: style
+        			3: commandDescription
+        			4: commandId
+        		ToolbarBitmapButton
+        			5: bitmap
+        			6: bitmapIndex"
+        ^{ anArray at: 3. anArray at: 4. anArray at: 5. anArray at: 1. nil. nil. anArray at: 6. anArray at: 7 }
+    ]
+    ToolbarButton class >> stbConvertFromVersion1: anArray [
+        "Version 2 adds textcolor and font"
+        | count | 
+        	count := anArray size + 2.
+        	^(Array new: count)
+        		replaceFrom: 1
+        			to: 4
+        			with: anArray
+        			startingAt: 1;
+        		replaceFrom: 7
+        			to: count
+        			with: anArray
+        			startingAt: 5;
+        		yourself
+    ]
+    ToolbarButton class >> stbVersion [
+        	^2
+    ]
+    ToolbarButton class >> systemBitmap: anInteger image: bitmapIndex command: aCommand description: aString [
+        	^self systemButtonClass
+        		bitmapId: anInteger
+        		index: bitmapIndex
+        		commandDescription: (CommandDescription command: aCommand description: aString)
+    ]
+    ToolbarButton class >> systemButtonClass [
+        "Answer the subclass of the receiver which implements system toolbar buttons."
+        ^ToolbarSystemButton
+    ]
+    ToolbarButton class >> undo [
+        "Answer a sub-instance of the receiver for the #undo command"
+        ^self
+        		systemBitmap: IDB_STD_SMALL_COLOR
+        		image: STD_UNDO
+        		command: #undo
+        		description: 'Undo'
+    ]
+]

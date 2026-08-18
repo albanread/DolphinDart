@@ -959,3 +959,46 @@ String extend [
         ^out contents
     ]
 ]
+
+"── Routing the COLLECTION filer overrides onto OUR hierarchy (DD16) ────
+ `Dolphin STx Filer Core.pax` files `stbReadFrom:format:size:` onto
+ `Core.LookupTable`, `Core.OrderedCollection` and `Core.Set`, and the
+ translator now emits all three (`st/mvp/90_*_loose.mst`). Two of them land
+ where they are needed. LookupTable's does NOT, because the hierarchies
+ differ:
+
+     Dolphin   IdentityDictionary -> LookupTable -> Dictionary -> Set
+     ours      IdentityDictionary -> Dictionary  -> HashedCollection
+
+ so nothing in our chain reaches `LookupTable class`. Dictionary is where our
+ chain converges, so the same delegation is declared here — pointing at the
+ SAME `readLookupTable:format:size:` the translated override calls, not a
+ reimplementation of it.
+
+ This matters because a dictionary cannot survive the generic raw-slot path
+ at all: Dolphin's has 2 named ivars with the hash buckets in its indexed
+ slots, ours has 3 and a different internal structure. `readLookupTable:`
+ reads KEYS AND VALUES and builds the collection through `at:put:`, which is
+ representation-independent — the only way this can be right."
+Dictionary class extend [
+    stbReadFrom: anSTxInFiler format: aFormat size: anInteger [
+        ^anSTxInFiler readLookupTable: self format: aFormat size: anInteger
+    ]
+]
+
+"── `become:` — the PROXY mechanism, exposed at last (DD16) ─────────────
+ `STxProxy>>stbFixup:at:` is `^self become: self value`: a deserialised proxy
+ REPLACES ITSELF with the object it stands for, so every reference the filer
+ has already handed out — readMap entries, ivars of objects read earlier —
+ points at the real thing without any of them being revisited. That is the
+ whole reason STB/STL can carry forward references.
+
+ The VM has had the primitive since Sprint 9 (`stBecome`, a two-way swap via
+ shallow copies) but nothing ever named it in Smalltalk, so the corpus's own
+ spelling raised doesNotUnderstand at the last step of a successful read.
+
+ Instance-side `<stprim:>` passes the receiver, unlike the class side."
+Object extend [
+    become: anObject [ <stprim: stBecome> ]
+    becomeForward: anObject [ <stprim: stBecomeForward> ]
+]

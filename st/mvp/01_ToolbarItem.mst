@@ -1,0 +1,99 @@
+"`ToolbarItem` is an abstract class whose subclasses represent the items held by a `Toolbar`.
+
+## Instance Variables:
+  `toolbar`		`Toolbar`"
+
+Object subclass: ToolbarItem [
+    | toolbar |
+
+    commandId [
+        "Private - Answer the Integer command identifier for the receiver"
+        ^0
+    ]
+    getCommandId [
+        "Private - Determine and answer the Integer command identifier for the receiver."
+        ^0
+    ]
+    isDivider [
+        "Answer whether the receiver is a toolbar separator (similar in function to a menu divider item)."
+        ^false
+    ]
+    isDropdownStyle [
+        "Answers true if the receiver is a drop down style button"
+        ^false
+    ]
+    isScalable [
+        "Answer whether the receiver can be scaled, e.g. for DPI."
+        ^true
+    ]
+    isTextOnly [
+        	^false
+    ]
+    onClick: aPoint [
+        "This toolbar item was left-clicked at the specified <Point>."
+        self trigger: #clicked: with: aPoint
+    ]
+    onDoubleClick: aPoint [
+        "This item was left double-clicked at the specified <Point>.
+        	Note that we don't seem to receive these at present."
+        self trigger: #doubleClicked: with: aPoint
+    ]
+    onRightClick: aPoint [
+        "This toolbar item was right-clicked at the specified <Point>."
+        self trigger: #rightClicked: with: aPoint
+    ]
+    parent [
+        "Answer the parent view of the receiver."
+        ^self toolbar view
+    ]
+    populateTbButton: aTBBUTTON for: aToolbar withLabels: aBoolean [
+        	^self subclassResponsibility
+    ]
+    style [
+        "Private - Answer the style of the receiver."
+        ^self subclassResponsibility
+    ]
+    toolbar [
+        "Private - Answer the ToolBar in which the receiver exists."
+        ^toolbar
+    ]
+    toolbar: aToolbar [
+        "Private - Set the toolbar in which the receiver exists to aToolbar."
+        toolbar := aToolbar
+    ]
+    update [
+        "Private - Update the associated Toolbar if we have one"
+        self toolbar notNil ifTrue: [
+        		self toolbar updateAllItems  ]
+    ]
+    validateUserInterface: route [
+        "Set the UI state of the receiver. Overridden in subclasses"
+    ]
+    ToolbarItem class >> buttonClass [
+        "Answer the subclass used to represent Toolbar buttons."
+        ^ToolbarButton
+    ]
+    ToolbarItem class >> editTools [
+        "Answer a collection of items which are the standard file tools (e.g. new, open, save)
+        	in the standard order."
+        | bc |
+        	bc := self buttonClass.
+        	^{bc cutSelection. bc copySelection. bc pasteClipboard. bc clearSelection. bc undo}
+    ]
+    ToolbarItem class >> fileTools [
+        "Answer a collection of items which are the standard file tools (e.g. new, open, save)
+        	in the standard order."
+        | bc |
+        	bc := self buttonClass.
+        	^{bc fileNew. bc fileOpen. bc fileSave}
+    ]
+    ToolbarItem class >> findTools [
+        "Answer a collection of items which are the standard find tools in the standard order."
+        | bc |
+        	bc := self buttonClass.
+        	^{bc find. bc findNext}
+    ]
+    ToolbarItem class >> stbVersion [
+        	^1
+    ]
+]

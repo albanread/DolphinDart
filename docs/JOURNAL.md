@@ -1620,3 +1620,121 @@ baseline) despite three new helper-table entries.
 2. Then `STLInFiler next` should complete a graph, and the STBViewProxy it
    answers can be asked for its view.
 3. Instantiate one Dolphin view resource end to end and PHOTOGRAPH it.
+
+---
+
+## DD16 — a Dolphin view resource loads end to end and becomes a real window
+
+`SV loadViewResource: ContainerView resource_Default_view forEdit: false`
+answers a **live `ContainerView`** — real HWND, parented to the shell, at a
+real rectangle. That is Dolphin's own serialised window description, read by
+Dolphin's own STL filer, realised through Dolphin's own `createWindow:` path.
+The DD14 plan item "instantiate one Dolphin view resource end to end" is done.
+
+### The 24 classes the resource named
+
+DD15b ended with a list of 16 classes the filer asked for and could not find.
+Added to `translate_mvp.py` as the transitive SUPERCLASS CLOSURE — 24 classes,
+4598 lines — because a class whose superclass is missing does not fail to
+load, it silently re-roots at Object and loses every inherited ivar. Wave:
+137 -> 177 classes, 5331 -> 6061 methods.
+
+`Core.Message`, `Core.Object` and `Core.SearchPolicy` are deliberately NOT in
+that closure: the world and compat layer already provide them, and a second
+declaration carrying ivars REPLACES rather than reopens.
+
+### Representation mismatch: what the generic path cannot deserialise
+
+The filer's generic path assigns raw slots — `instVarAt:put:` for
+`instSize + size` values — which assumes our object shape matches Dolphin's.
+An `instSize` sweep against the oracle, for all 53 resource-named classes that
+exist here, says it mostly does: **48 of 53 agree exactly**, including
+`ContainerView` 15 and `STBViewProxy` 8. That is a real check on the
+translation, class for class.
+
+The five that differ are the ones whose representation is genuinely ours:
+
+| class | ours | Dolphin | why |
+|---|--:|--:|---|
+| IdentityDictionary | 3 | 2 | different hashed-collection internals |
+| OrderedCollection | 3 | 2 | ours holds a named `array` |
+| OS.RECTL, OS.LOGFONTW | 3 | 1 | Dolphin's `External.Structure` is ONE `bytes` ivar; ours is `address size owned` |
+| Core.Semaphore | 0 | 3 | not on this path |
+
+Dolphin's answer is per-class `stbReadFrom:format:size:` overrides, filed as
+LOOSE METHODS in `Dolphin STx Filer Core.pax` — so the .pax is now a target,
+and `--loose Core.LookupTable/OrderedCollection/Set` emits the three that
+matter. They route to `readLookupTable:` / `readExtensibleCollection:`, which
+read KEYS AND VALUES through the collection's own protocol and so do not care
+about internal shape.
+
+Two of the three land where they are needed. LookupTable's does not, because
+the hierarchies differ:
+
+    Dolphin   IdentityDictionary -> LookupTable -> Dictionary -> Set
+    ours      IdentityDictionary -> Dictionary  -> HashedCollection
+
+so the same delegation is declared on `Dictionary class` in compat, pointing
+at the same filer method rather than reimplementing it. The struct case gets
+`ExternalMemory class >> stbReadFrom:format:size:`, which reads Dolphin's one
+`bytes` slot and copies it into our buffer.
+
+**How that bug presented, for the record.** Before the overrides, an
+IdentityDictionary read 3 slots where the stream held 2 and a RECTL read 3
+where it held 1. Nothing raised. The filer simply ran off the end of a
+59-element resource and said `end of stream` — five objects and forty
+elements past the class that actually mis-read.
+
+### Also added
+
+* `become:` / `becomeForward:`. `STxProxy>>stbFixup:at:` is
+  `^self become: self value` — a deserialised proxy REPLACES ITSELF with what
+  it stands for, which is how forward references resolve without revisiting
+  anything. The VM has had the primitive since Sprint 9; nothing had ever
+  named it in Smalltalk.
+* `RECTL>>scaleToDpi:from:`, transcribed from `OS.RECTL.cls`. Our RECTL is
+  generated from winkb, so it carries none of the Smalltalk Dolphin declares
+  on that class — and this one is on the critical path: a resource records its
+  geometry at the DPI it was designed at.
+* **Number / Point coercion** in `stDivide`'s slow path. Smalltalk coerces by
+  GENERALITY — `96 / (96@96)` is `1@1` — and Dolphin reaches it through
+  `retryDivisionCoercing:`. Here `/` is rewritten at the call site, so a
+  `Number>>/` written in Smalltalk would never run (rule 2) and the coercion
+  has to live in the helper. It surfaced as `Point has no method 'asDouble'`,
+  the fallback asking a Point to be a scalar.
+
+### The photograph, and what it actually shows
+
+The view is real: `handle` non-null, `parentView == SV`, GWL_STYLE
+`0x54000000` (WS_CHILD|WS_CLIPSIBLINGS|**WS_VISIBLE**), `getParent` answering
+the shell's HWND, rectangle honoured. The shot shows the shell — and an empty
+client area.
+
+Two things are true and worth separating:
+
+1. **The saved rect is DESIGNER coordinates**, not screen ones: the resource
+   literally encodes `left=3839, top=10` (`#[255 14 0 0 10 0 0 0 …]`), the
+   ViewComposer canvas position. Dolphin's container repositions a loaded
+   subview through its layout manager; a bare ShellView has none, so the view
+   parks off to the right. Placing it explicitly fixes the geometry.
+
+2. **It still does not paint** — and that is NOT the resource path. The
+   control settles it: a ContainerView built the ORDINARY way
+   (`ContainerView new; parentView:; create`), given a blue backcolor beside
+   it, does not paint either. So `ContainerView` does not paint its backcolor
+   in this port at all, however it was built. The filer work is sound; this is
+   a separate, pre-existing gap, and it is the same family as the black
+   `ModalOwnerShell` capture already on the open list.
+
+Recorded rather than fixed, because fixing it is a painting question and this
+sprint was a deserialisation one. It is the next thing to look at.
+
+25/25 gates throughout.
+
+### Next
+
+1. **Why a ContainerView does not paint its backcolor.** Start from the
+   control above — it needs no filer at all. WM_ERASEBKGND routing through the
+   door for a child window is the first suspect.
+2. Then re-photograph the resource-loaded view, which should need nothing new.
+3. `Tools.ClassBrowserAbstract` + `Tools.ClassBrowserShell` — the goal.
