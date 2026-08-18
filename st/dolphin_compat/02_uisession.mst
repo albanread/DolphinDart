@@ -171,11 +171,33 @@ Object subclass: UiSession [
                          view: aView.
                     nil ] ].
         (aView respondsTo: sel) ifFalse: [ ^nil ].
-        ^[ aView perform: sel with: msg with: wp with: lp ]
-            on: Error
-            do: [ :e |
-                self noteHandlerError: e message: msg selector: sel view: aView.
-                nil ]
+        ^self asHandlerResult:
+            ([ aView perform: sel with: msg with: wp with: lp ]
+                on: Error
+                do: [ :e |
+                    self noteHandlerError: e message: msg selector: sel view: aView.
+                    nil ])
+    ]
+
+    "THE DOOR ONLY BELIEVES INTEGERS. `CallImage` sets `*handled` when the
+     image answers a Dart Integer and at no other time, and an unhandled
+     message falls through to `DefWindowProcW`.
+
+     Dolphin's handlers answer BOOLEANS for the yes/no messages —
+     `View>>onEraseRequired:` ends `^true` — so every one of them was reported
+     as unhandled, and DefWindowProcW then erased the background with the
+     window class brush ON TOP of the fill Dolphin had just done. The handler
+     ran, the fill ran, no error was raised, and the window stayed white:
+     nothing in the port could tell that from a view that never painted, which
+     is why this survived so long.
+
+     nil still means `not handled`, which is what the door's own comment says
+     it means and what Dolphin's wndproc does with a nil answer."
+    UiSession class >> asHandlerResult: anObject [
+        anObject isNil ifTrue: [ ^nil ].
+        anObject == true ifTrue: [ ^1 ].
+        anObject == false ifTrue: [ ^0 ].
+        ^anObject
     ]
 
     "The map is a 1024-slot Array indexed by (message number + 1) — Dolphin's

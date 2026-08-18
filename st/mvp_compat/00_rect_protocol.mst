@@ -151,3 +151,42 @@ RECTL extend [
         ^self
     ]
 ]
+
+"── `LOGBRUSH>>style:color:hatch:` — from OS.LOGBRUSH.cls (DD16) ────────
+ THE reason no Dolphin view painted its background. `View>>onEraseRequired:`
+ fills the client rect with `actualBackcolor`; the fill builds a Brush; the
+ Brush builds a LOGBRUSH — and LOGBRUSH is GENERATED from winkb, so it had the
+ offsets and none of the Smalltalk `OS.LOGBRUSH.cls` declares on it.
+
+ It never looked like a missing method. The send is inside a wndproc handler,
+ contained twice (CLAUDE.md #4), so the window simply stayed unpainted; the
+ door's contained-error line — `LOGBRUSH class has no method
+ 'style:color:hatch:'` — is what named it, once the routed set was installed
+ so the handler ran at all.
+
+ Transcribed from the corpus, including the class side answering `newBuffer`
+ rather than `new` — a LOGBRUSH with no buffer would write its style into
+ address zero. `hatch` is kept as an ivar as Dolphin does, so the brush holds
+ its hatch object alive; a nil hatch marshals as 0 rather than being sent
+ `asParameter`."
+LOGBRUSH extend [
+    style: styleFlags color: aColour hatch: hatchObject [
+        hatch := hatchObject.
+        self uint32AtOffset: 0 put: styleFlags.
+        self uint32AtOffset: 4 put: aColour asCOLORREF.
+        self uintPtrAtOffset: 8
+             put: (hatchObject isNil ifTrue: [ 0 ] ifFalse: [ hatchObject asParameter ]).
+        ^self
+    ]
+    hatch [ ^hatch ]
+    hatch: anObject [ hatch := anObject ]
+]
+
+LOGBRUSH class extend [
+    style: styleFlags color: aColour hatch: hatchObject [
+        ^self newBuffer style: styleFlags color: aColour hatch: hatchObject
+    ]
+    withStyle: styleFlags color: aColour hatch: hatchObject [
+        ^self newBuffer style: styleFlags color: aColour hatch: hatchObject
+    ]
+]

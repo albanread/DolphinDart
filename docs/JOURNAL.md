@@ -1738,3 +1738,82 @@ sprint was a deserialisation one. It is the next thing to look at.
    door for a child window is the first suspect.
 2. Then re-photograph the resource-loaded view, which should need nothing new.
 3. `Tools.ClassBrowserAbstract` + `Tools.ClassBrowserShell` — the goal.
+
+---
+
+## DD16b — why no Dolphin view has ever painted its background
+
+Two real bugs, found by starting from the DD16 control (a ContainerView built
+the ordinary way, given a colour, photographed) so the filer was out of the
+picture entirely. A Dolphin view CAN now paint its backcolor — proven with a
+screenshot — but the last step of the chain is not yet closed. Both halves
+below are worth having regardless, and 25/25 gates pass with them.
+
+### The chain, in the order it had to be walked
+
+**1. The routed set was never installed in my probe** — my error, not the
+port's. The door reflects ONLY messages `UiSession routeMessagesFrom:` has
+told it about, so `View>>onEraseRequired:` was mapped and never called. Worth
+recording because "handler mapped, never invoked" is indistinguishable from
+"view will not paint" from the outside; `routedMessageCount` is the check.
+
+**2. `LOGBRUSH class >> style:color:hatch:` did not exist.** LOGBRUSH is
+GENERATED from winkb, so it has the offsets and none of the Smalltalk
+`OS.LOGBRUSH.cls` declares on it — the same shape as `RECTL>>scaleToDpi:from:`
+in DD16. `fillRectangle:color:` builds a Brush, the Brush builds a LOGBRUSH,
+and the send raised INSIDE a wndproc handler, contained twice (rule 4). The
+window simply stayed unpainted. The door's contained-error line named it in
+one run, once the routed set was installed so the handler ran at all.
+
+Now added, transcribed from the corpus — including the class side answering
+`newBuffer` rather than `new`, since a LOGBRUSH with no buffer would write its
+style to address zero.
+
+**3. THE DOOR ONLY BELIEVES INTEGERS.** `CallImage` sets `*handled` when the
+image answers a Dart **Integer** and at no other time; an unhandled message
+falls through to `DefWindowProcW`. Dolphin's handlers answer **Booleans** —
+`onEraseRequired:` ends `^true` — so every yes/no handler in the port has
+always been reported as UNHANDLED, and DefWindowProcW then erased the
+background with the window-class brush **on top of** the fill Dolphin had just
+done.
+
+That is the one that had hidden the longest. The handler ran, the fill ran,
+nothing raised, and the window stayed white: no assertion in this port can
+tell that from a view that never painted. Fixed image-side in
+`UiSession class >> asHandlerResult:` — nil still means "not handled", which
+is what the door's own comment says it means; true/false become 1/0.
+
+**Proof it is real:** with an override that does the same fill and answers
+`true`, the child view photographs **blue at exactly its rectangle** — 5850
+blue pixels, counted, not eyeballed. Before this fix, the identical override
+filled without error and the window stayed white.
+
+### What is NOT closed
+
+With no override at all, Dolphin's own `View>>onEraseRequired:` is called
+(counted: twice) and answers **nil** — the `^self eraseParentBackground:`
+fall-through — even though, measured inside the handler immediately before the
+`super` send, every guard is right:
+
+    hasTransparentBackground   false
+    actualBackcolor            (Color named: #green)   [and #blue on the other]
+    actualBackcolor isNone     false
+    aColorEvent canvas         a Canvas
+
+so it should take `ifFalse: [… ^true]`. Ruled out so far: non-local return
+from two nested blocks (a probe of the exact shape answers correctly, both
+directly and through `perform:`); `isNone` being a universal helper (it is
+not, and `Color>>isNone` answers false); a contained error (none reported).
+
+Next step is to bisect the method body itself — replace it with the same
+source line by line until the answer changes — rather than reason about it
+further. It is one method, and the counters technique localises it in a run.
+
+### Standing lesson
+
+The instrumentation replaced the method under test. `onEraseRequired:`
+overridden to fill-and-return-true proved the DOOR fix; it could not prove
+Dolphin's own method works, and for a while it looked like it had. Counting
+via `super` — bump, call super, record what super answered — is the form that
+does not lie, and it is what turned "it paints" into "it paints only when I
+paint it".
