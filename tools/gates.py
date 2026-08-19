@@ -115,6 +115,10 @@ GATES = {
     # Door-level gates: BOOT + a probe.
     "st_door": [FFI + "/mvp_door_spike.mst"],
     "st_paint": [FFI + "/paint_probe.mst"],
+    # DD17: a view's backcolor must reach the SCREEN. Reads the pixel back,
+    # because every other kind of assertion passed for five sprints while no
+    # Dolphin view painted its background at all.
+    "st_backcolor": [MVP, MVP_COMPAT],
     "st_routed": [FFI + "/routed_probe.mst"],
     # The translated wave, loaded by the gate itself.
     "st_triad": [MVP],

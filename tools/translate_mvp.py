@@ -548,6 +548,32 @@ TARGETS = [
     "Core/Object Arts/Dolphin/MVP/Views/Control Bars/UI.ToolbarSeparator.cls",
     "Core/Object Arts/Dolphin/MVP/Views/Control Bars/UI.ToolbarTextButton.cls",
 
+    # ── DD17: the MISSING SUPERCLASSES ────────────────────────────────────
+    # Found by `tools/audit_superclasses.py`, not by anything failing: eight
+    # classes were named as a superclass by a class IN THE WAVE and never
+    # translated. A missing superclass does not raise — cli.py auto-vivifies a
+    # stub and the subclass silently re-roots at Object, losing every inherited
+    # instance variable and method, and (because the stub's metaclass shadow is
+    # not linked either) its whole CLASS SIDE stops inheriting too.
+    #
+    # `ReferenceView instSize` failing while `ContainerView instSize` worked is
+    # what exposed it — ReferenceView sat on a stub of AbstractDelegatingView,
+    # so it never reached `Object class >> instSize`. ReferenceView is in
+    # Prompter's view resource, which is what was being loaded at the time.
+    #
+    # These are not obscure: ControlBarAbstract is the superclass of BOTH
+    # Toolbar and StatusBar, AbstractCardContainer of CardContainer,
+    # StatusBarItemAbstract of the status bar's items — i.e. most of what a
+    # real Dolphin window is made of was standing on stubs.
+    "Core/Object Arts/Dolphin/MVP/Views/Cards/UI.AbstractCardContainer.cls",
+    "Core/Object Arts/Dolphin/MVP/Base/UI.AbstractDelegatingView.cls",
+    "Core/Object Arts/Dolphin/MVP/Views/Buttons/UI.CheckButton.cls",
+    "Core/Object Arts/Dolphin/Base/Kernel.ClassLocator.cls",
+    "Core/Object Arts/Dolphin/MVP/Views/Control Bars/UI.ControlBarAbstract.cls",
+    "Core/Object Arts/Dolphin/MVP/Base/UI.CreateWindowDecorator.cls",
+    "Core/Object Arts/Dolphin/Base/Core.SequencedGrowableCollection.cls",
+    "Core/Object Arts/Dolphin/MVP/Views/Control Bars/UI.StatusBarItemAbstract.cls",
+
     # The STx FILER PACKAGE MANIFEST, for its LOOSE METHODS — the same reason
     # the two .pax files above are targets. It carries the per-class
     # `stbReadFrom:format:size:` overrides, and those are not an optimisation:

@@ -470,27 +470,20 @@ Object subclass: Color [
     ]
 ]
 
-"── background erase: DEFAULT PROCESSING until the Canvas wave ──────────────
+"── background erase: RETIRED IN DD16b ──────────────────────────────────────
 
- `View>>onEraseRequired:` fills the client rectangle with the view's
- background colour, through `aColorEvent canvas` — a `Graphics.Canvas`, which
- is not translated (it lands with DD11's graphics wave). So the event's
- `canvas` is nil and every WM_ERASEBKGND raised.
+ There was a `View>>onEraseRequired: [ ^nil ]` here from DD10, declining every
+ background erase so Windows filled with the window-class brush. It was put in
+ because `Graphics.Canvas` was not yet translated, and it carried its own
+ retirement condition: *translate Canvas (DD11), then DELETE this method*.
 
- Answering NIL is not a stub: it is the documented way to decline the message
- in Dolphin's own comment on that method — 'answer nil if no colour is set to
- accept the default window processing'. Windows then erases with the window
- class's background brush, which is what an unstyled window gets anyway.
+ Canvas landed in DD11 and this outlived it by five sprints, which is the
+ whole lesson — a stub with an honest comment is still a stub, and nothing
+ failed when its condition was met, because what it disables is PIXELS and no
+ gate looked at any. It cost a sitting in DD16b: the erase handler was
+ reinstated, `LOGBRUSH class >> style:color:hatch:` and the door's
+ integer-only `handled` contract were both found and fixed on the way to it,
+ and only then did this override turn out to be the thing still answering nil.
 
- THE COST, precisely: a view's `backcolor` is not honoured when erasing. Set
- a view to red and it will still erase to the class brush. Nothing in the
- DD10 gates asserts a custom background — the DD9 paint probe drives
- WM_PAINT, not WM_ERASEBKGND — and the day something does, this override is
- what has to go.
-
- RETIREMENT: translate `Graphics.Canvas` (DD11), then DELETE this method. The
- gate that proves it: fill a view with a named colour and read the pixel back,
- which the DD9 paint probe already knows how to do."
-View subclass: View [
-    onEraseRequired: aColorEvent [ ^nil ]
-]
+ `st_backcolor` is the gate that keeps it retired: it fills a view with a
+ named colour and reads the pixel back."

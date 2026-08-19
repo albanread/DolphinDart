@@ -50,12 +50,12 @@ AbstractCardContainer subclass: CardContainer [
         self hasOwnTabs 
         		ifTrue: 
         			[tabs 
-        				setWindowPosAfter: HWND_BOTTOM
+        				setWindowPosAfter: 1
         				x: 0
         				y: 0
         				width: 0
         				height: 0
-        				flags: [SWP_NOSIZE | SWP_NOMOVE] value]
+        				flags: 3]
     ]
     filerProxyIn: anSTxOutFiler [
         "Private - Answer a filer proxy that represents the receiver for use with the <STxOutFiler> argument."
@@ -285,7 +285,7 @@ AbstractCardContainer subclass: CardContainer [
         				wParam: wParam
         				lParam: lParam.
         	card := self currentCard.
-        	(card isNil or: [lParam noMask: PRF_CHILDREN]) ifTrue: [^result].
+        	(card isNil or: [lParam noMask: 16]) ifTrue: [^result].
         	insetRect := self actualInsets: (LayoutContext forContainer: self parentView).
         	canvas := Canvas withNonOwnedDC: wParam.
         	prev := canvas offsetWindowOrigin: (insetRect topLeft + (0 @ 0)) * -1.

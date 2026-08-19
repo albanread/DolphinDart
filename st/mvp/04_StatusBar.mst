@@ -262,10 +262,10 @@ ControlBarAbstract subclass: StatusBar [
     ]
     sbGetTipText: anInteger [
         	| buf |
-        	buf := Utf16String new: INFOTIPSIZE.
+        	buf := Utf16String new: 1024.
         	self
         		sendMessage: SB_GETTIPTEXT
-        		wParam: (anInteger bitOr: [INFOTIPSIZE << 16] value)
+        		wParam: (anInteger bitOr: [1024 << 16] value)
         		lpParam: buf.
         	^buf trimNulls
     ]

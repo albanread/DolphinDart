@@ -1,0 +1,36 @@
+CreateWindowFunction subclass: CreateWindowDecorator [
+    | decorated |
+
+    createShellWindow: aShellView [
+        	decorated createShellWindow: aShellView
+    ]
+    decorated [
+        	^decorated
+    ]
+    decorated: aCreateWindowFunction [
+        	decorated := aCreateWindowFunction
+    ]
+    dpi [
+        "Answer the <integer> logical dots-per-inch at which the <rectangle> of the receiver is measured."
+        ^decorated dpi
+    ]
+    dpi: anInteger [
+        "Set the <integer> logical dots-per-inch at which the <rectangle> of the receiver is measured."
+        decorated dpi: anInteger
+    ]
+    position: positionPoint extent: extentPoint dpi: anInteger [
+        "Set the position and extent of the window that will be created, and the dpi in which the pixel co-ordinates that it contains are measured."
+        decorated position: positionPoint extent: extentPoint dpi: anInteger
+    ]
+    rectangle [
+        "Answer the <rectangle> specifying the position and extent of the window that will be created."
+        ^decorated rectangle
+    ]
+    scaleToDpi: anInteger [
+        "Private - Scale the receiver in-place from it's current DPI to that specified by the <SmallInteger> argument."
+        decorated scaleToDpi: anInteger
+    ]
+    CreateWindowDecorator class >> decorating: aCreateWindow [
+        | _casc1 | _casc1 := self basicNew. _casc1 instVarAt: 1 put: aCreateWindow. ^_casc1 yourself
+    ]
+]

@@ -1,0 +1,190 @@
+"CheckButton is the abstract subclass of <valueView>s implementing the Windows ""BUTTON"" class in checkbox and radio button styles. The <valueModel> associated with a CheckButton must always yield a <boolean> value once mapped through the installed type converter, although nil is also an acceptable value for a <CheckBox> in 3-state mode. A CheckButton will normally be used in conjunction with either a <BooleanPresenter>, or in a group connected to a <RadioButtonSetPresenter>.
+
+The text in a button control can be aligned in various ways (this may also affect the alignment of any image displayed in the button):
+		#left			- left edge, vertically centred
+		#right			- right edge, vertically centred
+		#center			- horizontally and vertically centred (the default)
+		#top			- top edge, horizontally centred
+		#bottom			- bottom edge, horizontally centred
+		#topLeft		- top left corner
+		#topRight		- top right corner
+		#bottomLeft		- bottom left corner
+		#bottomRight	- bottom right corner
+
+Instance Variables:
+	image			<Image> or nil, specifying an image to associate with the button.
+
+Class Variables:
+	AlignmentMap	<LookupTable> mapping the alignment modes listed above to the corresponding integer flags."
+
+ValueConvertingControlView subclass: CheckButton [
+    <classVars: AlignmentMap>
+    CheckButton class >> classVarAlignmentMap [ ^AlignmentMap ]
+    CheckButton class >> classVarAlignmentMap: v [ ^AlignmentMap := v ]
+    | image |
+
+    alignment [
+        "Answer a <Symbol> naming the alignment of the text and graphic in the associated BUTTON
+        	control."
+        | alignment |
+        	alignment := self baseStyle
+        				bitAnd: 3840.
+        	^AlignmentMap keyAtValue: alignment ifAbsent: #leftCenter
+    ]
+    alignment: aSymbol [
+        "Set the alignment of the button to be the mode named by the <Symbol> argument, which must
+        	be one of the modes defined in AlignmentMap (see the class comment for a description of
+        	these modes). Note that this mainly controls the text alignment, but the vertical setting
+        	also controls the position of the button graphic. The separate #hasLeftText aspect can be
+        	used to control whether the check button is to the left or right of the label."
+        | alignment |
+        	alignment := AlignmentMap at: aSymbol ifAbsent: 3328.
+        	self 
+        		baseStyle: alignment
+        		maskedBy: 3840
+        		recreateIfChanged: false.
+        	self invalidate
+    ]
+    basicWindowStyle [
+        	^self subclassResponsibility
+    ]
+    calculateExtent: aLayoutContext [
+        "Private - Answer the desired window extent (for the receiver within the specified
+        	<LayoutContext>. By default the current extent recorded in the context (which might be a
+        	suggestion or the existing extent) is retained. Subclasses can reimplement it to answer an
+        	fixed preferred extent, or one calculated to fit the current contents of a view (for
+        	example)."
+        "N.B. This should be the complete extent for the Window, including non-client adornments
+        	such as borders, etc."
+
+        	| size |
+        	size := SIZEL new.
+        	self
+        		sendMessage: 5633
+        		wParam: 0
+        		lpParam: size.
+        	^size asPoint
+    ]
+    command: anInteger id: id [
+        "Private - Responds to a command notification message which has been redirected to us."
+        anInteger == 0 
+        		ifTrue: 
+        			[self updateModel.
+        			self presenter performAction].
+        	^nil
+    ]
+    defaultWindowStyle [
+        "Private - Answer a default style to use when creating a checkbox."
+        ^super defaultWindowStyle | 8192 | self basicWindowStyle
+    ]
+    displayValue [
+        "Private - Answer the displayed contents, the check state, of the receiver. This will be
+        	either true (for checked), false (for unchecked) or nil (for indeterminate)."
+        | state |
+        	state := self sendMessage: 240.
+        	^#(false true nil) at: state + 1
+    ]
+    displayValue: aBoolean [
+        "Private - Set the displayable contents, the check state, of the receiver to aBoolean"
+        | buttonState |
+        	buttonState := aBoolean isNil 
+        				ifTrue: [2]
+        				ifFalse: [aBoolean ifTrue: [1] ifFalse: [0]].
+        	^self sendMessage: 241 wParam: buttonState
+    ]
+    hasLeftText [
+        "Answer whether the receiver has the text at the left of the button."
+        ^self baseStyleAllMask: 32
+    ]
+    hasLeftText: boolean [
+        "Set whether the receiver has the text at the left of the button according to
+        	aBoolean."
+        self 
+        		baseStyleMask: 32
+        		set: boolean
+        		recreateIfChanged: true	"Recreate required for this change to take effect."
+    ]
+    image [
+        "Answer the image displayed on the button, if any."
+        ^image
+    ]
+    image: anImageOrNil [
+        "Sets the image displayed by the receiver to anImageOrNil."
+        | style |
+        	style := (image := anImageOrNil) 
+        				ifNil: [0]
+        				ifNotNil: [anImageOrNil imageType = 1 ifTrue: [64] ifFalse: [128]].
+        	self baseStyle: style maskedBy: 192.
+        	style = 0 
+        		ifFalse: 
+        			[self 
+        				sendMessage: 247
+        				wParam: anImageOrNil imageType
+        				lParam: anImageOrNil asParameter]
+    ]
+    isPushLike [
+        "Answer whether the receiver has an appearance like a push button (i.e. it is a Toggle
+        	Button)."
+        ^self baseStyleAllMask: 4096
+    ]
+    isPushLike: boolean [
+        "Set whether the receiver has appearance of a toggling push button according to aBoolean."
+        self 
+        		baseStyleMask: 4096
+        		set: boolean
+        		recreateIfChanged: true	"Recreate required for this change to take effect"
+    ]
+    onViewCreated [
+        "The receiver's window has been created. Copy any instance variable information across to
+        	the control."
+        super onViewCreated.
+        	self image: self image
+    ]
+    plainText: aString [
+        	super plainText: aString.
+        	self invalidateCalculatedExtent
+    ]
+    CheckButton class >> defaultModel [
+        "Answer a default model to be assigned to the receiver when it is initialized."
+        ^false asValue
+    ]
+    CheckButton class >> initialize [
+        "Private - Initialize the receiver's class variables.
+        		CheckButton initialize"
+        AlignmentMap := (IdentityDictionary withAll: {
+        						#leftCenter -> (256 | 3072).
+        						#rightCenter -> (512 | 3072).
+        						#topCenter -> (768 | 1024).
+        						#bottomCenter -> (768 | 2048).
+        						#center -> (768 | 3072).
+        						#topLeft -> (256 | 1024).
+        						#topRight -> (512 | 1024).
+        						#bottomLeft -> (256 | 2048).
+        						#bottomRight -> (512 | 2048)
+        					})
+    ]
+    CheckButton class >> themePartName [
+        	^'BUTTON'
+    ]
+    CheckButton class >> winClassName [
+        "Private - Answer the name of the Windows window class to use when realising the receiver."
+        ^'BUTTON'
+    ]
+    CheckButton class >> initializeClassConstants [
+        "Private - Assign the `classConstants:` entries whose values are expressions. GENERATED: Dolphin holds these in its image, so no source assigns them and every read was a nil."
+        AlignmentMap := (IdentityDictionary withAll: {
+        								#bottomCenter -> 16rB00.
+        								#bottomLeft -> 16r900.
+        								#bottomRight -> 16rA00.
+        								#center -> 16rF00.
+        								#leftCenter -> 16rD00.
+        								#rightCenter -> 16rE00.
+        								#topCenter -> 16r700.
+        								#topLeft -> 16r500.
+        								#topRight -> 16r600
+        							}).
+        ^self
+    ]
+]
+
+CheckButton initializeClassConstants.

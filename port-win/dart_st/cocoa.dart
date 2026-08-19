@@ -159,6 +159,15 @@ void _stEnsureHooks() {
       // #foo` fails). Without this, copy's `postCopy` step forwarded to the
       // spelling and demoted #foo to the String 'foo'.
       if (sel == 'copy' || sel == 'shallowCopy' || sel == 'postCopy') return [r];
+      // `value` IS THE SAME TRAP, and it cost a view resource. Dolphin:
+      // `#default value` answers `#default` and `#default value == #default`
+      // is true (oracle). Forwarded to the spelling it answered the STRING
+      // 'default' — and `STLInFiler>>basicNext` returns every non-integer
+      // literal as `^prefixOrLiteral value`, so EVERY symbol in EVERY view
+      // resource arrived demoted. It surfaced far away as `key not found` from
+      // `Color class >> named:`, whose NamedColors table is keyed by symbols:
+      // the resource said #default, the filer handed over 'default'.
+      if (sel == 'value') return [r];
       if (sel == 'hash' || sel == 'identityHash') return [r.hashCode];
       if (sel == '=' || sel == '==') return [identical(r, args[0])];
       // isKindOf:/class must see the SYMBOL, not its spelling — a Symbol is-a
@@ -1048,7 +1057,21 @@ stStbFixup(r, filer, idx) {
   return _stStbFixupSlow(r, filer, idx);
 }
 _stStbFixupSlow(r, filer, idx) {
-  try { return r.stbFixup_at_(filer, idx); } catch (e) { return r; }
+  // NARROW THE CATCH — the first version was `catch (e) { return r; }`, which
+  // swallowed everything the proxy's own fixup raised and answered the proxy
+  // as though it had declined. That is indistinguishable from success: the
+  // filer went on, `deferAction:` had never been called, and
+  // `loadViewResource:` answered an STBViewProxy that no longer knew anything
+  // was wrong. It cost a sitting on UI.Prompter's view resource.
+  //
+  // Only a genuine "this receiver has no stbFixup:at:" may be absorbed, which
+  // is the same discipline `_stValue0Slow` already applies to `value`.
+  try {
+    return r.stbFixup_at_(filer, idx);
+  } on NoSuchMethodError catch (e) {
+    if (!e.toString().contains('stbFixup')) rethrow;
+    return r;
+  }
 }
 
 /// Dolphin's `Behavior>>isMeta`. The corpus tests `class class isMeta` to ask

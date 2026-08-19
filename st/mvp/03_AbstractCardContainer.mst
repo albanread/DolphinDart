@@ -1,0 +1,93 @@
+"AbstractCardContainer is an abstract <compositeView> class that implements the base <cardView> protocol for its concrete sub-classes. A <cardView> has a fixed CardLayout manager for arranging its sub-views (which are generally known as ""cards""). The cards are arranged in a stack, one on top of the other, like cards in a card file box. The <cardView> protocol provides methods for bringing individual cards to the front of the stack and allowing them to be displayed.
+
+Typically one would use a <cardView> to create ""tabbed"" dialog boxes or multi-page wizards. There are specific concrete subclasses, CardContainer and WizardCardContainer, to do this."
+
+ContainerView subclass: AbstractCardContainer [
+    cardLayout [
+        	^self layoutManager
+    ]
+    cards [
+        	^self managedSubViews
+    ]
+    currentCard [
+        "Answer the subview of the receiver that is the currently visible
+        	card or nil if there is none"
+        ^self cardLayout currentCard
+    ]
+    cycleNextCard [
+        "Select the next card in z order sequence after the current card.
+        	Cycle round to the first card in the sequence where necessary.
+        	Answers the card selected"
+        ^self cardLayout cycleNextCard
+    ]
+    cyclePreviousCard [
+        "Select the previous card in z order sequence before the current card.
+        	Cycle round to the last card in the sequence where necessary.
+        	Answers the card selected"
+        ^self cardLayout cyclePreviousCard
+    ]
+    defaultLayoutManager [
+        	^CardLayout new
+    ]
+    ensureSubViewVisible: aSubView [
+        "Ensures that aSubView is visible in the receiver. Show the appropriate card
+        	if it is not already visible"
+        super ensureSubViewVisible: aSubView.
+        	self cardLayout showCard: aSubView
+    ]
+    isNotFirstCard [
+        	| cards |
+        	cards := self cardLayout cards.
+        	^cards notEmpty and: [self currentCard ~= cards first]
+    ]
+    isNotLastCard [
+        	^self currentCard ~= self cardLayout cards last
+    ]
+    onCardChangedFrom: previousView to: currentView [
+        "Private - The current card has been changed in the layout manager. 
+        	Trigger our own card change event."
+        self
+        		trigger: #currentCardChangedFrom:to:
+        		with: previousView
+        		with: currentView.
+        	"Trigger the pre-8 event for backwards compatibility."
+        	self trigger: #currentCardChanged
+    ]
+    onSubViewAdded: aView [
+        "Private - Received when aView has been added to the receiver.
+        	Ensure that this is given an arrangement to make it a suitable citizen
+        	of the receiver."
+        super onSubViewAdded: aView.
+        	aView arrangement isNil ifTrue: [aView arrangement: self cards size].
+        	self cardLayout showCard: aView.
+        	aView show
+    ]
+    onViewCreated [
+        "Private - Create the tabs view if it is not already present"
+        super onViewCreated.
+        	self cardLayout
+        		when: #currentCardChangedFrom:to:
+        		send: #onCardChangedFrom:to:
+        		to: self
+    ]
+    tabOntoCurrentCard [
+        "Private - The receiver has just displayed a new card.
+        	Tab to the first tab stop. Ask for the state to be refreshed. 
+        	Answer the current card"
+        | card |
+        	card := self currentCard.
+        	card notNil ifTrue: [ 
+        		card tabFirst.
+        		self invalidateUserInterface ].
+        	^card
+
+
+
+
+
+    ]
+    validateSubViewLayouts: aLayoutContext [
+        "Private - Validate the layout of the visible sub-views of the receiver."
+        self currentCard ifNotNil: [:card | card validateLayout: aLayoutContext]
+    ]
+]

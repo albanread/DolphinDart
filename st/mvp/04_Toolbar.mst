@@ -108,7 +108,7 @@ ControlBarAbstract subclass: Toolbar [
         					[self
         						sendMessage: TB_LOADIMAGES
         						wParam: systemBitmapId
-        						lParam: HINST_COMMCTRL].
+        						lParam: -1].
         	^start + anIntegerIndex
     ]
     applyFont [
@@ -214,12 +214,12 @@ ControlBarAbstract subclass: Toolbar [
     ]
     canCustomize [
         "Answers whether the user is allowed to customize the toolbar at runtime."
-        ^self baseStyleAllMask: CCS_ADJUSTABLE
+        ^self baseStyleAllMask: 32
     ]
     canCustomize: aBoolean [
         "Set whether the user is allowed to customize the toolbar at runtime."
         self 
-        		baseStyleMask: CCS_ADJUSTABLE
+        		baseStyleMask: 32
         		set: aBoolean
         		recreateIfChanged: false
     ]
@@ -529,20 +529,20 @@ ControlBarAbstract subclass: Toolbar [
         	draw speed too much as this message can be sent several times per sub-item."
 
         	| drawStage context item | 
-        	(drawStage := pNMHDR uint32AtOffset: NMHDR sizeInBytes) == CDDS_PREPAINT
+        	(drawStage := pNMHDR uint32AtOffset: NMHDR sizeInBytes) == 1
         		ifTrue: 
         			["Before any painting"
         			^(self wantCustomDrawItemNotifications: pNMHDR)
-        				ifTrue: [CDRF_NOTIFYITEMDRAW]
-        				ifFalse: [CDRF_DODEFAULT]].
+        				ifTrue: [32]
+        				ifFalse: [0]].
         	"Before painting item"
-        	(drawStage allMask: CDDS_ITEMPREPAINT) ifFalse: [^nil].
+        	(drawStage allMask: 65537) ifFalse: [^nil].
         	context := self customDrawContextClass fromAddress: pNMHDR.
         	item := self itemFromId: context dwItemSpec.
         	item
         		ifNil: 
         			["The control attempts to draw stuff that isn't there on occassion"
-        			^CDRF_DODEFAULT].context item: item. context view: self.
+        			^0].context item: item. context view: self.
         	^self customDrawItem: context
     ]
     nmNotify: pNMHDR [
@@ -693,10 +693,10 @@ ControlBarAbstract subclass: Toolbar [
         "Private - Answer the actual pixel extent of bitmaps shown on the toolbar, measure at the current window DPI. This can be visually inherited from a parent toolbar, which is useful in allowing the image size to be changed just by changing that of the topmost toolbar."
         | size |
         	size := self actualBitmapSize.
-        	^self isScalable ifTrue: [Icon standardSizeFor: (size * self dpi // USER_DEFAULT_SCREEN_DPI)] ifFalse: [size]
+        	^self isScalable ifTrue: [Icon standardSizeFor: (size * self dpi // 96)] ifFalse: [size]
     ]
     scalePadding: anInteger [
-        	^anInteger * self actualBitmapSize x * self dpi // [16 * USER_DEFAULT_SCREEN_DPI] value
+        	^anInteger * self actualBitmapSize x * self dpi // 1536
     ]
     setButtonSize [
         	self changeButtonSize: 
@@ -1226,7 +1226,7 @@ ControlBarAbstract subclass: Toolbar [
         	"creationStyle at: 1 put: ((creationStyle at: 1) bitOr: TBSTYLE_WRAPABLE)."
         	"The common idiom of embedding subsidiary toolsbars in a parent toolbar requires that the
         	embedded toolbars be marked as transparent, or they will always paint a face3d background."
-        	creationStyle at: 2 put: ((creationStyle at: 2) bitOr: WS_EX_TRANSPARENT).
+        	creationStyle at: 2 put: ((creationStyle at: 2) bitOr: 32).
         	anArray at: 13 put: Color default.
         	(anArray at: 6) = Color classVarFace3d ifTrue: [anArray at: 6 put: Color default].
         	^super stbConvertFromVersion12: anArray

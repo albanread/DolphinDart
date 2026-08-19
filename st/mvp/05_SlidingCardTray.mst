@@ -164,8 +164,8 @@ CardContainer subclass: SlidingCardTray [
         	User32
         		drawEdge: aCanvas asParameter
         		qrc: (0 @ -1 corner: self extent) asParameter
-        		edge: (self isResizable ifTrue: [EDGE_RAISED] ifFalse: [EDGE_ETCHED])
-        		grfFlags: BF_TOP | BF_RIGHT | BF_BOTTOM | BF_MIDDLE
+        		edge: (self isResizable ifTrue: [5] ifFalse: [6])
+        		grfFlags: 2 | 4 | 8 | 2048
     ]
     paintClassicOn: aCanvas [
         	self paintClassicEdgesOn: aCanvas.
@@ -288,18 +288,18 @@ CardContainer subclass: SlidingCardTray [
         					[self isInverted
         						ifTrue: 
         							[rect right: rect left + frameExtent x.
-        							HTLEFT]
+        							10]
         						ifFalse: 
         							[rect left: rect right - frameExtent x.
-        							HTRIGHT]]
+        							11]]
         				ifFalse: 
         					[self isInverted
         						ifTrue: 
         							[rect bottom: rect top + frameExtent y.
-        							HTTOP]
+        							12]
         						ifFalse: 
         							[rect top: rect bottom - frameExtent y.
-        							HTBOTTOM]].
+        							15]].
         	^hit -> rect
     ]
     tabOrientation: aSymbol [
@@ -331,7 +331,7 @@ CardContainer subclass: SlidingCardTray [
         			["Not resizable by dragging edge when pinned"
         			^nil].
         	edge := self sizingEdgeInfo.
-        	^(edge value containsPoint: lParam lowWord @ lParam highWord) ifTrue: [edge key] ifFalse: [HTCLIENT]
+        	^(edge value containsPoint: lParam lowWord @ lParam highWord) ifTrue: [edge key] ifFalse: [1]
     ]
     wmNcPaint: message wParam: wParam lParam: lParam [
         "Private - Paint the non-client area of the window when unpinned."
@@ -350,7 +350,7 @@ CardContainer subclass: SlidingCardTray [
         				defaultWindowProcessing: message
         				wParam: wParam
         				lParam: lParam.
-        	(lParam allMask: PRF_NONCLIENT) ifTrue: [self paintEdgesOn: (Canvas withNonOwnedDC: wParam)].
+        	(lParam allMask: 2) ifTrue: [self paintEdgesOn: (Canvas withNonOwnedDC: wParam)].
         	^result
     ]
     SlidingCardTray class >> initialize [

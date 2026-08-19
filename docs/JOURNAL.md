@@ -1817,3 +1817,123 @@ Dolphin's own method works, and for a while it looked like it had. Counting
 via `super` — bump, call super, record what super answered — is the form that
 does not lie, and it is what turned "it paints" into "it paints only when I
 paint it".
+
+---
+
+## DD17 — an actual Dolphin view on screen, and the four fakes between us and it
+
+Prompted by the obvious question: after DD16 we could load a view resource, so
+why was the evidence still a coloured rectangle? Answer: four separate things
+were stubbed, swallowed, or missing, each hidden behind the next. All four are
+fixed; `UI.TextEdit`, reconstituted from Dolphin's own view resource, now
+displays with its text and its sunken border, and most of Dolphin's other view
+resources reconstitute too.
+
+### 1. The erase stub that outlived its own retirement note by five sprints
+
+`View>>onEraseRequired: [ ^nil ]` in `st/mvp_compat/01_view_overrides.mst`,
+from DD10, declining every background erase. Its comment carried the
+condition: *translate `Graphics.Canvas` (DD11), then DELETE this method*.
+Canvas landed in DD11. Nothing failed when the condition was met, because what
+the stub disables is PIXELS and no assertion in this port looked at any.
+
+DELETED, and `st_backcolor` now guards it: fill a view with a named colour,
+capture, read the pixel back. Verified by REINTRODUCING the stub — the gate
+fails, so it is a guard and not decoration.
+
+### 2. `Symbol>>value` demoted every symbol in every resource
+
+`#default value` answered the **String** `'default'`; Dolphin answers the
+Symbol (oracle: `#default value == #default` is true). The Symbol NSM hook
+forwards unhandled selectors to the spelling, which is right for String
+protocol and wrong for this — the same trap the hook's own comment already
+documents for `copy`.
+
+It matters here because `STLInFiler>>basicNext` returns EVERY non-integer
+literal as `^prefixOrLiteral value`. So every symbol in every view resource
+arrived as a String. It surfaced a long way off, as `key not found` from
+`Color class >> named:`, whose NamedColors table is keyed by symbols: the
+resource said `#default`, the filer handed over `'default'`.
+
+### 3. My own catch, swallowing the proxy's real error
+
+DD15b added `stStbFixup` with `catch (e) { return r; }`. That absorbed
+everything `STBViewProxy>>stbFixup:at:` raised and answered the proxy as
+though it had declined — indistinguishable from success. `deferAction:` was
+never called, `evaluateDeferredActions` had nothing to run, and
+`loadViewResource:` answered an STBViewProxy that no longer knew anything had
+gone wrong. Narrowed to a genuine `stbFixup` miss, which is the discipline
+`_stValue0Slow` already applied to `value`.
+
+### 4. EIGHT MISSING SUPERCLASSES — the quiet one
+
+`ReferenceView instSize` raised while `ContainerView instSize` answered 15.
+`instSize` lives on `Object class`; ReferenceView could not reach it because
+it stood on an auto-vivified stub of `AbstractDelegatingView`, which had never
+been translated.
+
+A missing superclass does not raise. cli.py vivifies a stub, the subclass
+loads clean, and it silently loses every inherited ivar, every inherited
+method, and — because the stub's metaclass shadow is not linked — its whole
+class side. `tools/audit_superclasses.py` found eight at once:
+
+    AbstractCardContainer        <- CardContainer
+    AbstractDelegatingView       <- ReferenceView
+    CheckButton                  <- RadioButton
+    ClassLocator                 <- RestrictedClassLocator
+    ControlBarAbstract           <- StatusBar, Toolbar
+    CreateWindowDecorator        <- CreateInDpiAwarenessContext
+    SequencedGrowableCollection  <- ListModel
+    StatusBarItemAbstract        <- StatusBarItem, StatusBarNullItem
+
+i.e. most of what a real Dolphin window is made of was standing on stubs. The
+generated filenames make it vivid, because the depth prefix is computed from
+the real chain: `00_CardContainer.mst` became `04_CardContainer.mst`,
+`00_Toolbar` and `00_StatusBar` became `04_`, `00_RadioButton` became `05_`.
+They had been sitting at depth 00 — rooted directly on Object.
+
+Wave: 177 -> 188 classes, 6061 -> 6304 methods. The audit is now a tool, so
+the class stays closed.
+
+### 5. `Core.Semaphore`: three ivars in Dolphin, none here
+
+Found by re-running the instSize sweep against the oracle with every resource
+class finally present. Ours comes from the prelude and has no
+Smalltalk-visible fields; Dolphin's has `firstLink lastLink signals`, the
+queue of a green-thread scheduler this port does not have. So the filer read
+ZERO slots where the stream holds THREE, and every object after a Semaphore
+shifted by three.
+
+It presented as the top proxy's `version` slot holding an ARRAY OF SUBVIEW
+PROXIES — `List has no instance method '<'` from `version < 9` — five objects
+and three slots downstream. Now a class-side `stbReadFrom:format:size:` reads
+the three and discards them; a dialog's `endModal` is re-created by
+`DialogView>>initialize` anyway.
+
+### Where the port actually stands, view by view
+
+Loading each resource in the wave through `loadViewResource:forEdit:`:
+
+| resource | result |
+|---|---|
+| View, ContainerView, Shell, StatusBar, Splitter, PushButton | realize, live HWND |
+| StaticRectangle | realizes as StaticRectangle |
+| TextPresenter | realizes as **TextEdit** — and DISPLAYS, with text |
+| CardContainer | realizes, 1 subview (TabViewXP), CardLayout |
+| SlideyInneyOuteyThing | realizes, 2 subviews |
+| Toolbar | FAILS — `_bitAndFromSmi` called on null |
+| Prompter, Dialog | FAIL — `VM class has no method 'getDlgProc'` |
+
+### Known open, stated precisely
+
+* **Dialog resources need a dialog template.** A DialogView resource carries a
+  saved `CreateDialog`, whose `create:` wants `VM getDlgProc` and a Win32
+  DIALOG template. DD12 deliberately re-pointed the CONSTRUCTED path to an
+  ordinary window (`07_dialogs.mst`, with its rationale); the RESOURCE path
+  bypasses that override entirely because the creation object comes out of the
+  stream. Not faked further on purpose — it is a real decision, not an
+  oversight, and it belongs in a sitting of its own.
+* **Toolbar** fails with `_bitAndFromSmi` on null — a nil reaching a bitAnd,
+  i.e. an unfolded constant or an uninitialised class variable. Untouched.
+* **CardContainer loads but its TabViewXP does not draw.** The photograph
+  shows the TextEdit and an empty area below it.

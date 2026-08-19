@@ -4,6 +4,6 @@ Windows' standard behaviour for radio buttons is that among a group of such butt
 
 CheckButton subclass: RadioButton [
     basicWindowStyle [
-        	^BS_AUTORADIOBUTTON
+        	^9
     ]
 ]

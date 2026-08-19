@@ -1,5 +1,6 @@
 C:\projects\dsfork\Core\Object Arts\Dolphin\Base\Core.MessageSendAbstract.cls:204: [cascade] cascade on a receiver this rewriter cannot bound — splitting it could change evaluation
 C:\projects\dsfork\Core\Object Arts\Dolphin\Base\Core.Model.cls:85: [cascade] cascade on a receiver this rewriter cannot bound — splitting it could change evaluation
+C:\projects\dsfork\Core\Object Arts\Dolphin\Base\Kernel.ClassLocator.cls:243: [cascade] cascade on a receiver this rewriter cannot bound — splitting it could change evaluation
 C:\projects\dsfork\Core\Object Arts\Dolphin\Base\UI.ResourceIdentifier.cls:184: [cascade] cascade on a receiver this rewriter cannot bound — splitting it could change evaluation
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\Graphics.Rectangle.cls:666: [cascade] cascade on a receiver this rewriter cannot bound — splitting it could change evaluation
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Base\UI.CapturingInteractor.cls:38: [hashhash] `##((4 | 8 | 16) bitInvert)` folded to a runtime block
@@ -188,7 +189,10 @@ C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Buttons\UI.CommandButton.c
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Buttons\UI.PushButton.cls:252: [hashhash] `##((15 bitOr: 4096) maskClear: 1)` folded to a runtime block
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Buttons\UI.PushButton.cls:317: [hashhash] `##(self)` folded to a runtime block
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Buttons\UI.PushButton.cls:389: [cascade] cascade on a receiver this rewriter cannot bound — splitting it could change evaluation
-C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Cards\UI.CardContainer.cls:65: [hashhash] `##(SWP_NOSIZE | SWP_NOMOVE)` folded to a runtime block
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Cards\UI.AbstractCardContainer.cls:57: [pragma] unhandled pragma <commandQuery: #isNotFirstCard>
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Cards\UI.AbstractCardContainer.cls:74: [pragma] unhandled pragma <commandQuery: #isNotLastCard>
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Cards\UI.AbstractCardContainer.cls:83: [pragma] unhandled pragma <commandQuery: #isNotLastCard>
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Cards\UI.AbstractCardContainer.cls:122: [pragma] unhandled pragma <commandQuery: #isNotFirstCard>
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Cards\UI.CardContainer.cls:314: [pragma] unhandled pragma <commandQuery: #queryTabOrientation:>
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Cards\UI.CardContainer.cls:340: [pragma] unhandled pragma <commandQuery: #queryViewMode:>
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Cards\UI.CardLayout.cls:30: [hashhash] `##(Association new)` folded to a runtime block
@@ -246,10 +250,13 @@ C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Common Controls\UI.TreeVie
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Common Controls\UI.TreeView.cls:1396: [hashhash] `##(self indexOfInstVar: 'tvFlags')` folded to a runtime block
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Common Controls\UI.TreeViewStaticUpdateMode.cls:19: [qq] `??` with a non-primary right operand
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Common Controls\UI.TreeViewStaticUpdateMode.cls:46: [cascade] cascade on a receiver this rewriter cannot bound — splitting it could change evaluation
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Control Bars\UI.ControlBarAbstract.cls:413: [cascade] cascade on a receiver this rewriter cannot bound — splitting it could change evaluation
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Control Bars\UI.StatusBar.cls:67: [hashhash] `##(350 @ 20)` folded to a runtime block
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Control Bars\UI.StatusBar.cls:72: [hashhash] `##(SBARS_SIZEGRIP | SBARS_TOOLTIPS)` folded to a runtime block
-C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Control Bars\UI.StatusBar.cls:305: [hashhash] `##(INFOTIPSIZE << 16)` folded to a runtime block
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Control Bars\UI.StatusBar.cls:305: [hashhash] `##(1024 << 16)` folded to a runtime block
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Control Bars\UI.StatusBar.cls:428: [hashhash] `##(self)` folded to a runtime block
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Control Bars\UI.StatusBarItemAbstract.cls:37: [hashhash] `##(SBT_NOBORDERS|SBT_POPOUT)` folded to a runtime block
+C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Control Bars\UI.StatusBarItemAbstract.cls:42: [hashhash] `##((SBT_NOBORDERS | SBT_POPOUT) bitInvert)` folded to a runtime block
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Control Bars\UI.Toolbar.cls:263: [hashhash] `##(TBSTYLE_FLAT | TBSTYLE_TRANSPARENT)` folded to a runtime block
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Control Bars\UI.Toolbar.cls:334: [hashhash] `##(350 @ 25)` folded to a runtime block
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Control Bars\UI.Toolbar.cls:364: [hashhash] `##(TBSTYLE_TOOLTIPS | TBSTYLE_WRAPABLE | TBSTYLE_FLAT)` folded to a runtime block
@@ -262,7 +269,6 @@ C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Control Bars\UI.Toolbar.cl
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Control Bars\UI.Toolbar.cls:629: [hashhash] `##(TBN_FIRST + 1)` folded to a runtime block
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Control Bars\UI.Toolbar.cls:724: [hashhash] `##(TBSTYLE_EX_DRAWDDARROWS | TBSTYLE_EX_DOUBLEBUFFER)` folded to a runtime block
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Control Bars\UI.Toolbar.cls:724: [hashhash] `##(TBSTYLE_EX_DRAWDDARROWS | TBSTYLE_EX_DOUBLEBUFFER | TBSTYLE_)` folded to a runtime block
-C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Control Bars\UI.Toolbar.cls:789: [hashhash] `##(16 * USER_DEFAULT_SCREEN_DPI)` folded to a runtime block
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Control Bars\UI.Toolbar.cls:922: [hashhash] `##(TBMF_PAD | TBMF_BARPAD | TBMF_BUTTONSPACING)` folded to a runtime block
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Control Bars\UI.ToolbarButton.cls:273: [hashhash] `##(TBSTATE_CHECKED|TBSTATE_PRESSED)` folded to a runtime block
 C:\projects\dsfork\Core\Object Arts\Dolphin\MVP\Views\Control Bars\UI.ToolbarButton.cls:431: [cascade] cascade on a receiver this rewriter cannot bound — splitting it could change evaluation
@@ -314,7 +320,6 @@ Graphics.Bitmap: [orphan-loose-methods] 1 loose method(s) filed onto 'Graphics.B
 Kernel.AbsoluteFileLocator: [orphan-loose-methods] 1 loose method(s) filed onto 'Kernel.AbsoluteFileLocator', which was not translated
 Kernel.BindingReference: [orphan-loose-methods] 2 loose method(s) filed onto 'Kernel.BindingReference', which was not translated
 Kernel.BlockClosure: [orphan-loose-methods] 1 loose method(s) filed onto 'Kernel.BlockClosure', which was not translated
-Kernel.ClassLocator: [orphan-loose-methods] 2 loose method(s) filed onto 'Kernel.ClassLocator', which was not translated
 Kernel.ImageRelativeFileLocator: [orphan-loose-methods] 1 loose method(s) filed onto 'Kernel.ImageRelativeFileLocator', which was not translated
 Kernel.InstallRelativeFileLocator: [orphan-loose-methods] 1 loose method(s) filed onto 'Kernel.InstallRelativeFileLocator', which was not translated
 Kernel.MetaBindingReference: [orphan-loose-methods] 1 loose method(s) filed onto 'Kernel.MetaBindingReference', which was not translated

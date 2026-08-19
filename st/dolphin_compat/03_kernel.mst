@@ -1002,3 +1002,32 @@ Object extend [
     become: anObject [ <stprim: stBecome> ]
     becomeForward: anObject [ <stprim: stBecomeForward> ]
 ]
+
+"── Deserialising a SEMAPHORE: Dolphin has three ivars, we have none ────
+ `Core.Semaphore allInstVarNames` is `#('firstLink' 'lastLink' 'signals')` —
+ the process queue of a green-thread scheduler. Ours comes from the prelude
+ and has no Smalltalk-visible fields at all, because this port's waiting is
+ done by the Win32 message pump rather than by Dolphin's own scheduler.
+
+ So the generic path read ZERO slots where the stream holds THREE, and the
+ three values stayed in the stream to be read as the NEXT object's instance
+ variables. Everything after a Semaphore shifted by three.
+
+ That is how it presented, and it is worth writing down: `UI.Prompter`'s view
+ resource holds a DialogView whose `endModal` is a Semaphore, and the symptom
+ was the top proxy's `version` slot holding an ARRAY OF SUBVIEW PROXIES —
+ `List has no instance method '<'` from `version < 9`, five objects and three
+ slots away from the Semaphore that actually mis-read.
+
+ Read the three and DISCARD them: a queue of Dolphin processes means nothing
+ here, and a dialog's `endModal` is re-created by `DialogView>>initialize`
+ anyway. Answering a fresh Semaphore keeps the object graph well-formed."
+Semaphore class extend [
+    stbReadFrom: anSTxInFiler format: aFormat size: anInteger [
+        | sema |
+        sema := Semaphore new.
+        anSTxInFiler register: sema.
+        3 timesRepeat: [ anSTxInFiler basicNext ].
+        ^sema
+    ]
+]
