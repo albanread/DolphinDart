@@ -1,0 +1,1052 @@
+<title>The DolphinDart Stack</title>
+
+<style>
+  /* ---- tokens: light is the bare :root ---------------------------------- */
+  :root {
+    --ground:      #eef2f3;
+    --surf:        #fbfcfc;
+    --surf2:       #e6ecee;
+    --rule:        #c3cfd4;
+    --rule-soft:   #d8e1e4;
+    --fg:          #101f28;
+    --fg2:         #3d5462;
+    --fg3:         #6d8291;
+    --marine:      #14708f;
+    --marine-wash: #ddeef4;
+    --brass:       #8d6a24;
+    --brass-wash:  #f2ead6;
+    --kelp:        #2f6a49;
+    --coral:       #a5402c;
+
+    --serif: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Palatino, Georgia, serif;
+    --mono:  "Cascadia Mono", "Cascadia Code", Consolas, "SF Mono", ui-monospace, monospace;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground:      #0b161d;
+      --surf:        #12222c;
+      --surf2:       #0f1c25;
+      --rule:        #2b4351;
+      --rule-soft:   #21353f;
+      --fg:          #e2ebef;
+      --fg2:         #a6bdc9;
+      --fg3:         #74909f;
+      --marine:      #52b6d8;
+      --marine-wash: #103440;
+      --brass:       #cba055;
+      --brass-wash:  #33280f;
+      --kelp:        #6bb28a;
+      --coral:       #e58269;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --ground:      #0b161d;
+    --surf:        #12222c;
+    --surf2:       #0f1c25;
+    --rule:        #2b4351;
+    --rule-soft:   #21353f;
+    --fg:          #e2ebef;
+    --fg2:         #a6bdc9;
+    --fg3:         #74909f;
+    --marine:      #52b6d8;
+    --marine-wash: #103440;
+    --brass:       #cba055;
+    --brass-wash:  #33280f;
+    --kelp:        #6bb28a;
+    --coral:       #e58269;
+  }
+
+  /* ---- page ------------------------------------------------------------- */
+  body {
+    background: var(--ground);
+    color: var(--fg);
+    font-family: var(--serif);
+    font-size: 17px;
+    line-height: 1.62;
+    margin: 0;
+    padding: 0 24px 96px;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap { max-width: 1180px; margin: 0 auto; }
+
+  /* masthead */
+  header.top {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding: 64px 0 34px;
+    border-bottom: 1px solid var(--rule);
+  }
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: .18em;
+    color: var(--fg3);
+  }
+  h1 {
+    font-family: var(--serif);
+    font-size: clamp(34px, 5.2vw, 52px);
+    line-height: 1.08;
+    font-weight: 600;
+    letter-spacing: -.015em;
+    margin: 0;
+    text-wrap: balance;
+  }
+  h1 em { font-style: italic; color: var(--marine); }
+  .standfirst {
+    max-width: 63ch;
+    font-size: 19px;
+    color: var(--fg2);
+    margin: 0;
+  }
+
+  /* the fact strip */
+  .facts {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(148px, 1fr));
+    gap: 1px;
+    background: var(--rule-soft);
+    border: 1px solid var(--rule-soft);
+    margin: 34px 0 0;
+  }
+  .facts div {
+    background: var(--ground);
+    padding: 14px 16px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+  .facts b {
+    font-family: var(--mono);
+    font-size: 21px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -.02em;
+    color: var(--fg);
+  }
+  .facts span {
+    font-family: var(--mono);
+    font-size: 10.5px;
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    color: var(--fg3);
+  }
+
+  section { padding-top: 54px; }
+
+  h2 {
+    font-family: var(--mono);
+    font-size: 11.5px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .19em;
+    color: var(--marine);
+    margin: 0 0 6px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  h2::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: var(--rule);
+  }
+  h3 {
+    font-family: var(--serif);
+    font-size: 21px;
+    font-weight: 600;
+    letter-spacing: -.01em;
+    margin: 0 0 6px;
+    text-wrap: balance;
+  }
+  p { max-width: 66ch; margin: 0 0 16px; }
+  p:last-child { margin-bottom: 0; }
+  .lede { font-size: 18.5px; color: var(--fg2); max-width: 64ch; margin-bottom: 26px; }
+
+  code, .id {
+    font-family: var(--mono);
+    font-size: .875em;
+    color: var(--fg);
+    background: var(--surf2);
+    padding: .1em .34em;
+    border-radius: 2px;
+  }
+
+  /* legend */
+  .legend {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(272px, 1fr));
+    gap: 18px 26px;
+    margin: 0;
+    padding: 22px 24px;
+    background: var(--surf2);
+    border-left: 2px solid var(--rule);
+  }
+  .legend > div { display: flex; gap: 13px; align-items: flex-start; }
+  .swatch {
+    flex: none;
+    width: 26px;
+    height: 17px;
+    margin-top: 4px;
+    background: var(--surf);
+    border: 1px solid var(--rule);
+  }
+  .swatch.key   { background: var(--marine-wash); border: 1.5px solid var(--marine); }
+  .swatch.scaf  { background: var(--brass-wash);  border: 1.25px dashed var(--brass); }
+  .legend dt {
+    font-family: var(--mono);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: .11em;
+    color: var(--fg);
+    margin-bottom: 1px;
+  }
+  .legend dd {
+    margin: 0;
+    font-size: 15px;
+    line-height: 1.5;
+    color: var(--fg2);
+  }
+
+  /* figures */
+  figure {
+    margin: 26px 0 0;
+    padding: 0;
+  }
+  .canvas {
+    overflow-x: auto;
+    background: var(--surf);
+    border: 1px solid var(--rule);
+    padding: 22px 20px;
+  }
+  .dg {
+    display: block;
+    width: 100%;
+    min-width: 880px;
+    height: auto;
+    color: var(--fg2);
+  }
+  figcaption {
+    margin-top: 14px;
+    max-width: 78ch;
+    font-size: 15.5px;
+    line-height: 1.55;
+    color: var(--fg2);
+  }
+  figcaption b { color: var(--fg); font-weight: 600; }
+
+  /* diagram primitives */
+  .dg text { font-family: var(--mono); fill: var(--fg); }
+  .dg .sub { fill: var(--fg3); }
+  .dg .band {
+    fill: var(--fg3);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: .16em;
+  }
+  .dg .box   { fill: var(--surf);  stroke: var(--rule); stroke-width: 1; }
+  .dg .group { fill: var(--surf2); stroke: var(--rule); stroke-width: 1; }
+  .dg .key   { fill: var(--marine-wash); stroke: var(--marine); stroke-width: 1.5; }
+  .dg .scaf  { fill: var(--brass-wash);  stroke: var(--brass);  stroke-width: 1.25; stroke-dasharray: 5 4; }
+  .dg .flow  { stroke: var(--fg2); stroke-width: 1.4; fill: none; }
+  .dg .soft  { stroke: var(--fg3); stroke-width: 1.1; fill: none; stroke-dasharray: 4 4; }
+  .dg .head  { fill: var(--fg2); }
+  .dg .head-soft { fill: var(--fg3); }
+  .dg .accent { fill: var(--marine); }
+  .dg .eyb  { fill: var(--fg3);    font-size: 9.5px; letter-spacing: .1em; }
+  .dg .eyb-k{ fill: var(--marine); font-size: 9.5px; letter-spacing: .1em; }
+  .dg .ex   { fill: var(--fg2); }
+  .dg .flow-k { stroke: var(--marine); stroke-width: 1.5; fill: none; }
+  .dg .glyph { fill: var(--fg); font-weight: 600; }
+
+  /* identity ledger */
+  .idmap-wrap { overflow-x: auto; margin-top: 24px; border: 1px solid var(--rule-soft); }
+  table.idmap { border-collapse: collapse; width: 100%; min-width: 660px; }
+  table.idmap th, table.idmap td {
+    text-align: left; padding: 13px 18px;
+    border-bottom: 1px solid var(--rule-soft); vertical-align: top;
+    font-size: 15px; line-height: 1.5;
+  }
+  table.idmap thead th {
+    font-family: var(--mono); font-size: 10px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: .12em;
+    color: var(--fg3); background: var(--surf2);
+  }
+  table.idmap tbody tr:last-child td { border-bottom: none; }
+  table.idmap td:first-child { color: var(--marine); font-weight: 600; white-space: nowrap; }
+  table.idmap td { color: var(--fg2); }
+  table.idmap code { background: none; padding: 0; color: var(--fg); }
+  .idmap-note { margin-top: 16px; font-size: 15.5px; color: var(--fg2); max-width: 76ch; }
+  .idmap-note code { font-size: .86em; }
+
+  /* two-column doctrine */
+  .doctrine {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(268px, 1fr));
+    gap: 1px;
+    background: var(--rule-soft);
+    border: 1px solid var(--rule-soft);
+    margin-top: 24px;
+  }
+  .doctrine article {
+    background: var(--ground);
+    padding: 22px 22px 24px;
+  }
+  .doctrine h4 {
+    font-family: var(--mono);
+    font-size: 10.5px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .13em;
+    margin: 0 0 12px;
+    padding-bottom: 9px;
+    border-bottom: 1px solid var(--rule);
+    color: var(--fg3);
+  }
+  .doctrine article.is-ported h4 { color: var(--marine); }
+  .doctrine article.is-never h4  { color: var(--coral); }
+  .doctrine ul { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 11px; }
+  .doctrine li { font-size: 15.5px; line-height: 1.5; color: var(--fg2); }
+  .doctrine li strong { color: var(--fg); font-weight: 600; }
+
+  /* status ledger */
+  .ledger { margin-top: 24px; display: flex; flex-direction: column; gap: 1px; background: var(--rule-soft); border: 1px solid var(--rule-soft); }
+  .row {
+    background: var(--ground);
+    display: grid;
+    grid-template-columns: 118px 1fr;
+    gap: 0 22px;
+    padding: 18px 20px;
+    align-items: baseline;
+  }
+  .tag {
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .12em;
+    padding: 3px 8px;
+    border: 1px solid currentColor;
+    justify-self: start;
+    white-space: nowrap;
+  }
+  .tag.green   { color: var(--kelp); }
+  .tag.next    { color: var(--marine); }
+  .tag.blocked { color: var(--coral); }
+  .tag.open    { color: var(--brass); }
+  .row > div > p { margin-bottom: 10px; font-size: 16px; }
+  .row > div > p:last-child { margin-bottom: 0; }
+  .row h3 { font-size: 18px; margin-bottom: 5px; }
+
+  pre {
+    font-family: var(--mono);
+    font-size: 12.5px;
+    line-height: 1.62;
+    background: var(--surf2);
+    border-left: 2px solid var(--marine);
+    padding: 15px 18px;
+    margin: 14px 0;
+    overflow-x: auto;
+    color: var(--fg2);
+  }
+  pre b { color: var(--fg); font-weight: 600; }
+  pre .bad { color: var(--coral); }
+  pre .ok  { color: var(--kelp); }
+
+  /* traps */
+  .traps { margin-top: 24px; display: flex; flex-direction: column; gap: 0; border-top: 1px solid var(--rule); }
+  .trap {
+    display: grid;
+    grid-template-columns: 34px 1fr;
+    gap: 0 20px;
+    padding: 20px 0;
+    border-bottom: 1px solid var(--rule);
+    align-items: start;
+  }
+  .trap .n {
+    font-family: var(--mono);
+    font-size: 12px;
+    font-variant-numeric: tabular-nums;
+    color: var(--marine);
+    padding-top: 4px;
+  }
+  .trap p { font-size: 16px; margin-bottom: 0; color: var(--fg2); max-width: 72ch; }
+  .trap p + p { margin-top: 9px; }
+
+  footer {
+    margin-top: 62px;
+    padding-top: 22px;
+    border-top: 1px solid var(--rule);
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: .06em;
+    color: var(--fg3);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 22px;
+  }
+
+  @media (max-width: 620px) {
+    body { padding: 0 18px 72px; font-size: 16px; }
+    header.top { padding-top: 44px; }
+    .row { grid-template-columns: 1fr; gap: 10px; }
+  }
+</style>
+
+<div class="wrap">
+
+<header class="top">
+  <div class="eyebrow">C:\projects\DolphinDart &nbsp;·&nbsp; sprint DD12 &nbsp;·&nbsp; Windows 11 ARM64</div>
+  <h1>Dolphin Smalltalk, compiled <em>straight to Dart IR</em></h1>
+  <p class="standfirst">Dolphin 8's own language layer and MVP framework, translated ahead of
+  time and compiled by our own front end onto the Dart 1.24.3 JIT — no bytecode interpreter
+  anywhere. And not a language running <em>on</em> Dart so much as <em>in</em> it: its
+  integers, strings and arrays <em>are</em> Dart's own objects.</p>
+</header>
+
+<div class="facts">
+  <div><b>696</b><span>.mst source files</span></div>
+  <div><b>137</b><span>MVP classes ported</span></div>
+  <div><b>5,331</b><span>methods</span></div>
+  <div><b>25 / 25</b><span>gates green</span></div>
+  <div><b>12.5s</b><span>full suite, release</span></div>
+  <div><b>2</b><span>CPU targets</span></div>
+  <div><b>4</b><span>send-resolution paths</span></div>
+</div>
+
+<section>
+  <h2>How to read these drawings</h2>
+  <p class="lede">The fills carry the project's own doctrine: what belongs to Dolphin gets
+  ported, what sits underneath it may be written in whatever language fits, and every
+  stand-in must name the thing that will retire it.</p>
+  <div class="legend">
+    <div>
+      <span class="swatch key"></span>
+      <dl><dt>Dolphin's own Smalltalk</dt>
+      <dd>Translated D8 source, unmodified in meaning. This is the deliverable — never
+      re-implemented in Dart or C++.</dd></dl>
+    </div>
+    <div>
+      <span class="swatch"></span>
+      <dl><dt>Machinery underneath</dt>
+      <dd>C++ or Dart, chosen per job: the compiler, the wndproc door, the FFI floor, the
+      worker transport, the tooling.</dd></dl>
+    </div>
+    <div>
+      <span class="swatch scaf"></span>
+      <dl><dt>Stand-in, retirement named</dt>
+      <dd>Hand-written compat Smalltalk that duplicates a translated class's role. Allowed
+      only while the thing that kills it is written down.</dd></dl>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2>Figure 1 — Source to machine code</h2>
+  <h3>Two crossings, and an interpreter in neither of them</h3>
+  <p>Dolphin's <code>.cls</code> and <code>.pax</code> chunk files are translated into the
+  house dialect ahead of time, by Python. From there a C++ front end living inside the VM
+  takes them the rest of the way: no image file, no bytecode set, no dispatch loop — just
+  flow-graph IR handed to a JIT that shipped in production in 2017.</p>
+
+  <figure>
+    <div class="canvas">
+      <svg class="dg" viewBox="0 0 1120 560" role="img"
+           aria-label="Pipeline diagram: the dsfork Dolphin corpus is read by the dolphin2mst translator, which consults a booted Dolphin oracle for semantics and winkb for struct sizes, and emits 696 Smalltalk .mst source files. Those are compiled inside the Dart VM by a C++ front end — lexer, parser, flow-graph builder, loader, with cocoa.dart supplying helpers for 51 rewritten selectors — which emits Dart flow-graph IR for the Dart 1.24.3 optimizing JIT to turn into native arm64 or x64 code.">
+        <defs>
+          <marker id="f1a" viewBox="0 0 10 8" refX="9" refY="4" markerWidth="8" markerHeight="7" orient="auto">
+            <polygon class="head" points="0,0 10,4 0,8" />
+          </marker>
+          <marker id="f1s" viewBox="0 0 10 8" refX="9" refY="4" markerWidth="8" markerHeight="7" orient="auto">
+            <polygon class="head-soft" points="0,0 10,4 0,8" />
+          </marker>
+        </defs>
+
+        <!-- authorities -->
+        <rect class="box" x="232" y="16" width="176" height="44" />
+        <text x="320" y="35" text-anchor="middle" font-size="11.5">dolphin-oracle</text>
+        <text x="320" y="50" text-anchor="middle" font-size="9.5" class="sub">booted Dolphin Pro 8.2.3</text>
+
+        <rect class="box" x="428" y="16" width="152" height="44" />
+        <text x="504" y="35" text-anchor="middle" font-size="11.5">winkb</text>
+        <text x="504" y="50" text-anchor="middle" font-size="9.5" class="sub">types.size_bits</text>
+
+        <line class="flow" x1="320" y1="60" x2="320" y2="106" marker-end="url(#f1a)" />
+        <text x="327" y="87" font-size="9.5" class="sub">semantics</text>
+        <line class="flow" x1="452" y1="60" x2="452" y2="106" marker-end="url(#f1a)" />
+        <text x="459" y="87" font-size="9.5" class="sub">real sizes</text>
+
+        <!-- band 1 -->
+        <text x="24" y="96" class="band">Ahead of time · Python</text>
+
+        <rect class="box" x="24" y="108" width="176" height="72" />
+        <text x="112" y="132" text-anchor="middle" font-size="11.5">dsfork corpus</text>
+        <text x="112" y="148" text-anchor="middle" font-size="9.5" class="sub">Dolphin 8 · MIT</text>
+        <text x="112" y="163" text-anchor="middle" font-size="9.5" class="sub">3,164 .cls · 394 .pax</text>
+
+        <line class="flow" x1="200" y1="144" x2="250" y2="144" marker-end="url(#f1a)" />
+        <text x="225" y="136" text-anchor="middle" font-size="9" class="sub">reads</text>
+
+        <rect class="box" x="256" y="108" width="216" height="72" />
+        <text x="364" y="132" text-anchor="middle" font-size="11.5">tools/dolphin2mst</text>
+        <text x="364" y="148" text-anchor="middle" font-size="9.5" class="sub">chunks · parse · emit · pools</text>
+        <text x="364" y="163" text-anchor="middle" font-size="9.5" class="sub">litarray · genstructs · genprims</text>
+
+        <line class="flow" x1="472" y1="144" x2="522" y2="144" marker-end="url(#f1a)" />
+        <text x="497" y="136" text-anchor="middle" font-size="9" class="sub">emits</text>
+
+        <rect class="key" x="528" y="108" width="184" height="72" />
+        <text x="620" y="132" text-anchor="middle" font-size="11.5">st/**/*.mst</text>
+        <text x="620" y="148" text-anchor="middle" font-size="9.5" class="sub">696 files, six layers</text>
+        <text x="620" y="163" text-anchor="middle" font-size="9.5" class="sub">the image, in Smalltalk</text>
+
+        <line class="soft" x1="798" y1="144" x2="722" y2="144" marker-end="url(#f1s)" />
+        <text x="760" y="136" text-anchor="middle" font-size="9" class="sub">audits</text>
+
+        <rect class="box" x="800" y="108" width="296" height="72" />
+        <text x="948" y="132" text-anchor="middle" font-size="11.5">tools/audit_*.py</text>
+        <text x="948" y="148" text-anchor="middle" font-size="9.5" class="sub">audit_offsets · audit_helpers</text>
+        <text x="948" y="163" text-anchor="middle" font-size="9.5" class="sub">conform_structs · check_ivar_collisions</text>
+
+        <line class="flow" x1="620" y1="180" x2="620" y2="246" marker-end="url(#f1a)" />
+        <text x="628" y="217" font-size="9.5" class="sub">compiled by</text>
+
+        <!-- band 2: the front end -->
+        <text x="24" y="236" class="band">Our compiler · C++ inside the Dart VM</text>
+        <rect class="group" x="24" y="248" width="1072" height="180" />
+        <text x="44" y="271" font-size="9.5" class="sub">port-win/dart_st — 9,754 lines of C++ and 3,029 lines of Dart, in-process, no separate build step</text>
+
+        <rect class="box" x="48" y="284" width="232" height="60" />
+        <text x="164" y="309" text-anchor="middle" font-size="11">st_lexer.cc</text>
+        <text x="164" y="326" text-anchor="middle" font-size="9.5" class="sub">chunks and tokens</text>
+
+        <polygon class="head" points="284,309 296,314 284,319" />
+        <line class="flow" x1="280" y1="314" x2="288" y2="314" />
+
+        <rect class="box" x="312" y="284" width="232" height="60" />
+        <text x="428" y="309" text-anchor="middle" font-size="11">st_parser.cc</text>
+        <text x="428" y="326" text-anchor="middle" font-size="9.5" class="sub">AST — st_ast.h</text>
+
+        <polygon class="head" points="548,309 560,314 548,319" />
+        <line class="flow" x1="544" y1="314" x2="552" y2="314" />
+
+        <rect class="box" x="576" y="284" width="232" height="60" />
+        <text x="692" y="309" text-anchor="middle" font-size="10.5">st_flow_graph_builder.cc</text>
+        <text x="692" y="326" text-anchor="middle" font-size="9.5" class="sub">on:do: → try/catch · NLR home tokens</text>
+
+        <polygon class="head" points="812,309 824,314 812,319" />
+        <line class="flow" x1="808" y1="314" x2="816" y2="314" />
+
+        <rect class="box" x="840" y="284" width="232" height="60" />
+        <text x="956" y="309" text-anchor="middle" font-size="11">st_loader.cc</text>
+        <text x="956" y="326" text-anchor="middle" font-size="9.5" class="sub">installs classes and methods</text>
+
+        <line class="flow" x1="692" y1="344" x2="692" y2="364" marker-end="url(#f1a)" />
+        <rect class="box" x="576" y="366" width="232" height="44" />
+        <text x="692" y="385" text-anchor="middle" font-size="10.5">cocoa.dart</text>
+        <text x="692" y="400" text-anchor="middle" font-size="9" class="sub">at:  size  do:  value  printOn:  …</text>
+        <text x="820" y="382" font-size="9.5" class="sub">51 selectors are rewritten AT THE</text>
+        <text x="820" y="396" font-size="9.5" class="sub">CALL SITE into Dart helpers — a send</text>
+        <text x="820" y="410" font-size="9.5" class="sub">under one of these names never</text>
+        <text x="820" y="424" font-size="9.5" class="sub">reaches Smalltalk lookup.</text>
+
+        <!-- band 3: execution -->
+        <text x="24" y="456" class="band">Execution</text>
+        <line class="flow" x1="164" y1="428" x2="164" y2="466" marker-end="url(#f1a)" />
+        <text x="172" y="451" font-size="9.5" class="sub">emits IR</text>
+
+        <rect class="box" x="24" y="468" width="312" height="68" />
+        <text x="180" y="495" text-anchor="middle" font-size="11.5">Dart flow-graph IR</text>
+        <text x="180" y="512" text-anchor="middle" font-size="9.5" class="sub">no bytecode set, no dispatch loop</text>
+
+        <line class="flow" x1="336" y1="502" x2="398" y2="502" marker-end="url(#f1a)" />
+
+        <rect class="box" x="404" y="468" width="312" height="68" />
+        <text x="560" y="495" text-anchor="middle" font-size="11.5">Dart 1.24.3 optimizing JIT</text>
+        <text x="560" y="512" text-anchor="middle" font-size="9.5" class="sub">last V1 Dart · tier-up for free</text>
+
+        <line class="flow" x1="716" y1="502" x2="778" y2="502" marker-end="url(#f1a)" />
+
+        <rect class="box" x="784" y="468" width="312" height="68" />
+        <text x="940" y="495" text-anchor="middle" font-size="11.5">native arm64 · x64 code</text>
+        <text x="940" y="512" text-anchor="middle" font-size="9.5" class="sub">arm64 primary, x64 the control</text>
+      </svg>
+    </div>
+    <figcaption><b>The thesis, drawn.</b> Dolphin's own 32-bit x86 VM appears nowhere on this
+    path — it is reading material, not a dependency. The two authorities hanging off the
+    translator exist because the corpus cannot be trusted on its own numbers: the oracle
+    answers what a method <em>means</em>, winkb answers how wide a struct actually is on a
+    64-bit target, and the audit scripts re-check both against every emitted file. But this
+    pipeline is only <em>one</em> of the ways a send is answered, and it hides the object
+    model — which is the subject of Figure 2.</figcaption>
+  </figure>
+</section>
+
+<section>
+  <h2>Figure 2 — The object model is fused</h2>
+  <h3>A Smalltalk object <em>is</em> a Dart object; a send resolves four ways</h3>
+  <p>The pipeline above compiles user-written methods, but it is not the whole runtime. The
+  core classes are not ported — they are <em>identified</em> with Dart's own: a
+  <code>SmallInteger</code> is a Dart <code>int</code>, an <code>Array</code> is a Dart
+  <code>List</code>, a <code>String</code> literal is a Dart <code>String</code>. Nothing is
+  boxed or wrapped, so the JIT optimizes them as the native types they already are. The cost
+  of that fusion is dispatch: a single Smalltalk send can be answered in four different
+  places, and only two of them are Smalltalk.</p>
+
+  <figure>
+    <div class="canvas">
+      <svg class="dg" viewBox="0 0 1120 648" role="img"
+           aria-label="Dispatch diagram. Top: three receivers shown with dual identity — the integer 3 is a Smalltalk SmallInteger and a Dart int; the array literal is a Smalltalk Array and a Dart List; a string literal is a Smalltalk String and a Dart String. Middle: one Smalltalk send fans into four resolution paths. Path one, at compile time and answered by Dart, is a call-site helper rewrite to a dart:cocoa function covering about 51 universal selectors that never reach Smalltalk lookup. Path two, also compile time and Dart, is a dart:core alias that maps the selector to the object's own Dart method or operator. Path three, at runtime and answered by Smalltalk, is class-chain lookup to compiled flow-graph IR — the pipeline of Figure 1, for user and MVP methods. Path four, at runtime and Smalltalk, is a noSuchMethod fallthrough that probes the extension holder. Bottom: when all four miss, a native error is reified into a Smalltalk exception such as ZeroDivide, otherwise doesNotUnderstand fires MessageNotUnderstood.">
+        <defs>
+          <marker id="d2" viewBox="0 0 10 8" refX="9" refY="4" markerWidth="8" markerHeight="7" orient="auto">
+            <polygon class="head" points="0,0 10,4 0,8" />
+          </marker>
+          <marker id="d2k" viewBox="0 0 10 8" refX="9" refY="4" markerWidth="8" markerHeight="7" orient="auto">
+            <polygon class="accent" points="0,0 10,4 0,8" />
+          </marker>
+        </defs>
+
+        <!-- TOP: dual-identity receivers -->
+        <text x="24" y="22" class="band">The receiver is already a Dart object — one heap object, two identities</text>
+
+        <rect class="box" x="24" y="38" width="340" height="86" />
+        <text x="46" y="90" class="glyph" font-size="24" font-family="var(--mono)">3</text>
+        <line class="soft" x1="120" y1="52" x2="120" y2="110" stroke-dasharray="0" />
+        <text x="140" y="72" font-size="13"><tspan class="accent">Smalltalk</tspan>  SmallInteger</text>
+        <text x="140" y="102" font-size="13"><tspan class="sub">Dart</tspan>  int</text>
+
+        <rect class="box" x="390" y="38" width="340" height="86" />
+        <text x="412" y="90" class="glyph" font-size="19" font-family="var(--mono)">#(1 2 3)</text>
+        <line class="soft" x1="512" y1="52" x2="512" y2="110" stroke-dasharray="0" />
+        <text x="532" y="72" font-size="13"><tspan class="accent">Smalltalk</tspan>  Array</text>
+        <text x="532" y="102" font-size="13"><tspan class="sub">Dart</tspan>  List</text>
+
+        <rect class="box" x="756" y="38" width="340" height="86" />
+        <text x="778" y="90" class="glyph" font-size="20" font-family="var(--mono)">'text'</text>
+        <line class="soft" x1="872" y1="52" x2="872" y2="110" stroke-dasharray="0" />
+        <text x="892" y="72" font-size="13"><tspan class="accent">Smalltalk</tspan>  String</text>
+        <text x="892" y="102" font-size="13"><tspan class="sub">Dart</tspan>  String</text>
+
+        <!-- MIDDLE: one send, four resolutions -->
+        <text x="24" y="158" class="band">One send resolves up to four ways — only the two marine paths are Smalltalk</text>
+
+        <rect class="box" x="24" y="314" width="212" height="70" />
+        <text x="130" y="342" text-anchor="middle" font-size="10.5" class="sub">a Smalltalk send</text>
+        <text x="130" y="364" text-anchor="middle" font-size="13" font-family="var(--mono)">rcvr sel: arg</text>
+
+        <!-- fan arrows -->
+        <line class="flow"   x1="236" y1="349" x2="304" y2="213" marker-end="url(#d2)" />
+        <line class="flow"   x1="236" y1="349" x2="304" y2="303" marker-end="url(#d2)" />
+        <line class="flow-k" x1="236" y1="349" x2="304" y2="393" marker-end="url(#d2k)" />
+        <line class="flow-k" x1="236" y1="349" x2="304" y2="483" marker-end="url(#d2k)" />
+
+        <!-- box 1 -->
+        <rect class="box" x="310" y="176" width="786" height="74" />
+        <text x="328" y="200" class="eyb">① COMPILE-TIME · ANSWERED BY DART</text>
+        <text x="328" y="222" font-size="12.5">Call-site helper rewrite &#8594; <tspan font-family="var(--mono)">dart:cocoa</tspan> function</text>
+        <text x="328" y="240" class="ex" font-size="10.5" font-family="var(--mono)">at:  size  do:  value  isNil  yourself  printString&#8594;stPrintOf   — ~51 selectors, never reach ST lookup</text>
+
+        <!-- box 2 -->
+        <rect class="box" x="310" y="266" width="786" height="74" />
+        <text x="328" y="290" class="eyb">② COMPILE-TIME · ANSWERED BY DART</text>
+        <text x="328" y="312" font-size="12.5">dart:core alias &#8594; the object's own Dart method / operator</text>
+        <text x="328" y="330" class="ex" font-size="10.5" font-family="var(--mono)">=&#8594;==   printString&#8594;toString   bitAnd:&#8594;&amp;   hash&#8594;.hashCode   asUppercase&#8594;.toUpperCase()</text>
+
+        <!-- box 3 -->
+        <rect class="key" x="310" y="356" width="786" height="74" />
+        <text x="328" y="380" class="eyb-k">③ RUNTIME · ANSWERED BY SMALLTALK</text>
+        <text x="328" y="402" font-size="12.5">Class-chain lookup &#8594; compiled flow-graph IR &#8594; JIT</text>
+        <text x="328" y="420" class="ex" font-size="10.5">every user-defined &amp; MVP method — this is Figure 1's pipeline</text>
+
+        <!-- box 4 -->
+        <rect class="key" x="310" y="446" width="786" height="74" />
+        <text x="328" y="470" class="eyb-k">④ RUNTIME · ANSWERED BY SMALLTALK</text>
+        <text x="328" y="492" font-size="12.5"><tspan font-family="var(--mono)">noSuchMethod</tspan> &#8594; extension-holder probe (<tspan font-family="var(--mono)">_stExtSendTry</tspan>)</text>
+        <text x="328" y="510" class="ex" font-size="10.5">3 factorial · $a asUppercase · MVP protocol grafted onto core types — the sealed-core escape hatch</text>
+
+        <!-- BOTTOM: the miss -->
+        <line class="flow" x1="703" y1="520" x2="703" y2="560" marker-end="url(#d2)" />
+        <text x="713" y="544" font-size="9.5" class="sub">all four miss</text>
+        <rect class="group" x="24" y="562" width="1072" height="66" />
+        <text x="560" y="590" text-anchor="middle" font-size="12">A native Dart error is <tspan class="accent">reified</tspan> into its ST class (a divide-by-zero becomes <tspan font-family="var(--mono)">ZeroDivide</tspan>) …</text>
+        <text x="560" y="612" text-anchor="middle" font-size="12">… otherwise <tspan font-family="var(--mono)">doesNotUnderstand:</tspan> fires and raises <tspan font-family="var(--mono)">MessageNotUnderstood</tspan></text>
+      </svg>
+    </div>
+    <figcaption><b>The fills follow the same legend.</b> Marine is Smalltalk, plain is Dart —
+    so at a glance, two of the four paths (①②, resolved when the method compiles) never enter
+    Smalltalk at all, and the receiver box is deliberately drawn as both. The order is the
+    order the compiler tries them: a rewrite or alias wins first, then the class chain, and
+    the <code>noSuchMethod</code> probe is the last resort. That probe is what lets a bare
+    Dart <code>int</code> answer <code>factorial</code> — see the ledger.</figcaption>
+  </figure>
+
+  <div class="idmap-wrap">
+    <table class="idmap">
+      <thead>
+        <tr><th>Smalltalk class</th><th>Is, at runtime</th><th>Its Smalltalk-only protocol is reached via</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>SmallInteger / LargeInteger</td><td>one Dart <code>int</code> — Mint or Bigint, arbitrary precision</td><td>path ④, on the <code>Integer ext</code> holder</td></tr>
+        <tr><td>Float</td><td>Dart <code>double</code></td><td>path ④, on <code>Float ext</code></td></tr>
+        <tr><td>String</td><td>Dart <code>String</code>, immutable — a literal stays a fast Dart string</td><td>path ④; mutation (<code>String new:</code>, <code>at:put:</code>, a <code>WriteStream</code>) falls back to a char buffer, itself a <code>List</code></td></tr>
+        <tr><td>Symbol</td><td>an interned Dart <code>String</code></td><td>path ④, on <code>Symbol ext</code></td></tr>
+        <tr><td>Array</td><td>Dart <code>List</code> — a literal <code>#(…)</code>, <code>Array new:</code>, and every <code>collect:</code> result</td><td>path ④, on <code>Array ext</code></td></tr>
+        <tr><td>Character</td><td>one of 256 canonical <code>StChar</code> table entries</td><td>path ④, on <code>Character ext</code></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="idmap-note">These are <b>sealed</b> Dart core classes — the VM will not let Smalltalk
+  subclass them — so each carries a parallel <code>"&lt;Name&gt; ext"</code> holder where its
+  Smalltalk-only methods live, reached only once ①, ② and ③ have all missed. The same
+  machinery explains the house failure mode: an unbound capitalized name is not an error but a
+  nil-valued static field minted on <code>STGlobals</code>, so a missing global surfaces as
+  <code>doesNotUnderstand</code> on nil, far from its cause.</p>
+
+  <h3 style="margin-top:42px">Smalltalk's control machinery is Dart's, too</h3>
+  <p>The entanglement is not only the object model. The exception hierarchy is ordinary prelude
+  source, but its verbs are primitives that lower straight onto Dart's own runtime — which is
+  why non-local return and <code>ensure:</code> unwinding are exact rather than approximated.</p>
+  <div class="doctrine">
+    <article>
+      <h4>on:do: / ensure:</h4>
+      <ul>
+        <li><code>stOnDo</code> compiles to a Dart <strong>try / catch</strong>;
+        <code>ensure:</code> and <code>ifCurtailed:</code> to <strong>try / finally</strong>.</li>
+        <li>A non-local return rides Dart's unwinding with a per-activation <strong>NLR home
+        token</strong>, so an <code>ensure:</code> block fires mid-unwind exactly as ANSI
+        requires.</li>
+      </ul>
+    </article>
+    <article>
+      <h4>signal / raise</h4>
+      <ul>
+        <li><code>signal</code> is a <code>&lt;stprim&gt;</code> that becomes a Dart
+        <strong>throw</strong>.</li>
+        <li>A native Dart error is <strong>reified</strong> the other way: a division by zero
+        caught by <code>stOnDo</code> is handed back as a Smalltalk <code>ZeroDivide</code>, any
+        other as a plain <code>Error</code>.</li>
+      </ul>
+    </article>
+    <article>
+      <h4>become:</h4>
+      <ul>
+        <li>Not re-implemented — it is the <strong>VM's own</strong>
+        <code>Become::ElementsForwardIdentity</code>, the same primitive that powers hot-reload.</li>
+        <li>Exposed to the image through <code>STSystem</code>. It is the one feature the sibling
+        macOS port had to drop.</li>
+      </ul>
+    </article>
+  </div>
+</section>
+
+<section>
+  <h2>Figure 3 — What the running image stands on</h2>
+  <h3>The seam is a wndproc, and it re-enters</h3>
+  <p>Win32 sends are synchronous, so a Smalltalk handler that calls
+  <code>CreateWindowExW</code> re-enters the image from inside its own call, to arbitrary
+  depth. Everything about the floor's shape follows from surviving that: the door holds no
+  Dart handle across an invoke, and continuations are posted to a queue drained
+  <em>outside</em> the current entry rather than called back directly.</p>
+
+  <figure>
+    <div class="canvas">
+      <svg class="dg" viewBox="0 0 1120 580" role="img"
+           aria-label="Layer diagram: the Smalltalk image sits on top, comprising st/world house kernel, st/prims FFI bindings and structs, st/dolphin_compat, st/mvp holding Dolphin's own 137 MVP classes, st/mvp_compat scaffolding, and the st/ext gamepane. It meets C++ at a two-way seam — win_mvp.cpp reflects Win32 messages up into the image while Smalltalk handlers re-enter synchronously downward — alongside the pump and its posted-action queue. Beneath that sits the Windows floor: FFI marshalling, view and canvas natives, Workers on Dart isolates, and the D3D11 plus XAudio2 game pane. Underneath, two large C++ components are reused rather than rewritten: Scintilla with Lexilla rebuilt for ARM64, and the DolphinDR8 resource DLL.">
+        <defs>
+          <marker id="f2a" viewBox="0 0 10 8" refX="9" refY="4" markerWidth="8" markerHeight="7" orient="auto">
+            <polygon class="head" points="0,0 10,4 0,8" />
+          </marker>
+          <marker id="f2b" viewBox="0 0 10 8" refX="1" refY="4" markerWidth="8" markerHeight="7" orient="auto">
+            <polygon class="head" points="10,0 0,4 10,8" />
+          </marker>
+        </defs>
+
+        <!-- the image -->
+        <text x="24" y="22" class="band">The image — Smalltalk</text>
+        <rect class="group" x="24" y="34" width="1072" height="132" />
+
+        <rect class="box" x="48" y="54" width="154" height="96" />
+        <text x="125" y="78" text-anchor="middle" font-size="10.5">st/world</text>
+        <text x="125" y="95" text-anchor="middle" font-size="9.5" class="sub">house kernel</text>
+        <text x="125" y="110" text-anchor="middle" font-size="9.5" class="sub">our own numbering</text>
+        <text x="125" y="130" text-anchor="middle" font-size="9.5" class="accent">85 files</text>
+
+        <rect class="box" x="222" y="54" width="154" height="96" />
+        <text x="299" y="78" text-anchor="middle" font-size="10.5">st/prims</text>
+        <text x="299" y="95" text-anchor="middle" font-size="9.5" class="sub">35 FFI libraries</text>
+        <text x="299" y="110" text-anchor="middle" font-size="9.5" class="sub">387 structs</text>
+        <text x="299" y="130" text-anchor="middle" font-size="9.5" class="accent">429 files</text>
+
+        <rect class="box" x="396" y="54" width="154" height="96" />
+        <text x="473" y="78" text-anchor="middle" font-size="10.5">st/dolphin_compat</text>
+        <text x="473" y="95" text-anchor="middle" font-size="9.5" class="sub">bridges Dolphin</text>
+        <text x="473" y="110" text-anchor="middle" font-size="9.5" class="sub">idioms onto ours</text>
+        <text x="473" y="130" text-anchor="middle" font-size="9.5" class="accent">10 files</text>
+
+        <rect class="key" x="570" y="54" width="154" height="96" />
+        <text x="647" y="76" text-anchor="middle" font-size="10.5">st/mvp</text>
+        <text x="647" y="92" text-anchor="middle" font-size="9" class="sub">Dolphin's own MVP</text>
+        <text x="647" y="106" text-anchor="middle" font-size="9" class="sub">137 classes</text>
+        <text x="647" y="120" text-anchor="middle" font-size="9" class="sub">5,331 methods</text>
+        <text x="647" y="138" text-anchor="middle" font-size="9.5" class="accent">146 files</text>
+
+        <rect class="scaf" x="744" y="54" width="154" height="96" />
+        <text x="821" y="78" text-anchor="middle" font-size="10.5">st/mvp_compat</text>
+        <text x="821" y="95" text-anchor="middle" font-size="9.5" class="sub">scaffolding</text>
+        <text x="821" y="110" text-anchor="middle" font-size="9.5" class="sub">retires as views land</text>
+        <text x="821" y="130" text-anchor="middle" font-size="9.5" class="sub">16 files</text>
+
+        <rect class="box" x="918" y="54" width="154" height="96" />
+        <text x="995" y="78" text-anchor="middle" font-size="10.5">st/ext/gamepane</text>
+        <text x="995" y="95" text-anchor="middle" font-size="9.5" class="sub">games and sound</text>
+        <text x="995" y="110" text-anchor="middle" font-size="9.5" class="sub">a kept extension</text>
+        <text x="995" y="130" text-anchor="middle" font-size="9.5" class="accent">10 files</text>
+
+        <!-- the seam -->
+        <text x="24" y="190" class="band">The seam</text>
+        <line class="flow" x1="200" y1="166" x2="200" y2="210"
+              marker-start="url(#f2b)" marker-end="url(#f2a)" />
+        <text x="214" y="180" font-size="9.5" class="sub">↑ WM_PAINT · WM_NOTIFY · WM_COMMAND reflected into the image</text>
+        <text x="214" y="196" font-size="9.5" class="sub">↓ CreateWindowExW · SendMessageW re-enter, synchronously, to any depth</text>
+
+        <rect class="box" x="24" y="212" width="520" height="72" />
+        <text x="284" y="238" text-anchor="middle" font-size="11.5">win_mvp.cpp — the wndproc door</text>
+        <text x="284" y="256" text-anchor="middle" font-size="9.5" class="sub">a real window class whose WndProc calls into the image</text>
+        <text x="284" y="271" text-anchor="middle" font-size="9.5" class="sub">enter scope · invoke · exit · hold no Dart handle across it</text>
+
+        <rect class="box" x="576" y="212" width="520" height="72" />
+        <text x="836" y="238" text-anchor="middle" font-size="11">win_host.cpp — the pump and posted-action queue</text>
+        <text x="836" y="256" text-anchor="middle" font-size="9.5" class="sub">UiSession postAction: drains OUTSIDE the current entry,</text>
+        <text x="836" y="271" text-anchor="middle" font-size="9.5" class="sub">so a worker continuation never runs inside a door call</text>
+
+        <line class="flow" x1="284" y1="284" x2="284" y2="326" marker-end="url(#f2a)" />
+        <text x="292" y="309" font-size="9.5" class="sub">calls</text>
+        <line class="flow" x1="836" y1="284" x2="836" y2="326" marker-end="url(#f2a)" />
+
+        <!-- the floor -->
+        <text x="24" y="318" class="band">The Windows floor — C++</text>
+        <rect class="group" x="24" y="330" width="1072" height="104" />
+        <text x="44" y="352" font-size="9.5" class="sub">port-win/dart_win32</text>
+
+        <rect class="box" x="48" y="362" width="238" height="56" />
+        <text x="167" y="385" text-anchor="middle" font-size="10.5">FFI and marshalling</text>
+        <text x="167" y="401" text-anchor="middle" font-size="9.5" class="sub">windart_userlib.cc</text>
+
+        <rect class="box" x="310" y="362" width="238" height="56" />
+        <text x="429" y="385" text-anchor="middle" font-size="10.5">win_view · win_canvas</text>
+        <text x="429" y="401" text-anchor="middle" font-size="9.5" class="sub">common controls · Direct2D</text>
+
+        <rect class="box" x="572" y="362" width="238" height="56" />
+        <text x="691" y="385" text-anchor="middle" font-size="10.5">Workers on Dart isolates</text>
+        <text x="691" y="401" text-anchor="middle" font-size="9.5" class="sub">replace Dolphin's green processes</text>
+
+        <rect class="box" x="834" y="362" width="238" height="56" />
+        <text x="953" y="385" text-anchor="middle" font-size="10.5">gp_engine_d3d · gp_audio</text>
+        <text x="953" y="401" text-anchor="middle" font-size="9.5" class="sub">Direct3D 11 + XAudio2</text>
+
+        <line class="flow" x1="284" y1="478" x2="284" y2="438" marker-end="url(#f2a)" />
+        <text x="292" y="461" font-size="9.5" class="sub">loaded through the FFI floor</text>
+        <line class="flow" x1="836" y1="478" x2="836" y2="438" marker-end="url(#f2a)" />
+        <text x="844" y="461" font-size="9.5" class="sub">Icon fromId: → a real HICON</text>
+
+        <!-- reused -->
+        <text x="24" y="468" class="band">Reused, not rewritten</text>
+
+        <rect class="box" x="24" y="480" width="520" height="76" />
+        <text x="284" y="506" text-anchor="middle" font-size="11.5">Scintilla 5.6.1 + Lexilla 5.5.3</text>
+        <text x="284" y="524" text-anchor="middle" font-size="9.5" class="sub">built ARM64 from source — Dolphin's shipped DLLs are I386,</text>
+        <text x="284" y="539" text-anchor="middle" font-size="9.5" class="sub">and being CODE an ARM64 process cannot load them at all</text>
+
+        <rect class="box" x="576" y="480" width="520" height="76" />
+        <text x="836" y="506" text-anchor="middle" font-size="11.5">DolphinDR8.dll</text>
+        <text x="836" y="524" text-anchor="middle" font-size="9.5" class="sub">rebuilt ARM64 under the same name, so defaultResLibPath</text>
+        <text x="836" y="539" text-anchor="middle" font-size="9.5" class="sub">resolves unaltered — 295 icons and 5 bitmaps</text>
+      </svg>
+    </div>
+    <figcaption><b>Where the language boundary actually falls.</b> Everything above the seam
+    is Smalltalk; everything below may be C++ or Dart, whichever fits the job. The two boxes
+    at the bottom are the reuse test in practice — a component that is large, stable, and
+    already wrapped by Dolphin is one to link against, not re-type.
+    <span class="id">UI.Scintilla.ScintillaView</span> is 438 KB of Smalltalk that stays
+    exactly as Object Arts wrote it.</figcaption>
+  </figure>
+</section>
+
+<section>
+  <h2>The scope rule, four ways</h2>
+  <p class="lede">Every architectural argument on this project resolves to one question:
+  does this belong to Dolphin, or is it machinery underneath Dolphin?</p>
+  <div class="doctrine">
+    <article class="is-ported">
+      <h4>Ported, unmodified</h4>
+      <ul>
+        <li><strong>The MVP framework</strong> — Model-View-Presenter and the class
+        browsers, in Dolphin's own Smalltalk. This is the goal gate, not a milestone
+        on the way to one.</li>
+        <li><strong>The dialect semantics</strong> and the Windows primitives the
+        framework needs.</li>
+        <li>MVP in the corpus is <strong>byte-identical to upstream D8</strong>, so what
+        ships here is verifiably Dolphin's.</li>
+      </ul>
+    </article>
+    <article>
+      <h4>Ours to write</h4>
+      <ul>
+        <li><strong>The compiler</strong> — front end to Dart flow-graph IR, in C++
+        inside the VM.</li>
+        <li><strong>The door and the pump</strong>, the FFI floor, the struct generator.</li>
+        <li><strong>Workers on isolates</strong> in place of green processes. Dart is a
+        substrate with exactly the standing C++ has here — never a second home for
+        application logic.</li>
+      </ul>
+    </article>
+    <article>
+      <h4>Linked, not re-typed</h4>
+      <ul>
+        <li><strong>Scintilla and Lexilla</strong>, rebuilt ARM64. Dolphin already drives
+        them through 438 KB of Smalltalk we keep.</li>
+        <li><strong>DolphinDR8.dll</strong> — the artwork loads through Dolphin's own
+        resource path, from a DLL rebuilt for this architecture under the original name.</li>
+      </ul>
+    </article>
+    <article class="is-never">
+      <h4>Never ported</h4>
+      <ul>
+        <li><strong>Dolphin's 386 bytecode interpreter.</strong> The execution model is
+        fixed: front end → Dart IR → JIT. There is no interpreter to port to.</li>
+        <li><strong>The dsfork VM.</strong> It does not work. It is never an oracle and
+        never a dependency — only reading material for semantics.</li>
+        <li><strong>A green-thread scheduler.</strong> This VM has none and will not
+        grow one.</li>
+      </ul>
+    </article>
+  </div>
+</section>
+
+<section>
+  <h2>Where it stands</h2>
+  <div class="ledger">
+    <div class="row">
+      <span class="tag green">DD12 · done</span>
+      <div>
+        <h3>The goal gate is green, and photographed</h3>
+        <p>All 25 gates pass in 12.5 seconds on Release. Modal dialogs block properly —
+        owner disabled and re-enabled, <code>ValueBuffer</code> applied on OK and not on
+        Cancel, two stacked modals unwinding innermost-first. Thirteen of Dolphin's real
+        view classes are translated and running, and its artwork loads through Dolphin's
+        own resource path.</p>
+      </div>
+    </div>
+    <div class="row">
+      <span class="tag next">DD14 · next</span>
+      <div>
+        <h3>The STB view-resource reader</h3>
+        <p>Dolphin's windows are not constructed — they are <em>deserialised</em>. 217
+        classes carry <code>resource_*</code> literals across 654 methods, and one reader
+        unlocks all of them: <code>UI.ResourceIdentifier</code>,
+        <code>UI.STBViewProxy</code>, <code>Kernel.STBInFiler</code> and its proxies. The
+        binding literals inside those resources already lower correctly — refusals went
+        from 45 to zero — and <code>ContainerView resource_Default_view</code> answers
+        Dolphin's own 59-element window description, live in the image.</p>
+      </div>
+    </div>
+    <div class="row">
+      <span class="tag blocked">blocker</span>
+      <div>
+        <h3>A <code>self</code> send in an inherited class-side method binds to the wrong class</h3>
+        <p>This is a Smalltalk semantics violation in our front end, not a corpus quirk, and
+        Dolphin leans on class-side polymorphism heavily — abstract templates, factory
+        methods, version dispatch. It is what stops the filer:
+        <code>STxFiler class &gt;&gt; classForVersion:</code> reaches the abstract instead of
+        <code>STLInFiler class &gt;&gt; versions</code>.</p>
+<pre>Object subclass: PBase [
+    PBase class &gt;&gt; tag    [ ^self subclassResponsibility ]
+    PBase class &gt;&gt; useTag [ ^self tag ] ]
+PBase subclass: PDerived [
+    PDerived class &gt;&gt; tag [ ^'DERIVED' ] ]
+
+PDerived tag        <span class="ok">→ 'DERIVED'</span>                 correct
+PDerived useTag     <span class="bad">→ 'subclass responsibility'</span>  <b>wrong — want 'DERIVED'</b>
+PDerived new useTag <span class="ok">→ 'DERIVED'</span>                 instance side is fine</pre>
+        <p>Fixing it is likely to unblock more than the filer.</p>
+      </div>
+    </div>
+    <div class="row">
+      <span class="tag open">open</span>
+      <div>
+        <h3>Two things no gate can see</h3>
+        <p>The port runs <strong>DPI-unaware</strong> despite a PerMonitorV2 manifest and a
+        <code>SetProcessDpiAwarenessContext</code> call — Dolphin reports 3840×2160 at
+        144 dpi where we report 2560×1440 at 96. Every coordinate is off by 1.5 and no
+        assertion notices.</p>
+        <p><code>ModalOwnerShell</code> and <code>ValuePromptView</code>
+        <strong>photograph black</strong> while the class browser captures fine. The
+        behaviour is verified; the pixels are not.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2>Four traps that shaped the architecture</h2>
+  <p class="lede">Each of these is a class of silent failure, and each one is why a piece of
+  the tooling in Figure 1 exists at all. None of them raise.</p>
+  <div class="traps">
+    <div class="trap">
+      <span class="n">01</span>
+      <div>
+        <p><strong>Dolphin is a 32-bit system, so every byte number in the corpus is
+        suspect.</strong> A wrong offset reads the neighbouring field and the code keeps
+        running. One literal — <code>nmNotify:</code> reading the code at 8 instead of 16 —
+        silently disabled every WM_NOTIFY handler in the port. Struct sizes now come from
+        winkb's <code>types.size_bits</code> rather than arithmetic; 90 were wrong, and
+        correcting them uncovered five latent gate failures that were all one bug.</p>
+      </div>
+    </div>
+    <div class="trap">
+      <span class="n">02</span>
+      <div>
+        <p><strong>A method named after a universal helper may be dead on arrival.</strong>
+        The IL builder rewrites 51 selectors at the call site, so a send under one of those
+        names never reaches Smalltalk lookup. <code>Object&gt;&gt;value</code> written in
+        Smalltalk blew the stack on every gate; <code>ExternalMemory&gt;&gt;asInteger</code>
+        did nothing at all. Fixes belong in the helper's slow path, by protocol probe.</p>
+      </div>
+    </div>
+    <div class="trap">
+      <span class="n">03</span>
+      <div>
+        <p><strong>Silent nil is the house failure mode.</strong> An unbound global is nil. A
+        class-side method on a bridged core name may be unreachable. <code>initialize</code>
+        is never called by a file-in loader unless emitted as a top-level statement. Each
+        presents far from its cause, usually as <code>doesNotUnderstand</code> on nil inside
+        a contained handler — and handler errors are contained twice, by the image and again
+        by the door.</p>
+      </div>
+    </div>
+    <div class="trap">
+      <span class="n">04</span>
+      <div>
+        <p><strong>Assertions cannot see pixels.</strong> <code>listItemCount</code> answered
+        33 while zero rows drew. Handles, class names and counts all pass on an invisible
+        failure, so any change meant to affect what draws is not done until a screenshot
+        shows it: <code>Win32 mvpCapture:path:clientOnly:</code> from a real message loop,
+        converted by <code>tools/shot.py</code>, and read.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <span>DolphinDart · Dolphin Smalltalk 8 on Dart 1.24.3</span>
+  <span>Corpus: dsfork, MIT © Object Arts</span>
+  <span>Windows 11 ARM64 · arm64 primary, x64 control</span>
+  <span>Drawn 18 August 2026</span>
+</footer>
+
+</div>
